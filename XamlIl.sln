@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}"
+ProjectSection(SolutionItems) = preProject
+	src\TODO.md = src\TODO.md
+EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlIl", "src\XamlIl\XamlIl.csproj", "{3986513F-FAE6-4DA6-9221-51837AFC9B3C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{55203DEB-3DB3-4907-8275-7FBE48185148}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlParserTests", "tests\XamlParserTests\XamlParserTests.csproj", "{6512A859-F453-4388-9DAA-9B0C3E62956E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{6512A859-F453-4388-9DAA-9B0C3E62956E} = {55203DEB-3DB3-4907-8275-7FBE48185148}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6512A859-F453-4388-9DAA-9B0C3E62956E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6512A859-F453-4388-9DAA-9B0C3E62956E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6512A859-F453-4388-9DAA-9B0C3E62956E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6512A859-F453-4388-9DAA-9B0C3E62956E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
