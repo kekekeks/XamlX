@@ -14,6 +14,8 @@ This is work in progress, the current goal is to reach feature parity with Porta
 - Support for collections themselves (e. g. <List x:TypeArguments="sys:String"></List>
 - x:Arguments Directive
 - x:TypeArguments Directive
+- x:Null Markup Extension
+- x:Type Markup Extension
 - xml:space Handling in XAML (automatically via XmlReader)
 
 ## Architecture
@@ -40,9 +42,7 @@ The flow looks like this:
 - x:Array Markup Extension
 - x:Key Directive 
 - x:Name Directive
-- x:Null Markup Extension
 - x:Static Markup Extension
-- x:Type Markup Extension
 - {} Escape Sequence / Markup Extension
 - Event handlers
 - xml:lang Handling in XAML
