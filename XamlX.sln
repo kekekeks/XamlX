@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}"
 ProjectSection(SolutionItems) = preProject
 	src\TODO.md = src\TODO.md
+	README.md = README.md
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX", "src\XamlX\XamlX.csproj", "{3986513F-FAE6-4DA6-9221-51837AFC9B3C}"
