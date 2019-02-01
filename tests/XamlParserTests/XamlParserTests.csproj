@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp2.1</TargetFramework>
-
+        <TargetFrameworks>netcoreapp2.1;net47</TargetFrameworks>
+        <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -15,5 +15,11 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\XamlIl\XamlIl.csproj" />
     </ItemGroup>
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+        <Content Include="xunit.runner.json" Link="xunit.runner.json" >
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
 
 </Project>

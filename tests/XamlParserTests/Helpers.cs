@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using XamlIl;
+using XamlIl.Ast;
 
 namespace XamlParserTests
 {
