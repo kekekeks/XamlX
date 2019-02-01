@@ -1,0 +1,91 @@
+
+using System.Collections.Generic;
+using XamlX.TypeSystem;
+using Visitor = XamlX.Ast.XamlXAstVisitorDelegate;
+namespace XamlX.Ast
+{
+    public delegate IXamlXAstNode XamlXAstVisitorDelegate(IXamlXAstNode node);
+    
+    public interface IXamlXLineInfo
+    {
+        int Line { get; set; }
+        int Position { get; set; }   
+    }
+    
+    public interface IXamlXAstNode : IXamlXLineInfo
+    {
+        void VisitChildren(Visitor visitor);
+        IXamlXAstNode Visit(Visitor visitor);
+    }
+    
+    public abstract class XamlXAstNode : IXamlXAstNode
+    {
+        public int Line { get; set; }
+        public int Position { get; set; }
+
+        public XamlXAstNode(IXamlXLineInfo lineInfo)
+        {
+            Line = lineInfo.Line;
+            Position = lineInfo.Position;
+        }
+        
+        public virtual void VisitChildren(Visitor visitor)
+        {
+            
+        }
+        
+        public IXamlXAstNode Visit(Visitor visitor)
+        {
+            var node = visitor(this);
+            node.VisitChildren(visitor);
+            return node;
+        }
+
+        protected static void VisitList<T>(IList<T> list, Visitor visitor) where T : IXamlXAstNode
+        {
+            for (var c = 0; c < list.Count; c++)
+            {
+                list[c] = (T) list[c].Visit(visitor);
+            }
+        }
+    }
+
+    public interface IXamlXAstManipulationNode : IXamlXAstNode
+    {
+        
+    }
+    
+    public interface IXamlXAstValueNode : IXamlXAstNode
+    {
+        IXamlXAstTypeReference Type { get; }
+    }
+    
+    
+    public interface IXamlXAstTypeReference : IXamlXAstNode
+    {
+        
+    }
+    
+    
+    public interface IXamlXAstPropertyReference : IXamlXAstNode
+    {
+        
+    }
+    
+    public static class XamlXAstExtensions
+    {
+        public static IXamlXType GetClrType(this IXamlXAstTypeReference r)
+        {
+            if (r is XamlXAstClrTypeReference clr)
+                return clr.Type;
+            throw new XamlXParseException($"Unable to convert {r} to CLR type", r);
+        }
+        
+        public static IXamlXProperty GetClrProperty(this IXamlXAstPropertyReference r)
+        {
+            if (r is XamlXAstClrPropertyReference clr)
+                return clr.Property;
+            throw new XamlXParseException($"Unable to convert {r} to CLR property", r);
+        }
+    }
+}
