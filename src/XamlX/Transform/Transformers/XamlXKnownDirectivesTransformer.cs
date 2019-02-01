@@ -4,13 +4,13 @@ using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlXKnownContentDirectivesTransformer : IXamlXAstTransformer
+    public class XamlXKnownDirectivesTransformer : IXamlXAstTransformer
     {
         public IXamlXAstNode Transform(XamlXAstTransformationContext context, IXamlXAstNode node)
         {
             if (node is XamlXAstNewInstanceNode ni && ni.Type is XamlXAstXmlTypeReference type)
             {
-                foreach (var d in context.Configuration.KnownContentDirectives)
+                foreach (var d in context.Configuration.KnownDirectives)
                     if (type.XmlNamespace == d.ns && type.Name == d.name)
                     {
                         var vnodes = new List<IXamlXAstValueNode>();

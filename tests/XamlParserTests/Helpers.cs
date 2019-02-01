@@ -9,9 +9,10 @@ namespace XamlParserTests
     public static class Helpers
     {
 
-        public static void StructDiff(object parsed, object expected) => StructDiff(parsed, expected, "{root}");
+        public static void StructDiff(object parsed, object expected) 
+            => StructDiff(parsed, expected, "{root}", true);
 
-        static void StructDiff(object parsed, object expected, string path)
+        static void StructDiff(object parsed, object expected, string path, bool isRoot = false)
         {
             if (parsed == null && expected == null)
                 return;
@@ -56,9 +57,7 @@ namespace XamlParserTests
                     if (prop.DeclaringType == typeof(XamlXAstNode)
                         && (prop.Name == "Line" || prop.Name == "Position"))
                     {
-                        if (parsed is XamlXAstRootInstanceNode)
-                            continue;
-                        else if((int)prop.GetValue(parsed) == 0)
+                        if(!isRoot && (int)prop.GetValue(parsed) == 0)
                             throw new Exception($"{path}.{prop.Name}: Missing line info (first)");
                         continue;
                     }

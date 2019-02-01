@@ -26,7 +26,7 @@ namespace XamlX.Transform
         public XamlXLanguageTypeMappings TypeMappings { get; }
         public XamlXXmlnsMappings XmlnsMappings { get; }
         public XamlXTypeWellKnownTypes WellKnownTypes { get; }
-        public List<(string ns, string name)> KnownContentDirectives { get; } = new List<(string, string)>
+        public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
             (XamlNamespaces.Xaml2006, "Arguments")
         };

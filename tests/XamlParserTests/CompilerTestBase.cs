@@ -38,11 +38,12 @@ namespace XamlParserTests
             
         }
 
-        protected object CompileAndRun(string xaml)
+        protected object CompileAndRun(string xaml) => Compile(xaml)();
+        protected Func<object> Compile(string xaml)
         {
-            var root = XDocumentXamlXParser.Parse(xaml);
+            var parsed = XDocumentXamlXParser.Parse(xaml);
             var compiler = new XamlXAstTransformationManager(Configuration, true);
-            compiler.Transform(root);
+            compiler.Transform(parsed.Root, parsed.NamespaceAliases);
             
             #if !NETCOREAPP
             
@@ -58,17 +59,18 @@ namespace XamlParserTests
             var m = t.DefineMethod("Build", MethodAttributes.Static | MethodAttributes.Public,
                 typeof(object), new Type[0]);
             var gen = ((SreTypeSystem) _typeSystem).CreateCodeGen(m);
-            compiler.Compile(root, gen);
+            compiler.Compile(parsed.Root, gen);
             
             
             var created = t.CreateType();
             #if !NETCOREAPP
             dm.CreateGlobalFunctions();
-            da.Save( "testasm.dll");
+            // Useful for debugging the actual MSIL, don't remove
+            //da.Save( "testasm.dll");
             #endif
             var cb = (Func<object>) Delegate.CreateDelegate(typeof(Func<object>),
                 created.GetMethod("Build", BindingFlags.Static | BindingFlags.Public));
-            return cb();
+            return cb;
         }
     }
 }

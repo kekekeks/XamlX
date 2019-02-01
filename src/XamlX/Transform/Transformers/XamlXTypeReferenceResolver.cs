@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
@@ -17,7 +18,7 @@ namespace XamlX.Transform.Transformers
                 name += "`" + typeArguments.Count;
                 
             const string clrNamespace = "clr-namespace:";
-            const string assemblyNamePrefix = "assembly=";
+            const string assemblyNamePrefix = ";assembly=";
             
             
             
@@ -41,34 +42,16 @@ namespace XamlX.Transform.Transformers
             // Try to resolve from clr-namespace
             if (found == null && xmlns.StartsWith(clrNamespace))
             {
-                var asm = context.Configuration.DefaultAssembly;
                 var ns = xmlns.Substring(clrNamespace.Length);
 
-                // Parse `?assembly=` part if present
-                var indexOfQuestionMark = ns.IndexOf('?');
-                if (indexOfQuestionMark != -1)
-                {
-                    var qs = ns.Substring(indexOfQuestionMark + 1);
-                    ns = ns.Substring(0, indexOfQuestionMark);
-                    foreach (var pair in qs.Split('&'))
-                        if (pair.StartsWith(assemblyNamePrefix))
-                        {
-                            var assemblyName = pair.Substring(assemblyNamePrefix.Length);
-                            var foundAsm = context.Configuration.TypeSystem.FindAssembly(assemblyName);
-                            if (foundAsm == null)
-                            {
-                                if (context.StrictMode)
-                                    throw new XamlXParseException(
-                                        $"Unable to find assembly {assemblyName} referenced by {xmlns}",
-                                        lineInfo);
-                                else
-                                    return null;
-                            }
+                // We are completely ignoring `;assembly=` part because of type forwarding shenanigans with
+                // netstandard and .NET Core
+                
+                var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, StringComparison.Ordinal);
+                if (indexOfAssemblyPrefix != -1) 
+                    ns = ns.Substring(0, indexOfAssemblyPrefix);
 
-                            break;
-                        }
-                }
-                found = asm.FindType($"{ns}.{name}");
+                found = context.Configuration.TypeSystem.FindType($"{ns}.{name}");
             }
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);
