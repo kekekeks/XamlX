@@ -2,7 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}"
 ProjectSection(SolutionItems) = preProject
-	src\TODO.md = src\TODO.md
 	README.md = README.md
 EndProjectSection
 EndProject

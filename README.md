@@ -25,8 +25,8 @@ The flow looks like this:
 3) Emit IL code
 
 ## Features to implement (TODO)
-===============
 
+- Populate
 - Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
 - Support for intercepting property setters and BeginInit/EndInit (needed for bindings to work)
@@ -44,6 +44,7 @@ The flow looks like this:
 - x:Static Markup Extension
 - x:Type Markup Extension
 - {} Escape Sequence / Markup Extension
+- Event handlers
 - xml:lang Handling in XAML
 
 

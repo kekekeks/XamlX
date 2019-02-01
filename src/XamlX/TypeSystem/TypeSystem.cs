@@ -87,10 +87,37 @@ namespace XamlX.TypeSystem
         IXamlILEmitter Generator { get; }
         void EmitClosure(IEnumerable<IXamlType> fields);
     }
+
+    public class XamlXNullType : IXamlType
+    {
+        public bool Equals(IXamlType other) => other == this;
+
+        public object Id { get; } = Guid.NewGuid();
+        public string Name { get; } = "{x:Null}";
+        public string Namespace { get; } = "";
+        public IXamlAssembly Assembly { get; } = null;
+        public IReadOnlyList<IXamlProperty> Properties { get; } = new IXamlProperty[0];
+        public IReadOnlyList<IXamlMethod> Methods { get; } = new IXamlMethod[0];
+        public IReadOnlyList<IXamlConstructor> Constructors { get; } = new IXamlConstructor[0];
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = new IXamlCustomAttribute[0];
+        public IXamlType BaseType { get; }
+        public bool IsAssignableFrom(IXamlType type) => type == this;
+
+        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
+        {
+            throw new NotSupportedException();
+        }
+
+        XamlXNullType()
+        {
+            
+        }
+        public static XamlXNullType Instance { get; } = new XamlXNullType();
+    }
     
     public static class XamlTypeSystemExtensions
     {
-        public static string GetFqn(this IXamlType type) => $"{type.Assembly.Name}:{type.Namespace}.{type.Name}";
+        public static string GetFqn(this IXamlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
 
         public static IXamlMethod FindMethod(this IXamlType type, string name, IXamlType returnType, 
             bool allowDowncast, params IXamlType[] args)

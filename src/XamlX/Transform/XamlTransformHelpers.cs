@@ -30,9 +30,13 @@ namespace XamlX.Transform
                         setNode(ind,
                             new XamlPropertyValueManipulationNode(getNode(ind), contentProperty, addCall));
                     else
+                    {
+                        var propFqn = contentProperty.PropertyType.GetFqn();
+                        var valueFqn = getNode(ind).Type.GetClrType().GetFqn();
                         throw new XamlLoadException(
-                            $"Unable to find a suitable Add({getNode(ind).Type.GetClrType().GetFqn()}) on type {contentProperty.PropertyType.GetFqn()}",
+                            $"Unable to directly convert {valueFqn} to {propFqn} find a suitable Add({valueFqn}) on type {propFqn}",
                             getNode(ind));
+                    }
                 }
             }
             else
