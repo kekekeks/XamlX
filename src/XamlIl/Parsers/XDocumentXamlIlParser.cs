@@ -17,12 +17,26 @@ namespace XamlIl.Parsers
     public class XDocumentXamlIlParser
     {
 
-        public static XamlIlAstRootInstanceNode Parse(string s) => Parse(new StringReader(s));
+        public static XamlIlDocument Parse(string s) => Parse(new StringReader(s));
 
-        public static XamlIlAstRootInstanceNode Parse(TextReader reader)
+        public static XamlIlDocument Parse(TextReader reader)
         {
             var root = XDocument.Load(reader, LoadOptions.SetLineInfo).Root;
-            return new ParserContext(root).Parse();
+
+            var doc = new XamlIlDocument
+            {
+                Root = new ParserContext(root).Parse()
+            };
+            
+            foreach(var attr in root.Attributes())
+                if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
+                    (attr.Name.NamespaceName == "" && attr.Name.LocalName == "xmlns"))
+                {
+                    var name = attr.Name.NamespaceName == "" ? "" : attr.Name.LocalName;
+                    doc.NamespaceAliases[name] = attr.Value;
+                }
+
+            return doc;
         }
 
 
@@ -81,7 +95,7 @@ namespace XamlIl.Parsers
                 if (el.Name.LocalName.Contains("."))
                     throw ParseError(el, "Dots aren't allowed in type names");
                 var type = GetTypeReference(el);
-                var i = (root ? new XamlIlAstRootInstanceNode(el.AsLi(), type) : new XamlIlAstNewInstanceNode(el.AsLi(), type));
+                var i = new XamlIlAstNewInstanceNode(el.AsLi(), type);
                 foreach (var attr in el.Attributes())
                 {
                     if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
@@ -90,11 +104,6 @@ namespace XamlIl.Parsers
                         if (!root)
                             throw ParseError(attr,
                                 "xmlns declarations are only allowed on the root element to preserve memory");
-                        else
-                        {
-                            var name = attr.Name.NamespaceName == "" ? "" : attr.Name.LocalName;
-                            ((XamlIlAstRootInstanceNode) i).XmlNamespaces[name] = attr.Value;
-                        }
                     }
                     else if (attr.Name.NamespaceName.StartsWith("http://www.w3.org"))
                     {
@@ -185,7 +194,7 @@ namespace XamlIl.Parsers
             Exception ParseError(IXmlLineInfo line, string message) =>
                 new XamlIlParseException(message, line.LineNumber, line.LinePosition);
 
-            public XamlIlAstRootInstanceNode Parse() => (XamlIlAstRootInstanceNode) ParseNewInstance(_root, true);
+            public XamlIlAstNewInstanceNode Parse() => (XamlIlAstNewInstanceNode) ParseNewInstance(_root, true);
         }
     }
 

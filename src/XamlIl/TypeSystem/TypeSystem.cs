@@ -87,10 +87,37 @@ namespace XamlIl.TypeSystem
         IXamlIlEmitter Generator { get; }
         void EmitClosure(IEnumerable<IXamlIlType> fields);
     }
+
+    public class XamlIlNullType : IXamlIlType
+    {
+        public bool Equals(IXamlIlType other) => other == this;
+
+        public object Id { get; } = Guid.NewGuid();
+        public string Name { get; } = "{x:Null}";
+        public string Namespace { get; } = "";
+        public IXamlIlAssembly Assembly { get; } = null;
+        public IReadOnlyList<IXamlIlProperty> Properties { get; } = new IXamlIlProperty[0];
+        public IReadOnlyList<IXamlIlMethod> Methods { get; } = new IXamlIlMethod[0];
+        public IReadOnlyList<IXamlIlConstructor> Constructors { get; } = new IXamlIlConstructor[0];
+        public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; } = new IXamlIlCustomAttribute[0];
+        public IXamlIlType BaseType { get; }
+        public bool IsAssignableFrom(IXamlIlType type) => type == this;
+
+        public IXamlIlType MakeGenericType(IReadOnlyList<IXamlIlType> typeArguments)
+        {
+            throw new NotSupportedException();
+        }
+
+        XamlIlNullType()
+        {
+            
+        }
+        public static XamlIlNullType Instance { get; } = new XamlIlNullType();
+    }
     
     public static class XamlIlTypeSystemExtensions
     {
-        public static string GetFqn(this IXamlIlType type) => $"{type.Assembly.Name}:{type.Namespace}.{type.Name}";
+        public static string GetFqn(this IXamlIlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
 
         public static IXamlIlMethod FindMethod(this IXamlIlType type, string name, IXamlIlType returnType, 
             bool allowDowncast, params IXamlIlType[] args)

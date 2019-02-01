@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
+using XamlIl.Transform;
 using XamlIl.TypeSystem;
 using Visitor = XamlIl.Ast.XamlIlAstVisitorDelegate;
 
@@ -87,5 +89,55 @@ namespace XamlIl.Ast
         }
 
         public override void VisitChildren(XamlIlAstVisitorDelegate visitor) => VisitList(Children, visitor);
+    }
+
+    public class XamlIlNullDirectiveNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+    {
+        public XamlIlNullDirectiveNode(IXamlIlLineInfo lineInfo) : base(lineInfo)
+        {
+            Type = new XamlIlAstClrTypeReference(lineInfo, XamlIlNullType.Instance);
+        }
+
+        public IXamlIlAstTypeReference Type { get; }
+        public void Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        {
+            codeGen.Generator.Emit(OpCodes.Ldnull);
+        }
+    }
+
+    public class XamlIlTypeDirectiveNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+    {
+        private readonly IXamlIlType _systemType;
+
+        public XamlIlTypeDirectiveNode(IXamlIlLineInfo lineInfo, IXamlIlAstTypeReference value,
+            IXamlIlType systemType) : base(lineInfo)
+        {
+            _systemType = systemType;
+            Type = new XamlIlAstClrTypeReference(this, systemType);
+            Value = value;
+        }
+
+        public IXamlIlAstTypeReference Type { get; }
+        public IXamlIlAstTypeReference Value { get; set; }
+
+        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        {
+            Value = visitor(Value) as IXamlIlAstTypeReference;
+        }
+
+        public void Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        {
+            var type = Value.GetClrType();
+            var method = _systemType.Methods.FirstOrDefault(m =>
+                m.Name == "GetTypeFromHandle" && m.Parameters.Count == 1 &&
+                m.Parameters[0].Name == "RuntimeTypeHandle");
+
+            if (method == null)
+                throw new XamlIlTypeSystemException(
+                    $"Unable to find GetTypeFromHandle(RuntimeTypeHandle) on {_systemType.GetFqn()}");
+            codeGen.Generator
+                .Emit(OpCodes.Ldtoken, type)
+                .Emit(OpCodes.Call, method);
+        }
     }
 }

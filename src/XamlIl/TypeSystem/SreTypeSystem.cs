@@ -156,7 +156,18 @@ namespace XamlIl.TypeSystem
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Select(c => new SreConstructor(System, c)).ToList());
 
-            public bool IsAssignableFrom(IXamlIlType type) => Type.IsAssignableFrom(((SreType) type).Type);
+            public bool IsAssignableFrom(IXamlIlType type)
+            {
+                if (type == XamlIlNullType.Instance)
+                {
+                    if (!Type.IsValueType)
+                        return true;
+                    if (Type.IsConstructedGenericType && Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                        return true;
+                    return false;
+                }
+                return Type.IsAssignableFrom(((SreType) type).Type);
+            }
 
             public IXamlIlType MakeGenericType(IReadOnlyList<IXamlIlType> typeArguments)
             {

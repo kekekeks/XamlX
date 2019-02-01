@@ -21,7 +21,8 @@ namespace XamlIl.Transform
             {
                 Transformers = new List<IXamlIlAstTransformer>
                 {
-                    new XamlIlKnownContentDirectivesTransformer(),
+                    new XamlIlKnownDirectivesTransformer(),
+                    new XamlIlIntrinsicsTransformer(),
                     new XamlIlXArgumentsTransformer(),
                     new XamlIlTypeReferenceResolver(),
                     new XamlIlPropertyReferenceResolver(),
@@ -40,21 +41,20 @@ namespace XamlIl.Transform
             }
         }
 
-        public XamlIlAstRootInstanceNode Transform(XamlIlAstRootInstanceNode root,  bool strict = true)
+        public IXamlIlAstNode Transform(IXamlIlAstNode root,
+            Dictionary<string, string> namespaceAliases, bool strict = true)
         {
-            var ctx = new XamlIlAstTransformationContext(_configuration, strict);
+            var ctx = new XamlIlAstTransformationContext(_configuration, namespaceAliases, strict);
 
             foreach (var transformer in Transformers)
             {
-                root = (XamlIlAstRootInstanceNode) root.Visit(n => transformer.Transform(ctx, n));
+                root = root.Visit(n => transformer.Transform(ctx, n));
             }
 
             return root;
         }
 
-
-
-        public void Compile(XamlIlAstRootInstanceNode root, IXamlIlCodeGen codeGen)
+        public void Compile(IXamlIlAstNode root, IXamlIlCodeGen codeGen)
         {
             new XamlIlEmitContext(_configuration, Emitters).Emit(root, codeGen);
             codeGen.Generator.Emit(OpCodes.Ret);
@@ -70,9 +70,24 @@ namespace XamlIl.Transform
         public XamlIlTransformerConfiguration Configuration { get; }
         public bool StrictMode { get; }
 
-        public XamlIlAstTransformationContext(XamlIlTransformerConfiguration configuration, bool strictMode = true)
+        public IXamlIlAstNode Error(IXamlIlAstNode node, Exception e)
+        {
+            if (StrictMode)
+                throw e;
+            return node;
+        }
+
+        public IXamlIlAstNode ParseError(string message, IXamlIlAstNode node) =>
+            Error(node, new XamlIlParseException(message, node));
+        
+        public IXamlIlAstNode ParseError(string message, IXamlIlAstNode offender, IXamlIlAstNode ret) =>
+            Error(ret, new XamlIlParseException(message, offender));
+
+        public XamlIlAstTransformationContext(XamlIlTransformerConfiguration configuration,
+            Dictionary<string, string> namespaceAliases, bool strictMode = true)
         {
             Configuration = configuration;
+            NamespaceAliases = namespaceAliases;
             StrictMode = strictMode;
         }
 
@@ -98,7 +113,11 @@ namespace XamlIl.Transform
                 if(e is IXamlIlAstNodeEmitter ve 
                 && ve.Emit(value, this, codeGen))
                     return;
-            throw new XamlIlLoadException("Unable to find emitter for node type: " + value.GetType().FullName, value);
+            if (value is IXamlIlAstEmitableNode en)
+                en.Emit(this, codeGen);
+            else
+                throw new XamlIlLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
+                    value);
         }
     }
 
@@ -110,6 +129,11 @@ namespace XamlIl.Transform
     public interface IXamlIlAstNodeEmitter
     {
         bool Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen);
+    }
+
+    public interface IXamlIlAstEmitableNode
+    {
+        void Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen);
     }
     
 }

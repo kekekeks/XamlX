@@ -90,16 +90,6 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlAstRootInstanceNode : XamlIlAstNewInstanceNode
-    {
-        public Dictionary<string, string> XmlNamespaces { get; set; } = new Dictionary<string, string>();
-
-        public XamlIlAstRootInstanceNode(IXamlIlLineInfo lineInfo, IXamlIlAstTypeReference type)
-            : base(lineInfo, type)
-        {
-        }
-    }
-
     public class XamlIlAstTextNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public string Text { get; set; }
