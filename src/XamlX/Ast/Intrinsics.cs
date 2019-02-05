@@ -133,4 +133,34 @@ namespace XamlX.Ast
         
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveReturnType());
     }
+
+    public class XamlConstantNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    {
+        public object Constant { get; }
+
+        public XamlConstantNode(IXamlLineInfo lineInfo, IXamlType type, object constant) : base(lineInfo)
+        {
+            if (!constant.GetType().IsPrimitive)
+                throw new ArgumentException($"Don't know how to emit {constant.GetType()} constant");
+            Constant = constant;
+            Type = new XamlAstClrTypeReference(lineInfo, type);
+
+        }
+
+        public IXamlAstTypeReference Type { get; }
+        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlXCodeGen codeGen)
+        {
+            if (Constant is string)
+                codeGen.Generator.Emit(OpCodes.Ldstr, (string) Constant);
+            else if (Constant is long || Constant is ulong)
+                codeGen.Generator.Emit(OpCodes.Ldc_I8, TypeSystemHelpers.ConvertLiteralToLong(Constant));
+            else if (Constant is float f)
+                codeGen.Generator.Emit(OpCodes.Ldc_R4, f);
+            else if (Constant is double d)
+                codeGen.Generator.Emit(OpCodes.Ldc_R8, d);
+            else
+                codeGen.Generator.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
+            return XamlNodeEmitResult.Type(Type.GetClrType());
+        }
+    }
 }
