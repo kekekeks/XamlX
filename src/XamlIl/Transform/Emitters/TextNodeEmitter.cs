@@ -6,14 +6,14 @@ namespace XamlIl.Transform.Emitters
 {
     public class TextNodeEmitter : IXamlIlAstNodeEmitter
     {
-        public bool Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen)
         {
             if (!(node is XamlIlAstTextNode text))
-                return false;
+                return null;
             if (!text.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String))
                 throw new XamlIlLoadException("Text node type wasn't resolved to well-known System.String", node);
             codeGen.Generator.Emit(OpCodes.Ldstr, text.Text);
-            return true;
+            return XamlIlNodeEmitResult.Type(text.Type.GetClrType());
         }
     }
 }

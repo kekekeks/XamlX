@@ -10,14 +10,27 @@ namespace XamlParserTests
         public object ObjectProperty { get; set; }
         public int IntProperty { get; set; }
         public Type TypeProperty { get; set; }
+
+        public static object StaticProp { get; } = "StaticPropValue";
+        public static object StaticField = "StaticFieldValue";
+        public const string StringConstant = "ConstantValue";
+        public const int IntConstant = 100;
+        public const float FloatConstant = 2;
+        public const double DoubleConstant = 3;
+        
     }
-    
+
+    public enum IntrinsicsTestsEnum : long
+    {
+        Foo = 100500
+    }
+
     public class IntrinsicsTests : CompilerTestBase
     {
         [Fact]
         public void Null_Extension_Should_Be_Operational()
         {
-            var res = (IntrinsicsTestsClass)CompileAndRun(@"
+            var res = (IntrinsicsTestsClass) CompileAndRun(@"
 <IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <IntrinsicsTestsClass.ObjectProperty><x:Null/></IntrinsicsTestsClass.ObjectProperty>
 </IntrinsicsTestsClass>");
@@ -39,7 +52,7 @@ namespace XamlParserTests
         ]
         public void Type_Extension_Resolves_Types(Type expectedType, string typeExt)
         {
-            var res = (IntrinsicsTestsClass)CompileAndRun($@"
+            var res = (IntrinsicsTestsClass) CompileAndRun($@"
 <IntrinsicsTestsClass 
     xmlns='test' 
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
@@ -48,6 +61,33 @@ namespace XamlParserTests
     <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
 </IntrinsicsTestsClass>");
             Assert.Equal(expectedType, res.TypeProperty);
+        }
+
+        [Theory,
+         InlineData("StaticPropValue", "IntrinsicsTestsClass.StaticProp"),
+         InlineData("StaticFieldValue", "IntrinsicsTestsClass.StaticField"),
+         InlineData("ConstantValue", "IntrinsicsTestsClass.StringConstant"),
+         InlineData(100, "IntrinsicsTestsClass.IntConstant"),
+         InlineData(2f, "IntrinsicsTestsClass.FloatConstant"),
+         InlineData(3d, "IntrinsicsTestsClass.DoubleConstant"),
+        ]
+        public void Static_Extension_Resolves_Values(object expected, string r)
+        {
+            var res = (IntrinsicsTestsClass) CompileAndRun($@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:scg='clr-namespace:System.Collections.Generic'
+>
+    <IntrinsicsTestsClass.ObjectProperty><x:Static Member='{r}'/></IntrinsicsTestsClass.ObjectProperty>
+</IntrinsicsTestsClass>");
+            Assert.Equal(expected, res.ObjectProperty);
+        }
+
+        [Fact]
+        public void Static_Extension_Resolves_Enum_Values()
+        {
+            Static_Extension_Resolves_Values(IntrinsicsTestsEnum.Foo, "IntrinsicsTestsEnum.Foo");
         }
     }
 }
