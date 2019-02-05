@@ -143,6 +143,15 @@ namespace XamlIl.Transform
                                                      && m.Parameters.Count > 0
                                                      && m.Parameters[0].Equals(WellKnownTypes.String)).ToList();
 
+            // Well known types
+            if (node is XamlIlAstTextNode tn &&
+                TypeSystemHelpers.ParseConstantIfTypeAllows(tn.Text, type, tn, out var constantNode))
+            {
+                rv = constantNode;
+                return true;
+            }
+            
+            // Types with parse method
             var parser = candidates.FirstOrDefault(m =>
                              m.Parameters.Count == 2 &&
                              (
