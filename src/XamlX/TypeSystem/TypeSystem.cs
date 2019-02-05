@@ -13,23 +13,31 @@ namespace XamlX.TypeSystem
         string Namespace { get; }
         IXamlXAssembly Assembly { get; }
         IReadOnlyList<IXamlXProperty> Properties { get; }
+        IReadOnlyList<IXamlXField> Fields { get; }
         IReadOnlyList<IXamlXMethod> Methods { get; }
         IReadOnlyList<IXamlXConstructor> Constructors { get; }
         IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; }
         bool IsAssignableFrom(IXamlXType type);
         IXamlXType MakeGenericType(IReadOnlyList<IXamlXType> typeArguments);
         IXamlXType BaseType { get; }
+        bool IsValueType { get; }
+        bool IsEnum { get; }
+        IXamlXType GetEnumUnderlyingType();
     }
 
-    public interface IXamlXMethod : IEquatable<IXamlXMethod>
+    public interface IXamlXMethod : IEquatable<IXamlXMethod>, IXamlXMember
     {
-        string Name { get; }
         bool IsPublic { get; }
         bool IsStatic { get; }
         IXamlXType ReturnType { get; }
         IReadOnlyList<IXamlXType> Parameters { get; }
     }
 
+    public interface IXamlXMember
+    {
+        string Name { get; }
+    }
+    
     public interface IXamlXConstructor : IEquatable<IXamlXConstructor>
     {
         bool IsPublic { get; }
@@ -37,13 +45,21 @@ namespace XamlX.TypeSystem
         IReadOnlyList<IXamlXType> Parameters { get; }
     }
     
-    public interface IXamlXProperty : IEquatable<IXamlXProperty>
+    public interface IXamlXProperty : IEquatable<IXamlXProperty>, IXamlXMember
     {
-        string Name { get; }
         IXamlXType PropertyType { get; }
         IXamlXMethod Setter { get; }
         IXamlXMethod Getter { get; }
         IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; }
+    }
+
+    public interface IXamlXField : IEquatable<IXamlXField>, IXamlXMember
+    {
+        IXamlXType FieldType { get; }
+        bool IsPublic { get; }
+        bool IsStatic { get; }
+        bool IsLiteral { get; }
+        object GetLiteralValue();
     }
 
     public interface IXamlXAssembly : IEquatable<IXamlXAssembly>
@@ -71,10 +87,15 @@ namespace XamlX.TypeSystem
     public interface IXamlXEmitter
     {
         IXamlXEmitter Emit(OpCode code);
+        IXamlXEmitter Emit(OpCode code, IXamlXField field);
         IXamlXEmitter Emit(OpCode code, IXamlXMethod method);
         IXamlXEmitter Emit(OpCode code, IXamlXConstructor ctor);
         IXamlXEmitter Emit(OpCode code, string arg);
+        IXamlXEmitter Emit(OpCode code, int arg);
+        IXamlXEmitter Emit(OpCode code, long arg);
         IXamlXEmitter Emit(OpCode code, IXamlXType type);
+        IXamlXEmitter Emit(OpCode ldcR8, float arg);
+        IXamlXEmitter Emit(OpCode ldcR8, double arg);
     }
 
     public interface IXamlXClosure : IXamlXCodeGen
@@ -88,31 +109,36 @@ namespace XamlX.TypeSystem
         void EmitClosure(IEnumerable<IXamlXType> fields);
     }
 
-    public class XamlXNullType : IXamlXType
+    public class XamlXPseudoType : IXamlXType
     {
+        public XamlXPseudoType(string name)
+        {
+            Name = name;
+        }
         public bool Equals(IXamlXType other) => other == this;
 
         public object Id { get; } = Guid.NewGuid();
-        public string Name { get; } = "{x:Null}";
+        public string Name { get; }
         public string Namespace { get; } = "";
         public IXamlXAssembly Assembly { get; } = null;
         public IReadOnlyList<IXamlXProperty> Properties { get; } = new IXamlXProperty[0];
+        public IReadOnlyList<IXamlXField> Fields { get; } = new List<IXamlXField>();
         public IReadOnlyList<IXamlXMethod> Methods { get; } = new IXamlXMethod[0];
         public IReadOnlyList<IXamlXConstructor> Constructors { get; } = new IXamlXConstructor[0];
         public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; } = new IXamlXCustomAttribute[0];
         public IXamlXType BaseType { get; }
+        public bool IsValueType { get; } = false;
+        public bool IsEnum { get; } = false;
+        public IXamlXType GetEnumUnderlyingType() => throw new InvalidOperationException();
+
         public bool IsAssignableFrom(IXamlXType type) => type == this;
 
         public IXamlXType MakeGenericType(IReadOnlyList<IXamlXType> typeArguments)
         {
             throw new NotSupportedException();
         }
-
-        XamlXNullType()
-        {
-            
-        }
-        public static XamlXNullType Instance { get; } = new XamlXNullType();
+        public static XamlXPseudoType Null { get; } = new XamlXPseudoType("{x:Null}");
+        public static XamlXPseudoType Unknown { get; } = new XamlXPseudoType("{Unknown type}");
     }
     
     public static class XamlXTypeSystemExtensions

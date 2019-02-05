@@ -7,10 +7,10 @@ namespace XamlX.Transform.Emitters
 {
     public class NewObjectEmitter : IXamlXAstNodeEmitter
     {
-        public bool Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
         {
             if (!(node is XamlXAstNewInstanceNode n))
-                return false;
+                return null;
             var type = n.Type.GetClrType();
 
             var argTypes = n.Arguments.Select(a => a.Type.GetClrType()).ToList();
@@ -20,9 +20,12 @@ namespace XamlX.Transform.Emitters
                     $"Unable to find public constructor for type {type.GetFqn()}({string.Join(", ", argTypes.Select(at => at.GetFqn()))})",
                     n);
 
-            foreach (var ctorArg in n.Arguments)
-                context.Emit(ctorArg, codeGen);
-            
+            for (var c = 0; c < n.Arguments.Count; c++)
+            {
+                var ctorArg = n.Arguments[c];
+                context.Emit(ctorArg, codeGen, ctor.Parameters[c]);
+            }
+
             var gen = codeGen.Generator
                 .Emit(OpCodes.Newobj, ctor);
             
@@ -32,12 +35,13 @@ namespace XamlX.Transform.Emitters
                 if (ch is IXamlXAstManipulationNode mnode)
                 {
                     gen.Emit(OpCodes.Dup);
-                    context.Emit(mnode, codeGen);
+                    context.Emit(mnode, codeGen, null);
                 }
                 else
                     throw new XamlXLoadException($"Unable to emit node {ch}", ch);
             }
-            return true;
+
+            return XamlXNodeEmitResult.Type(type);
         }
     }
 }

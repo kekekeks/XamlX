@@ -56,7 +56,8 @@ namespace XamlX.Transform
 
         public void Compile(IXamlXAstNode root, IXamlXCodeGen codeGen)
         {
-            new XamlXEmitContext(_configuration, Emitters).Emit(root, codeGen);
+            new XamlXEmitContext(_configuration, Emitters).Emit(root, codeGen,
+                _configuration.TypeSystem.FindType("System.Object"));
             codeGen.Generator.Emit(OpCodes.Ret);
         }
     }
@@ -107,14 +108,51 @@ namespace XamlX.Transform
             Configuration = configuration;
         }
 
-        public void Emit(IXamlXAstNode value, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXCodeGen codeGen, IXamlXType expectedType)
         {
-            foreach(var e in _emitters)
-                if(e is IXamlXAstNodeEmitter ve 
-                && ve.Emit(value, this, codeGen))
-                    return;
+            var res = EmitCore(value, codeGen);
+            var returnedType = res.ReturnType;
+
+            if (returnedType != null || expectedType != null)
+            {
+
+                if (returnedType != null && expectedType == null)
+                    throw new XamlXLoadException(
+                        $"Emit of node {value} resulted in {returnedType.GetFqn()} while caller expected void", value);
+
+                if (expectedType != null && returnedType == null)
+                    throw new XamlXLoadException(
+                        $"Emit of node {value} resulted in void while caller expected {expectedType.GetFqn()}", value);
+
+                if (!expectedType.IsAssignableFrom(returnedType))
+                {
+                    throw new XamlXLoadException(
+                        $"Emit of node {value} resulted in  {returnedType.GetFqn()} which is not convertible to expected {expectedType.GetFqn()}",
+                        value);
+                }
+
+                if (returnedType.IsValueType && !expectedType.IsValueType)
+                    codeGen.Generator.Emit(OpCodes.Box, returnedType);
+            }
+
+            return res;
+        }
+
+        private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXCodeGen codeGen)
+        {
+            XamlXNodeEmitResult res = null;
+            foreach (var e in _emitters)
+            {
+                if (e is IXamlXAstNodeEmitter ve)
+                {
+                    res = ve.Emit(value, this, codeGen);
+                    if (res != null)
+                        return res;
+                }
+            }
+
             if (value is IXamlXAstEmitableNode en)
-                en.Emit(this, codeGen);
+                return en.Emit(this, codeGen);
             else
                 throw new XamlXLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
                     value);
@@ -125,15 +163,27 @@ namespace XamlX.Transform
     {
         IXamlXAstNode Transform(XamlXAstTransformationContext context, IXamlXAstNode node);
     }
-   
+
+    public class XamlXNodeEmitResult
+    {
+        public IXamlXType ReturnType { get; set; }
+
+        public XamlXNodeEmitResult(IXamlXType returnType = null)
+        {
+            ReturnType = returnType;
+        }
+        public static XamlXNodeEmitResult Void { get; } = new XamlXNodeEmitResult();
+        public static XamlXNodeEmitResult Type(IXamlXType type) => new XamlXNodeEmitResult(type);
+    }
+    
     public interface IXamlXAstNodeEmitter
     {
-        bool Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen);
+        XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen);
     }
 
     public interface IXamlXAstEmitableNode
     {
-        void Emit(XamlXEmitContext context, IXamlXCodeGen codeGen);
+        XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen);
     }
     
 }

@@ -104,13 +104,13 @@ namespace XamlX.Transform
                 yield return a;
         }
 
-        public bool TryCallAdd(IXamlXType type, IXamlXAstValueNode value, out XamlXInstanceMethodCallNode rv)
+        public bool TryCallAdd(IXamlXType type, IXamlXAstValueNode value, out XamlXInstanceNoReturnMethodCallNode rv)
         {
             rv = null;
             var method = type.FindMethod("Add", WellKnownTypes.Void, true, value.Type.GetClrType());
             if (method != null)
             {
-                rv = new XamlXInstanceMethodCallNode(value, method, new[] {value});
+                rv = new XamlXInstanceNoReturnMethodCallNode(value, method, new[] {value});
                 return true;
             }
             return false;

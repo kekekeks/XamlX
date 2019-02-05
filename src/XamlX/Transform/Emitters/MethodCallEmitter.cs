@@ -6,14 +6,22 @@ namespace XamlX.Transform.Emitters
 {
     public class MethodCallEmitter : IXamlXAstNodeEmitter
     {
-        public bool Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
         {
-            if (!(node is XamlXInstanceMethodCallNode mc))
-                return false;
-            foreach (var a in mc.Arguments)
-                context.Emit(a, codeGen);
+            if (!(node is XamlXInstanceMethodCallBaseNode mc))
+                return null;
+            for (var c = 0; c < mc.Arguments.Count; c++)
+                context.Emit(mc.Arguments[c], codeGen, mc.Method.Parameters[c]);
             codeGen.Generator.Emit(mc.Method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, mc.Method);
-            return true;
+
+            var isVoid = mc.Method.ReturnType.Equals(context.Configuration.WellKnownTypes.Void);
+            if (mc is XamlXInstanceNoReturnMethodCallNode && !isVoid)
+                codeGen.Generator.Emit(OpCodes.Pop);
+            if (mc is XamlXInstanceReturnMethodCallNode && isVoid)
+                throw new XamlXLoadException(
+                    $"XamlXInstanceReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);
+
+            return isVoid ? XamlXNodeEmitResult.Void : XamlXNodeEmitResult.Type(mc.Method.ReturnType);
         }
     }
 }
