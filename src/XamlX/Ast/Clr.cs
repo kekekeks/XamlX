@@ -63,11 +63,11 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXInstanceMethodCallNode : XamlAstNode, IXamlAstManipulationNode
+    public abstract class XamlXInstanceMethodCallBaseNode : XamlAstNode
     {
         public IXamlMethod Method { get; set; }
         public List<IXamlAstValueNode> Arguments { get; set; }
-        public XamlXInstanceMethodCallNode(IXamlLineInfo lineInfo, 
+        public XamlXInstanceMethodCallBaseNode(IXamlLineInfo lineInfo, 
             IXamlMethod method, IEnumerable<IXamlAstValueNode> args) 
             : base(lineInfo)
         {
@@ -80,6 +80,25 @@ namespace XamlX.Ast
             VisitList(Arguments, visitor);
         }
     }
+    
+    public class XamlXInstanceNoReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlAstManipulationNode
+    {
+        public XamlXInstanceNoReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method, IEnumerable<IXamlAstValueNode> args)
+            : base(lineInfo, method, args)
+        {
+        }
+    }
+    
+    public class XamlXInstanceReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlAstValueNode
+    {
+        public XamlXInstanceReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method, IEnumerable<IXamlAstValueNode> args)
+            : base(lineInfo, method, args)
+        {
+            Type = new XamlAstClrTypeReference(lineInfo, method.ReturnType);
+        }
+
+        public IXamlAstTypeReference Type { get; }
+    }
 
     public class XamlManipulationGroupNode : XamlAstNode, IXamlAstManipulationNode
     {
@@ -89,55 +108,5 @@ namespace XamlX.Ast
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor) => VisitList(Children, visitor);
-    }
-
-    public class XamlXNullDirectiveNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
-    {
-        public XamlXNullDirectiveNode(IXamlLineInfo lineInfo) : base(lineInfo)
-        {
-            Type = new XamlAstClrTypeReference(lineInfo, XamlXNullType.Instance);
-        }
-
-        public IXamlAstTypeReference Type { get; }
-        public void Emit(XamlEmitContext context, IXamlXCodeGen codeGen)
-        {
-            codeGen.Generator.Emit(OpCodes.Ldnull);
-        }
-    }
-
-    public class XamlXTypeDirectiveNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
-    {
-        private readonly IXamlType _systemType;
-
-        public XamlXTypeDirectiveNode(IXamlLineInfo lineInfo, IXamlAstTypeReference value,
-            IXamlType systemType) : base(lineInfo)
-        {
-            _systemType = systemType;
-            Type = new XamlAstClrTypeReference(this, systemType);
-            Value = value;
-        }
-
-        public IXamlAstTypeReference Type { get; }
-        public IXamlAstTypeReference Value { get; set; }
-
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
-        {
-            Value = visitor(Value) as IXamlAstTypeReference;
-        }
-
-        public void Emit(XamlEmitContext context, IXamlXCodeGen codeGen)
-        {
-            var type = Value.GetClrType();
-            var method = _systemType.Methods.FirstOrDefault(m =>
-                m.Name == "GetTypeFromHandle" && m.Parameters.Count == 1 &&
-                m.Parameters[0].Name == "RuntimeTypeHandle");
-
-            if (method == null)
-                throw new XamlTypeSystemException(
-                    $"Unable to find GetTypeFromHandle(RuntimeTypeHandle) on {_systemType.GetFqn()}");
-            codeGen.Generator
-                .Emit(OpCodes.Ldtoken, type)
-                .Emit(OpCodes.Call, method);
-        }
     }
 }

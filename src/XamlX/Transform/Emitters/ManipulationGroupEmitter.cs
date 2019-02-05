@@ -6,10 +6,10 @@ namespace XamlX.Transform.Emitters
 {
     public class ManipulationGroupEmitter : IXamlAstNodeEmitter
     {
-        public bool Emit(IXamlAstNode node, XamlEmitContext context, IXamlXCodeGen codeGen)
+        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlXCodeGen codeGen)
         {
             if (!(node is XamlManipulationGroupNode group))
-                return false;
+                return null;
             if (group.Children.Count == 0)
                 codeGen.Generator.Emit(OpCodes.Pop);
             else
@@ -18,11 +18,11 @@ namespace XamlX.Transform.Emitters
                 {
                     if (c != group.Children.Count - 1)
                         codeGen.Generator.Emit(OpCodes.Dup);
-                    context.Emit(group.Children[0], codeGen);
+                    context.Emit(group.Children[0], codeGen, null);
                 }
             }
 
-            return true;
+            return XamlNodeEmitResult.Void;
         }
     }
 }

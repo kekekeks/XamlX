@@ -14,8 +14,9 @@ This is work in progress, the current goal is to reach feature parity with Porta
 - Support for collections themselves (e. g. <List x:TypeArguments="sys:String"></List>
 - x:Arguments Directive
 - x:TypeArguments Directive
-- x:Null Markup Extension
-- x:Type Markup Extension
+- x:Null Markup Extension (intrinsic: `ldnull`)
+- x:Type Markup Extension (intrinsic: `ldtoken` + `Type.FromRuntimeHandle`)
+- x:Static Markup Extension (intrinsic: properties (`call get_PropName`), fields (`ldsfld`), constants/enums (`ldc_*`/`ldstr`)
 - xml:space Handling in XAML (automatically via XmlReader)
 
 ## Architecture
@@ -42,10 +43,19 @@ The flow looks like this:
 - x:Array Markup Extension
 - x:Key Directive 
 - x:Name Directive
-- x:Static Markup Extension
 - {} Escape Sequence / Markup Extension
 - Event handlers
 - xml:lang Handling in XAML
+
+- IProvideValueTarget
+- IRootObjectProvider
+- IDestinationTypeProvider (probably don't need it)
+- IUriContext
+
+These are questinable fo
+- IXamlTypeResolver
+- IXamlNameResolver
+- IXamlNamespaceResolver
 
 
 These directives are framework-specific and can be implemented via custom transformers/emitters
@@ -59,6 +69,14 @@ These directives are framework-specific and can be implemented via custom transf
 - x:FieldModifier Directive *fwspec*
 - x:Member Directive *fwspec*
 - x:Members Directive *fwspec*
+
+
+### Won't fix:
+
+
+- IXamlSchemaContextProvider: we don't have a schema context at run time
+- IAmbientProvider - we don't have "xaml type system" at run time, only plain CLR types
+
 
 Future: 
 x:Code Intrinsic XAML Type (probably use Roslyn to inline C# code)

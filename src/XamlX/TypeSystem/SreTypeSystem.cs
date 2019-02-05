@@ -122,6 +122,7 @@ namespace XamlX.TypeSystem
         class SreType : SreMemberInfo, IXamlType
         {
             private IReadOnlyList<IXamlProperty> _properties;
+            private IReadOnlyList<IXamlField> _fields;
             private IReadOnlyList<IXamlMethod> _methods;
             private IReadOnlyList<IXamlConstructor> _constructors;
             public Type Type { get; }
@@ -131,8 +132,8 @@ namespace XamlX.TypeSystem
                 Assembly = asm;
                 Type = type;
             }
-                       
-            public bool Equals(IXamlType other) => Type == ((SreType) other)?.Type;
+
+            public bool Equals(IXamlType other) => Type == (other as SreType)?.Type;
 
             public object Id => Type;
             
@@ -144,6 +145,12 @@ namespace XamlX.TypeSystem
                     .GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance |
                                    BindingFlags.NonPublic)
                     .Select(p => new SreProperty(System, p)).ToList());
+
+            public IReadOnlyList<IXamlField> Fields =>
+                _fields ?? (_fields = Type.GetFields(BindingFlags.Public | BindingFlags.Static
+                                                                         | BindingFlags.Instance |
+                                                                         BindingFlags.NonPublic)
+                    .Select(f => new SreField(System, f)).ToList());
 
             public IReadOnlyList<IXamlMethod> Methods =>
                 _methods ?? (_methods = Type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic |
@@ -158,7 +165,7 @@ namespace XamlX.TypeSystem
 
             public bool IsAssignableFrom(IXamlType type)
             {
-                if (type == XamlXNullType.Instance)
+                if (type == XamlPseudoType.Null)
                 {
                     if (!Type.IsValueType)
                         return true;
@@ -176,6 +183,12 @@ namespace XamlX.TypeSystem
             }
 
             public IXamlType BaseType => Type.BaseType == null ? null : System.ResolveType(Type.BaseType);
+            public bool IsValueType => Type.IsValueType;
+            public bool IsEnum => Type.IsEnum;
+            public IXamlType GetEnumUnderlyingType()
+            {
+                return System.ResolveType(Enum.GetUnderlyingType(Type));
+            }
         }
 
         class SreCustomAttribute : IXamlCustomAttribute
@@ -263,6 +276,31 @@ namespace XamlX.TypeSystem
             public IXamlMethod Setter { get; }
             public IXamlMethod Getter { get; }
         }
+        
+        class SreField : SreMemberInfo, IXamlField
+        {
+            public FieldInfo Field { get; }
+
+            private IReadOnlyList<IXamlType> _parameters;
+            public SreField(SreTypeSystem system, FieldInfo field) : base(system, field)
+            {
+                Field = field;
+                FieldType = system.ResolveType(field.FieldType);
+            }
+
+            public IXamlType FieldType { get; }
+            public bool IsPublic => Field.IsPublic;
+            public bool IsStatic => Field.IsStatic;
+            public bool IsLiteral => Field.IsLiteral;
+            public object GetLiteralValue()
+            {
+                if (!IsLiteral)
+                    throw new InvalidOperationException();
+                return Field.GetValue(null);
+            }
+
+            public bool Equals(IXamlField other) => ((SreField) other)?.Field.Equals(Field) == true;
+        }
 
         public IXamlXCodeGen CreateCodeGen(MethodBuilder mb)
         {
@@ -302,9 +340,40 @@ namespace XamlX.TypeSystem
                 return this;
             }
 
+            public IXamlILEmitter Emit(OpCode code, int arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+
+            public IXamlILEmitter Emit(OpCode code, long arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, float arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, double arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+
             public IXamlILEmitter Emit(OpCode code, IXamlType type)
             {
                 _ilg.Emit(code, ((SreType) type).Type);
+                return this;
+            }
+            
+            
+            public IXamlILEmitter Emit(OpCode code, IXamlField field)
+            {
+                _ilg.Emit(code, ((SreField) field).Field);
                 return this;
             }
         }
