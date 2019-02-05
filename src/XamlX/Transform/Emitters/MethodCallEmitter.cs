@@ -17,9 +17,9 @@ namespace XamlX.Transform.Emitters
             var isVoid = mc.Method.ReturnType.Equals(context.Configuration.WellKnownTypes.Void);
             if (mc is XamlXInstanceNoReturnMethodCallNode && !isVoid)
                 codeGen.Generator.Emit(OpCodes.Pop);
-            if (mc is XamlXInstanceReturnMethodCallNode && isVoid)
+            if (mc is XamlXStaticReturnMethodCallNode && isVoid)
                 throw new XamlLoadException(
-                    $"XamlXInstanceReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);
+                    $"XamlXStaticReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);
 
             return isVoid ? XamlNodeEmitResult.Void : XamlNodeEmitResult.Type(mc.Method.ReturnType);
         }
