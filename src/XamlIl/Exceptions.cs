@@ -5,7 +5,7 @@ namespace XamlIl
 {
     public class XamlIlParseException : Exception
     {
-        public XamlIlParseException(string message, int line, int position) : base($"{line}:{position}: {message}")
+        public XamlIlParseException(string message, int line, int position) : base($"{message} (line {line} position {position})")
         {
             
         }

@@ -10,6 +10,7 @@ This is work in progress, the current goal is to reach feature parity with Porta
 ## Implemented features
 
 - Direct convertion of XML to objects (instantiation, setting properties, setting attached properties)
+- Implicit type converting for types with `static T Parse(string, [IFormatProvider])` method (e. g. `int`, `double`, `TimeSpan`, etc)
 - Support for [Content] attribute both for direct content and for collections
 - Support for collections themselves (e. g. <List x:TypeArguments="sys:String"></List>
 - x:Arguments Directive

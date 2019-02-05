@@ -37,7 +37,7 @@ namespace XamlParserTests
         {
             
         }
-
+        static object s_asmLock = new object();
         protected object CompileAndRun(string xaml) => Compile(xaml)();
         protected Func<object> Compile(string xaml)
         {
@@ -66,7 +66,8 @@ namespace XamlParserTests
             #if !NETCOREAPP
             dm.CreateGlobalFunctions();
             // Useful for debugging the actual MSIL, don't remove
-            //da.Save( "testasm.dll");
+            lock (s_asmLock)
+                da.Save("testasm.dll");
             #endif
             var cb = (Func<object>) Delegate.CreateDelegate(typeof(Func<object>),
                 created.GetMethod("Build", BindingFlags.Static | BindingFlags.Public));

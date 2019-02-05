@@ -20,25 +20,30 @@ namespace XamlIl.Transform
         /// <param name="extra"></param>
         /// <typeparam name="T"></typeparam>
         public void AddExtra<T>(T extra) => _extras[typeof(T)] = extra;
+
+        public delegate bool XamlIlValueConverter(IXamlIlAstValueNode node, IXamlIlType type, out IXamlIlAstValueNode result);
         
         public IXamlIlTypeSystem TypeSystem { get; }
         public IXamlIlAssembly DefaultAssembly { get; }
         public XamlIlLanguageTypeMappings TypeMappings { get; }
         public XamlIlXmlnsMappings XmlnsMappings { get; }
         public XamlIlTypeWellKnownTypes WellKnownTypes { get; }
+        public XamlIlValueConverter CustomValueConverter { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
             (XamlNamespaces.Xaml2006, "Arguments")
         };
 
         public XamlIlTransformerConfiguration(IXamlIlTypeSystem typeSystem, IXamlIlAssembly defaultAssembly,
-            XamlIlLanguageTypeMappings typeMappings, XamlIlXmlnsMappings xmlnsMappings = null)
+            XamlIlLanguageTypeMappings typeMappings, XamlIlXmlnsMappings xmlnsMappings = null,
+            XamlIlValueConverter customValueConverter = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
             TypeMappings = typeMappings;
             XmlnsMappings = xmlnsMappings ?? XamlIlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlIlTypeWellKnownTypes(typeSystem);
+            CustomValueConverter = customValueConverter;
         }
 
         IDictionary<object, IXamlIlProperty> _contentPropertyCache = new Dictionary<object, IXamlIlProperty>();
@@ -124,7 +129,44 @@ namespace XamlIl.Transform
                 rv = node;
                 return true;
             }
-            //TODO: Converters
+
+            if (CustomValueConverter?.Invoke(node, type, out rv) == true)
+                return true;
+
+            var nodeType = node.Type.GetClrType();
+            // Implicit type converters
+            if (!nodeType.Equals(WellKnownTypes.String))
+                return false;
+
+            var candidates = type.Methods.Where(m => m.Name == "Parse"
+                                                     && m.ReturnType.Equals(type)
+                                                     && m.Parameters.Count > 0
+                                                     && m.Parameters[0].Equals(WellKnownTypes.String)).ToList();
+
+            var parser = candidates.FirstOrDefault(m =>
+                             m.Parameters.Count == 2 &&
+                             (
+                                 m.Parameters[1].Equals(WellKnownTypes.CultureInfo)
+                                 || m.Parameters[1].Equals(WellKnownTypes.IFormatProvider)
+                             )
+                         )
+                         ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1);
+            if (parser != null)
+            {
+                var args = new List<IXamlIlAstValueNode> {node};
+                if (parser.Parameters.Count == 2)
+                {
+                    args.Add(
+                        new XamlIlStaticReturnMethodCallNode(node,
+                            WellKnownTypes.CultureInfo.Methods.First(x =>
+                                x.IsPublic && x.IsStatic && x.Name == "get_InvariantCulture"), null));
+                }
+
+                rv = new XamlIlStaticReturnMethodCallNode(node, parser, args);
+                return true;
+            }
+            
+            //TODO: TypeConverter's
             return false;
         }
     }
@@ -136,12 +178,16 @@ namespace XamlIl.Transform
         public IXamlIlType Object { get;  }
         public IXamlIlType String { get;  }
         public IXamlIlType Void { get;  }
+        public IXamlIlType CultureInfo { get;  }
+        public IXamlIlType IFormatProvider { get;  }
 
         public XamlIlTypeWellKnownTypes(IXamlIlTypeSystem typeSystem)
         {
             Void = typeSystem.FindType("System.Void");
             String = typeSystem.FindType("System.String");
             Object = typeSystem.FindType("System.Object");
+            CultureInfo = typeSystem.FindType("System.Globalization.CultureInfo");
+            IFormatProvider = typeSystem.FindType("System.IFormatProvider");
             IList = typeSystem.FindType("System.Collections.IList");
             IListOfT = typeSystem.FindType("System.Collections.Generic.IList`1");
         }
