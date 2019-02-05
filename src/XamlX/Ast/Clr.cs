@@ -72,7 +72,7 @@ namespace XamlX.Ast
             : base(lineInfo)
         {
             Method = method;
-            Arguments = args.ToList();
+            Arguments = args?.ToList() ?? new List<IXamlXAstValueNode>();
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
@@ -89,9 +89,9 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXInstanceReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlXAstValueNode
+    public class XamlXStaticReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlXAstValueNode
     {
-        public XamlXInstanceReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
+        public XamlXStaticReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
             : base(lineInfo, method, args)
         {
             Type = new XamlXAstClrTypeReference(lineInfo, method.ReturnType);

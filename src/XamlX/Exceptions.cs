@@ -5,7 +5,7 @@ namespace XamlX
 {
     public class XamlXParseException : Exception
     {
-        public XamlXParseException(string message, int line, int position) : base($"{line}:{position}: {message}")
+        public XamlXParseException(string message, int line, int position) : base($"{message} (line {line} position {position})")
         {
             
         }
