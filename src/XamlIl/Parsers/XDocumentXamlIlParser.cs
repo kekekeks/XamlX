@@ -17,11 +17,21 @@ namespace XamlIl.Parsers
     public class XDocumentXamlIlParser
     {
 
-        public static XamlIlDocument Parse(string s) => Parse(new StringReader(s));
-
-        public static XamlIlDocument Parse(TextReader reader)
+        public static XamlIlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
         {
-            var root = XDocument.Load(reader, LoadOptions.SetLineInfo).Root;
+            return Parse(new StringReader(s), compatibilityMappings);
+        }
+
+        public static XamlIlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null)
+        {
+            var xr = XmlReader.Create(reader, new XmlReaderSettings
+            {
+                IgnoreWhitespace = true,
+                DtdProcessing = DtdProcessing.Ignore
+            });
+            xr = new CompatibleXmlReader(xr, compatibilityMappings ?? new Dictionary<string, string>());
+            
+            var root = XDocument.Load(xr, LoadOptions.SetLineInfo).Root;
 
             var doc = new XamlIlDocument
             {

@@ -29,7 +29,7 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - x:Type Markup Extension (intrinsic: `ldtoken` + `Type.FromRuntimeHandle`)
 - x:Static Markup Extension (intrinsic: properties (`call get_PropName`), fields (`ldsfld`), constants/enums (`ldc_*`/`ldstr`)
 - IRootObjectProvider
-
+- Support for mc:Ignorable
 - xml:space Handling in XAML (automatically via XmlReader)
 
 ## Architecture
@@ -45,7 +45,6 @@ The flow looks like this:
 - Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
 - Support for intercepting property setters and BeginInit/EndInit (needed for bindings to work)
-- Support for mc:Ignorable
 - IsUsableDuringInitialization (assign first, set properties/contents later)
 - ISupportInitialize
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
