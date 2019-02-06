@@ -16,4 +16,9 @@ namespace XamlParserTests
             
         }
     }
+    
+    public interface ITestRootObjectProvider
+    {
+        object RootObject { get; }
+    }
 }

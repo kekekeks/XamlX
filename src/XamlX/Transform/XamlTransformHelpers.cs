@@ -21,6 +21,12 @@ namespace XamlX.Transform
                     out var value))
                 setNode(0,
                     new XamlPropertyAssignmentNode(getNode(0), contentProperty, value));
+            // Markup extension ?
+            else if (contentProperty.Setter?.IsPublic == true
+                && count == 1
+                && TryConvertMarkupExtension(context, getNode(0),
+                    contentProperty, out var me))
+                setNode(0, me);
             // Collection property?
             else if (contentProperty.Getter?.IsPublic == true)
             {
@@ -55,6 +61,30 @@ namespace XamlX.Transform
                 i => (IXamlAstValueNode) tmp[i],
                 (i, v) => tmp[i] = v);
             return tmp.Cast<IXamlAstManipulationNode>().ToList();
+        }
+        
+        public static bool TryConvertMarkupExtension(XamlAstTransformationContext context,
+            IXamlAstValueNode node, IXamlProperty prop, out IXamlAstManipulationNode o)
+        {
+            o = null;
+            var nodeType = node.Type.GetClrType();
+            var candidates = nodeType.Methods.Where(m => m.Name == "ProvideValue" && m.IsPublic && !m.IsStatic)
+                .ToList();
+            var so = context.Configuration.WellKnownTypes.Object;
+            var sp = context.Configuration.TypeMappings.ServiceProvider;
+
+            // Try non-object variant first and variants without IServiceProvider argument first
+            
+            var provideValue = candidates.FirstOrDefault(m => m.Parameters.Count == 0 && !m.ReturnType.Equals(so))
+                               ?? candidates.FirstOrDefault(m => m.Parameters.Count == 0)
+                               ?? candidates.FirstOrDefault(m =>
+                                   m.Parameters.Count == 1 && m.Parameters[0].Equals(sp) && !m.ReturnType.Equals(so))
+                               ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1 && m.Parameters[0].Equals(sp));
+
+            if (provideValue == null)
+                return false;
+            o = new XamlMarkupExtensionNode(node, prop, provideValue, node);
+            return true;
         }
     }
 }

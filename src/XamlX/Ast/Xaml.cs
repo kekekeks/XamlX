@@ -25,26 +25,6 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXAstMarkupExtensionNode : XamlAstNode, IXamlAstValueNode
-    {
-        public IXamlAstTypeReference Type { get; set; }
-        public List<IXamlAstNode> ConstructorArguments { get; set; } = new List<IXamlAstNode>();
-
-        public List<XamlAstXamlPropertyValueNode> Properties { get; set; } =
-            new List<XamlAstXamlPropertyValueNode>();
-
-        public override void VisitChildren(Visitor visitor)
-        {
-            Type = (IXamlAstTypeReference) Type.Visit(visitor);
-
-        }
-
-        public XamlXAstMarkupExtensionNode(IXamlLineInfo lineInfo) : base(lineInfo)
-        {
-        }
-    }
-
-
     public class XamlAstXamlPropertyValueNode : XamlAstNode, IXamlAstManipulationNode
     {
         public IXamlAstPropertyReference Property { get; set; }
@@ -71,9 +51,9 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXAstNewInstanceNode : XamlAstNode, IXamlAstValueNode
+    public class XamlAstObjectNode : XamlAstNode, IXamlAstValueNode
     {
-        public XamlXAstNewInstanceNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
+        public XamlAstObjectNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
         {
             Type = type;
         }
@@ -89,6 +69,8 @@ namespace XamlX.Ast
             VisitList(Children, visitor);
         }
     }
+    
+    
 
     public class XamlAstTextNode : XamlAstNode, IXamlAstValueNode
     {

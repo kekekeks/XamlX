@@ -54,27 +54,38 @@ namespace XamlX.Parsers
                 new XamlAstXmlTypeReference(el.AsLi(), el.Name.NamespaceName, el.Name.LocalName);
 
 
+            static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, XElement xel)
+                => ParseTypeName(info, typeName,
+                    ns => string.IsNullOrWhiteSpace(ns)
+                        ? xel.GetDefaultNamespace().NamespaceName
+                        : xel.GetNamespaceOfPrefix(ns)?.NamespaceName ?? "");
+            
+            static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, Func<string, string> prefixResolver)
+            {
+                var pair = typeName.Trim().Split(new[] {':'}, 2);
+                string xmlns, name;
+                if (pair.Length == 1)
+                {
+                    xmlns = prefixResolver("");
+                    name = pair[0];
+                }
+                else
+                {
+                    xmlns = prefixResolver(pair[0]);
+                    if (xmlns == null)
+                        throw new XamlParseException($"Namespace '{pair[0]}' is not recognized", info);
+                    name = pair[1];
+                }
+                return new XamlAstXmlTypeReference(info, xmlns, name);
+            }
+
             static List<XamlAstXmlTypeReference> ParseTypeArguments(string args, XElement xel, IXamlLineInfo info)
             {
                 try
                 {
                     XamlAstXmlTypeReference Parse(CommaSeparatedParenthesesTreeParser.Node node)
                     {
-                        var pair = node.Value.Trim().Split(new[] {':'}, 2);
-                        string xmlns, name;
-                        if (pair.Length == 1)
-                        {
-                            xmlns = xel.GetDefaultNamespace().NamespaceName;
-                            name = pair[0];
-                        }
-                        else
-                        {
-                            xmlns = xel.GetNamespaceOfPrefix(pair[0])?.NamespaceName;
-                            if (xmlns == null)
-                                throw new XamlParseException($"Namespace '{pair[0]}' is not recognized", info);
-                            name = pair[1];
-                        }
-                        var rv = new XamlAstXmlTypeReference(info, xmlns, name);
+                        var rv = ParseTypeName(info, node.Value, xel);
 
                         if (node.Children.Count != 0)
                             rv.GenericArguments = node.Children.Select(Parse).ToList();
@@ -88,14 +99,26 @@ namespace XamlX.Parsers
                     throw new XamlParseException(e.Message, info);
                 }
             }
-            
 
-            XamlXAstNewInstanceNode ParseNewInstance(XElement el, bool root)
+            static IXamlAstValueNode ParseTextValueOrMarkupExtension(string ext, XElement xel, IXamlLineInfo info)
+            {
+                if (ext.StartsWith("{"))
+                {
+                    if (ext.StartsWith("{}"))
+                        ext = ext.Substring(2);
+                    else
+                        return XamlMarkupExtensionParser.Parse(info, ext, t => ParseTypeName(info, t, xel));
+                }
+
+                return new XamlAstTextNode(info, ext);
+            }
+
+            XamlAstObjectNode ParseNewInstance(XElement el, bool root)
             {
                 if (el.Name.LocalName.Contains("."))
                     throw ParseError(el, "Dots aren't allowed in type names");
                 var type = GetTypeReference(el);
-                var i = new XamlXAstNewInstanceNode(el.AsLi(), type);
+                var i = new XamlAstObjectNode(el.AsLi(), type);
                 foreach (var attr in el.Attributes())
                 {
                     if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
@@ -137,7 +160,7 @@ namespace XamlX.Parsers
 
                         i.Children.Add(new XamlAstXamlPropertyValueNode(el.AsLi(),
                             new XamlAstNamePropertyReference(el.AsLi(), ptype, pname, type),
-                            new XamlAstTextNode(el.AsLi(), attr.Value)));
+                            ParseTextValueOrMarkupExtension(attr.Value, el, attr.AsLi())));
                     }
                 }
 
@@ -194,7 +217,7 @@ namespace XamlX.Parsers
             Exception ParseError(IXmlLineInfo line, string message) =>
                 new XamlParseException(message, line.LineNumber, line.LinePosition);
 
-            public XamlXAstNewInstanceNode Parse() => (XamlXAstNewInstanceNode) ParseNewInstance(_root, true);
+            public XamlAstObjectNode Parse() => (XamlAstObjectNode) ParseNewInstance(_root, true);
         }
     }
 

@@ -61,7 +61,7 @@ namespace XamlX.Ast
 
     public class XamlStaticExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
     {
-        public XamlStaticExtensionNode(XamlXAstNewInstanceNode lineInfo, IXamlAstTypeReference targetType, string member) : base(lineInfo)
+        public XamlStaticExtensionNode(XamlAstObjectNode lineInfo, IXamlAstTypeReference targetType, string member) : base(lineInfo)
         {
             TargetType = targetType;
             Member = member;

@@ -26,7 +26,7 @@ namespace XamlParserTests
             if (parsed is string || parsed.GetType().IsPrimitive)
             {
                 if (!parsed.Equals(expected))
-                    throw new Exception($"{path}: Not equal {parsed} {expected}");
+                    throw new Exception($"{path}: Not equal '{parsed}' '{expected}'");
             }
             else if (parsed is IDictionary dic)
             {

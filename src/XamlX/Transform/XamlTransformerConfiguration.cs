@@ -184,21 +184,23 @@ namespace XamlX.Transform
     {
         public IXamlType IList { get; }
         public IXamlType IListOfT { get; }
-        public IXamlType Object { get;  }
-        public IXamlType String { get;  }
-        public IXamlType Void { get;  }
-        public IXamlType CultureInfo { get;  }
-        public IXamlType IFormatProvider { get;  }
+        public IXamlType Object { get; }
+        public IXamlType String { get; }
+        public IXamlType Void { get; }
+        public IXamlType NullableT { get; }
+        public IXamlType CultureInfo { get; }
+        public IXamlType IFormatProvider { get; }
 
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
         {
-            Void = typeSystem.FindType("System.Void");
-            String = typeSystem.FindType("System.String");
-            Object = typeSystem.FindType("System.Object");
-            CultureInfo = typeSystem.FindType("System.Globalization.CultureInfo");
-            IFormatProvider = typeSystem.FindType("System.IFormatProvider");
-            IList = typeSystem.FindType("System.Collections.IList");
-            IListOfT = typeSystem.FindType("System.Collections.Generic.IList`1");
+            Void = typeSystem.GetType("System.Void");
+            String = typeSystem.GetType("System.String");
+            Object = typeSystem.GetType("System.Object");
+            CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
+            IFormatProvider = typeSystem.GetType("System.IFormatProvider");
+            IList = typeSystem.GetType("System.Collections.IList");
+            IListOfT = typeSystem.GetType("System.Collections.Generic.IList`1");
+            NullableT = typeSystem.GetType("System.Nullable`1");
         }
     }
 }

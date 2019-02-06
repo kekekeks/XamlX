@@ -18,7 +18,7 @@ namespace XamlX.Transform.Emitters
                 {
                     if (c != group.Children.Count - 1)
                         codeGen.Generator.Emit(OpCodes.Dup);
-                    context.Emit(group.Children[0], codeGen, null);
+                    context.Emit(group.Children[c], codeGen, null);
                 }
             }
 

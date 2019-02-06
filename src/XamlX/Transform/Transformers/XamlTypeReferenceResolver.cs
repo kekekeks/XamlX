@@ -14,12 +14,16 @@ namespace XamlX.Transform.Transformers
             var targs = typeArguments
                 .Select(ta => ResolveType(context, ta.XmlNamespace, ta.Name, ta.GenericArguments, lineInfo))
                 .ToList();
-            if (typeArguments.Count != 0)
-                name += "`" + typeArguments.Count;
+            
                 
             const string clrNamespace = "clr-namespace:";
             const string assemblyNamePrefix = ";assembly=";
-            
+
+            IXamlType Attempt(Func<string, IXamlType> cb, string xname)
+            {
+                var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
+                return cb(xname + suffix) ?? cb(xname + "Extension" + suffix);
+            }
             
             
             IXamlType found = null;
@@ -33,7 +37,7 @@ namespace XamlX.Transform.Transformers
             {
                 foreach (var pair in lst)
                 {
-                    found = pair.asm.FindType(pair.ns + "." + name);
+                    found = Attempt(pair.asm.FindType,pair.ns + "." + name);
                     if (found != null)
                         break;
                 }
@@ -51,7 +55,7 @@ namespace XamlX.Transform.Transformers
                 if (indexOfAssemblyPrefix != -1) 
                     ns = ns.Substring(0, indexOfAssemblyPrefix);
 
-                found = context.Configuration.TypeSystem.FindType($"{ns}.{name}");
+                found = Attempt(context.Configuration.TypeSystem.FindType,$"{ns}.{name}");
             }
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);

@@ -9,7 +9,7 @@ namespace XamlX.Transform.Emitters
     {
         public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlXCodeGen codeGen)
         {
-            if (!(node is XamlXAstNewInstanceNode n))
+            if (!(node is XamlAstNewClrObjectNode n))
                 return null;
             var type = n.Type.GetClrType();
 
@@ -30,17 +30,6 @@ namespace XamlX.Transform.Emitters
                 .Emit(OpCodes.Newobj, ctor);
             
             
-            foreach (var ch in n.Children)
-            {
-                if (ch is IXamlAstManipulationNode mnode)
-                {
-                    gen.Emit(OpCodes.Dup);
-                    context.Emit(mnode, codeGen, null);
-                }
-                else
-                    throw new XamlLoadException($"Unable to emit node {ch}", ch);
-            }
-
             return XamlNodeEmitResult.Type(type);
         }
     }
