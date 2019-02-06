@@ -13,28 +13,27 @@ namespace XamlIl.Transform
             int count, Func<int, IXamlIlAstValueNode> getNode, Action<int, IXamlIlAstNode> setNode)
         {
             var type = contentProperty.PropertyType;
-            // Direct property assignment?
+            // Markup extension ?
             if (contentProperty.Setter?.IsPublic == true
+                     && count == 1
+                     && TryConvertMarkupExtension(context, getNode(0),
+                         contentProperty, out var me))
+                setNode(0, me);
+            // Direct property assignment?
+            else if (contentProperty.Setter?.IsPublic == true
                 && count == 1
                 && context.Configuration.TryGetCorrectlyTypedValue(getNode(0),
                     contentProperty.PropertyType,
                     out var value))
                 setNode(0,
                     new XamlIlPropertyAssignmentNode(getNode(0), contentProperty, value));
-            // Markup extension ?
-            else if (contentProperty.Setter?.IsPublic == true
-                && count == 1
-                && TryConvertMarkupExtension(context, getNode(0),
-                    contentProperty, out var me))
-                setNode(0, me);
             // Collection property?
             else if (contentProperty.Getter?.IsPublic == true)
             {
                 for (var ind = 0; ind < count; ind++)
                 {
-                    if (context.Configuration.TryCallAdd(type, getNode(ind), out var addCall))
-                        setNode(ind,
-                            new XamlIlPropertyValueManipulationNode(getNode(ind), contentProperty, addCall));
+                    if (TryCallAdd(context, contentProperty, contentProperty.PropertyType, getNode(ind), out var addCall))
+                        setNode(ind, addCall);
                     else
                     {
                         var propFqn = contentProperty.PropertyType.GetFqn();
@@ -62,9 +61,42 @@ namespace XamlIl.Transform
                 (i, v) => tmp[i] = v);
             return tmp.Cast<IXamlIlAstManipulationNode>().ToList();
         }
-        
+
+        public static bool TryCallAdd(XamlIlAstTransformationContext context,
+            IXamlIlProperty targetProperty, IXamlIlType targetPropertyType, IXamlIlAstValueNode value, out IXamlIlAstManipulationNode rv)
+        {
+            if (TryConvertMarkupExtension(context, value, targetProperty, out var ext))
+            {
+                var adder = new[] {ext.ProvideValue.ReturnType, context.Configuration.WellKnownTypes.Object}
+                    .Select(argType => targetPropertyType.FindMethod(m =>
+                        !m.IsStatic && m.IsPublic
+                        && (m.Name == "Add" || m.Name.EndsWith(".Add"))
+                        && m.Parameters.Count == 1
+                        && m.Parameters[0].Equals(argType)))
+                    .FirstOrDefault(m => m != null);
+                if (adder != null)
+                {
+                    ext.Manipulation = adder;
+                    rv = ext;
+                    return true;
+                }
+            }
+
+            if (context.Configuration.TryCallAdd(targetPropertyType, value, out var nret))
+            {
+                if (targetProperty != null)
+                    rv = new XamlIlPropertyValueManipulationNode(value, targetProperty, nret);
+                else
+                    rv = nret;
+                return true;
+            }
+
+            rv = null;
+            return false;
+        }
+
         public static bool TryConvertMarkupExtension(XamlIlAstTransformationContext context,
-            IXamlIlAstValueNode node, IXamlIlProperty prop, out IXamlIlAstManipulationNode o)
+            IXamlIlAstValueNode node, IXamlIlProperty prop, out XamlIlMarkupExtensionNode o)
         {
             o = null;
             var nodeType = node.Type.GetClrType();
@@ -83,7 +115,7 @@ namespace XamlIl.Transform
 
             if (provideValue == null)
                 return false;
-            o = new XamlIlMarkupExtensionNode(node, prop, provideValue, node);
+            o = new XamlIlMarkupExtensionNode(node, prop, provideValue, node, null);
             return true;
         }
     }
