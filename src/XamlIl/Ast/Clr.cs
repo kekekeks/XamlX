@@ -109,4 +109,66 @@ namespace XamlIl.Ast
 
         public override void VisitChildren(XamlIlAstVisitorDelegate visitor) => VisitList(Children, visitor);
     }
+
+    public class XamlIlValueWithManipulationNode : XamlIlAstNode, IXamlIlAstValueNode
+    {
+        public IXamlIlAstValueNode Value { get; set; }
+        public IXamlIlAstManipulationNode Manipulation { get; set; }
+        public IXamlIlAstTypeReference Type => Value.Type;
+        
+        public XamlIlValueWithManipulationNode(IXamlIlLineInfo lineInfo,
+            IXamlIlAstValueNode value,
+            IXamlIlAstManipulationNode manipulation) : base(lineInfo)
+        {
+            Value = value;
+            Manipulation = manipulation;
+        }
+
+        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        {
+            Value = (IXamlIlAstValueNode) Value?.Visit(visitor);
+            Manipulation = (IXamlIlAstManipulationNode) Manipulation?.Visit(visitor);
+        }
+    }
+
+    public class XamlIlAstNewClrObjectNode : XamlIlAstNode, IXamlIlAstValueNode
+    {
+        public XamlIlAstNewClrObjectNode(IXamlIlLineInfo lineInfo,
+            IXamlIlAstTypeReference type,
+            List<IXamlIlAstValueNode> arguments) : base(lineInfo)
+        {
+            Type = type;
+            Arguments = arguments;
+        }
+
+        public IXamlIlAstTypeReference Type { get; set; }
+        public List<IXamlIlAstValueNode> Arguments { get; set; } = new List<IXamlIlAstValueNode>();
+
+        public override void VisitChildren(Visitor visitor)
+        {
+            Type = (IXamlIlAstTypeReference) Type.Visit(visitor);
+            VisitList(Arguments, visitor);
+        }
+    }
+
+    public class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstManipulationNode
+    {
+        public IXamlIlAstValueNode Value { get; set; }
+        public IXamlIlProperty Property { get; set; }
+        public IXamlIlMethod ProvideValue { get; }
+
+        public XamlIlMarkupExtensionNode(IXamlIlLineInfo lineInfo, IXamlIlProperty property, IXamlIlMethod provideValue,
+            IXamlIlAstValueNode value) : base(lineInfo)
+        {
+            Property = property;
+            ProvideValue = provideValue;
+            Value = value;
+        }
+
+        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        {
+            Value = (IXamlIlAstValueNode) Value.Visit(visitor);
+        }
+    }
+   
 }

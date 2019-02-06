@@ -125,6 +125,7 @@ namespace XamlIl.TypeSystem
             private IReadOnlyList<IXamlIlField> _fields;
             private IReadOnlyList<IXamlIlMethod> _methods;
             private IReadOnlyList<IXamlIlConstructor> _constructors;
+            private IReadOnlyList<IXamlIlType> _genericArguments;
             public Type Type { get; }
 
             public SreType(SreTypeSystem system, SreAssembly asm, Type type): base(system, type)
@@ -163,6 +164,18 @@ namespace XamlIl.TypeSystem
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Select(c => new SreConstructor(System, c)).ToList());
 
+            public IReadOnlyList<IXamlIlType> GenericArguments
+            {
+                get
+                {
+                    if (_genericArguments != null)
+                        return _genericArguments;
+                    if (GenericTypeDefinition == null)
+                        return _genericArguments = new IXamlIlType[0];
+                    return _genericArguments = Type.GetGenericArguments().Select(System.ResolveType).ToList();
+                }
+            }
+
             public bool IsAssignableFrom(IXamlIlType type)
             {
                 if (type == XamlIlPseudoType.Null)
@@ -181,6 +194,10 @@ namespace XamlIl.TypeSystem
                 return System.ResolveType(
                     Type.MakeGenericType(typeArguments.Select(t => ((SreType) t).Type).ToArray()));
             }
+
+            public IXamlIlType GenericTypeDefinition => Type.IsConstructedGenericType
+                ? System.ResolveType(Type.GetGenericTypeDefinition())
+                : null;
 
             public IXamlIlType BaseType => Type.BaseType == null ? null : System.ResolveType(Type.BaseType);
             public bool IsValueType => Type.IsValueType;
@@ -307,6 +324,10 @@ namespace XamlIl.TypeSystem
             return new CodeGen(mb);
         }
 
+        public Type GetType(IXamlIlType t) => ((SreType) t).Type;
+
+        public IXamlIlTypeBuilder CreateTypeBuilder(TypeBuilder builder) => new SreTypeBuilder(this, builder);
+
         class IlGen : IXamlIlEmitter
         {
             private readonly ILGenerator _ilg;
@@ -364,6 +385,34 @@ namespace XamlIl.TypeSystem
                 return this;
             }
 
+            public IXamlIlLocal DefineLocal(IXamlIlType type)
+            {
+                return new SreLocal(_ilg.DeclareLocal(((SreType) type).Type));
+            }
+
+            public IXamlIlLabel DefineLabel()
+            {
+                return new SreLabel(_ilg.DefineLabel());
+            }
+
+            public IXamlIlEmitter MarkLabel(IXamlIlLabel label)
+            {
+                _ilg.MarkLabel(((SreLabel) label).Label);
+                return this;
+            }
+
+            public IXamlIlEmitter Emit(OpCode code, IXamlIlLabel label)
+            {
+                _ilg.Emit(code, ((SreLabel)label).Label);
+                return this;
+            }
+
+            public IXamlIlEmitter Emit(OpCode code, IXamlIlLocal local)
+            {
+                _ilg.Emit(code, ((SreLocal) local).Local);
+                return this;
+            }
+
             public IXamlIlEmitter Emit(OpCode code, IXamlIlType type)
             {
                 _ilg.Emit(code, ((SreType) type).Type);
@@ -376,6 +425,109 @@ namespace XamlIl.TypeSystem
                 _ilg.Emit(code, ((SreField) field).Field);
                 return this;
             }
+
+            class SreLabel : IXamlIlLabel
+            {
+                public Label Label { get; }
+
+                public SreLabel(Label label)
+                {
+                    Label = label;
+                }
+            }
+            
+            class SreLocal : IXamlIlLocal
+            {
+                public LocalBuilder Local { get; }
+
+                public SreLocal(LocalBuilder local)
+                {
+                    Local = local;
+                }
+            }
+        }
+
+        class SreTypeBuilder : IXamlIlTypeBuilder
+        {
+            private readonly SreTypeSystem _system;
+            private readonly TypeBuilder _tb;
+
+            public SreTypeBuilder(SreTypeSystem system, TypeBuilder tb)
+            {
+                _system = system;
+                _tb = tb;
+            }
+            
+            public IXamlIlField DefineField(IXamlIlType type, string name, bool isPublic, bool isStatic)
+            {
+                var f = _tb.DefineField(name, ((SreType) type).Type,
+                    (isPublic ? FieldAttributes.Public : FieldAttributes.Private)
+                    | (isStatic ? FieldAttributes.Static : default(FieldAttributes)));
+                return new SreField(_system, f);
+            }
+
+            public void AddInterfaceImplementation(IXamlIlType type)
+            {
+                _tb.AddInterfaceImplementation(((SreType)type).Type);
+            }
+
+            class SreMethodBuilder : SreMethod, IXamlIlMethodBuilder
+            {
+                public MethodBuilder MethodBuilder { get; }
+
+                public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder) : base(system, methodBuilder)
+                {
+                    MethodBuilder = methodBuilder;
+                    Generator = new IlGen(methodBuilder.GetILGenerator());
+                }
+
+                public IXamlIlEmitter Generator { get; }
+            }
+            
+            public IXamlIlMethodBuilder DefineMethod(IXamlIlType returnType, IEnumerable<IXamlIlType> args, string name, bool isPublic, bool isStatic,
+                bool isInterfaceImpl)
+            {
+                var ret = ((SreType) returnType).Type;
+                var argTypes = args.Cast<SreType>().Select(t => t.Type);
+                var m = _tb.DefineMethod(name, 
+                    (isPublic ? MethodAttributes.Public : MethodAttributes.Private)
+                    |(isStatic ? MethodAttributes.Static : default(MethodAttributes))
+                    |(isInterfaceImpl ? MethodAttributes.Virtual|MethodAttributes.NewSlot : default(MethodAttributes))
+                    , ret, argTypes.ToArray());
+                return new SreMethodBuilder(_system, m);
+            }
+
+            public IXamlIlProperty DefineProperty(IXamlIlType propertyType, string name, IXamlIlMethod setter, IXamlIlMethod getter)
+            {
+                var p = _tb.DefineProperty(name, PropertyAttributes.None, ((SreType) propertyType).Type, new Type[0]);
+                if (setter != null)
+                    p.SetSetMethod(((SreMethodBuilder) setter).MethodBuilder);
+                if (getter != null)
+                    p.SetGetMethod(((SreMethodBuilder) getter).MethodBuilder);
+                return new SreProperty(_system, p);
+            }
+
+            class SreConstructorBuilder : SreConstructor, IXamlIlConstructorBuilder
+            {
+                public SreConstructorBuilder(SreTypeSystem system, ConstructorBuilder ctor) : base(system, ctor)
+                {
+                    Generator = new IlGen(ctor.GetILGenerator());
+                }
+
+                public IXamlIlEmitter Generator { get; }
+            }
+
+            
+            public IXamlIlConstructorBuilder DefineConstructor(params IXamlIlType[] args)
+            {
+                var ctor = _tb.DefineConstructor(MethodAttributes.Public,
+                    CallingConventions.Standard,
+                    args.Cast<SreType>().Select(t => t.Type).ToArray());
+                return new SreConstructorBuilder(_system, ctor);
+            }
+            
+            public IXamlIlType CreateType() => new SreType(_system, null, _tb.CreateTypeInfo());
+
         }
 
         class CodeGen : IXamlIlCodeGen

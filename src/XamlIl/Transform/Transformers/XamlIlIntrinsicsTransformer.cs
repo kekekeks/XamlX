@@ -6,7 +6,7 @@ namespace XamlIl.Transform.Transformers
     {
         public IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node)
         {
-            if (node is XamlIlAstNewInstanceNode ni 
+            if (node is XamlIlAstObjectNode ni 
                 && ni.Type is XamlIlAstXmlTypeReference xml
                 && xml.XmlNamespace == XamlNamespaces.Xaml2006)
             {

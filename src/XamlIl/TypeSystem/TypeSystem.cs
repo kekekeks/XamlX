@@ -17,12 +17,15 @@ namespace XamlIl.TypeSystem
         IReadOnlyList<IXamlIlMethod> Methods { get; }
         IReadOnlyList<IXamlIlConstructor> Constructors { get; }
         IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; }
+        IReadOnlyList<IXamlIlType> GenericArguments { get; }
         bool IsAssignableFrom(IXamlIlType type);
         IXamlIlType MakeGenericType(IReadOnlyList<IXamlIlType> typeArguments);
+        IXamlIlType GenericTypeDefinition { get; }
         IXamlIlType BaseType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IXamlIlType GetEnumUnderlyingType();
+        
     }
 
     public interface IXamlIlMethod : IEquatable<IXamlIlMethod>, IXamlIlMember
@@ -94,8 +97,23 @@ namespace XamlIl.TypeSystem
         IXamlIlEmitter Emit(OpCode code, int arg);
         IXamlIlEmitter Emit(OpCode code, long arg);
         IXamlIlEmitter Emit(OpCode code, IXamlIlType type);
-        IXamlIlEmitter Emit(OpCode ldcR8, float arg);
-        IXamlIlEmitter Emit(OpCode ldcR8, double arg);
+        IXamlIlEmitter Emit(OpCode code, float arg);
+        IXamlIlEmitter Emit(OpCode code, double arg);
+        IXamlIlLocal DefineLocal(IXamlIlType type);
+        IXamlIlLabel DefineLabel();
+        IXamlIlEmitter MarkLabel(IXamlIlLabel label);
+        IXamlIlEmitter Emit(OpCode code, IXamlIlLabel label);
+        IXamlIlEmitter Emit(OpCode code, IXamlIlLocal local);
+    }
+
+    public interface IXamlIlLocal
+    {
+        
+    }
+    
+    public interface IXamlIlLabel
+    {
+        
     }
 
     public interface IXamlIlClosure : IXamlIlCodeGen
@@ -109,6 +127,30 @@ namespace XamlIl.TypeSystem
         void EmitClosure(IEnumerable<IXamlIlType> fields);
     }
 
+    public interface IXamlIlMethodBuilder : IXamlIlMethod
+    {
+        IXamlIlEmitter Generator { get; }
+    }
+    
+    public interface IXamlIlConstructorBuilder : IXamlIlConstructor
+    {
+        IXamlIlEmitter Generator { get; }
+    }
+
+    public interface IXamlIlTypeBuilder
+    {
+        IXamlIlField DefineField(IXamlIlType type, string name, bool isPublic, bool isStatic);
+        void AddInterfaceImplementation(IXamlIlType type);
+
+        IXamlIlMethodBuilder DefineMethod(IXamlIlType returnType, IEnumerable<IXamlIlType> args, string name, bool isPublic, bool isStatic,
+            bool isInterfaceImpl);
+
+        IXamlIlProperty DefineProperty(IXamlIlType propertyType, string name, IXamlIlMethod setter, IXamlIlMethod getter);
+        IXamlIlConstructorBuilder DefineConstructor(params IXamlIlType[] args);
+        IXamlIlType CreateType();
+    }
+    
+    
     public class XamlIlPseudoType : IXamlIlType
     {
         public XamlIlPseudoType(string name)
@@ -126,6 +168,7 @@ namespace XamlIl.TypeSystem
         public IReadOnlyList<IXamlIlMethod> Methods { get; } = new IXamlIlMethod[0];
         public IReadOnlyList<IXamlIlConstructor> Constructors { get; } = new IXamlIlConstructor[0];
         public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; } = new IXamlIlCustomAttribute[0];
+        public IReadOnlyList<IXamlIlType> GenericArguments { get; } = new IXamlIlType[0];
         public IXamlIlType BaseType { get; }
         public bool IsValueType { get; } = false;
         public bool IsEnum { get; } = false;
@@ -137,6 +180,8 @@ namespace XamlIl.TypeSystem
         {
             throw new NotSupportedException();
         }
+
+        public IXamlIlType GenericTypeDefinition => null;
         public static XamlIlPseudoType Null { get; } = new XamlIlPseudoType("{x:Null}");
         public static XamlIlPseudoType Unknown { get; } = new XamlIlPseudoType("{Unknown type}");
     }
@@ -145,6 +190,14 @@ namespace XamlIl.TypeSystem
     {
         public static string GetFqn(this IXamlIlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
 
+        public static IXamlIlType GetType(this IXamlIlTypeSystem sys, string type)
+        {
+            var f = sys.FindType(type);
+            if (f == null)
+                throw new XamlIlTypeSystemException("Unable to resolve type " + type);
+            return f;
+        }
+        
         public static IXamlIlMethod FindMethod(this IXamlIlType type, string name, IXamlIlType returnType, 
             bool allowDowncast, params IXamlIlType[] args)
         {
@@ -192,6 +245,18 @@ namespace XamlIl.TypeSystem
             }
 
             return null;
+        }
+
+        public static bool IsNullable(this IXamlIlType type)
+        {
+            var def = type.GenericTypeDefinition;
+            if (def == null) return false;
+            return def.Namespace == "System" && def.Name == "Nullable`1";
+        }
+
+        public static bool IsNullableOf(this IXamlIlType type, IXamlIlType vtype)
+        {
+            return type.IsNullable() && type.GenericArguments[0].Equals(vtype);
         }
     }
     
