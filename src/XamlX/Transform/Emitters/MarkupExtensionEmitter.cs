@@ -30,7 +30,6 @@ namespace XamlX.Transform.Emitters
 
             IXamlILEmitter CallSetter()
             {
-                codeGen.Generator.DebugHatch("Entering setter");
                 if (me.Manipulation != null)
                 {
                     // {target}.{Property}.{Method)(res)
@@ -133,7 +132,7 @@ namespace XamlX.Transform.Emitters
             
             // Cast attempts have failed, call external method
             codeGen.Generator
-                .Emit(OpCodes.Ldstr, me.Property.Name)
+                .Emit(OpCodes.Ldstr, me.Property?.Name)
                 .Emit(OpCodes.Ldloc, context.ContextLocal)
                 .Emit(OpCodes.Ldloc, resultLocal);
             if(rtype.IsValueType)

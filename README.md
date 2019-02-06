@@ -13,10 +13,10 @@ This is work in progress, the current goal is to reach feature parity with Porta
 - Create / Populate semantics
 - Implicit type converting for types with `static T Parse(string, [IFormatProvider])` method (e. g. `int`, `double`, `TimeSpan`, etc)
 - Support for [Content] attribute both for direct content and for collections
-- Support for collections themselves (e. g. <List x:TypeArguments="sys:String"></List>
+- Support for collections themselves (e. g. `<List x:TypeArguments="sys:String"></List>`)
 - x:Arguments Directive
 - x:TypeArguments Directive
-- Markup extensions with escape hatch for non-convertable values (e. g. Binding)
+- Markup extensions with extension point for handling non-convertable values at runtime (e. g. `Binding`)
 - Duck-typing for markup extensions, following signatures are checked for markup extension detection (`T` is anything that's not `System.Object`):
 ```cs
 T ProvideValue();
