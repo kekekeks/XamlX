@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using XamlX;
 using XamlX.Ast;
@@ -163,6 +164,43 @@ namespace XamlParserTests
             };
             Helpers.StructDiff(root, other);
 
+        }
+
+        [Theory, InlineData(false), InlineData(true)]
+        public void Parser_Should_Handle_Ignorable_Content(bool map)
+        {
+            var root = XDocumentXamlXParser.Parse(@"
+<Root xmlns='rootns' xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' 
+    mc:Ignorable='d d2' xmlns:d='test' xmlns:d2='test2'
+    d:DataContext='123' d2:Lalala='321'>
+    <d:DesignWidth>test</d:DesignWidth>
+</Root>
+ ", map ? new Dictionary<string, string>() {["test"] = "mapped"} : null);
+            var ni = new NullLineInfo();
+            var rootType = new XamlXAstXmlTypeReference(ni, "rootns", "Root");
+
+            if (map)
+            {
+                Helpers.StructDiff(root.Root, new XamlXAstObjectNode(ni, rootType)
+                {
+                    Children =
+                    {
+                        new XamlXAstXmlDirective(ni, "mapped", "DataContext", new[] {new XamlXAstTextNode(ni, "123"),}),
+                        new XamlXAstObjectNode(ni, new XamlXAstXmlTypeReference(ni, "mapped", "DesignWidth"))
+                        {
+                            Children =
+                            {
+                                new XamlXAstTextNode(ni, "test")
+                            }
+                        }
+                    }
+                });
+            }
+            else
+                Helpers.StructDiff(root.Root, new XamlXAstObjectNode(ni, rootType)
+                {
+
+                });
         }
     }
 }
