@@ -5,9 +5,21 @@ namespace XamlX.Transform
 {
     public class XamlXLanguageTypeMappings
     {
+        public XamlXLanguageTypeMappings(IXamlXTypeSystem typeSystem)
+        {
+            ServiceProvider = typeSystem.FindType("System.IServiceProvider");
+        }
+
         public List<IXamlXType> XmlnsAttributes { get; set; } = new List<IXamlXType>();
         public List<IXamlXType> ContentAttributes { get; set; } = new List<IXamlXType>();
-        public IXamlXCustomAttributeResolver CustomAttributeResolver { get; set; }        
+        public IXamlXType ServiceProvider { get; set; }
+        public IXamlXType RootObjectProvider { get; set; }
+        public IXamlXCustomAttributeResolver CustomAttributeResolver { get; set; }
+        /// <summary>
+        /// Expected signature:
+        /// static void ApplyNonMatchingMarkupExtension(object target, string property, IServiceProvider prov, object value)
+        /// </summary>
+        public IXamlXMethod ApplyNonMatchingMarkupExtension { get; set; }
     }
 
     public interface IXamlXCustomAttributeResolver

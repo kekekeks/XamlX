@@ -7,7 +7,7 @@ namespace XamlX.Transform.Transformers
     {
         public IXamlXAstNode Transform(XamlXAstTransformationContext context, IXamlXAstNode node)
         {
-            if (node is XamlXAstNewInstanceNode ni)
+            if (node is XamlXAstObjectNode ni)
             {
                 var argDirectives = ni.Children.OfType<XamlXAstXmlDirective>()
                     .Where(d => d.Namespace == XamlNamespaces.Xaml2006 && d.Name == "Arguments").ToList();

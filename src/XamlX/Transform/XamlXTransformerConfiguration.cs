@@ -184,21 +184,23 @@ namespace XamlX.Transform
     {
         public IXamlXType IList { get; }
         public IXamlXType IListOfT { get; }
-        public IXamlXType Object { get;  }
-        public IXamlXType String { get;  }
-        public IXamlXType Void { get;  }
-        public IXamlXType CultureInfo { get;  }
-        public IXamlXType IFormatProvider { get;  }
+        public IXamlXType Object { get; }
+        public IXamlXType String { get; }
+        public IXamlXType Void { get; }
+        public IXamlXType NullableT { get; }
+        public IXamlXType CultureInfo { get; }
+        public IXamlXType IFormatProvider { get; }
 
         public XamlXTypeWellKnownTypes(IXamlXTypeSystem typeSystem)
         {
-            Void = typeSystem.FindType("System.Void");
-            String = typeSystem.FindType("System.String");
-            Object = typeSystem.FindType("System.Object");
-            CultureInfo = typeSystem.FindType("System.Globalization.CultureInfo");
-            IFormatProvider = typeSystem.FindType("System.IFormatProvider");
-            IList = typeSystem.FindType("System.Collections.IList");
-            IListOfT = typeSystem.FindType("System.Collections.Generic.IList`1");
+            Void = typeSystem.GetType("System.Void");
+            String = typeSystem.GetType("System.String");
+            Object = typeSystem.GetType("System.Object");
+            CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
+            IFormatProvider = typeSystem.GetType("System.IFormatProvider");
+            IList = typeSystem.GetType("System.Collections.IList");
+            IListOfT = typeSystem.GetType("System.Collections.Generic.IList`1");
+            NullableT = typeSystem.GetType("System.Nullable`1");
         }
     }
 }

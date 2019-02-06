@@ -19,16 +19,23 @@ namespace XamlParserTests
     
     public class BasicCompilerTests : CompilerTestBase
     {
-        [Fact]
-        public void Compiler_Should_Compile_Simple_Xaml()
+        [Theory,
+            InlineData(false),
+            InlineData(true)]
+        public void Compiler_Should_Compile_Simple_Xaml(bool populate)
         {
-            var res = (SimpleClass)CompileAndRun(@"
+            var comp = Compile(@"
 <SimpleClass xmlns='test' Test='123'>
     <SimpleSubClass Test='test'/>
     <SimpleClass.Test2>321</SimpleClass.Test2>
     <SimpleSubClass Test='test2'/>
     
 </SimpleClass>");
+
+            var res = populate ? new SimpleClass() : (SimpleClass) comp.create(null);
+            if (populate)
+                comp.populate(null, res);
+            
             Assert.Equal("123", res.Test);
             Assert.Equal("321", res.Test2);
             Assert.Equal("test", res.Children[0].Test);

@@ -26,7 +26,7 @@ namespace XamlX.Transform
                     new XamlXXArgumentsTransformer(),
                     new XamlXTypeReferenceResolver(),
                     new XamlXPropertyReferenceResolver(),
-                    new XamlXContentTransformer(),
+                    new XamlXNewObjectTransformer(),
                     new XamlXXamlPropertyValueTransformer()
                 };
                 Emitters = new List<IXamlXAstNodeEmitter>()
@@ -36,29 +36,69 @@ namespace XamlX.Transform
                     new MethodCallEmitter(),
                     new PropertyAssignmentEmitter(),
                     new PropertyValueManipulationEmitter(),
-                    new ManipulationGroupEmitter()
+                    new ManipulationGroupEmitter(),
+                    new ValueWithManipulationsEmitter(),
+                    new MarkupExtensionEmitter()
                 };
             }
         }
 
-        public IXamlXAstNode Transform(IXamlXAstNode root,
+        public void Transform(XamlXDocument doc,
             Dictionary<string, string> namespaceAliases, bool strict = true)
         {
             var ctx = new XamlXAstTransformationContext(_configuration, namespaceAliases, strict);
 
+            var root = doc.Root;
             foreach (var transformer in Transformers)
             {
                 root = root.Visit(n => transformer.Transform(ctx, n));
             }
 
-            return root;
+            doc.Root = root;
         }
+        
+        
+        /// <summary>
+        /// populate = true:
+        /// void Populate(IServiceProvider sp, T target);
+        /// populate = false
+        /// T Build(IServiceProvider sp); 
+        /// </summary>
 
-        public void Compile(IXamlXAstNode root, IXamlXCodeGen codeGen)
+        public void Compile(IXamlXAstNode root, IXamlXCodeGen codeGen, XamlXContext context, bool populate)
         {
-            new XamlXEmitContext(_configuration, Emitters).Emit(root, codeGen,
-                _configuration.TypeSystem.FindType("System.Object"));
-            codeGen.Generator.Emit(OpCodes.Ret);
+            var contextLocal = codeGen.Generator.DefineLocal(context.ContextType);
+            codeGen.Generator
+                .Emit(OpCodes.Ldarg_0)
+                .Emit(OpCodes.Newobj, context.Constructor)
+                .Emit(OpCodes.Stloc, contextLocal);
+            var rootGrp = (XamlXValueWithManipulationNode) root;
+            var emitContext = new XamlXEmitContext(_configuration, context, contextLocal, Emitters);
+            
+            if (populate)
+            {
+                codeGen.Generator
+                    .Emit(OpCodes.Ldloc, contextLocal)
+                    .Emit(OpCodes.Ldarg_1)
+                    .Emit(OpCodes.Stfld, context.RootObjectField)
+                    .Emit(OpCodes.Ldarg_1);
+                emitContext.Emit(rootGrp.Manipulation, codeGen, null);
+                codeGen.Generator.Emit(OpCodes.Ret);
+            }
+            else
+            {
+                codeGen.Generator.Emit(OpCodes.Ldloc, contextLocal);
+                emitContext.Emit(rootGrp.Value, codeGen, rootGrp.Value.Type.GetClrType());
+                codeGen.Generator
+                    .Emit(OpCodes.Stfld, context.RootObjectField);
+
+                codeGen.Generator
+                    .Emit(OpCodes.Ldloc, contextLocal)
+                    .Emit(OpCodes.Ldfld, context.RootObjectField)
+                    .Emit(OpCodes.Dup);
+                emitContext.Emit(rootGrp.Manipulation, codeGen, null);
+                codeGen.Generator.Emit(OpCodes.Ret);
+            }
         }
     }
 
@@ -101,11 +141,17 @@ namespace XamlX.Transform
     {
         private readonly List<object> _emitters;
         public XamlXTransformerConfiguration Configuration { get; }
+        public XamlXContext RuntimeContext { get; }
+        public IXamlXLocal ContextLocal { get; }
 
-        public XamlXEmitContext(XamlXTransformerConfiguration configuration, IEnumerable<object> emitters)
+        public XamlXEmitContext(XamlXTransformerConfiguration configuration,
+            XamlXContext runtimeContext, IXamlXLocal contextLocal,
+            IEnumerable<object> emitters)
         {
             _emitters = emitters.ToList();
             Configuration = configuration;
+            RuntimeContext = runtimeContext;
+            ContextLocal = contextLocal;
         }
 
         public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXCodeGen codeGen, IXamlXType expectedType)
@@ -167,6 +213,7 @@ namespace XamlX.Transform
     public class XamlXNodeEmitResult
     {
         public IXamlXType ReturnType { get; set; }
+        public bool AllowCast { get; set; }
 
         public XamlXNodeEmitResult(IXamlXType returnType = null)
         {

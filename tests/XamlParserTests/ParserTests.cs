@@ -23,8 +23,8 @@ namespace XamlParserTests
             var root = XDocumentXamlXParser.Parse(
                 @"
 <Root xmlns='rootns' xmlns:t='testns' xmlns:d='directive' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
-    <Child 
-        Other.Prop='{TestExt something}'
+    <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2}'
+        Other.Prop='{}Not extension'
         Prop1='123' 
         Root.AttachedProp='AttachedValue'
         t:Namespaced.AttachedProp='AttachedValue'
@@ -46,6 +46,7 @@ namespace XamlParserTests
             var subChildType = new XamlXAstXmlTypeReference(ni, "rootns", "SubChild");
             var nsSubChildType = new XamlXAstXmlTypeReference(ni, "testns", "SubChild");
             var namespacedType = new XamlXAstXmlTypeReference(ni, "testns", "Namespaced");
+            var extensionType = new XamlXAstXmlTypeReference(ni, "rootns", "Extension");
 
             var other = new XamlXDocument
             {
@@ -56,19 +57,39 @@ namespace XamlParserTests
                     ["d"] = "directive",
                     ["x"] = "http://schemas.microsoft.com/winfx/2006/xaml"
                 },
-                Root = new XamlXAstNewInstanceNode(ni, rootType)
+                Root = new XamlXAstObjectNode(ni, rootType)
                 {
                     Children =
                     {
                         // <Child
-                        new XamlXAstNewInstanceNode(ni, childType)
+                        new XamlXAstObjectNode(ni, childType)
                         {
                             Children =
                             {
-                                // Other.Prop='{TestExt something}'
+                                // Ext='{Extension 123, 321, Prop=test, Prop2=test2}'
+                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                        childType, "Ext", childType),
+                                    new XamlXAstObjectNode(ni, extensionType)
+                                    {
+                                        Arguments =
+                                        {
+                                            new XamlXAstTextNode(ni, "123"),
+                                            new XamlXAstTextNode(ni, "321"),
+                                        },
+                                        Children =
+                                        {
+                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                    extensionType, "Prop", extensionType),
+                                                new XamlXAstTextNode(ni, "test")),
+                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                    extensionType, "Prop2", extensionType),
+                                                new XamlXAstTextNode(ni, "test2")),
+                                        }
+                                    }),                             
+                                //Other.Prop='{}Not extension'
                                 new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
                                         new XamlXAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
-                                    new XamlXAstTextNode(ni, "{TestExt something}")),
+                                    new XamlXAstTextNode(ni, "Not extension")),
                                 //  Prop1='123' 
                                 new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
                                         childType, "Prop1", childType),
@@ -87,7 +108,7 @@ namespace XamlParserTests
                                     new XamlXAstTextNode(ni, "DirectiveValue")
                                 }),
                                 // <t:SubChild Prop='321'/>
-                                new XamlXAstNewInstanceNode(ni, nsSubChildType)
+                                new XamlXAstObjectNode(ni, nsSubChildType)
                                 {
                                     Children =
                                     {
@@ -116,14 +137,14 @@ namespace XamlParserTests
                                     new[]
                                     {
                                         // <SubChild/>
-                                        new XamlXAstNewInstanceNode(ni, subChildType),
+                                        new XamlXAstObjectNode(ni, subChildType),
                                         // <SubChild/>
-                                        new XamlXAstNewInstanceNode(ni, subChildType),
+                                        new XamlXAstObjectNode(ni, subChildType),
                                     })
                             }
                         },
                         //<GenericType x:TypeArguments='Child,t:NamespacedGeneric(Child,GenericType(Child, t:Namespaced))'/>
-                        new XamlXAstNewInstanceNode(ni, new XamlXAstXmlTypeReference(ni, "rootns", "GenericType",
+                        new XamlXAstObjectNode(ni, new XamlXAstXmlTypeReference(ni, "rootns", "GenericType",
                             new[]
                             {
                                 childType,

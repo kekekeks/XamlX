@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
     {
         public IXamlXAstNode Transform(XamlXAstTransformationContext context, IXamlXAstNode node)
         {
-            if (node is XamlXAstNewInstanceNode ni && ni.Type is XamlXAstXmlTypeReference type)
+            if (node is XamlXAstObjectNode ni && ni.Type is XamlXAstXmlTypeReference type)
             {
                 foreach (var d in context.Configuration.KnownDirectives)
                     if (type.XmlNamespace == d.ns && type.Name == d.name)
