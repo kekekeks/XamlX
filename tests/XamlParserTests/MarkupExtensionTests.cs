@@ -10,6 +10,9 @@ namespace XamlParserTests
         public int NullableIntProperty { get; set; }
         public string StringProperty { get; set; }
         public object ObjectProperty { get; set; }
+        [Content]
+        public List<int> IntList { get; } = new List<int>();
+        public List<int> IntList2 { get; } = new List<int>();
     }
 
     public class ObjectTestExtension
@@ -77,6 +80,30 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' 
     NullableIntProperty='{ServiceProviderValue}'/>", CreateValueProvider(123));
             Assert.Equal(123, res.NullableIntProperty);
+        }
+
+        [Fact]
+        public void Extensions_Should_Be_Able_To_PopulateContentLists()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test'>
+    <ServiceProviderValue/>
+    <ServiceProviderValue/> 
+</MarkupExtensionTestsClass>", CreateValueProvider(123));
+            Assert.Equal(new[] {123, 123}, res.IntList);
+        }
+        
+        [Fact]
+        public void Extensions_Should_Be_Able_To_PopulateLists()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test'>
+    <MarkupExtensionTestsClass.IntList2>
+        <ServiceProviderValue/>
+        <ServiceProviderValue/>
+    </MarkupExtensionTestsClass.IntList2> 
+</MarkupExtensionTestsClass>", CreateValueProvider(123));
+            Assert.Equal(new[] {123, 123}, res.IntList2);
         }
         
         /*TODO: checks for

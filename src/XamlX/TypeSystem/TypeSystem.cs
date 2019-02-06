@@ -24,6 +24,7 @@ namespace XamlX.TypeSystem
         IXamlType BaseType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
+        IReadOnlyList<IXamlType> Interfaces { get; }
         IXamlType GetEnumUnderlyingType();
         
     }
@@ -89,6 +90,7 @@ namespace XamlX.TypeSystem
     
     public interface IXamlILEmitter
     {
+        IXamlTypeSystem TypeSystem { get; }
         IXamlILEmitter Emit(OpCode code);
         IXamlILEmitter Emit(OpCode code, IXamlField field);
         IXamlILEmitter Emit(OpCode code, IXamlMethod method);
@@ -172,6 +174,7 @@ namespace XamlX.TypeSystem
         public IXamlType BaseType { get; }
         public bool IsValueType { get; } = false;
         public bool IsEnum { get; } = false;
+        public IReadOnlyList<IXamlType> Interfaces { get; } = new IXamlType[0];
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
@@ -196,6 +199,21 @@ namespace XamlX.TypeSystem
             if (f == null)
                 throw new XamlTypeSystemException("Unable to resolve type " + type);
             return f;
+        }
+
+        public static IXamlMethod FindMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
+        {
+            foreach (var m in type.Methods)
+                if (criteria(m))
+                    return m;
+            var bres = type.BaseType?.FindMethod(criteria);
+            if (bres != null)
+                return bres;
+            foreach(var iface in type.Interfaces)
+                foreach(var m in iface.Methods)
+                    if (criteria(m))
+                        return m;
+            return null;
         }
         
         public static IXamlMethod FindMethod(this IXamlType type, string name, IXamlType returnType, 
@@ -257,6 +275,24 @@ namespace XamlX.TypeSystem
         public static bool IsNullableOf(this IXamlType type, IXamlType vtype)
         {
             return type.IsNullable() && type.GenericArguments[0].Equals(vtype);
+        }
+
+        public static IXamlILEmitter EmitCall(this IXamlILEmitter emitter, IXamlMethod method, bool swallowResult = false)
+        {
+            emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+            if (swallowResult && !(method.ReturnType.Namespace == "System" && method.ReturnType.Name == "Void"))
+                emitter.Emit(OpCodes.Pop);
+            return emitter;
+        }
+
+        public static IXamlILEmitter DebugHatch(this IXamlILEmitter emitter, string message)
+        {
+            #if DEBUG
+            var debug = emitter.TypeSystem.GetType("XamlX.XamlXDebugHatch").FindMethod(m => m.Name == "Debug");
+            emitter.Emit(OpCodes.Ldstr, message);
+            emitter.Emit(OpCodes.Call, debug);
+            #endif
+            return emitter;
         }
     }
     

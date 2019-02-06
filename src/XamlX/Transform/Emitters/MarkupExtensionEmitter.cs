@@ -13,7 +13,7 @@ namespace XamlX.Transform.Emitters
                 return null;
             
             
-            var ptype = me.Property.PropertyType;
+            var ptype = me.Manipulation?.Parameters[0] ?? me.Property.PropertyType;
             var rtype = me.ProvideValue.ReturnType;
             context.Emit(me.Value, codeGen, me.Value.Type.GetClrType());
             if (me.ProvideValue.Parameters.Count != 0)
@@ -28,11 +28,27 @@ namespace XamlX.Transform.Emitters
                 .Emit(OpCodes.Call, me.ProvideValue)
                 .Emit(OpCodes.Stloc, resultLocal);
 
-            IXamlILEmitter CallSetter() => codeGen.Generator.Emit(me.Property.Setter.IsStatic ? OpCodes.Call : OpCodes.Callvirt,
-                me.Property.Setter);
+            IXamlILEmitter CallSetter()
+            {
+                codeGen.Generator.DebugHatch("Entering setter");
+                if (me.Manipulation != null)
+                {
+                    // {target}.{Property}.{Method)(res)
+                    var res = codeGen.Generator.DefineLocal(ptype);
+                    if (me.Property != null)
+                        codeGen.Generator
+                            .Emit(OpCodes.Stloc, res)
+                            .EmitCall(me.Property.Getter)
+                            .Emit(OpCodes.Ldloc, res);
+                    codeGen.Generator    
+                        .EmitCall(me.Manipulation, true);
+                    return codeGen.Generator;
+                }
+                
+                return codeGen.Generator.EmitCall(me.Property.Setter);
+            }
 
 
-            
             // Now we have the value returned by markup extension in resultLocal
 
             

@@ -10,14 +10,26 @@ This is work in progress, the current goal is to reach feature parity with Porta
 ## Implemented features
 
 - Direct convertion of XML to objects (instantiation, setting properties, setting attached properties)
+- Create / Populate semantics
 - Implicit type converting for types with `static T Parse(string, [IFormatProvider])` method (e. g. `int`, `double`, `TimeSpan`, etc)
 - Support for [Content] attribute both for direct content and for collections
 - Support for collections themselves (e. g. <List x:TypeArguments="sys:String"></List>
 - x:Arguments Directive
 - x:TypeArguments Directive
+- Markup extensions with escape hatch for non-convertable values (e. g. Binding)
+- Duck-typing for markup extensions, following signatures are checked for markup extension detection (`T` is anything that's not `System.Object`):
+```cs
+T ProvideValue();
+T ProvideValue(IServiceProvider provider);
+object ProvideValue();
+object ProvideValue(IServiceProvider provider);
+```
+If strongly typed markup extension overload is available, it's used to avoid unnecessary casts and boxing
 - x:Null Markup Extension (intrinsic: `ldnull`)
 - x:Type Markup Extension (intrinsic: `ldtoken` + `Type.FromRuntimeHandle`)
 - x:Static Markup Extension (intrinsic: properties (`call get_PropName`), fields (`ldsfld`), constants/enums (`ldc_*`/`ldstr`)
+- IRootObjectProvider
+
 - xml:space Handling in XAML (automatically via XmlReader)
 
 ## Architecture
@@ -30,7 +42,6 @@ The flow looks like this:
 
 ## Features to implement (TODO)
 
-- Populate
 - Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
 - Support for intercepting property setters and BeginInit/EndInit (needed for bindings to work)
@@ -44,12 +55,10 @@ The flow looks like this:
 - x:Array Markup Extension
 - x:Key Directive 
 - x:Name Directive
-- {} Escape Sequence / Markup Extension
 - Event handlers
 - xml:lang Handling in XAML
 
 - IProvideValueTarget
-- IRootObjectProvider
 - IDestinationTypeProvider (probably don't need it)
 - IUriContext
 

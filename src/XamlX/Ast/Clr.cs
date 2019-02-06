@@ -156,13 +156,15 @@ namespace XamlX.Ast
         public IXamlAstValueNode Value { get; set; }
         public IXamlProperty Property { get; set; }
         public IXamlMethod ProvideValue { get; }
+        public IXamlMethod Manipulation { get; set; }
 
         public XamlMarkupExtensionNode(IXamlLineInfo lineInfo, IXamlProperty property, IXamlMethod provideValue,
-            IXamlAstValueNode value) : base(lineInfo)
+            IXamlAstValueNode value, IXamlMethod manipulation) : base(lineInfo)
         {
             Property = property;
             ProvideValue = provideValue;
             Value = value;
+            Manipulation = manipulation;
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
