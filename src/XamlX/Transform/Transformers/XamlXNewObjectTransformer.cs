@@ -23,7 +23,7 @@ namespace XamlX.Transform.Transformers
             if (contentProperty == null)
             {
                 foreach (var ind in valueIndexes)
-                    if (context.Configuration.TryCallAdd(type, VNode(ind), out var addCall))
+                    if (XamlXTransformHelpers.TryCallAdd(context,null, type, VNode(ind), out var addCall))
                         ni.Children[ind] = addCall;
                     else
                         throw new XamlXLoadException(

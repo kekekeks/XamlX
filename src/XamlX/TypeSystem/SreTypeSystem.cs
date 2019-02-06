@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -119,6 +120,7 @@ namespace XamlX.TypeSystem
                        System.ResolveType(a.AttributeType))).ToList());
         }
         
+        [DebuggerDisplay("{" + nameof(Type) + "}")]
         class SreType : SreMemberInfo, IXamlXType
         {
             private IReadOnlyList<IXamlXProperty> _properties;
@@ -126,6 +128,7 @@ namespace XamlX.TypeSystem
             private IReadOnlyList<IXamlXMethod> _methods;
             private IReadOnlyList<IXamlXConstructor> _constructors;
             private IReadOnlyList<IXamlXType> _genericArguments;
+            private IReadOnlyList<IXamlXType> _interfaces;
             public Type Type { get; }
 
             public SreType(SreTypeSystem system, SreAssembly asm, Type type): base(system, type)
@@ -163,6 +166,9 @@ namespace XamlX.TypeSystem
                 _constructors ?? (_constructors = Type.GetConstructors(
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Select(c => new SreConstructor(System, c)).ToList());
+
+            public IReadOnlyList<IXamlXType> Interfaces =>
+                _interfaces ?? (_interfaces = Type.GetInterfaces().Select(System.ResolveType).ToList());
 
             public IReadOnlyList<IXamlXType> GenericArguments
             {
@@ -231,6 +237,7 @@ namespace XamlX.TypeSystem
             public Dictionary<string, object> Properties { get; }
         }
 
+        [DebuggerDisplay("{_method}")]
         class SreMethodBase : SreMemberInfo
         {
             private readonly MethodBase _method;
@@ -321,7 +328,7 @@ namespace XamlX.TypeSystem
 
         public IXamlXCodeGen CreateCodeGen(MethodBuilder mb)
         {
-            return new CodeGen(mb);
+            return new CodeGen(this, mb);
         }
 
         public Type GetType(IXamlXType t) => ((SreType) t).Type;
@@ -331,9 +338,11 @@ namespace XamlX.TypeSystem
         class IlGen : IXamlXEmitter
         {
             private readonly ILGenerator _ilg;
+            public IXamlXTypeSystem TypeSystem { get; }
 
-            public IlGen(ILGenerator ilg)
+            public IlGen(SreTypeSystem system, ILGenerator ilg)
             {
+                TypeSystem = system;
                 _ilg = ilg;
             }
 
@@ -478,7 +487,7 @@ namespace XamlX.TypeSystem
                 public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder) : base(system, methodBuilder)
                 {
                     MethodBuilder = methodBuilder;
-                    Generator = new IlGen(methodBuilder.GetILGenerator());
+                    Generator = new IlGen(system, methodBuilder.GetILGenerator());
                 }
 
                 public IXamlXEmitter Generator { get; }
@@ -511,7 +520,7 @@ namespace XamlX.TypeSystem
             {
                 public SreConstructorBuilder(SreTypeSystem system, ConstructorBuilder ctor) : base(system, ctor)
                 {
-                    Generator = new IlGen(ctor.GetILGenerator());
+                    Generator = new IlGen(system, ctor.GetILGenerator());
                 }
 
                 public IXamlXEmitter Generator { get; }
@@ -532,9 +541,9 @@ namespace XamlX.TypeSystem
 
         class CodeGen : IXamlXCodeGen
         {
-            public CodeGen(MethodBuilder mb)
+            public CodeGen(SreTypeSystem system, MethodBuilder mb)
             {
-                Generator = new IlGen(mb.GetILGenerator());
+                Generator = new IlGen(system, mb.GetILGenerator());
             }
             public IXamlXEmitter Generator { get; }
             public void EmitClosure(IEnumerable<IXamlXType> fields)
