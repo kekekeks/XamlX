@@ -29,6 +29,8 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - x:Type Markup Extension (intrinsic: `ldtoken` + `Type.FromRuntimeHandle`)
 - x:Static Markup Extension (intrinsic: properties (`call get_PropName`), fields (`ldsfld`), constants/enums (`ldc_*`/`ldstr`)
 - IRootObjectProvider
+- UsableDuringInitializationAttribute (assign first, set properties/contents later)
+- ISupportInitialize
 - Support for mc:Ignorable
 - xml:space Handling in XAML (automatically via XmlReader)
 
@@ -44,9 +46,6 @@ The flow looks like this:
 
 - Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
-- Support for intercepting property setters and BeginInit/EndInit (needed for bindings to work)
-- IsUsableDuringInitialization (assign first, set properties/contents later)
-- ISupportInitialize
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
 - https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/xaml-namespace-x-language-features
 - x:FactoryMethod Directive
@@ -56,14 +55,13 @@ The flow looks like this:
 - x:Name Directive
 - Event handlers
 - xml:lang Handling in XAML
-
 - IProvideValueTarget
 - IDestinationTypeProvider (probably don't need it)
 - IUriContext
 
 These are questinable fo
 - IXamlTypeResolver
-- IXamlNameResolver
+- IXamlNameResolver (probably without forward references)
 - IXamlNamespaceResolver
 
 

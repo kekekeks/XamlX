@@ -13,6 +13,7 @@ namespace XamlIl.Transform
     {
         private readonly XamlIlTransformerConfiguration _configuration;
         public List<IXamlIlAstTransformer> Transformers { get; } = new List<IXamlIlAstTransformer>();
+        public List<IXamlIlAstTransformer> SimplificationTransformers { get; } = new List<IXamlIlAstTransformer>();
         public List<IXamlIlAstNodeEmitter> Emitters { get; } = new List<IXamlIlAstNodeEmitter>();
         public XamlIlAstTransformationManager(XamlIlTransformerConfiguration configuration, bool fillWithDefaults)
         {
@@ -27,7 +28,12 @@ namespace XamlIl.Transform
                     new XamlIlTypeReferenceResolver(),
                     new XamlIlPropertyReferenceResolver(),
                     new XamlIlNewObjectTransformer(),
-                    new XamlIlXamlPropertyValueTransformer()
+                    new XamlIlXamlPropertyValueTransformer(),
+                    new XamlIlTopDownInitializationTransformer()
+                };
+                SimplificationTransformers = new List<IXamlIlAstTransformer>
+                {
+                    new XamlIlFlattenTransformer()
                 };
                 Emitters = new List<IXamlIlAstNodeEmitter>()
                 {
@@ -38,7 +44,8 @@ namespace XamlIl.Transform
                     new PropertyValueManipulationEmitter(),
                     new ManipulationGroupEmitter(),
                     new ValueWithManipulationsEmitter(),
-                    new MarkupExtensionEmitter()
+                    new MarkupExtensionEmitter(),
+                    new ObjectInitializationNodeEmitter()
                 };
             }
         }
@@ -52,6 +59,8 @@ namespace XamlIl.Transform
             foreach (var transformer in Transformers)
             {
                 root = root.Visit(n => transformer.Transform(ctx, n));
+                foreach (var simplifier in SimplificationTransformers)
+                    root = root.Visit(n => simplifier.Transform(ctx, n));
             }
 
             doc.Root = root;
@@ -140,6 +149,9 @@ namespace XamlIl.Transform
     public class XamlIlEmitContext
     {
         private readonly List<object> _emitters;
+
+        private readonly Dictionary<XamlIlAstCompilerLocalNode, (IXamlIlLocal local, IXamlIlCodeGen codegen)>
+            _locals = new Dictionary<XamlIlAstCompilerLocalNode, (IXamlIlLocal local, IXamlIlCodeGen codegen)>();
         public XamlIlTransformerConfiguration Configuration { get; }
         public XamlIlContext RuntimeContext { get; }
         public IXamlIlLocal ContextLocal { get; }
@@ -152,6 +164,31 @@ namespace XamlIl.Transform
             Configuration = configuration;
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
+        }
+
+        public void StLocal(XamlIlAstCompilerLocalNode node,  IXamlIlCodeGen codeGen)
+        {
+            if (_locals.TryGetValue(node, out var local))
+            {
+                if (local.codegen != codeGen)
+                    throw new XamlIlLoadException("Local node is assigned to a different codegen", node);
+            }
+            else
+                _locals[node] = local = (codeGen.Generator.DefineLocal(node.Type), codeGen);
+
+            codeGen.Generator.Emit(OpCodes.Stloc, local.local);
+        }
+
+        public void LdLocal(XamlIlAstCompilerLocalNode node, IXamlIlCodeGen codeGen)
+        {
+            if (_locals.TryGetValue(node, out var local))
+            {
+                if (local.codegen != codeGen)
+                    throw new XamlIlLoadException("Local node is assigned to a different codegen", node);
+                codeGen.Generator.Emit(OpCodes.Ldloc, local.local);
+            }
+            else
+                throw new XamlIlLoadException("Attempt to read uninitialized local variable", node);
         }
 
         public XamlIlNodeEmitResult Emit(IXamlIlAstNode value, IXamlIlCodeGen codeGen, IXamlIlType expectedType)
