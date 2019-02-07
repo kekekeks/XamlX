@@ -63,7 +63,7 @@ namespace XamlX.Transform
             {
                 if (GetCustomAttribute(p, TypeMappings.ContentAttributes).Any())
                 {
-                    if (found != null)
+                    if (found != null && !p.Equals(found))
                         throw new XamlXTypeSystemException(
                             "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
                     found = p;

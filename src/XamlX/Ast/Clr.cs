@@ -43,6 +43,11 @@ namespace XamlX.Ast
             Property = property;
             Value = value;
         }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Value = (IXamlXAstValueNode) Value.Visit(visitor);
+        }
     }
     
     public class XamlXPropertyValueManipulationNode : XamlXAstNode, IXamlXAstManipulationNode
@@ -110,15 +115,29 @@ namespace XamlX.Ast
         public override void VisitChildren(XamlXAstVisitorDelegate visitor) => VisitList(Children, visitor);
     }
 
-    public class XamlXValueWithManipulationNode : XamlXAstNode, IXamlXAstValueNode
+    public abstract class XamlXValueWithSideEffectNodeBase : XamlXAstNode, IXamlXAstValueNode
     {
+        protected XamlXValueWithSideEffectNodeBase(IXamlXLineInfo lineInfo, IXamlXAstValueNode value) : base(lineInfo)
+        {
+            Value = value;
+        }
+
         public IXamlXAstValueNode Value { get; set; }
+        public virtual IXamlXAstTypeReference Type => Value.Type;
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Value = (IXamlXAstValueNode) Value.Visit(visitor);
+        }
+    }
+    
+    public class XamlXValueWithManipulationNode : XamlXValueWithSideEffectNodeBase
+    {
         public IXamlXAstManipulationNode Manipulation { get; set; }
-        public IXamlXAstTypeReference Type => Value.Type;
-        
+
         public XamlXValueWithManipulationNode(IXamlXLineInfo lineInfo,
             IXamlXAstValueNode value,
-            IXamlXAstManipulationNode manipulation) : base(lineInfo)
+            IXamlXAstManipulationNode manipulation) : base(lineInfo, value)
         {
             Value = value;
             Manipulation = manipulation;
@@ -126,7 +145,7 @@ namespace XamlX.Ast
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
         {
-            Value = (IXamlXAstValueNode) Value?.Visit(visitor);
+            base.VisitChildren(visitor);
             Manipulation = (IXamlXAstManipulationNode) Manipulation?.Visit(visitor);
         }
     }
@@ -172,5 +191,22 @@ namespace XamlX.Ast
             Value = (IXamlXAstValueNode) Value.Visit(visitor);
         }
     }
-   
+    
+    public class XamlXObjectInitializationNode : XamlXAstNode, IXamlXAstManipulationNode
+    {
+        public IXamlXAstManipulationNode Manipulation { get; set; }
+        public IXamlXType Type { get; set; }
+        public XamlXObjectInitializationNode(IXamlXLineInfo lineInfo, 
+            IXamlXAstManipulationNode manipulation, IXamlXType type) 
+            : base(lineInfo)
+        {
+            Manipulation = manipulation;
+            Type = type;
+        }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Manipulation = (IXamlXAstManipulationNode) Manipulation.Visit(visitor);
+        }
+    }
 }

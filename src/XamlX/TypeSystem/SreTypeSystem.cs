@@ -294,7 +294,14 @@ namespace XamlX.TypeSystem
                 Getter = member.GetMethod == null ? null : new SreMethod(system, member.GetMethod);
             }
 
-            public bool Equals(IXamlXProperty other) => ((SreProperty) other)?.Member.Equals(Member) == true;
+            public bool Equals(IXamlXProperty other)
+            {
+                var otherProp =((SreProperty) other)?.Member;
+                if (otherProp == null)
+                    return false;
+                return otherProp?.DeclaringType?.Equals(Member.DeclaringType) == true
+                       && Member.Name == otherProp.Name;
+            }
 
             public IXamlXType PropertyType => System.ResolveType(Member.PropertyType);
             public IXamlXMethod Setter { get; }

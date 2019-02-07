@@ -25,14 +25,18 @@ namespace XamlParserTests
                 {
                     XmlnsAttributes =
                     {
-                        typeSystem.FindType("XamlParserTests.XmlnsDefinitionAttribute"),
+                        typeSystem.GetType("XamlParserTests.XmlnsDefinitionAttribute"),
 
                     },
                     ContentAttributes =
                     {
-                        typeSystem.FindType("XamlParserTests.ContentAttribute")
+                        typeSystem.GetType("XamlParserTests.ContentAttribute")
                     },
-                    RootObjectProvider = typeSystem.FindType("XamlParserTests.ITestRootObjectProvider"),
+                    UsableDuringInitializationAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
+                    },
+                    RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
                     ApplyNonMatchingMarkupExtension = typeSystem.GetType("XamlParserTests.CompilerTestBase")
                         .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
                 }
