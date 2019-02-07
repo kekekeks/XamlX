@@ -54,6 +54,11 @@ namespace XamlX.Ast
     {
         
     }
+
+    public interface IXamlAstImperativeNode : IXamlAstNode
+    {
+        
+    }
     
     public interface IXamlAstValueNode : IXamlAstNode
     {

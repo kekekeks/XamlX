@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
+using XamlX.Transform.Emitters;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
@@ -41,13 +42,14 @@ namespace XamlX.Transform.Transformers
             if (node is XamlAstObjectNode ni)
             {
                 SubTransform(context, ni);
-                
-                return new XamlValueWithManipulationNode(ni, 
+
+                return new XamlValueWithManipulationNode(ni,
                     new XamlAstNewClrObjectNode(ni, ni.Type, ni.Arguments),
-                    new XamlManipulationGroupNode(ni)
-                    {
-                        Children = ni.Children.Cast<IXamlAstManipulationNode>().ToList()
-                    });
+                    new XamlObjectInitializationNode(ni,
+                        new XamlManipulationGroupNode(ni)
+                        {
+                            Children = ni.Children.Cast<IXamlAstManipulationNode>().ToList()
+                        }, ni.Type.GetClrType()));
             }
 
             return node;

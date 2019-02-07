@@ -8,11 +8,14 @@ namespace XamlX.Transform
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem)
         {
             ServiceProvider = typeSystem.FindType("System.IServiceProvider");
+            SupportInitialize = typeSystem.FindType("System.ComponentModel.ISupportInitialize");
         }
 
         public List<IXamlType> XmlnsAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> ContentAttributes { get; set; } = new List<IXamlType>();
         public IXamlType ServiceProvider { get; set; }
+        public IXamlType SupportInitialize { get; set; }
         public IXamlType RootObjectProvider { get; set; }
         public IXamlCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>

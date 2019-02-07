@@ -16,6 +16,14 @@ namespace XamlParserTests
             
         }
     }
+
+    public class UsableDuringInitializationAttribute : Attribute
+    {
+        public UsableDuringInitializationAttribute(bool usable)
+        {
+            
+        }
+    }
     
     public interface ITestRootObjectProvider
     {
