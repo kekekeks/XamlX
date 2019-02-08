@@ -98,5 +98,22 @@ namespace XamlParserTests
             }, importedParents);
         }
         
+        [Fact]
+        public void TypeDescriptor_Stubs_Are_Somewhat_Usable()
+        {
+            CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
+            {
+                var tdc = (ITypeDescriptorContext) sp;
+                Assert.Equal(tdc, sp.GetService<ITypeDescriptorContext>());
+                Assert.Null(tdc.Instance);
+                Assert.Null(tdc.Container);
+                Assert.Null(tdc.PropertyDescriptor);
+                Assert.Throws<NotSupportedException>(() => tdc.OnComponentChanging());
+                Assert.Throws<NotSupportedException>(() => tdc.OnComponentChanged());
+                
+                return "Value";
+            }, null);
+        }
+        
     }
 }

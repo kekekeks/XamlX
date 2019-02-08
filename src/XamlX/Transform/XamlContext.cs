@@ -84,9 +84,9 @@ namespace XamlX.Transform
                     .Emit(OpCodes.Newobj, enumerator.ctor)
                     .Emit(OpCodes.Stfld, _parentStackEnumerableField));
                 ownServices.Add(mappings.ParentStackProvider);
-
             }
-            
+
+            ownServices.Add(EmitTypeDescriptorContextStub(typeSystem, builder, mappings));
             
             builder.AddInterfaceImplementation(mappings.ServiceProvider);
             var getServiceMethod = builder.DefineMethod(so,
@@ -141,6 +141,46 @@ namespace XamlX.Transform
             
         }
 
+        IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeBuilder builder,
+            XamlLanguageTypeMappings mappings)
+        {
+            if (mappings.TypeDescriptorContext == null)
+                return null;
+            var tdc = mappings.TypeDescriptorContext;
+            var tdcPrefix = tdc.Namespace + "." + tdc.Name+".";
+
+            builder.AddInterfaceImplementation(mappings.TypeDescriptorContext);
+            void PropertyStub(string name)
+            {
+                var originalGetter = tdc.FindMethod(m => m.Name == "get_" + name);
+                var getContainer = builder.DefineMethod(originalGetter.ReturnType, new IXamlType[0],
+                    tdcPrefix + "get_"+name, false, false,
+                    true, originalGetter);
+                getContainer.Generator.Ldnull().Ret();
+                builder.DefineProperty(originalGetter.ReturnType,tdcPrefix+ name, null, getContainer);
+            }
+            PropertyStub("Container");
+            PropertyStub("Instance");
+            PropertyStub("PropertyDescriptor");
+
+            void MethodStub(string name)
+            {
+                var original = tdc.FindMethod(m => m.Name == name);
+                builder.DefineMethod(original.ReturnType, original.Parameters, tdcPrefix + name, 
+                        false, false, true,
+                        original)
+                    .Generator
+                    .Emit(OpCodes.Newobj,
+                        typeSystem.FindType("System.NotSupportedException").FindConstructor(new List<IXamlType>()))
+                    .Emit(OpCodes.Throw);
+
+            }
+            MethodStub("OnComponentChanging");
+            MethodStub("OnComponentChanged");
+
+            return mappings.TypeDescriptorContext;
+        }
+        
         (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeBuilder parentBuilder,
             XamlLanguageTypeMappings mappings)
         {
