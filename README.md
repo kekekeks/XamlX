@@ -16,6 +16,7 @@ This is work in progress, the current goal is to reach feature parity with Porta
 - Support for collections themselves (e. g. `<List x:TypeArguments="sys:String"></List>`)
 - x:Arguments Directive
 - x:TypeArguments Directive
+- x:Key Directive 
 - Markup extensions with extension point for handling non-convertable values at runtime (e. g. `Binding`)
 - Duck-typing for markup extensions, following signatures are checked for markup extension detection (`T` is anything that's not `System.Object`):
 ```cs
@@ -52,7 +53,6 @@ The flow looks like this:
 - x:FactoryMethod Directive
 - x:Reference Markup Extension
 - x:Array Markup Extension
-- x:Key Directive 
 - x:Name Directive
 - Event handlers
 - xml:lang Handling in XAML

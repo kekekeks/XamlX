@@ -256,6 +256,7 @@ namespace XamlIl.TypeSystem
                     .Select(p => System.ResolveType(p.ParameterType)).ToList());
         }
         
+        [DebuggerDisplay("{Method}")]
         class SreMethod : SreMethodBase, IXamlIlMethod
         {
             public MethodInfo Method { get; }
