@@ -130,7 +130,7 @@ namespace XamlIl.TypeSystem
         void EmitClosure(IEnumerable<IXamlIlType> fields);
     }
 
-    public interface IXamlIlMethodBuilder : IXamlIlMethod
+    public interface IXamlIlMethodBuilder : IXamlIlMethod, IXamlIlCodeGen
     {
         IXamlIlEmitter Generator { get; }
     }

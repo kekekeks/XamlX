@@ -82,21 +82,13 @@ namespace XamlParserTests
 
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
-            var createMethod = t.DefineMethod("Build", MethodAttributes.Static | MethodAttributes.Public,
-                parsedType, new[]{typeof(IServiceProvider)});
-            var createGen = ((SreTypeSystem) _typeSystem).CreateCodeGen(createMethod);
             
-            var populateMethod = t.DefineMethod("Populate", MethodAttributes.Static | MethodAttributes.Public,
-                typeof(void), new []{typeof(IServiceProvider), parsedType});
-            var populateGen = ((SreTypeSystem) _typeSystem).CreateCodeGen(populateMethod);
-
-
             var contextClass = XamlIlContext.GenerateContextClass(((SreTypeSystem) _typeSystem).CreateTypeBuilder(
                     dm.DefineType(t.Name + "_Context", TypeAttributes.Public)),
                 _typeSystem, Configuration.TypeMappings, parsedTsType);
             
-            compiler.Compile(parsed.Root, createGen, contextClass, false);
-            compiler.Compile(parsed.Root, populateGen, contextClass, true);
+            var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
+            compiler.Compile(parsed.Root, parserTypeBuilder, contextClass, "Populate", "Build");
             
             var created = t.CreateType();
             #if !NETCOREAPP
