@@ -185,6 +185,32 @@ namespace XamlX.Transform
         public XamlTransformerConfiguration Configuration { get; }
         public XamlContext RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
+        private List<(IXamlType type, IXamlXCodeGen codeGen, IXamlLocal local)> _localsPool = 
+            new List<(IXamlType, IXamlXCodeGen, IXamlLocal)>();
+
+        public sealed class PooledLocal : IDisposable
+        {
+            public IXamlLocal Local { get; private set; }
+            private readonly XamlEmitContext _parent;
+            private readonly IXamlType _type;
+            private readonly IXamlXCodeGen _codeGen;
+
+            public PooledLocal(XamlEmitContext parent,  IXamlType type, IXamlXCodeGen codeGen, IXamlLocal local)
+            {
+                Local = local;
+                _parent = parent;
+                _type = type;
+                _codeGen = codeGen;
+            }
+
+            public void Dispose()
+            {
+                if (Local == null)
+                    return;
+                _parent._localsPool.Add((_type, _codeGen, Local));
+                Local = null;
+            }
+        }
 
         public XamlEmitContext(XamlTransformerConfiguration configuration,
             XamlContext runtimeContext, IXamlLocal contextLocal,
@@ -221,6 +247,22 @@ namespace XamlX.Transform
                 throw new XamlLoadException("Attempt to read uninitialized local variable", node);
         }
 
+        public PooledLocal GetLocal(IXamlXCodeGen codeGen, IXamlType type)
+        {
+            for (var c = 0; c < _localsPool.Count; c++)
+            {
+                if (_localsPool[c].type.Equals(type))
+                {
+                    var rv = new PooledLocal(this, type, codeGen, _localsPool[c].local);
+                    _localsPool.RemoveAt(c);
+                    return rv;
+                }
+            }
+
+            return new PooledLocal(this, type, codeGen, codeGen.Generator.DefineLocal(type));
+
+        }
+        
         public XamlNodeEmitResult Emit(IXamlAstNode value, IXamlXCodeGen codeGen, IXamlType expectedType)
         {
             var res = EmitCore(value, codeGen);

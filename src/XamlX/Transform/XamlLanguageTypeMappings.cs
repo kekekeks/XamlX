@@ -22,12 +22,13 @@ namespace XamlX.Transform
         public IXamlType ServiceProvider { get; set; }
         public IXamlType TypeDescriptorContext { get; set; }
         public IXamlType SupportInitialize { get; set; }
+        public IXamlType ProvideValueTarget { get; set; }
         public IXamlType RootObjectProvider { get; set; }
         public IXamlType ParentStackProvider { get; set; }
         public IXamlCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>
         /// Expected signature:
-        /// static void ApplyNonMatchingMarkupExtension(object target, string property, IServiceProvider prov, object value)
+        /// static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov, object value)
         /// </summary>
         public IXamlMethod ApplyNonMatchingMarkupExtension { get; set; }
     }

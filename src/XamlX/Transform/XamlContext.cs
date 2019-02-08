@@ -13,6 +13,8 @@ namespace XamlX.Transform
         public IXamlType ContextType { get; set; }
         private IXamlField _parentStackEnumerableField;
         private IXamlField _parentServiceProviderField;
+        public IXamlField PropertyTargetObject { get; set; }
+        public IXamlField PropertyTargetProperty { get; set; }
 
         /// <summary>
         /// Ctor expects IServiceProvider
@@ -40,13 +42,8 @@ namespace XamlX.Transform
             if (mappings.RootObjectProvider != null)
             {
                 builder.AddInterfaceImplementation(mappings.RootObjectProvider);
-                var getRootObject = builder.DefineMethod(so, new IXamlType[0],
-                    "get_RootObject", true, false, true);
-                builder.DefineProperty(so, "RootObject",null, getRootObject);
-                getRootObject.Generator
-                    .Emit(OpCodes.Ldarg_0)
-                    .Emit(OpCodes.Ldfld, RootObjectField)
-                    .Emit(OpCodes.Ret);
+                ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, "RootObject")
+                    .Generator.LdThisFld(RootObjectField).Ret();
                 ownServices.Add(mappings.RootObjectProvider);
             }
 
@@ -63,17 +60,8 @@ namespace XamlX.Transform
                     typeSystem.GetType("System.Collections.Generic.IEnumerable`1").MakeGenericType(new[]{so}),
                     "_parentStackEnumerable", false, false);
 
-                
-                var objectEnumerable = typeSystem
-                    .GetType("System.Collections.Generic.IEnumerable`1")
-                    .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
-                var getParents = builder.DefineMethod(objectEnumerable, new IXamlType[0],
-                    "get_Parents", true, false, true);
-                builder.DefineProperty(objectEnumerable, "Parents", null, getParents);
-                getParents.Generator
-                    .Emit(OpCodes.Ldarg_0)
-                    .Emit(OpCodes.Ldfld, _parentStackEnumerableField)
-                    .Emit(OpCodes.Ret);
+                ImplementInterfacePropertyGetter(builder, mappings.ParentStackProvider, "Parents")
+                    .Generator.LdThisFld(_parentStackEnumerableField).Ret();
                 
                 ctorCallbacks.Add(g => g
                     .Emit(OpCodes.Ldarg_0)
@@ -87,6 +75,18 @@ namespace XamlX.Transform
             }
 
             ownServices.Add(EmitTypeDescriptorContextStub(typeSystem, builder, mappings));
+
+            if (mappings.ProvideValueTarget != null)
+            {
+                builder.AddInterfaceImplementation(mappings.ProvideValueTarget);
+                PropertyTargetObject = builder.DefineField(so, "ProvideTargetObject", true, false);
+                PropertyTargetProperty = builder.DefineField(so, "ProvideTargetProperty", true, false);
+                ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetObject")
+                    .Generator.LdThisFld(PropertyTargetObject).Ret();
+                ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetProperty")
+                    .Generator.LdThisFld(PropertyTargetProperty).Ret();
+                ownServices.Add(mappings.ProvideValueTarget);
+            }
             
             builder.AddInterfaceImplementation(mappings.ServiceProvider);
             var getServiceMethod = builder.DefineMethod(so,
@@ -141,6 +141,18 @@ namespace XamlX.Transform
             
         }
 
+        private IXamlMethodBuilder ImplementInterfacePropertyGetter(IXamlTypeBuilder builder ,
+            IXamlType type, string name)
+        {
+            var prefix = type.Namespace + "." + type.Name + ".";
+            var originalGetter = type.FindMethod(m => m.Name == "get_" + name);
+            var gen = builder.DefineMethod(originalGetter.ReturnType, new IXamlType[0],
+                prefix + "get_" + name, false, false,
+                true, originalGetter);
+            builder.DefineProperty(originalGetter.ReturnType,prefix+ name, null, gen);
+            return gen;
+        }
+        
         IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeBuilder builder,
             XamlLanguageTypeMappings mappings)
         {
@@ -150,15 +162,7 @@ namespace XamlX.Transform
             var tdcPrefix = tdc.Namespace + "." + tdc.Name+".";
 
             builder.AddInterfaceImplementation(mappings.TypeDescriptorContext);
-            void PropertyStub(string name)
-            {
-                var originalGetter = tdc.FindMethod(m => m.Name == "get_" + name);
-                var getContainer = builder.DefineMethod(originalGetter.ReturnType, new IXamlType[0],
-                    tdcPrefix + "get_"+name, false, false,
-                    true, originalGetter);
-                getContainer.Generator.Ldnull().Ret();
-                builder.DefineProperty(originalGetter.ReturnType,tdcPrefix+ name, null, getContainer);
-            }
+            void PropertyStub(string name) => ImplementInterfacePropertyGetter(builder, tdc, name).Generator.Ldnull().Ret();
             PropertyStub("Container");
             PropertyStub("Instance");
             PropertyStub("PropertyDescriptor");

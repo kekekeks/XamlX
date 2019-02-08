@@ -196,6 +196,16 @@ namespace XamlX.TypeSystem
     {
         public static string GetFqn(this IXamlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
 
+        public static string GetFullName(this IXamlType type)
+        {
+            var name = type.Name;
+            if (type.Namespace != null)
+                name = type.Namespace + "." + name;
+            if (type.Assembly != null)
+                name += "," + type.Assembly.Name;
+            return name;
+        }
+        
         public static IXamlType GetType(this IXamlTypeSystem sys, string type)
         {
             var f = sys.FindType(type);

@@ -35,4 +35,11 @@ namespace XamlParserTests
     {
         IEnumerable<object> Parents { get; }
     }
+
+    public interface ITestProvideValueTarget
+    {
+        object TargetObject { get; }
+        object TargetProperty { get; }
+    }
+    
 }
