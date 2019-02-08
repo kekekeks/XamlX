@@ -31,14 +31,14 @@ namespace XamlIl.Transform.Emitters
                 objectListType = context.Configuration.TypeSystem.GetType("System.Collections.Generic.List`1")
                     .MakeGenericType(new[] {context.Configuration.WellKnownTypes.Object});
                     
-                var local = codeGen.Generator.DefineLocal(init.Type);
+                using(var local = context.GetLocal(codeGen, init.Type))
                 codeGen.Generator
-                    .Stloc(local)
+                    .Stloc(local.Local)
                     .Ldloc(context.ContextLocal).Ldfld(context.RuntimeContext.ParentListField)
-                    .Ldloc(local)
+                    .Ldloc(local.Local)
                     .EmitCall(objectListType.FindMethod("Add", context.Configuration.WellKnownTypes.Void,
                         false, context.Configuration.WellKnownTypes.Object))
-                    .Ldloc(local);
+                    .Ldloc(local.Local);
 
             }
 

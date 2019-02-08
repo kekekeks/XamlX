@@ -53,7 +53,7 @@ namespace XamlParserTests
             (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
     }
 
-    delegate void ApplyNonMatchingMarkupExtensionDelegate(object target, string property, IServiceProvider prov,
+    delegate void ApplyNonMatchingMarkupExtensionDelegate(object target, object property, IServiceProvider prov,
         object value);
     
     public class MarkupExtensionTests : CompilerTestBase
@@ -144,7 +144,7 @@ namespace XamlParserTests
         }
 
 
-        public static void ApplyNonMatchingMarkupExtension(object target, string property, IServiceProvider prov,
+        public static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov,
             object value)
         {
             ((ApplyNonMatchingMarkupExtensionDelegate)

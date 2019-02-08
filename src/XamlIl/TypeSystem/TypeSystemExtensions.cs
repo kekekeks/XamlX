@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace XamlIl.TypeSystem
@@ -27,6 +28,9 @@ namespace XamlIl.TypeSystem
             => emitter.Emit(OpCodes.Stloc, local);
 
         public static IXamlIlEmitter Ldnull(this IXamlIlEmitter emitter) => emitter.Emit(OpCodes.Ldnull);
+
+        public static IXamlIlEmitter Ldstr(this IXamlIlEmitter emitter, string arg)
+            => emitter.Emit(OpCodes.Ldstr, arg);
         
         public static IXamlIlEmitter Ldc_I4(this IXamlIlEmitter emitter, int arg)
             => arg == 0
@@ -67,12 +71,22 @@ namespace XamlIl.TypeSystem
         
         public static IXamlIlEmitter Ldtoken(this IXamlIlEmitter emitter, IXamlIlType type)
             => emitter.Emit(OpCodes.Ldtoken, type);
+        
+        public static IXamlIlEmitter Ldtoken(this IXamlIlEmitter emitter, IXamlIlMethod method)
+            => emitter.Emit(OpCodes.Ldtoken, method);
 
         public static IXamlIlEmitter Ldtype(this IXamlIlEmitter emitter, IXamlIlType type)
         {
             var conv = emitter.TypeSystem.GetType("System.Type")
                 .FindMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetTypeFromHandle");
             return emitter.Ldtoken(type).EmitCall(conv);
+        }
+        
+        public static IXamlIlEmitter LdMethodInfo(this IXamlIlEmitter emitter, IXamlIlMethod method)
+        {
+            var conv = emitter.TypeSystem.GetType("System.Reflection.MethodInfo")
+                .FindMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetMethodFromHandle");
+            return emitter.Ldtoken(method).EmitCall(conv);
         }
 
 

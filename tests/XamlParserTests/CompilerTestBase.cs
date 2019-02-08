@@ -37,6 +37,7 @@ namespace XamlParserTests
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
                     },
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
+                    ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlParserTests.IXamlParentStack"),
                     ApplyNonMatchingMarkupExtension = typeSystem.GetType("XamlParserTests.CompilerTestBase")
                         .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
@@ -44,7 +45,7 @@ namespace XamlParserTests
             );
         }
 
-        public static void ApplyNonMatchingMarkupExtension(object target, string property, IServiceProvider prov,
+        public static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov,
             object value)
         {
             throw new InvalidCastException();
