@@ -52,10 +52,15 @@ namespace XamlX.Transform.Transformers
                 // netstandard and .NET Core
                 
                 var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, StringComparison.Ordinal);
-                if (indexOfAssemblyPrefix != -1) 
+                string asm = null;
+                if (indexOfAssemblyPrefix != -1)
+                {
+                    asm = ns.Substring(indexOfAssemblyPrefix + assemblyNamePrefix.Length).Trim();
                     ns = ns.Substring(0, indexOfAssemblyPrefix);
+                }
 
-                found = Attempt(context.Configuration.TypeSystem.FindType,$"{ns}.{name}");
+                found = Attempt(x =>
+                    context.Configuration.TypeSystem.FindType(x, asm), $"{ns}.{name}");
             }
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);

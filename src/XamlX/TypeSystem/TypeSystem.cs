@@ -88,6 +88,7 @@ namespace XamlX.TypeSystem
         IReadOnlyList<IXamlAssembly> Assemblies { get; }
         IXamlAssembly FindAssembly(string substring);
         IXamlType FindType(string name);
+        IXamlType FindType(string name, string assembly);
     }
     
     public interface IXamlILEmitter
