@@ -34,6 +34,8 @@ namespace XamlX.TypeSystem
 
         SreAssembly ResolveAssembly(Assembly asm)
         {
+            if (asm.IsDynamic)
+                return null;
             foreach(var a in Assemblies)
                 if (((SreAssembly) a).Assembly == asm)
                     return (SreAssembly)a;
@@ -464,12 +466,12 @@ namespace XamlX.TypeSystem
             }
         }
 
-        class SreTypeBuilder : IXamlXTypeBuilder
+        class SreTypeBuilder : SreType, IXamlXTypeBuilder
         {
             private readonly SreTypeSystem _system;
             private readonly TypeBuilder _tb;
 
-            public SreTypeBuilder(SreTypeSystem system, TypeBuilder tb)
+            public SreTypeBuilder(SreTypeSystem system, TypeBuilder tb) : base(system,null, tb)
             {
                 _system = system;
                 _tb = tb;
@@ -506,8 +508,9 @@ namespace XamlX.TypeSystem
                 }
             }
             
-            public IXamlXMethodBuilder DefineMethod(IXamlXType returnType, IEnumerable<IXamlXType> args, string name, bool isPublic, bool isStatic,
-                bool isInterfaceImpl)
+            public IXamlXMethodBuilder DefineMethod(IXamlXType returnType, IEnumerable<IXamlXType> args, string name,
+                bool isPublic, bool isStatic,
+                bool isInterfaceImpl, IXamlXMethod overrideMethod)
             {
                 var ret = ((SreType) returnType).Type;
                 var argTypes = args.Cast<SreType>().Select(t => t.Type);
@@ -516,6 +519,9 @@ namespace XamlX.TypeSystem
                     |(isStatic ? MethodAttributes.Static : default(MethodAttributes))
                     |(isInterfaceImpl ? MethodAttributes.Virtual|MethodAttributes.NewSlot : default(MethodAttributes))
                     , ret, argTypes.ToArray());
+                if (overrideMethod != null)
+                    _tb.DefineMethodOverride(m, ((SreMethod) overrideMethod).Method);
+               
                 return new SreMethodBuilder(_system, m);
             }
 
@@ -549,7 +555,18 @@ namespace XamlX.TypeSystem
             }
             
             public IXamlXType CreateType() => new SreType(_system, null, _tb.CreateTypeInfo());
-
+            public IXamlXTypeBuilder DefineSubType(IXamlXType baseType, string name, bool isPublic)
+            {
+                var attrs = TypeAttributes.Class;
+                if (isPublic)
+                    attrs |= TypeAttributes.NestedPublic;
+                else
+                    attrs |= TypeAttributes.NestedPrivate;
+                
+                var builder  = _tb.DefineNestedType(name, attrs,
+                    ((SreType) baseType).Type);
+                return new SreTypeBuilder(_system, builder);
+            }
         }
 
         class CodeGen : IXamlXCodeGen
