@@ -27,6 +27,7 @@ namespace XamlX.Transform
                     new XamlXXArgumentsTransformer(),
                     new XamlXTypeReferenceResolver(),
                     new XamlXPropertyReferenceResolver(),
+                    new XamlXStructConvertTransformer(),
                     new XamlXNewObjectTransformer(),
                     new XamlXXamlPropertyValueTransformer(),
                     new XamlXTopDownInitializationTransformer()
