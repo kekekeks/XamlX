@@ -6,6 +6,8 @@ namespace XamlParserTests
 {
     public class ConvertersTestClass
     {
+        [Content]
+        public object ContentProperty { get; set; }
         public long Int64Property { get; set; }
         public double DoubleProperty { get; set; }
         public float FloatProperty { get; set; }
@@ -18,7 +20,7 @@ namespace XamlParserTests
         public string Value { get; set; }
         public override string ToString() => Value;
 
-        public static ConvertersTestValueType  Parse(string s, IFormatProvider prov)
+        public static ConvertersTestValueType Parse(string s, IFormatProvider prov)
         {
             Assert.NotNull(prov);
             return new ConvertersTestValueType() {Value = s};
@@ -55,5 +57,42 @@ namespace XamlParserTests
                 CultureInfo.CurrentCulture = old;
             }
         }
+        
+        [Theory,
+         InlineData("x:Int32", "1"),
+         InlineData("x:Double", "1.5"),
+         InlineData("x:Single", "2.5"),
+         InlineData("x:String", "Some string"),
+         InlineData("x:TimeSpan", "01:10:00"),
+         InlineData("sys:Int32", "1"),
+         InlineData("sys:Double", "1.5"),
+         InlineData("sys:Single", "2.5"),
+         InlineData("sys:String", "Some string"),
+         InlineData("sys:TimeSpan", "01:10:00")
+        ]
+        public void Primitive_Types_Are_Properly_Parsed(string type, string value)
+        {
+            var res = (ConvertersTestClass) CompileAndRun($@"
+<ConvertersTestClass
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'>
+    <{type}>{value}</{type}>
+</ConvertersTestClass>");
+            CultureInfo old = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+                var v = res.ContentProperty;
+                var ts = v.ToString();
+                Assert.Equal(value, ts);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = old;
+            }
+        }
+        
+        
     }
 }

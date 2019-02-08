@@ -27,6 +27,7 @@ namespace XamlIl.Transform
                     new XamlIlXArgumentsTransformer(),
                     new XamlIlTypeReferenceResolver(),
                     new XamlIlPropertyReferenceResolver(),
+                    new XamlIlStructConvertTransformer(),
                     new XamlIlNewObjectTransformer(),
                     new XamlIlXamlPropertyValueTransformer(),
                     new XamlIlTopDownInitializationTransformer()
