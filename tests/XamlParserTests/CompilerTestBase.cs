@@ -37,6 +37,7 @@ namespace XamlParserTests
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
                     },
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
+                    ParentStackProvider = typeSystem.GetType("XamlParserTests.IXamlParentStack"),
                     ApplyNonMatchingMarkupExtension = typeSystem.GetType("XamlParserTests.CompilerTestBase")
                         .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
                 }

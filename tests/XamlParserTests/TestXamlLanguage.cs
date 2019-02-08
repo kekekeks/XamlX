@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using XamlParserTests;
 
 [assembly: XmlnsDefinition("test", "XamlParserTests")]
@@ -28,5 +29,10 @@ namespace XamlParserTests
     public interface ITestRootObjectProvider
     {
         object RootObject { get; }
+    }
+
+    public interface IXamlParentStack
+    {
+        IEnumerable<object> Parents { get; }
     }
 }
