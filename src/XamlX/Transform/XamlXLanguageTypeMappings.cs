@@ -10,11 +10,15 @@ namespace XamlX.Transform
             ServiceProvider = typeSystem.FindType("System.IServiceProvider");
             TypeDescriptorContext = typeSystem.FindType("System.ComponentModel.ITypeDescriptorContext");
             SupportInitialize = typeSystem.FindType("System.ComponentModel.ISupportInitialize");
+            var tconv = typeSystem.FindType("System.ComponentModel.TypeConverterAttribute");
+            if (tconv != null)
+                TypeConverterAttributes.Add(tconv);
         }
 
         public List<IXamlXType> XmlnsAttributes { get; set; } = new List<IXamlXType>();
         public List<IXamlXType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlXType>();
         public List<IXamlXType> ContentAttributes { get; set; } = new List<IXamlXType>();
+        public List<IXamlXType> TypeConverterAttributes { get; set; } = new List<IXamlXType>();
         public IXamlXType ServiceProvider { get; set; }
         public IXamlXType TypeDescriptorContext { get; set; }
         public IXamlXType SupportInitialize { get; set; }

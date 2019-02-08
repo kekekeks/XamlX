@@ -68,11 +68,11 @@ namespace XamlX.Ast
         }
     }
 
-    public abstract class XamlXInstanceMethodCallBaseNode : XamlXAstNode
+    public abstract class XamlXMethodCallBaseNode : XamlXAstNode
     {
         public IXamlXMethod Method { get; set; }
         public List<IXamlXAstValueNode> Arguments { get; set; }
-        public XamlXInstanceMethodCallBaseNode(IXamlXLineInfo lineInfo, 
+        public XamlXMethodCallBaseNode(IXamlXLineInfo lineInfo, 
             IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args) 
             : base(lineInfo)
         {
@@ -86,17 +86,17 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXInstanceNoReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlXAstManipulationNode
+    public class XamlXNoReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstManipulationNode
     {
-        public XamlXInstanceNoReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
+        public XamlXNoReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
             : base(lineInfo, method, args)
         {
         }
     }
     
-    public class XamlXStaticReturnMethodCallNode : XamlXInstanceMethodCallBaseNode, IXamlXAstValueNode
+    public class XamlXStaticOrTargetedReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstValueNode
     {
-        public XamlXStaticReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
+        public XamlXStaticOrTargetedReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
             : base(lineInfo, method, args)
         {
             Type = new XamlXAstClrTypeReference(lineInfo, method.ReturnType);
@@ -208,5 +208,18 @@ namespace XamlX.Ast
         {
             Manipulation = (IXamlXAstManipulationNode) Manipulation.Visit(visitor);
         }
+    }
+
+    public class XamlXToArrayNode : XamlXAstNode, IXamlXAstValueNode
+    {
+        public IXamlXAstValueNode Value { get; set; }
+        public XamlXToArrayNode(IXamlXLineInfo lineInfo, IXamlXAstTypeReference arrayType,
+            IXamlXAstValueNode value) : base(lineInfo)
+        {
+            Type = arrayType;
+            Value = value;
+        }
+
+        public IXamlXAstTypeReference Type { get; }
     }
 }
