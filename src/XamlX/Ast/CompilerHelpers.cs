@@ -92,4 +92,44 @@ namespace XamlX.Ast
         }
     }
 
+    public class XamlAstContextLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    {
+        public XamlAstContextLocalNode(IXamlLineInfo lineInfo, IXamlType type) : base(lineInfo)
+        {
+            Type = new XamlAstClrTypeReference(this, type);
+        }
+
+        public IXamlAstTypeReference Type { get; }
+        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlXCodeGen codeGen)
+        {
+            codeGen.Generator.Ldloc(context.ContextLocal);
+            return XamlNodeEmitResult.Type(Type.GetClrType());
+        }
+    }
+
+    public class XamlAstRuntimeCastNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    {
+        public XamlAstRuntimeCastNode(IXamlLineInfo lineInfo, IXamlAstValueNode value, IXamlAstTypeReference castTo) : base(lineInfo)
+        {
+            Value = value;
+            Type = castTo;
+        }
+        public IXamlAstValueNode Value { get; set; }
+        public IXamlAstTypeReference Type { get; set; }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Value = (IXamlAstValueNode) Value.Visit(visitor);
+            Type = (IXamlAstTypeReference) Type.Visit(visitor);
+        }
+
+        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlXCodeGen codeGen)
+        {
+            context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
+            var t = Type.GetClrType();
+            codeGen.Generator.Emit(OpCodes.Castclass, t);
+            return XamlNodeEmitResult.Type(t);
+        }
+    }
+
 }

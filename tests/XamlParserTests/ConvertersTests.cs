@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using Xunit;
 
@@ -9,10 +10,12 @@ namespace XamlParserTests
         [Content]
         public object ContentProperty { get; set; }
         public long Int64Property { get; set; }
+        public bool BoolProperty { get; set; }
         public double DoubleProperty { get; set; }
         public float FloatProperty { get; set; }
         public TimeSpan TimeSpanProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
+        public ConvertersTestsClassWithConverter ConverterProperty { get; set; }
     }
 
     public struct ConvertersTestValueType
@@ -26,15 +29,37 @@ namespace XamlParserTests
             return new ConvertersTestValueType() {Value = s};
         }
     }
+
+    [TypeConverter(typeof(ConvertersTests.TestConverter))]
+    public class ConvertersTestsClassWithConverter
+    {
+        public string Value { get; set; }
+        public override string ToString() => Value;
+    }
+    
+    
     
     public class ConvertersTests : CompilerTestBase
     {
+
+        public class TestConverter : TypeConverter
+        {
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                Assert.Equal(CultureInfo.InvariantCulture, culture);
+                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+                return new ConvertersTestsClassWithConverter {Value = (string) value};
+            }
+        }
+        
         [Theory,
             InlineData("Int64Property", "1"),
+            InlineData("BoolProperty", "True"),
             InlineData("DoubleProperty", "1.5"),
             InlineData("FloatProperty", "2.5"),
             InlineData("CustomProperty", "Custom"),
-            InlineData("TimeSpanProperty", "01:10:00")
+            InlineData("TimeSpanProperty", "01:10:00"),
+            InlineData("ConverterProperty", "CustomConverter"),
         ]
         public void Parse_Converters_Are_Operational(string property, string value)
         {

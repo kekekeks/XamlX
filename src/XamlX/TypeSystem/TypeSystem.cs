@@ -36,6 +36,7 @@ namespace XamlX.TypeSystem
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
+        IXamlType DeclaringType { get; }
     }
 
     public interface IXamlMember
