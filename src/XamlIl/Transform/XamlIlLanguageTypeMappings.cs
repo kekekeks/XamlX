@@ -17,6 +17,7 @@ namespace XamlIl.Transform
         public IXamlIlType ServiceProvider { get; set; }
         public IXamlIlType SupportInitialize { get; set; }
         public IXamlIlType RootObjectProvider { get; set; }
+        public IXamlIlType ParentStackProvider { get; set; }
         public IXamlIlCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>
         /// Expected signature:

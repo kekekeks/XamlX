@@ -31,6 +31,7 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - IRootObjectProvider
 - UsableDuringInitializationAttribute (assign first, set properties/contents later)
 - ISupportInitialize
+- XAML parents stack (see IXamlParentsStack in tests) as an lightweight alternative for IAmbientProvider
 - Support for mc:Ignorable
 - xml:space Handling in XAML (automatically via XmlReader)
 

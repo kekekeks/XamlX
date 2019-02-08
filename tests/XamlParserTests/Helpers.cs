@@ -65,9 +65,8 @@ namespace XamlParserTests
                     StructDiff(prop.GetValue(parsed), prop.GetValue(expected), path + "." + prop.Name);
                 }
             }
-
-
-            
         }
+
+        public static T GetService<T>(this IServiceProvider prov) => (T) prov.GetService(typeof(T));
     }
 }

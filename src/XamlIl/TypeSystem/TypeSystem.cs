@@ -140,17 +140,18 @@ namespace XamlIl.TypeSystem
         IXamlIlEmitter Generator { get; }
     }
 
-    public interface IXamlIlTypeBuilder
+    public interface IXamlIlTypeBuilder : IXamlIlType
     {
         IXamlIlField DefineField(IXamlIlType type, string name, bool isPublic, bool isStatic);
         void AddInterfaceImplementation(IXamlIlType type);
 
         IXamlIlMethodBuilder DefineMethod(IXamlIlType returnType, IEnumerable<IXamlIlType> args, string name, bool isPublic, bool isStatic,
-            bool isInterfaceImpl);
+            bool isInterfaceImpl, IXamlIlMethod overrideMethod = null);
 
         IXamlIlProperty DefineProperty(IXamlIlType propertyType, string name, IXamlIlMethod setter, IXamlIlMethod getter);
         IXamlIlConstructorBuilder DefineConstructor(params IXamlIlType[] args);
         IXamlIlType CreateType();
+        IXamlIlTypeBuilder DefineSubType(IXamlIlType baseType, string name, bool isPublic);
     }
     
     
