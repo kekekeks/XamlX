@@ -65,49 +65,78 @@ namespace XamlX.Transform
 
             doc.Root = root;
         }
-        
-        
+
+
         /// <summary>
-        /// populate = true:
-        /// void Populate(IServiceProvider sp, T target);
-        /// populate = false
-        /// T Build(IServiceProvider sp); 
+        ///         /// T Build(IServiceProvider sp); 
         /// </summary>
 
-        public void Compile(IXamlAstNode root, IXamlXCodeGen codeGen, XamlContext context, bool populate)
-        {
-            var contextLocal = codeGen.Generator.DefineLocal(context.ContextType);
-            codeGen.Generator
-                .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Newobj, context.Constructor)
-                .Emit(OpCodes.Stloc, contextLocal);
-            var rootGrp = (XamlValueWithManipulationNode) root;
-            var emitContext = new XamlEmitContext(_configuration, context, contextLocal, Emitters);
-            
-            if (populate)
-            {
-                codeGen.Generator
-                    .Emit(OpCodes.Ldloc, contextLocal)
-                    .Emit(OpCodes.Ldarg_1)
-                    .Emit(OpCodes.Stfld, context.RootObjectField)
-                    .Emit(OpCodes.Ldarg_1);
-                emitContext.Emit(rootGrp.Manipulation, codeGen, null);
-                codeGen.Generator.Emit(OpCodes.Ret);
-            }
-            else
-            {
-                codeGen.Generator.Emit(OpCodes.Ldloc, contextLocal);
-                emitContext.Emit(rootGrp.Value, codeGen, rootGrp.Value.Type.GetClrType());
-                codeGen.Generator
-                    .Emit(OpCodes.Stfld, context.RootObjectField);
 
+        XamlEmitContext InitCodeGen(IXamlXCodeGen codeGen, XamlContext context,
+            bool needContextLocal)
+        {
+            IXamlLocal contextLocal = null;
+
+            if (needContextLocal)
+            {
+                contextLocal = codeGen.Generator.DefineLocal(context.ContextType);
                 codeGen.Generator
-                    .Emit(OpCodes.Ldloc, contextLocal)
-                    .Emit(OpCodes.Ldfld, context.RootObjectField)
-                    .Emit(OpCodes.Dup);
-                emitContext.Emit(rootGrp.Manipulation, codeGen, null);
-                codeGen.Generator.Emit(OpCodes.Ret);
+                    .Emit(OpCodes.Ldarg_0)
+                    .Emit(OpCodes.Newobj, context.Constructor)
+                    .Emit(OpCodes.Stloc, contextLocal);
             }
+
+            var emitContext = new XamlEmitContext(_configuration, context, contextLocal, Emitters);
+            return emitContext;
+        }
+        
+        void CompileBuild(IXamlAstValueNode rootInstance, IXamlXCodeGen codeGen, XamlContext context,
+            IXamlMethod compiledPopulate)
+        {
+            var needContextLocal = !(rootInstance is XamlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
+            var emitContext = InitCodeGen(codeGen, context, needContextLocal);
+
+
+            var rv = codeGen.Generator.DefineLocal(rootInstance.Type.GetClrType());
+            emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
+            codeGen.Generator
+                .Emit(OpCodes.Stloc, rv)
+                .Emit(OpCodes.Ldarg_0)
+                .Emit(OpCodes.Ldloc, rv)
+                .Emit(OpCodes.Call, compiledPopulate)
+                .Emit(OpCodes.Ldloc, rv)
+                .Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// void Populate(IServiceProvider sp, T target);
+        /// </summary>
+
+        void CompilePopulate(IXamlAstManipulationNode manipulation, IXamlXCodeGen codeGen, XamlContext context)
+        {
+            var emitContext = InitCodeGen(codeGen, context, true);
+
+            codeGen.Generator
+                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Emit(OpCodes.Ldarg_1)
+                .Emit(OpCodes.Stfld, context.RootObjectField)
+                .Emit(OpCodes.Ldarg_1);
+            emitContext.Emit(manipulation, codeGen, null);
+            codeGen.Generator.Emit(OpCodes.Ret);
+        }
+
+        public void Compile(IXamlAstNode root, IXamlTypeBuilder typeBuilder, XamlContext contextType,
+            string populateMethodName, string createMethodName)
+        {
+            var rootGrp = (XamlValueWithManipulationNode) root;
+            var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
+                new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
+                populateMethodName, true, true, false);
+            CompilePopulate(rootGrp.Manipulation, populateMethod, contextType);
+
+            var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
+                new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
+            CompileBuild(rootGrp.Value, createMethod, contextType, populateMethod);
         }
     }
 
