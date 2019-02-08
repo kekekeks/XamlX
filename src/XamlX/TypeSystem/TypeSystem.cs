@@ -202,6 +202,21 @@ namespace XamlX.TypeSystem
                 throw new XamlXTypeSystemException("Unable to resolve type " + type);
             return f;
         }
+        
+        public static IEnumerable<IXamlXMethod> FindMethods(this IXamlXType type, Func<IXamlXMethod, bool> criteria)
+        {
+            foreach (var m in type.Methods)
+                if (criteria(m))
+                    yield return m;
+            var bt = type.BaseType;
+            if(bt!=null)
+                foreach (var bm in bt.FindMethods(criteria))
+                    yield return bm;
+            foreach(var iface in type.Interfaces)
+            foreach(var m in iface.Methods)
+                if (criteria(m))
+                    yield return m;
+        }
 
         public static IXamlXMethod FindMethod(this IXamlXType type, Func<IXamlXMethod, bool> criteria)
         {

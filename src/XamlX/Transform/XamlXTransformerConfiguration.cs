@@ -108,19 +108,7 @@ namespace XamlX.Transform
             foreach (var a in GetCustomAttribute(prop, t))
                 yield return a;
         }
-
-        public bool TryCallAdd(IXamlXType type, IXamlXAstValueNode value, out XamlXInstanceNoReturnMethodCallNode rv)
-        {
-            rv = null;
-            var method = type.FindMethod("Add", WellKnownTypes.Void, true, value.Type.GetClrType());
-            if (method != null)
-            {
-                rv = new XamlXInstanceNoReturnMethodCallNode(value, method, new[] {value});
-                return true;
-            }
-            return false;
-        }
-        
+       
         public bool TryGetCorrectlyTypedValue(IXamlXAstValueNode node, IXamlXType type, out IXamlXAstValueNode rv)
         {
             rv = null;

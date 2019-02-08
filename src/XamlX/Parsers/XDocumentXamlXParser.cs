@@ -151,7 +151,7 @@ namespace XamlX.Parsers
                         i.Children.Add(new XamlXAstXmlDirective(el.AsLi(),
                             attr.Name.NamespaceName, attr.Name.LocalName, new[]
                             {
-                                new XamlXAstTextNode(el.AsLi(), attr.Value)
+                                ParseTextValueOrMarkupExtension(attr.Value, el, attr.AsLi())
                             }
                         ));
                     // Parse as a property

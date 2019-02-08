@@ -29,7 +29,8 @@ namespace XamlParserTests
         Prop1='123' 
         Root.AttachedProp='AttachedValue'
         t:Namespaced.AttachedProp='AttachedValue'
-        d:Directive='DirectiveValue'>
+        d:Directive='DirectiveValue'
+        d:DirectiveExt='{Extension 123}'>
         <t:SubChild Prop='321'/>
         <Child.DottedProp>DottedValue</Child.DottedProp>
         <Root.AttachedDottedProp>AttachedValue</Root.AttachedDottedProp>
@@ -107,6 +108,17 @@ namespace XamlParserTests
                                 new XamlXAstXmlDirective(ni, "directive", "Directive", new[]
                                 {
                                     new XamlXAstTextNode(ni, "DirectiveValue")
+                                }),
+                                //d:DirectiveExt='{Extension 123}'>
+                                new XamlXAstXmlDirective(ni, "directive", "DirectiveExt", new[]
+                                {
+                                    new XamlXAstObjectNode(ni, extensionType)
+                                    {
+                                        Arguments =
+                                        {
+                                            new XamlXAstTextNode(ni, "123"),
+                                        }
+                                    }
                                 }),
                                 // <t:SubChild Prop='321'/>
                                 new XamlXAstObjectNode(ni, nsSubChildType)

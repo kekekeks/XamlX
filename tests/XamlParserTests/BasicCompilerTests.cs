@@ -41,7 +41,6 @@ namespace XamlParserTests
             Assert.Equal("test", res.Children[0].Test);
             Assert.Equal("test2", res.Children[1].Test);
         }
-        
     }
 
 
