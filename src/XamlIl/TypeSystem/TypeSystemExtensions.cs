@@ -26,6 +26,8 @@ namespace XamlIl.TypeSystem
         public static IXamlIlEmitter Stloc(this IXamlIlEmitter emitter, IXamlIlLocal local)
             => emitter.Emit(OpCodes.Stloc, local);
 
+        public static IXamlIlEmitter Ldnull(this IXamlIlEmitter emitter) => emitter.Emit(OpCodes.Ldnull);
+        
         public static IXamlIlEmitter Ldc_I4(this IXamlIlEmitter emitter, int arg)
             => arg == 0
                 ? emitter.Emit(OpCodes.Ldc_I4_0)

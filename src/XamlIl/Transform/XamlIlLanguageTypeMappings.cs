@@ -8,6 +8,7 @@ namespace XamlIl.Transform
         public XamlIlLanguageTypeMappings(IXamlIlTypeSystem typeSystem)
         {
             ServiceProvider = typeSystem.FindType("System.IServiceProvider");
+            TypeDescriptorContext = typeSystem.FindType("System.ComponentModel.ITypeDescriptorContext");
             SupportInitialize = typeSystem.FindType("System.ComponentModel.ISupportInitialize");
         }
 
@@ -15,6 +16,7 @@ namespace XamlIl.Transform
         public List<IXamlIlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlIlType>();
         public List<IXamlIlType> ContentAttributes { get; set; } = new List<IXamlIlType>();
         public IXamlIlType ServiceProvider { get; set; }
+        public IXamlIlType TypeDescriptorContext { get; set; }
         public IXamlIlType SupportInitialize { get; set; }
         public IXamlIlType RootObjectProvider { get; set; }
         public IXamlIlType ParentStackProvider { get; set; }
