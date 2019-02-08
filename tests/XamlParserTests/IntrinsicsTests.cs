@@ -56,7 +56,7 @@ namespace XamlParserTests
 <IntrinsicsTestsClass 
     xmlns='test' 
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
-    xmlns:scg='clr-namespace:System.Collections.Generic'
+    xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
 >
     <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
 </IntrinsicsTestsClass>");

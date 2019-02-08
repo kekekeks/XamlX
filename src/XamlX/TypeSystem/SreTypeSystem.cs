@@ -53,6 +53,15 @@ namespace XamlX.TypeSystem
             return rv;
         }
 
+        public IXamlXType FindType(string name, string asm)
+        {
+            if (asm != null)
+                name += ", " + asm;
+            var found = Type.GetType(name);
+            if (found == null)
+                return null;
+            return ResolveType(found);
+        }
         public IXamlXType FindType(string name)
         {
             foreach (var asm in Assemblies)
