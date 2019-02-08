@@ -2,7 +2,11 @@
 
 General purpose pluggable XAML compiler with no runtime dependencies.
 
-This is work in progress, the current goal is to reach feature parity with Portable.Xaml for the purposes of Avalonia project and add features missing in Portable.Xaml (e. g. UsableDuringInitialization) 
+This is work in progress, the current goal is to reach feature parity with Portable.Xaml for the purposes of Avalonia project and add features missing in Portable.Xaml (e. g. UsableDuringInitialization).
+
+The compiler isn't tied to Avalonia in any way, shape or form and can be used for any purposes 
+by configuring `XamlXLanguageTypeMappings` to match the needs of your particular framework.
+Further customization can be done by AST manipulations.
 
 ![default](https://user-images.githubusercontent.com/1067584/52111361-90ad7900-2614-11e9-8133-a5aa6ebb1804.png)
 
@@ -46,37 +50,41 @@ The flow looks like this:
 
 ## Features to implement (TODO)
 
+Features marked with *[dontneed]* aren't required for the Avalonia project, but might be implemented later if the need arises.
+Features marked with *[opt]* are considered optional and will be implemented after non-optional features
+
 - Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
 - https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/xaml-namespace-x-language-features
-- x:FactoryMethod Directive
-- x:Reference Markup Extension
 - x:Array Markup Extension
 - x:Name Directive
 - Event handlers
-- xml:lang Handling in XAML
 - IProvideValueTarget
-- IDestinationTypeProvider (probably don't need it)
-- IUriContext
+- x:FactoryMethod Directive *[opt]*
+- x:Reference Markup Extension *[opt]*
+- xml:lang Handling in XAML *[dontneed]*
+- IDestinationTypeProvider (probably don't need it) *[dontneed]*
 
-These are questinable fo
+
+These are questinable due to heavy reliance on reflection:
 - IXamlTypeResolver
-- IXamlNameResolver (probably without forward references)
-- IXamlNamespaceResolver
+- IXamlNameResolver (probably without forward references) *[dontneed]*
+- IXamlNamespaceResolver *[dontneed]*
 
 
-These directives are framework-specific and can be implemented via custom transformers/emitters
-- x:Property Directive *fwspec*
-- x:Uid Directive *fwspec*
-- x:XData Intrinsic XAML Type *fwspec*
-- x:Shared Attribute *fwspec*
-- x:Class Directive *fwspec*
-- x:Subclass Directive *fwspec*
-- x:ClassModifier Directive *fwspec*
-- x:FieldModifier Directive *fwspec*
-- x:Member Directive *fwspec*
-- x:Members Directive *fwspec*
+These are framework-specific and can be implemented via custom transformers/emitters or custom IServiceProvider
+- IUriContext
+- x:Property Directive
+- x:Uid Directive
+- x:XData Intrinsic XAML Type
+- x:Shared Attribute
+- x:Class Directive
+- x:Subclass Directive
+- x:ClassModifier Directive
+- x:FieldModifier Directive
+- x:Member Directive
+- x:Members Directive
 
 
 ### Won't fix:
