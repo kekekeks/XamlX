@@ -138,7 +138,8 @@ namespace XamlParserTests
                 else if (num == 1)
                 {
                     Assert.Equal("1", ((ServiceProviderTestsClass) pt.TargetObject).Property);
-                    var me = ((MethodInfo) pt.TargetProperty);
+                    var mh = (RuntimeMethodHandle) pt.TargetProperty;
+                    var me = MethodBase.GetMethodFromHandle(mh);
                     Assert.Equal(typeof(ServiceProviderTests), me.DeclaringType);
                     Assert.Equal("SetAttachedProperty", me.Name);
                 }
