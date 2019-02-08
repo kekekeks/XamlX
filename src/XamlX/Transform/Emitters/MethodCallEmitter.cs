@@ -21,7 +21,9 @@ namespace XamlX.Transform.Emitters
                 throw new XamlLoadException(
                     $"XamlXStaticReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);
 
-            return isVoid ? XamlNodeEmitResult.Void : XamlNodeEmitResult.Type(mc.Method.ReturnType);
+            return mc is XamlXInstanceNoReturnMethodCallNode || isVoid
+                ? XamlNodeEmitResult.Void
+                : XamlNodeEmitResult.Type(mc.Method.ReturnType);
         }
     }
 }

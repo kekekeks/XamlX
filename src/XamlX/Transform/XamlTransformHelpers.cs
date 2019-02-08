@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
@@ -65,15 +66,43 @@ namespace XamlX.Transform
         public static bool TryCallAdd(XamlAstTransformationContext context,
             IXamlProperty targetProperty, IXamlType targetPropertyType, IXamlAstValueNode value, out IXamlAstManipulationNode rv)
         {
+            var so = context.Configuration.WellKnownTypes.Object;
+            rv = null;
+            IXamlMethod FindAdder(IXamlType valueType, IXamlType keyType = null)
+            {
+                var candidates = targetPropertyType.FindMethods(m =>
+                        !m.IsStatic && m.IsPublic
+                                    && (m.Name == "Add" || m.Name.EndsWith(".Add"))).ToList();
+
+                bool CheckArg(IXamlType argType, bool allowObj)
+                {
+                    if (allowObj && argType.Equals(so))
+                        return true;
+                    if (!allowObj && !argType.Equals(so) && argType.IsAssignableFrom(valueType))
+                        return true;
+                    return false;
+                }
+
+                foreach (var allowObj in new[] {true, false})
+                {
+                    foreach (var m in candidates)
+                    {
+                        if (keyType == null && m.Parameters.Count == 1
+                                            && CheckArg(m.Parameters[0], allowObj))
+                            return m;
+                        if (keyType != null && m.Parameters.Count == 2
+                                                 && m.Parameters[0].IsAssignableFrom(keyType)
+                                                 && CheckArg(m.Parameters[1], allowObj))
+                            return m;
+
+                    }
+                }
+
+                return null;
+            }
             if (TryConvertMarkupExtension(context, value, targetProperty, out var ext))
             {
-                var adder = new[] {ext.ProvideValue.ReturnType, context.Configuration.WellKnownTypes.Object}
-                    .Select(argType => targetPropertyType.FindMethod(m =>
-                        !m.IsStatic && m.IsPublic
-                        && (m.Name == "Add" || m.Name.EndsWith(".Add"))
-                        && m.Parameters.Count == 1
-                        && m.Parameters[0].Equals(argType)))
-                    .FirstOrDefault(m => m != null);
+                var adder = FindAdder(ext.ProvideValue.ReturnType);
                 if (adder != null)
                 {
                     ext.Manipulation = adder;
@@ -81,17 +110,72 @@ namespace XamlX.Transform
                     return true;
                 }
             }
-
-            if (context.Configuration.TryCallAdd(targetPropertyType, value, out var nret))
+            else
             {
-                if (targetProperty != null)
-                    rv = new XamlPropertyValueManipulationNode(value, targetProperty, nret);
-                else
-                    rv = nret;
-                return true;
-            }
+                var vtype = value.Type.GetClrType();
+                IXamlAstValueNode keyNode = null;
 
-            rv = null;
+                bool IsKeyDirective(object node) => node is XamlAstXmlDirective d
+                                                                        && d.Namespace == XamlNamespaces.Xaml2006 &&
+                                                                        d.Name == "Key";
+
+                void ProcessDirective(object d)
+                {
+                    var directive = (XamlAstXmlDirective) d;
+                    if (directive.Values.Count != 1)
+                        throw new XamlParseException("Invalid number of arguments for x:Key directive",
+                            directive);
+                    keyNode = directive.Values[0];
+                }
+
+               
+                void ProcessDirectiveCandidateList(IList nodes)
+                {
+                    var d = nodes.OfType<object>().FirstOrDefault(IsKeyDirective);
+                    if (d != null)
+                    {
+                        ProcessDirective(d);
+                        nodes.Remove(d);
+                    }
+                }
+                
+                IXamlAstManipulationNode VisitManipulationNode(IXamlAstManipulationNode man)
+                {
+                    if (IsKeyDirective(man))
+                    {
+                        ProcessDirective(man);
+                        return new XamlManipulationGroupNode(man);
+                    }
+                    if(man is XamlManipulationGroupNode grp)
+                        ProcessDirectiveCandidateList(grp.Children);
+                    if (man is XamlObjectInitializationNode init)
+                        init.Manipulation = VisitManipulationNode(init.Manipulation);
+                    return man;
+                }
+                
+                if (value is XamlAstObjectNode astObject)
+                    ProcessDirectiveCandidateList(astObject.Children);
+                else if (value is XamlValueWithManipulationNode vman)
+                {
+                    vman.Manipulation = VisitManipulationNode(vman.Manipulation);
+                }
+                    
+                
+                var adder = FindAdder(vtype, keyNode?.Type.GetClrType());
+                if (adder != null)
+                {
+                    var args = new List<IXamlAstValueNode>();
+                    if (keyNode != null)
+                        args.Add(keyNode);
+                    args.Add(value);
+                    
+                    rv = new XamlXInstanceNoReturnMethodCallNode(value, adder, args);
+                    if (targetProperty != null)
+                        rv = new XamlPropertyValueManipulationNode(value, targetProperty, rv);
+                    return true;
+                }
+            }
+            
             return false;
         }
 
