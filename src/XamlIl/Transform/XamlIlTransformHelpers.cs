@@ -169,7 +169,7 @@ namespace XamlIl.Transform
                         args.Add(keyNode);
                     args.Add(value);
                     
-                    rv = new XamlIlInstanceNoReturnMethodCallNode(value, adder, args);
+                    rv = new XamlIlNoReturnMethodCallNode(value, adder, args);
                     if (targetProperty != null)
                         rv = new XamlIlPropertyValueManipulationNode(value, targetProperty, rv);
                     return true;

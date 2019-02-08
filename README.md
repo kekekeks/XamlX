@@ -16,6 +16,8 @@ Further customization can be done by AST manipulations.
 - Direct convertion of XML to objects (instantiation, setting properties, setting attached properties)
 - Create / Populate semantics
 - Implicit type converting for types with `static T Parse(string, [IFormatProvider])` method (e. g. `int`, `double`, `TimeSpan`, etc)
+- Compile-time parsing of primitive types (numbers and boolean)
+- Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - Support for [Content] attribute both for direct content and for collections
 - Support for collections themselves (e. g. `<List x:TypeArguments="sys:String"></List>`)
 - x:Arguments Directive
@@ -54,12 +56,11 @@ The flow looks like this:
 Features marked with *[dontneed]* aren't required for the Avalonia project, but might be implemented later if the need arises.
 Features marked with *[opt]* are considered optional and will be implemented after non-optional features
 
-- Support for TypeConverterAttribute and a way to provide conveters for types without one.
 - A way to execute a part of markup in a deferred way (probably multiple times) for later use
 - x:Array Markup Extension
-- x:Name Directive
-- Event handlers
 - IProvideValueTarget
+- x:Name Directive
+- Event handlers *[opt]*
 - x:FactoryMethod Directive *[opt]*
 - x:Reference Markup Extension *[opt]*
 - xml:lang Handling in XAML *[dontneed]*

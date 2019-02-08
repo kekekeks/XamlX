@@ -48,6 +48,8 @@ namespace XamlIl.TypeSystem
                     return Single.Parse(s, CultureInfo.InvariantCulture);
                 if (type.Name == "Double")
                     return Double.Parse(s, CultureInfo.InvariantCulture);
+                if (type.Name == "Boolean")
+                    return Boolean.Parse(s);
                 return null;
             }
 

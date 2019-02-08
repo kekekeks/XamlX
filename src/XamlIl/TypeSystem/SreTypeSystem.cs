@@ -87,8 +87,8 @@ namespace XamlIl.TypeSystem
 
             public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes
                 => _customAttributes ??
-                   (_customAttributes = Assembly.GetCustomAttributesData().Select(a => new SreCustomAttribute(a,
-                       _system.ResolveType(a.AttributeType))).ToList());
+                   (_customAttributes = Assembly.GetCustomAttributesData().Select(a => new SreCustomAttribute(
+                       _system, a, _system.ResolveType(a.AttributeType))).ToList());
 
             public IXamlIlType FindType(string fullName)
             {
@@ -118,8 +118,8 @@ namespace XamlIl.TypeSystem
 
             public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes
                 => _customAttributes ??
-                   (_customAttributes = _member.GetCustomAttributesData().Select(a => new SreCustomAttribute(a,
-                       System.ResolveType(a.AttributeType))).ToList());
+                   (_customAttributes = _member.GetCustomAttributesData().Select(a => new SreCustomAttribute(System,
+                       a, System.ResolveType(a.AttributeType))).ToList());
         }
         
         [DebuggerDisplay("{" + nameof(Type) + "}")]
@@ -220,11 +220,13 @@ namespace XamlIl.TypeSystem
         {
             private readonly CustomAttributeData _data;
 
-            public SreCustomAttribute(CustomAttributeData data, IXamlIlType type)
+            public SreCustomAttribute(SreTypeSystem system, CustomAttributeData data, IXamlIlType type)
             {
                 Type = type;
                 _data = data;
-                Parameters = data.ConstructorArguments.Select(p => p.Value).ToList();
+                Parameters = data.ConstructorArguments.Select(p =>
+                    p.Value is Type t ? system.ResolveType(t) : p.Value
+                ).ToList();
                 Properties = data.NamedArguments?.ToDictionary(x => x.MemberName, x => x.TypedValue.Value) ??
                              new Dictionary<string, object>();
             }
@@ -270,8 +272,7 @@ namespace XamlIl.TypeSystem
 
             public bool Equals(IXamlIlMethod other) => ((SreMethod) other)?.Method.Equals(Method) == true;
             public IXamlIlType ReturnType => _system.ResolveType(Method.ReturnType);
-
-
+            public IXamlIlType DeclaringType => _system.ResolveType(Method.DeclaringType);
         }
 
         class SreConstructor : SreMethodBase, IXamlIlConstructor

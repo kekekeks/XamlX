@@ -57,7 +57,7 @@ namespace XamlIl.Transform.Transformers
                     }
                 };
             }
-            else if (node is XamlIlInstanceNoReturnMethodCallNode call)
+            else if (node is XamlIlNoReturnMethodCallNode call)
             {
                 var deferredNodes = new List<IXamlIlAstManipulationNode>();
                 for (var c = 0; c < call.Arguments.Count; c++)
