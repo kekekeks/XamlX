@@ -339,6 +339,7 @@ namespace XamlX.TypeSystem
         }
 
         public Type GetType(IXamlXType t) => ((SreType) t).Type;
+        public IXamlXType GetType(Type t) => ResolveType(t);
 
         public IXamlXTypeBuilder CreateTypeBuilder(TypeBuilder builder) => new SreTypeBuilder(this, builder);
 
@@ -498,6 +499,11 @@ namespace XamlX.TypeSystem
                 }
 
                 public IXamlXEmitter Generator { get; }
+
+                public void EmitClosure(IEnumerable<IXamlXType> fields)
+                {
+                    throw new NotImplementedException();
+                }
             }
             
             public IXamlXMethodBuilder DefineMethod(IXamlXType returnType, IEnumerable<IXamlXType> args, string name, bool isPublic, bool isStatic,
