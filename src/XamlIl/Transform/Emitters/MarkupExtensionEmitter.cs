@@ -24,7 +24,8 @@ namespace XamlIl.Transform.Emitters
             void EmitPropertyDescriptor()
             {
                 if (me.Property is XamlIlAstAttachedProperty)
-                    codeGen.Generator.LdMethodInfo(me.Property.Getter ?? me.Property.Setter);
+                    codeGen.Generator.Ldtoken(me.Property.Getter ?? me.Property.Setter)
+                        .Emit(OpCodes.Box, context.Configuration.TypeSystem.GetType("System.RuntimeMethodHandle"));
                 else
                     codeGen.Generator.Ldstr(me.Property?.Name);
             }

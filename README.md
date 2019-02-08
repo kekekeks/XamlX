@@ -40,7 +40,7 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - ISupportInitialize
 - XAML parents stack (see IXamlParentsStack in tests) as an lightweight alternative for IAmbientProvider
 - Support for mc:Ignorable
-- IProvideValueTarget (property name is provided for regular properties, MethodInfo is provided for attached ones)
+- IProvideValueTarget (property name is provided for regular properties, RuntimeMethodInfo is provided for attached ones)
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
 - xml:space Handling in XAML (automatically via XmlReader)
 
