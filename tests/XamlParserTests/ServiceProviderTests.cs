@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace XamlParserTests
@@ -113,6 +114,40 @@ namespace XamlParserTests
                 
                 return "Value";
             }, null);
+        }
+
+        public static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
+        {
+            
+        }
+        
+        [Fact]
+        public void ProvideValueTarget_Provides_Info_About_Properties()
+        {
+            var num = 0;
+            CompileAndRun(@"
+<ServiceProviderTestsClass xmlns='test' 
+    Property='{Callback}'
+    ServiceProviderTests.AttachedProperty='{Callback}'
+/>", sp =>
+            {
+                var pt = sp.GetService<ITestProvideValueTarget>();
+                Assert.IsType<ServiceProviderTestsClass>(pt.TargetObject);
+                if(num == 0)
+                    Assert.Equal("Property", pt.TargetProperty);
+                else if (num == 1)
+                {
+                    Assert.Equal("1", ((ServiceProviderTestsClass) pt.TargetObject).Property);
+                    var me = ((MethodInfo) pt.TargetProperty);
+                    Assert.Equal(typeof(ServiceProviderTests), me.DeclaringType);
+                    Assert.Equal("SetAttachedProperty", me.Name);
+                }
+                else
+                    throw new InvalidOperationException();
+                num++;
+                return num.ToString();
+            }, null);
+            Assert.Equal(2, num);
         }
         
     }

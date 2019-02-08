@@ -14,7 +14,8 @@ namespace XamlX.Transform.Transformers
                 if (!(prop.DeclaringType is XamlXAstClrTypeReference declaringRef))
                 {
                     if (context.StrictMode)
-                        throw new XamlXParseException($"Unable to resolve property {prop.Name} on {prop.DeclaringType}", node);
+                        throw new XamlXParseException(
+                            $"Unable to resolve property {prop.Name} on {prop.DeclaringType}", node);
                     else
                         return node;
                 }
@@ -68,36 +69,37 @@ namespace XamlX.Transform.Transformers
                     return null;
                 }
 
-                return new XamlXAstClrPropertyReference(prop, new AttachedProperty(prop.Name, setter, getter));
+                return new XamlXAstClrPropertyReference(prop, new XamlXAstAttachedProperty(prop.Name, setter, getter));
             }
 
             return node;
         }
+    }
 
-        class AttachedProperty : IXamlXProperty
+    class XamlXAstAttachedProperty : IXamlXProperty
+    {
+        public bool Equals(IXamlXProperty other)
         {
-            public bool Equals(IXamlXProperty other)
-            {
-                if (other == null)
-                    return false;
-                return other.Name == Name
-                       && other.Getter.Equals(Getter)
-                       && other.Setter.Equals(Setter);
-            }
+            if (other == null)
+                return false;
+            return other.Name == Name
+                   && other.Getter.Equals(Getter)
+                   && other.Setter.Equals(Setter);
+        }
 
-            public string Name { get; }
-            public IXamlXType PropertyType { get; }
-            public IXamlXMethod Setter { get; }
-            public IXamlXMethod Getter { get; }
-            public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; set; } = new IXamlXCustomAttribute[0];
+        public string Name { get; }
+        public IXamlXType PropertyType { get; }
+        public IXamlXMethod Setter { get; }
+        public IXamlXMethod Getter { get; }
+        public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; set; } = new IXamlXCustomAttribute[0];
 
-            public AttachedProperty(string name, IXamlXMethod setter, IXamlXMethod getter)
-            {
-                Name = name;
-                Setter = setter;
-                Getter = getter;
-                PropertyType = getter != null ? getter.ReturnType : setter.Parameters[1];
-            }
+        public XamlXAstAttachedProperty(string name, IXamlXMethod setter, IXamlXMethod getter)
+        {
+            Name = name;
+            Setter = setter;
+            Getter = getter;
+            PropertyType = getter != null ? getter.ReturnType : setter.Parameters[1];
         }
     }
+
 }
