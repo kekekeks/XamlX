@@ -1,0 +1,54 @@
+﻿<TestObject xmlns="http://example.com/benchmark" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	StringProperty="Hello!"
+	>
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+	<ChildObject StringProperty="Hello" IntProperty="2" DoubleProperty="123.456" BoolProperty="True" />
+</TestObject>
