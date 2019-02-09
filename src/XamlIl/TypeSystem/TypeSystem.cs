@@ -122,18 +122,8 @@ namespace XamlIl.TypeSystem
         
     }
 
-    public interface IXamlIlClosure : IXamlIlCodeGen
-    {
-        
-    }
     
-    public interface IXamlIlCodeGen
-    {
-        IXamlIlEmitter Generator { get; }
-        void EmitClosure(IEnumerable<IXamlIlType> fields);
-    }
-
-    public interface IXamlIlMethodBuilder : IXamlIlMethod, IXamlIlCodeGen
+    public interface IXamlIlMethodBuilder : IXamlIlMethod
     {
         IXamlIlEmitter Generator { get; }
     }

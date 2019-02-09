@@ -7,7 +7,7 @@ namespace XamlIl.Transform.Emitters
 {
     public class NewObjectEmitter : IXamlIlAstNodeEmitter
     {
-        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             if (!(node is XamlIlAstNewClrObjectNode n))
                 return null;
@@ -26,7 +26,7 @@ namespace XamlIl.Transform.Emitters
                 context.Emit(ctorArg, codeGen, ctor.Parameters[c]);
             }
 
-            var gen = codeGen.Generator
+            var gen = codeGen
                 .Emit(OpCodes.Newobj, ctor);
             
             

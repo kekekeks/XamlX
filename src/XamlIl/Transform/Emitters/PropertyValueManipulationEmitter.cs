@@ -6,11 +6,11 @@ namespace XamlIl.Transform.Emitters
 {
     public class PropertyValueManipulationEmitter : IXamlIlAstNodeEmitter
     {
-        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             if (!(node is XamlIlPropertyValueManipulationNode pvm))
                 return null;
-            codeGen.Generator.Emit(pvm.Property.Getter.IsStatic ? OpCodes.Call : OpCodes.Callvirt,
+            codeGen.Emit(pvm.Property.Getter.IsStatic ? OpCodes.Call : OpCodes.Callvirt,
                 pvm.Property.Getter);
             context.Emit(pvm.Manipulation, codeGen, null);
             

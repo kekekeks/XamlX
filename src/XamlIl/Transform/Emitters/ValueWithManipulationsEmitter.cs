@@ -6,7 +6,7 @@ namespace XamlIl.Transform.Emitters
 {
     public class ValueWithManipulationsEmitter : IXamlIlAstNodeEmitter
     {
-        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             if (!(node is XamlIlValueWithManipulationNode vwm))
                 return null;
@@ -15,7 +15,7 @@ namespace XamlIl.Transform.Emitters
             if (vwm.Manipulation != null &&
                 !(vwm.Manipulation is XamlIlManipulationGroupNode grp && grp.Children.Count == 0))
             {
-                codeGen.Generator.Emit(OpCodes.Dup);
+                codeGen.Emit(OpCodes.Dup);
                 context.Emit(vwm.Manipulation, codeGen, null);
             }
             return XamlIlNodeEmitResult.Type(created.ReturnType);

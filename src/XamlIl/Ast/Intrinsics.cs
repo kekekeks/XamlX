@@ -15,9 +15,9 @@ namespace XamlIl.Ast
         }
 
         public IXamlIlAstTypeReference Type { get; }
-        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
-            codeGen.Generator.Emit(OpCodes.Ldnull);
+            codeGen.Emit(OpCodes.Ldnull);
             return XamlIlNodeEmitResult.Type(XamlIlPseudoType.Null);
         }
     }
@@ -42,7 +42,7 @@ namespace XamlIl.Ast
             Value = Value.Visit(visitor) as IXamlIlAstTypeReference;
         }
 
-        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             var type = Value.GetClrType();
             var method = _systemType.Methods.FirstOrDefault(m =>
@@ -52,7 +52,7 @@ namespace XamlIl.Ast
             if (method == null)
                 throw new XamlIlTypeSystemException(
                     $"Unable to find GetTypeFromHandle(RuntimeTypeHandle) on {_systemType.GetFqn()}");
-            codeGen.Generator
+            codeGen
                 .Emit(OpCodes.Ldtoken, type)
                 .Emit(OpCodes.Call, method);
             return XamlIlNodeEmitResult.Type(_systemType);
@@ -82,13 +82,13 @@ namespace XamlIl.Ast
                        p.Name == Member && p.Getter != null && p.Getter.IsPublic && p.Getter.IsStatic);
         }
         
-        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             var type = TargetType.GetClrType();
             var member = ResolveMember(type);
             if (member is IXamlIlProperty prop)
             {
-                codeGen.Generator.Emit(OpCodes.Call, prop.Getter);
+                codeGen.Emit(OpCodes.Call, prop.Getter);
                 return XamlIlNodeEmitResult.Type(prop.Getter.ReturnType);
             }
             else if (member is IXamlIlField field)
@@ -98,20 +98,20 @@ namespace XamlIl.Ast
                     var ftype = field.FieldType.IsEnum ? field.FieldType.GetEnumUnderlyingType() : field.FieldType;
                     
                     if (ftype.Name == "UInt64" || ftype.Name == "Int64")
-                        codeGen.Generator.Emit(OpCodes.Ldc_I8,
+                        codeGen.Emit(OpCodes.Ldc_I8,
                             TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
                     else if (ftype.Name == "Double")
-                        codeGen.Generator.Emit(OpCodes.Ldc_R8, (double) field.GetLiteralValue());
+                        codeGen.Emit(OpCodes.Ldc_R8, (double) field.GetLiteralValue());
                     else if (ftype.Name == "Single")
-                        codeGen.Generator.Emit(OpCodes.Ldc_R4, (float) field.GetLiteralValue());
+                        codeGen.Emit(OpCodes.Ldc_R4, (float) field.GetLiteralValue());
                     else if (ftype.Name == "String")
-                        codeGen.Generator.Emit(OpCodes.Ldstr, (string) field.GetLiteralValue());
+                        codeGen.Emit(OpCodes.Ldstr, (string) field.GetLiteralValue());
                     else
-                        codeGen.Generator.Emit(OpCodes.Ldc_I4,
+                        codeGen.Emit(OpCodes.Ldc_I4,
                             TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
                 }
                 else
-                    codeGen.Generator.Emit(OpCodes.Ldsfld, field);
+                    codeGen.Emit(OpCodes.Ldsfld, field);
                 return XamlIlNodeEmitResult.Type(field.FieldType);
             }
             else
@@ -148,18 +148,18 @@ namespace XamlIl.Ast
         }
 
         public IXamlIlAstTypeReference Type { get; }
-        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlCodeGen codeGen)
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             if (Constant is string)
-                codeGen.Generator.Emit(OpCodes.Ldstr, (string) Constant);
+                codeGen.Emit(OpCodes.Ldstr, (string) Constant);
             else if (Constant is long || Constant is ulong)
-                codeGen.Generator.Emit(OpCodes.Ldc_I8, TypeSystemHelpers.ConvertLiteralToLong(Constant));
+                codeGen.Emit(OpCodes.Ldc_I8, TypeSystemHelpers.ConvertLiteralToLong(Constant));
             else if (Constant is float f)
-                codeGen.Generator.Emit(OpCodes.Ldc_R4, f);
+                codeGen.Emit(OpCodes.Ldc_R4, f);
             else if (Constant is double d)
-                codeGen.Generator.Emit(OpCodes.Ldc_R8, d);
+                codeGen.Emit(OpCodes.Ldc_R8, d);
             else
-                codeGen.Generator.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
+                codeGen.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
             return XamlIlNodeEmitResult.Type(Type.GetClrType());
         }
     }
