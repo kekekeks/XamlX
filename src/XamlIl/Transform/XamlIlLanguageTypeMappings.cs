@@ -40,6 +40,11 @@ namespace XamlIl.Transform
         /// static IServiceProvider InnerServiceProviderFactory(IServiceProvider self);
         /// </summary>
         public IXamlIlMethod InnerServiceProviderFactoryMethod { get; set; }
+        /// <summary>
+        /// static Func&lt;IServiceProvider, object&gt; DeferredTransformationFactory(Func&lt;IServiceProvider, object&gt; builder, IServiceProvider provider);
+        /// </summary>
+        public IXamlIlMethod DeferredContentExecutorCustomization { get; set; }
+        public List<IXamlIlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlIlType>();
     }
 
     public interface IXamlIlCustomAttributeResolver

@@ -9,7 +9,7 @@ namespace XamlIl.Transform
 {
     public class XamlIlEmitContext
     {
-        private readonly List<object> _emitters;
+        public List<object> Emitters { get; }
 
         private readonly Dictionary<XamlIlAstCompilerLocalNode, IXamlIlLocal>
             _locals = new Dictionary<XamlIlAstCompilerLocalNode, IXamlIlLocal>();
@@ -17,9 +17,10 @@ namespace XamlIl.Transform
         public XamlIlTransformerConfiguration Configuration { get; }
         public XamlIlContext RuntimeContext { get; }
         public IXamlIlLocal ContextLocal { get; }
+        public Func<string, IXamlIlType, IXamlIlTypeBuilder> CreateSubType { get; }
         public IXamlIlEmitter Emitter { get; }
 
-        private List<(IXamlIlType type, IXamlIlLocal local)> _localsPool =
+        private readonly List<(IXamlIlType type, IXamlIlLocal local)> _localsPool =
             new List<(IXamlIlType, IXamlIlLocal)>();
 
         public sealed class PooledLocal : IDisposable
@@ -45,14 +46,15 @@ namespace XamlIl.Transform
         }
 
         public XamlIlEmitContext(IXamlIlEmitter emitter, XamlIlTransformerConfiguration configuration,
-            XamlIlContext runtimeContext, IXamlIlLocal contextLocal,
-            IEnumerable<object> emitters)
+            XamlIlContext runtimeContext, IXamlIlLocal contextLocal, 
+            Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType, IEnumerable<object> emitters)
         {
             Emitter = emitter;
-            _emitters = emitters.ToList();
+            Emitters = emitters.ToList();
             Configuration = configuration;
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
+            CreateSubType = createSubType;
         }
 
         public void StLocal(XamlIlAstCompilerLocalNode node)
@@ -134,7 +136,7 @@ namespace XamlIl.Transform
         private XamlIlNodeEmitResult EmitCore(IXamlIlAstNode value, IXamlIlEmitter codeGen)
         {
             XamlIlNodeEmitResult res = null;
-            foreach (var e in _emitters)
+            foreach (var e in Emitters)
             {
                 if (e is IXamlIlAstNodeEmitter ve)
                 {
