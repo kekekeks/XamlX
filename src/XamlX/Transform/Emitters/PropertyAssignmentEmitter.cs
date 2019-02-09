@@ -7,13 +7,13 @@ namespace XamlX.Transform.Emitters
 {
     public class PropertyAssignmentEmitter : IXamlAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlXCodeGen codeGen)
+        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;
             var callOp = an.Property.Setter.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             context.Emit(an.Value, codeGen, an.Property.Setter.Parameters.Last()); 
-            codeGen.Generator.Emit(callOp, an.Property.Setter);
+            codeGen.Emit(callOp, an.Property.Setter);
 
             return XamlNodeEmitResult.Void;
         }

@@ -6,7 +6,7 @@ namespace XamlX.Transform.Emitters
 {
     public class MethodCallEmitter : IXamlAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlXCodeGen codeGen)
+        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlMethodCallBaseNode mc))
                 return null;
@@ -23,11 +23,11 @@ namespace XamlX.Transform.Emitters
 
 
 
-            codeGen.Generator.Emit(mc.Method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, mc.Method);
+            codeGen.Emit(mc.Method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, mc.Method);
             
             var isVoid = mc.Method.ReturnType.Equals(context.Configuration.WellKnownTypes.Void);
             if (expectsVoid && !isVoid)
-                codeGen.Generator.Emit(OpCodes.Pop);
+                codeGen.Emit(OpCodes.Pop);
             
             
             if (!expectsVoid && isVoid)
