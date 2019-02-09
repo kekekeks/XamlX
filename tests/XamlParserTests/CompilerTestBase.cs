@@ -65,7 +65,7 @@ namespace XamlParserTests
         {
             var parsed = XDocumentXamlParser.Parse(xaml);
             
-            var compiler = new XamlXAstTransformationManager(Configuration, true);
+            var compiler = new XamlILCompiler(Configuration, true);
             compiler.Transform(parsed, parsed.NamespaceAliases);
             
             
