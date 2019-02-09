@@ -11,86 +11,79 @@ namespace XamlX.Transform
     {
         private readonly List<object> _emitters;
 
-        private readonly Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXEmitter codegen)>
-            _locals = new Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXEmitter codegen)>();
+        private readonly Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>
+            _locals = new Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>();
+        
         public XamlXTransformerConfiguration Configuration { get; }
         public XamlXContext RuntimeContext { get; }
         public IXamlXLocal ContextLocal { get; }
-        private List<(IXamlXType type, IXamlXEmitter codeGen, IXamlXLocal local)> _localsPool = 
-            new List<(IXamlXType, IXamlXEmitter, IXamlXLocal)>();
+        public IXamlXEmitter Emitter { get; }
+
+        private List<(IXamlXType type, IXamlXLocal local)> _localsPool =
+            new List<(IXamlXType, IXamlXLocal)>();
 
         public sealed class PooledLocal : IDisposable
         {
             public IXamlXLocal Local { get; private set; }
             private readonly XamlXEmitContext _parent;
             private readonly IXamlXType _type;
-            private readonly IXamlXEmitter _codeGen;
 
-            public PooledLocal(XamlXEmitContext parent,  IXamlXType type, IXamlXEmitter codeGen, IXamlXLocal local)
+            public PooledLocal(XamlXEmitContext parent, IXamlXType type, IXamlXLocal local)
             {
                 Local = local;
                 _parent = parent;
                 _type = type;
-                _codeGen = codeGen;
             }
 
             public void Dispose()
             {
                 if (Local == null)
                     return;
-                _parent._localsPool.Add((_type, _codeGen, Local));
+                _parent._localsPool.Add((_type, Local));
                 Local = null;
             }
         }
 
-        public XamlXEmitContext(XamlXTransformerConfiguration configuration,
+        public XamlXEmitContext(IXamlXEmitter emitter, XamlXTransformerConfiguration configuration,
             XamlXContext runtimeContext, IXamlXLocal contextLocal,
             IEnumerable<object> emitters)
         {
+            Emitter = emitter;
             _emitters = emitters.ToList();
             Configuration = configuration;
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
         }
 
-        public void StLocal(XamlXAstCompilerLocalNode node,  IXamlXEmitter codeGen)
+        public void StLocal(XamlXAstCompilerLocalNode node)
         {
-            if (_locals.TryGetValue(node, out var local))
-            {
-                if (local.codegen != codeGen)
-                    throw new XamlXLoadException("Local node is assigned to a different codegen", node);
-            }
-            else
-                _locals[node] = local = (codeGen.DefineLocal(node.Type), codeGen);
+            if (!_locals.TryGetValue(node, out var local))
+                _locals[node] = local = Emitter.DefineLocal(node.Type);
 
-            codeGen.Emit(OpCodes.Stloc, local.local);
+            Emitter.Emit(OpCodes.Stloc, local);
         }
 
-        public void LdLocal(XamlXAstCompilerLocalNode node, IXamlXEmitter codeGen)
+        public void LdLocal(XamlXAstCompilerLocalNode node)
         {
             if (_locals.TryGetValue(node, out var local))
-            {
-                if (local.codegen != codeGen)
-                    throw new XamlXLoadException("Local node is assigned to a different codegen", node);
-                codeGen.Emit(OpCodes.Ldloc, local.local);
-            }
+                Emitter.Emit(OpCodes.Ldloc, local);
             else
                 throw new XamlXLoadException("Attempt to read uninitialized local variable", node);
         }
 
-        public PooledLocal GetLocal(IXamlXEmitter codeGen, IXamlXType type)
+        public PooledLocal GetLocal(IXamlXType type)
         {
             for (var c = 0; c < _localsPool.Count; c++)
             {
                 if (_localsPool[c].type.Equals(type))
                 {
-                    var rv = new PooledLocal(this, type, codeGen, _localsPool[c].local);
+                    var rv = new PooledLocal(this, type, _localsPool[c].local);
                     _localsPool.RemoveAt(c);
                     return rv;
                 }
             }
 
-            return new PooledLocal(this, type, codeGen, codeGen.DefineLocal(type));
+            return new PooledLocal(this, type, Emitter.DefineLocal(type));
 
         }
         
@@ -122,7 +115,7 @@ namespace XamlX.Transform
                             {
                                 // We need to store the value to a temporary variable, since *address*
                                 // is required (probably for  method call on the value type)
-                                local = GetLocal(codeGen, returnedType);
+                                local = GetLocal(returnedType);
                                 codeGen
                                     .Stloc(local.Local)
                                     .Ldloca(local.Local);

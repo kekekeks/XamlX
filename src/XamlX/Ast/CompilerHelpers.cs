@@ -15,7 +15,7 @@ namespace XamlX.Ast
         IXamlXAstTypeReference IXamlXAstValueNode.Type => new XamlXAstClrTypeReference(this, Type);
         public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
-            context.LdLocal(this, codeGen);
+            context.LdLocal(this);
             return XamlXNodeEmitResult.Type(Type);
         }
     }
@@ -42,7 +42,7 @@ namespace XamlX.Ast
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
-            context.StLocal(Local, codeGen);
+            context.StLocal(Local);
             return rv;
         }
     }
