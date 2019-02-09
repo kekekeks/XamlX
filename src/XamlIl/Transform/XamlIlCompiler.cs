@@ -85,7 +85,7 @@ namespace XamlIl.Transform
                     .Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlIlEmitContext(_configuration, context, contextLocal, Emitters);
+            var emitContext = new XamlIlEmitContext(codeGen, _configuration, context, contextLocal, Emitters);
             return emitContext;
         }
         
