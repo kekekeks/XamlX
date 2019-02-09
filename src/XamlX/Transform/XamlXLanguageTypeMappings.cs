@@ -34,6 +34,12 @@ namespace XamlX.Transform
         public IXamlXMethod MarkupExtensionCustomResultHandler { get; set; }
         public List<IXamlXType> MarkupExtensionCustomResultTypes { get; set; } = new List<IXamlXType>();
         public Func<IXamlXProperty, IXamlXType, bool> ShouldIgnoreMarkupExtensionCustomResultForProperty { get; set; }
+        
+        /// <summary>
+        /// Expected signature:
+        /// static IServiceProvider InnerServiceProviderFactory(IServiceProvider self);
+        /// </summary>
+        public IXamlXMethod InnerServiceProviderFactoryMethod { get; set; }
     }
 
     public interface IXamlXCustomAttributeResolver
