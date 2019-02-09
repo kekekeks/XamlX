@@ -12,7 +12,9 @@ namespace XamlX.Transform.Emitters
             if (!(node is XamlObjectInitializationNode init))
                 return null;
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
-            var supportsInitialize = context.Configuration.TypeMappings.SupportInitialize.IsAssignableFrom(init.Type);
+            var supportsInitialize = supportInitType != null
+                                     && context.Configuration.TypeMappings.SupportInitialize
+                                         .IsAssignableFrom(init.Type);
 
             if (supportsInitialize)
             {
