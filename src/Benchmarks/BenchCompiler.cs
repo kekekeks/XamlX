@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -15,8 +16,11 @@ namespace Benchmarks
     {
         
     }
+    
+    
     public class BenchCompiler
     {
+        static object s_asmLock = new object();
         public static Func<IServiceProvider, object> Compile(string xaml)
         {
             
@@ -51,9 +55,15 @@ namespace Benchmarks
             
             var parsedTsType = ((IXamlXAstValueNode) parsed.Root).Type.GetClrType();
             
-
+#if !NETCOREAPP
+            var path = Path.GetDirectoryName(typeof(BenchCompiler).Assembly.GetModules()[0].FullyQualifiedName);
+            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
+                AssemblyBuilderAccess.RunAndSave,
+                path);
+#else
             var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.Run);
-
+#endif
+            
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
             
@@ -66,6 +76,12 @@ namespace Benchmarks
             
             var created = t.CreateType();
 
+#if !NETCOREAPP
+            dm.CreateGlobalFunctions();
+            // Useful for debugging the actual MSIL, don't remove
+            lock (s_asmLock)
+                da.Save("testasm.dll");
+#endif
             
             var isp = Expression.Parameter(typeof(IServiceProvider));
             return Expression.Lambda<Func<IServiceProvider, object>>(
