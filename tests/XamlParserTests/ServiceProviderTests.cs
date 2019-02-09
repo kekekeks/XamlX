@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using XamlIl.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
@@ -149,6 +150,45 @@ namespace XamlParserTests
                 return num.ToString();
             }, null);
             Assert.Equal(2, num);
+        }
+
+
+        class InnerProvider : IServiceProvider, ITestRootObjectProvider
+        {
+            private ITestRootObjectProvider _originalRootObjectProvider;
+            public object RootObject => "Definitely not the root object";
+            public object OriginalRootObject => _originalRootObjectProvider.RootObject;
+            public InnerProvider(IServiceProvider parent)
+            {
+                _originalRootObjectProvider = parent.GetService<ITestRootObjectProvider>();
+            }
+            
+            public object GetService(Type serviceType)
+            {
+                if (serviceType == typeof(ITestRootObjectProvider))
+                    return this;
+                return null;
+            }
+        }
+
+        public static IServiceProvider InnerProviderFactory(IServiceProvider outer) => new InnerProvider(outer);
+        
+        [Fact]
+        public void Inner_Provider_Interception_Works()
+        {
+
+            Configuration.TypeMappings.InnerServiceProviderFactoryMethod =
+                Configuration.TypeSystem.GetType(typeof(ServiceProviderTests).FullName)
+                    .FindMethod(m => m.Name == "InnerProviderFactory");
+                    
+            CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
+            {
+                var rootProv = (InnerProvider)sp.GetService<ITestRootObjectProvider>();
+                Assert.IsType<ServiceProviderTestsClass>(rootProv.OriginalRootObject);
+                Assert.IsType<string>(rootProv.RootObject);
+                
+                return "Value";
+            }, null);
         }
         
     }

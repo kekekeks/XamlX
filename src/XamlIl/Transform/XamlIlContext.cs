@@ -13,6 +13,7 @@ namespace XamlIl.Transform
         public IXamlIlType ContextType { get; set; }
         private IXamlIlField _parentStackEnumerableField;
         private IXamlIlField _parentServiceProviderField;
+        private IXamlIlField _innerServiceProviderField;
         public IXamlIlField PropertyTargetObject { get; set; }
         public IXamlIlField PropertyTargetProperty { get; set; }
 
@@ -32,6 +33,8 @@ namespace XamlIl.Transform
         {
             RootObjectField = builder.DefineField(rootType, "RootObject", true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
+            if (mappings.InnerServiceProviderFactoryMethod != null)
+                _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
             var so = typeSystem.GetType("System.Object");
             var systemType = typeSystem.GetType("System.Type");
 
@@ -94,15 +97,38 @@ namespace XamlIl.Transform
                 "GetService", true, false, true);
 
             ownServices = ownServices.Where(s => s != null).ToList();
+            var getServiceInterfaceMethod = mappings.ServiceProvider.FindMethod("GetService", so, false, systemType);
             if (ownServices.Count != 0)
             {
                 var compare = systemType.FindMethod("Equals", typeSystem.GetType("System.Boolean"),
                     false, systemType);
                 var fromHandle = systemType.Methods.First(m => m.Name == "GetTypeFromHandle");
+
+                if (_innerServiceProviderField != null)
+                {
+                    var next = getServiceMethod.Generator.DefineLabel();
+                    var innerResult = getServiceMethod.Generator.DefineLocal(so);
+                    getServiceMethod.Generator
+                        //if(_inner == null) goto next;
+                        .LdThisFld(_innerServiceProviderField)
+                        .Brfalse(next)
+                        // var innerRes = _inner.GetService(type);
+                        .LdThisFld(_innerServiceProviderField)
+                        .Ldarg(1)
+                        .EmitCall(getServiceInterfaceMethod)
+                        .Stloc(innerResult)
+                        // if(innerRes == null) goto next;
+                        .Ldloc(innerResult)
+                        .Brfalse(next)
+                        // return innerRes
+                        .Ldloc(innerResult)
+                        .Ret()
+                        .MarkLabel(next);
+
+                }
                 
                 for (var c = 0; c < ownServices.Count; c++)
                 {
-                    
                     var next = getServiceMethod.Generator.DefineLabel();
                     getServiceMethod.Generator
                         .Emit(OpCodes.Ldtoken, ownServices[c])
@@ -120,7 +146,7 @@ namespace XamlIl.Transform
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldfld, _parentServiceProviderField)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Callvirt, mappings.ServiceProvider.FindMethod("GetService", so, false, systemType))
+                .Emit(OpCodes.Callvirt, getServiceInterfaceMethod)
                 .Emit(OpCodes.Ret);
 
             var ctor = builder.DefineConstructor(mappings.ServiceProvider);
@@ -132,6 +158,16 @@ namespace XamlIl.Transform
                 .Emit(OpCodes.Stfld, _parentServiceProviderField);
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
+            
+            // We are calling this last to ensure that our own services are ready
+            if (_innerServiceProviderField != null)
+                ctor.Generator
+                    // _innerSp = InnerServiceProviderFactory(this)
+                    .Ldarg_0()
+                    .Ldarg_0()
+                    .EmitCall(mappings.InnerServiceProviderFactoryMethod)
+                    .Stfld(_innerServiceProviderField);
+                    
             ctor.Generator.Emit(OpCodes.Ret);
 
             Constructor = ctor;
