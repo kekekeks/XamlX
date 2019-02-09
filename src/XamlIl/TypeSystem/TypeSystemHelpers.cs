@@ -1,5 +1,7 @@
 using System;
 using System.Globalization;
+using System.Linq;
+using System.Reflection.Emit;
 using XamlIl.Ast;
 
 namespace XamlIl.TypeSystem
@@ -61,6 +63,59 @@ namespace XamlIl.TypeSystem
             }
 
             return false;
+        }
+        
+        public static void EmitConvert(IXamlIlLineInfo node, IXamlIlType what,
+            IXamlIlType to, Func<bool, IXamlIlEmitter> ld)
+        {
+            if (what.Equals(to))
+                ld(false);
+            else if (what.IsValueType && to.IsValueType)
+            {
+                if (to.IsNullableOf(what))
+                {
+                    ld(false).Emit(OpCodes.Newobj,
+                        to.Constructors.First(c =>
+                            c.Parameters.Count == 1 && c.Parameters[0].Equals(what)));
+                }
+                else if (what.IsNullableOf(what))
+                    ld(true)
+                        .EmitCall(what.FindMethod(m => m.Name == "get_Value"));
+                else
+                    throw new XamlIlLoadException(
+                        $"Don't know how to convert value type {what.GetFullName()} to value type {to.GetFullName()}",
+                        node);
+            }
+            else if (!to.IsValueType && what.IsValueType)
+            {
+                if (!to.IsAssignableFrom(what))
+                    throw new XamlIlLoadException(
+                        $"Don't know how to convert value type {what.GetFullName()} to reference type {to.GetFullName()}",
+                        node);
+                ld(false).Box(what);
+            }
+            else if(to.IsValueType && !what.IsValueType)
+            {
+                if (!(what.Namespace == "System" && what.Name == "Object"))
+                    throw new XamlIlLoadException(
+                        $"Don't know how to convert reference type {what.GetFullName()} to value type {to.GetFullName()}",
+                        node);
+                ld(false).Unbox_Any(to);
+            }
+            else
+            {
+                if (to.IsAssignableFrom(what))
+                    // Downcast, always safe
+                    ld(false);
+                else if (what.IsInterface || what.IsAssignableFrom(to))
+                    // Upcast or cast from interface, might throw InvalidCastException
+                    ld(false).Emit(OpCodes.Castclass, to);
+                else
+                    // Types are completely unrelated, e. g. string to List<int> conversion attempt
+                    throw new XamlIlLoadException(
+                        $"Don't know how to convert reference type {what.GetFullName()} to reference type {to.GetFullName()}",
+                        node);
+            }
         }
     }
 }

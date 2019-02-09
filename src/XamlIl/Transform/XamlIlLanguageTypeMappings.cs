@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using XamlIl.TypeSystem;
 
@@ -30,7 +31,9 @@ namespace XamlIl.Transform
         /// Expected signature:
         /// static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov, object value)
         /// </summary>
-        public IXamlIlMethod ApplyNonMatchingMarkupExtension { get; set; }
+        public IXamlIlMethod MarkupExtensionCustomResultHandler { get; set; }
+        public List<IXamlIlType> MarkupExtensionCustomResultTypes { get; set; } = new List<IXamlIlType>();
+        public Func<IXamlIlProperty, IXamlIlType, bool> ShouldIgnoreMarkupExtensionCustomResultForProperty { get; set; }
     }
 
     public interface IXamlIlCustomAttributeResolver
