@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using XamlX;
 using XamlX.TypeSystem;
 using Xunit;
 
@@ -53,6 +54,13 @@ namespace XamlParserTests
             (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
     }
 
+    public class CustomConvertedType
+    {
+        public string Value { get; set; }
+    }
+    
+    
+
     delegate void ApplyNonMatchingMarkupExtensionDelegate(object target, object property, IServiceProvider prov,
         object value);
     
@@ -60,7 +68,7 @@ namespace XamlParserTests
     {
         public MarkupExtensionTests()
         {
-            Configuration.TypeMappings.ApplyNonMatchingMarkupExtension =
+            Configuration.TypeMappings.MarkupExtensionCustomResultHandler =
                 Configuration.TypeSystem.FindType("XamlParserTests.MarkupExtensionTests")
                     .FindMethod(m => m.Name == "ApplyNonMatchingMarkupExtension");
         }
@@ -153,44 +161,56 @@ namespace XamlParserTests
         }
 
         [Fact]
-        public void Reference_Type_To_Value_Type_Should_Trigger_Conversion()
+        public void Unknown_Reference_Type_To_Value_Type_Should_Trigger_InvalidCastException()
         {
-            bool ok = false;
-            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+            Assert.Throws<InvalidCastException>(() =>
+                (MarkupExtensionTestsClass) CompileAndRun(@"
 <MarkupExtensionTestsClass xmlns='test' 
-    IntProperty='{ServiceProviderValue}'/>", CreateValueProvider("test", (t, p, s, v) => ok = v.Equals("test")));
-            Assert.True(ok);
+    IntProperty='{ServiceProviderValue}'/>", CreateValueProvider("test")));
         }
         
         [Fact]
-        public void Value_Type_To_Reference_Type_Should_Trigger_Conversion()
+        public void Value_Type_To_Reference_Type_Should_Trigger_Compile_Error()
         {
-            bool ok = false;
-            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+            Assert.Throws<XamlLoadException>(() => Compile(@"
 <MarkupExtensionTestsClass xmlns='test' 
-    StringProperty='{ServiceProviderIntValue}'/>", CreateValueProvider(123, (t, p, s, v) => ok = v.Equals(123)));
-            Assert.True(ok);
+    StringProperty='{ServiceProviderIntValue}'/>"));
         }
         
         [Fact]
-        public void Mismatched_Value_Type_To_Value_Type_Should_Trigger_Conversion()
+        public void Mismatched_Value_Type_To_Value_Type_Should_Trigger_Compile_Error()
         {
-            bool ok = false;
-            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+            Assert.Throws<XamlLoadException>(() => Compile(@"
 <MarkupExtensionTestsClass xmlns='test' 
-    DoubleProperty='{ServiceProviderIntValue}'/>", CreateValueProvider(150, (t, p, s, v) => ok = v.Equals(150)));
-            Assert.True(ok);
+    DoubleProperty='{ServiceProviderIntValue}'/>"));
         }
         
         [Fact]
-        public void Mismatched_Reference_Type_To_Reference_Type_Should_Trigger_Conversion()
+        public void Mismatched_Reference_Type_To_Reference_Type_Should_Trigger_InvalidCastException()
         {
             var val = new Uri("http://test/");
-            bool ok = false;
+            Assert.Throws<InvalidCastException>(() =>
+                (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' 
+    StringProperty='{ServiceProviderValue}'/>", CreateValueProvider(val)));
+        }
+
+        [Fact]
+        public void Custom_Converted_Types_Should_Be_Passed_To_Apply_Callback()
+        {
+            Configuration.TypeMappings.MarkupExtensionCustomResultTypes.Add(
+                Configuration.TypeSystem.GetType(typeof(CustomConvertedType).FullName));
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
 <MarkupExtensionTestsClass xmlns='test' 
-    StringProperty='{ServiceProviderValue}'/>", CreateValueProvider(val, (t, p, s, v) => ok = v.Equals(val)));
-            Assert.True(ok);
+    ObjectProperty='{ServiceProviderValue}'/>", CreateValueProvider(new CustomConvertedType()
+            {
+                Value = "test"
+            }, (t, p, s, v) =>
+            {
+                if (v is CustomConvertedType ct)
+                    t.GetType().GetProperty((string) p).SetValue(t, ct.Value);
+            }));
+            Assert.Equal("test", res.ObjectProperty);
         }
     }
 }

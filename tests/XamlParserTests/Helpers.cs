@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Linq;
+using System.Reflection.Emit;
 using XamlX;
 using XamlX.Ast;
+using XamlX.TypeSystem;
 
 namespace XamlParserTests
 {
@@ -68,5 +70,7 @@ namespace XamlParserTests
         }
 
         public static T GetService<T>(this IServiceProvider prov) => (T) prov.GetService(typeof(T));
+
+        
     }
 }

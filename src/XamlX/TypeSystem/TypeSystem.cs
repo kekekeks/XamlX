@@ -26,6 +26,7 @@ namespace XamlX.TypeSystem
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlType> Interfaces { get; }
+        bool IsInterface { get; }
         IXamlType GetEnumUnderlyingType();
         
     }
@@ -179,6 +180,7 @@ namespace XamlX.TypeSystem
         public bool IsValueType { get; } = false;
         public bool IsEnum { get; } = false;
         public IReadOnlyList<IXamlType> Interfaces { get; } = new IXamlType[0];
+        public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
