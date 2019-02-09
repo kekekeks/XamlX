@@ -83,7 +83,7 @@ namespace XamlIl.Transform
                     return false;
                 }
 
-                foreach (var allowObj in new[] {true, false})
+                foreach (var allowObj in new[] {false, true})
                 {
                     foreach (var m in candidates)
                     {
