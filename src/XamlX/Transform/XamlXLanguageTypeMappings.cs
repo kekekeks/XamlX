@@ -8,10 +8,10 @@ namespace XamlX.Transform
     {
         public XamlXLanguageTypeMappings(IXamlXTypeSystem typeSystem)
         {
-            ServiceProvider = typeSystem.FindType("System.IServiceProvider");
-            TypeDescriptorContext = typeSystem.FindType("System.ComponentModel.ITypeDescriptorContext");
-            SupportInitialize = typeSystem.FindType("System.ComponentModel.ISupportInitialize");
-            var tconv = typeSystem.FindType("System.ComponentModel.TypeConverterAttribute");
+            ServiceProvider = typeSystem.GetType("System.IServiceProvider");
+            TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
+            SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
+            var tconv = typeSystem.GetType("System.ComponentModel.TypeConverterAttribute");
             if (tconv != null)
                 TypeConverterAttributes.Add(tconv);
         }

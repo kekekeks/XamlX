@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -16,6 +17,9 @@ namespace XamlX.TypeSystem
 
         public SreTypeSystem()
         {
+            // Ensure that System.ComponentModel is available
+            var rasm = typeof(ISupportInitialize).Assembly;
+            rasm = typeof(ITypeDescriptorContext).Assembly;
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 try
                 {
