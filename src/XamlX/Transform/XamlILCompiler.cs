@@ -85,7 +85,7 @@ namespace XamlX.Transform
                     .Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlEmitContext(_configuration, context, contextLocal, Emitters);
+            var emitContext = new XamlEmitContext(codeGen, _configuration, context, contextLocal, Emitters);
             return emitContext;
         }
         

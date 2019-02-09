@@ -31,7 +31,7 @@ namespace XamlX.Transform.Emitters
                 objectListType = context.Configuration.TypeSystem.GetType("System.Collections.Generic.List`1")
                     .MakeGenericType(new[] {context.Configuration.WellKnownTypes.Object});
                     
-                using(var local = context.GetLocal(codeGen, init.Type))
+                using(var local = context.GetLocal(init.Type))
                 codeGen
                     .Stloc(local.Local)
                     .Ldloc(context.ContextLocal).Ldfld(context.RuntimeContext.ParentListField)

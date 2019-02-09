@@ -29,10 +29,10 @@ namespace XamlX.Transform.Emitters
                     ilgen.Ldstr(me.Property?.Name);
             }
 
-            using (var resultLocalContainer = context.GetLocal(codeGen, rtype))
+            using (var resultLocalContainer = context.GetLocal(rtype))
             {
                 var resultLocal = resultLocalContainer.Local;
-                using (var targetObjectLocal = needProvideValueTarget ? context.GetLocal(codeGen, so) : null)
+                using (var targetObjectLocal = needProvideValueTarget ? context.GetLocal(so) : null)
                 {
                     if (needProvideValueTarget)
                         ilgen
@@ -137,7 +137,7 @@ namespace XamlX.Transform.Emitters
                 {
                     // {target}.{Property}.{Method)(res)
                     if (me.Property != null)
-                        using (var res = context.GetLocal(codeGen, ptype))
+                        using (var res = context.GetLocal(ptype))
                             ilgen
                                 .Emit(OpCodes.Stloc, res.Local)
                                 .EmitCall(me.Property.Getter)
