@@ -94,6 +94,9 @@ namespace XamlX.TypeSystem
         
         public static IXamlILEmitter Isinst(this IXamlILEmitter emitter, IXamlType type)
             => emitter.Emit(OpCodes.Isinst, type);
+        
+        public static IXamlILEmitter Castclass(this IXamlILEmitter emitter, IXamlType type)
+            => emitter.Emit(OpCodes.Castclass, type);
 
         public static IXamlILEmitter Box(this IXamlILEmitter emitter, IXamlType type)
             => emitter.Emit(OpCodes.Box, type);
