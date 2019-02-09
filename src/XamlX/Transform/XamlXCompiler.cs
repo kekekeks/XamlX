@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using XamlX.Ast;
@@ -28,7 +29,8 @@ namespace XamlX.Transform
                     new XamlXStructConvertTransformer(),
                     new XamlXNewObjectTransformer(),
                     new XamlXXamlPropertyValueTransformer(),
-                    new XamlXTopDownInitializationTransformer()
+                    new XamlXDeferredContentTransformer(),
+                    new XamlXTopDownInitializationTransformer(),
                 };
                 SimplificationTransformers = new List<IXamlXAstTransformer>
                 {
@@ -71,8 +73,8 @@ namespace XamlX.Transform
         /// </summary>
 
 
-        XamlXEmitContext InitCodeGen(IXamlXEmitter codeGen, XamlXContext context,
-            bool needContextLocal)
+        XamlXEmitContext InitCodeGen(Func<string, IXamlXType, IXamlXTypeBuilder> createSubType,
+            IXamlXEmitter codeGen, XamlXContext context, bool needContextLocal)
         {
             IXamlXLocal contextLocal = null;
 
@@ -85,15 +87,15 @@ namespace XamlX.Transform
                     .Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlXEmitContext(codeGen, _configuration, context, contextLocal, Emitters);
+            var emitContext = new XamlXEmitContext(codeGen, _configuration, context, contextLocal, createSubType, Emitters);
             return emitContext;
         }
         
-        void CompileBuild(IXamlXAstValueNode rootInstance, IXamlXEmitter codeGen, XamlXContext context,
-            IXamlXMethod compiledPopulate)
+        void CompileBuild(IXamlXAstValueNode rootInstance, Func<string, IXamlXType, IXamlXTypeBuilder> createSubType,
+            IXamlXEmitter codeGen, XamlXContext context, IXamlXMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlXAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
-            var emitContext = InitCodeGen(codeGen, context, needContextLocal);
+            var emitContext = InitCodeGen(createSubType, codeGen, context, needContextLocal);
 
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
@@ -111,9 +113,9 @@ namespace XamlX.Transform
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
 
-        void CompilePopulate(IXamlXAstManipulationNode manipulation, IXamlXEmitter codeGen, XamlXContext context)
+        void CompilePopulate(IXamlXAstManipulationNode manipulation, Func<string, IXamlXType, IXamlXTypeBuilder> createSubType, IXamlXEmitter codeGen, XamlXContext context)
         {
-            var emitContext = InitCodeGen(codeGen, context, true);
+            var emitContext = InitCodeGen(createSubType, codeGen, context, true);
 
             codeGen
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
@@ -131,11 +133,15 @@ namespace XamlX.Transform
             var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
                 populateMethodName, true, true, false);
-            CompilePopulate(rootGrp.Manipulation, populateMethod.Generator, contextType);
+
+            IXamlXTypeBuilder CreateSubType(string name, IXamlXType baseType) 
+                => typeBuilder.DefineSubType(baseType, name, false);
+
+            CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, contextType);
 
             var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                 new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-            CompileBuild(rootGrp.Value, createMethod.Generator, contextType, populateMethod);
+            CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, contextType, populateMethod);
         }
     }
 

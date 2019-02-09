@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.XamlXAstVisitorDelegate;
@@ -221,5 +221,102 @@ namespace XamlX.Ast
         }
 
         public IXamlXAstTypeReference Type { get; }
+    }
+
+    public class XamlXDeferredContentNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+    {
+        public IXamlXAstValueNode Value { get; set; }
+        public IXamlXAstTypeReference Type { get; }
+        
+        public XamlXDeferredContentNode(IXamlXAstValueNode value, 
+            XamlXTransformerConfiguration config) : base(value)
+        {
+            Value = value;
+            var funcType = config.TypeSystem.GetType("System.Func`2")
+                .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
+            Type = new XamlXAstClrTypeReference(value, funcType);
+        }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Value = (IXamlXAstValueNode) Value.Visit(visitor);
+        }
+
+        void CompileBuilder(XamlXEmitContext context)
+        {
+            var il = context.Emitter;
+            // Initialize the context
+            il
+                .Ldarg_0()
+                .Newobj(context.RuntimeContext.Constructor)
+                .Stloc(context.ContextLocal);
+
+            // It might be better to save this in a closure
+            if (context.Configuration.TypeMappings.RootObjectProvider != null)
+            {
+                // Attempt to get the root object from parent service provider
+                var noRoot = il.DefineLabel();
+                using (var loc = context.GetLocal(context.Configuration.WellKnownTypes.Object))
+                    il
+                        // if(arg == null) goto noRoot;
+                        .Ldarg_0()
+                        .Brfalse(noRoot)
+                        // var loc = arg.GetService(typeof(IRootObjectProvider))
+                        .Ldarg_0()
+                        .Ldtype(context.Configuration.TypeMappings.RootObjectProvider)
+                        .EmitCall(context.Configuration.TypeMappings.ServiceProvider
+                            .FindMethod(m => m.Name == "GetService"))
+                        .Stloc(loc.Local)
+                        // if(loc == null) goto noRoot;
+                        .Ldloc(loc.Local)
+                        .Brfalse(noRoot)
+                        // loc = ((IRootObjectProvider)loc).RootObject
+                        .Ldloc(loc.Local)
+                        .Castclass(context.Configuration.TypeMappings.RootObjectProvider)
+                        .EmitCall(context.Configuration.TypeMappings.RootObjectProvider
+                            .FindMethod(m => m.Name == "get_RootObject"))
+                        .Stloc(loc.Local)
+                        // contextLocal.RootObject = loc;
+                        .Ldloc(context.ContextLocal)
+                        .Ldloc(loc.Local)
+                        .Stfld(context.RuntimeContext.RootObjectField)
+                        .MarkLabel(noRoot);
+            }
+
+            context.Emit(Value, context.Emitter, context.Configuration.WellKnownTypes.Object);
+            il.Ret();
+        }
+
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
+        {
+            var so = context.Configuration.WellKnownTypes.Object;
+            var isp = context.Configuration.TypeMappings.ServiceProvider;
+            var subType = context.CreateSubType("XamlXClosure_" + Guid.NewGuid(), so);
+            var buildMethod = subType.DefineMethod(so, new[]
+            {
+                isp
+            }, "Build", true, true, false);
+            CompileBuilder(new XamlXEmitContext(buildMethod.Generator, context.Configuration,
+                context.RuntimeContext, buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
+                (s, type) => subType.DefineSubType(type, s, false), context.Emitters));
+
+            var funcType = Type.GetClrType();
+            codeGen
+                .Ldnull()
+                .Ldftn(buildMethod)
+                .Newobj(funcType.Constructors.FirstOrDefault(ct =>
+                    ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            
+            // Allow to save values from the parent context, pass own service provider, etc, etc
+            if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
+            {
+                codeGen
+                    .Ldloc(context.ContextLocal)
+                    .EmitCall(context.Configuration.TypeMappings.DeferredContentExecutorCustomization);
+            }
+            
+            subType.CreateType();
+            return XamlXNodeEmitResult.Type(funcType);
+        }
     }
 }

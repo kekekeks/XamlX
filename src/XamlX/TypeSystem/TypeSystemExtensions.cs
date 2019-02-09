@@ -91,6 +91,9 @@ namespace XamlX.TypeSystem
                 .FindMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetMethodFromHandle");
             return emitter.Ldtoken(method).EmitCall(conv);
         }
+
+        public static IXamlXEmitter Ldftn(this IXamlXEmitter emitter, IXamlXMethod method)
+            => emitter.Emit(OpCodes.Ldftn, method);
         
         public static IXamlXEmitter Isinst(this IXamlXEmitter emitter, IXamlXType type)
             => emitter.Emit(OpCodes.Isinst, type);
@@ -104,6 +107,8 @@ namespace XamlX.TypeSystem
         public static IXamlXEmitter Unbox_Any(this IXamlXEmitter emitter, IXamlXType type)
             => emitter.Emit(OpCodes.Unbox_Any, type);
 
+        public static IXamlXEmitter Newobj(this IXamlXEmitter emitter, IXamlXConstructor ctor)
+            => emitter.Emit(OpCodes.Newobj, ctor);
 
 
     }

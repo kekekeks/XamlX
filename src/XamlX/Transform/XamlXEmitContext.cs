@@ -9,7 +9,7 @@ namespace XamlX.Transform
 {
     public class XamlXEmitContext
     {
-        private readonly List<object> _emitters;
+        public List<object> Emitters { get; }
 
         private readonly Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>
             _locals = new Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>();
@@ -17,9 +17,10 @@ namespace XamlX.Transform
         public XamlXTransformerConfiguration Configuration { get; }
         public XamlXContext RuntimeContext { get; }
         public IXamlXLocal ContextLocal { get; }
+        public Func<string, IXamlXType, IXamlXTypeBuilder> CreateSubType { get; }
         public IXamlXEmitter Emitter { get; }
 
-        private List<(IXamlXType type, IXamlXLocal local)> _localsPool =
+        private readonly List<(IXamlXType type, IXamlXLocal local)> _localsPool =
             new List<(IXamlXType, IXamlXLocal)>();
 
         public sealed class PooledLocal : IDisposable
@@ -45,14 +46,15 @@ namespace XamlX.Transform
         }
 
         public XamlXEmitContext(IXamlXEmitter emitter, XamlXTransformerConfiguration configuration,
-            XamlXContext runtimeContext, IXamlXLocal contextLocal,
-            IEnumerable<object> emitters)
+            XamlXContext runtimeContext, IXamlXLocal contextLocal, 
+            Func<string, IXamlXType, IXamlXTypeBuilder> createSubType, IEnumerable<object> emitters)
         {
             Emitter = emitter;
-            _emitters = emitters.ToList();
+            Emitters = emitters.ToList();
             Configuration = configuration;
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
+            CreateSubType = createSubType;
         }
 
         public void StLocal(XamlXAstCompilerLocalNode node)
@@ -134,7 +136,7 @@ namespace XamlX.Transform
         private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXEmitter codeGen)
         {
             XamlXNodeEmitResult res = null;
-            foreach (var e in _emitters)
+            foreach (var e in Emitters)
             {
                 if (e is IXamlXAstNodeEmitter ve)
                 {

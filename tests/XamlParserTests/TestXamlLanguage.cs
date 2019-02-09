@@ -25,6 +25,11 @@ namespace XamlParserTests
             
         }
     }
+
+    public class DeferredContentAttribute : Attribute
+    {
+        
+    }
     
     public interface ITestRootObjectProvider
     {
