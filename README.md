@@ -97,3 +97,10 @@ These are framework-specific and can be implemented via custom transformers/emit
 Future: 
 x:Code Intrinsic XAML Type (probably use Roslyn to inline C# code)
 
+
+## Possible optimizations (TODO):
+
+- Right now if IXamlIlParentStack feature is enabled, each object initialization triggers push/pop to the parent objects stack. 
+That could be optimized out for objects that don't have anything that uses IServiceProvider (markup extensions, `TypeConverter`'s, `DeferredContent`) inside of them
+- Parent's `RootObject` could be saved in a closure, right deferred content builder attempts to extract it from
+passed `IServiceProvider` 
