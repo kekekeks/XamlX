@@ -306,6 +306,9 @@ namespace XamlX.TypeSystem
             return emitter;
         }
 
+        public static IXamlType MakeGenericType(this IXamlType type, params IXamlType[] typeArguments)
+            => type.MakeGenericType(typeArguments);
+        
         public static IXamlILEmitter DebugHatch(this IXamlILEmitter emitter, string message)
         {
             #if DEBUG

@@ -36,6 +36,10 @@ namespace XamlParserTests
                     {
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
                     },
+                    DeferredContentPropertyAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.DeferredContentAttribute")
+                    },
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlParserTests.IXamlParentStack"),

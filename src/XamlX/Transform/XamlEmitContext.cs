@@ -9,7 +9,7 @@ namespace XamlX.Transform
 {
     public class XamlEmitContext
     {
-        private readonly List<object> _emitters;
+        public List<object> Emitters { get; }
 
         private readonly Dictionary<XamlAstCompilerLocalNode, IXamlLocal>
             _locals = new Dictionary<XamlAstCompilerLocalNode, IXamlLocal>();
@@ -17,9 +17,10 @@ namespace XamlX.Transform
         public XamlTransformerConfiguration Configuration { get; }
         public XamlContext RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
+        public Func<string, IXamlType, IXamlTypeBuilder> CreateSubType { get; }
         public IXamlILEmitter Emitter { get; }
 
-        private List<(IXamlType type, IXamlLocal local)> _localsPool =
+        private readonly List<(IXamlType type, IXamlLocal local)> _localsPool =
             new List<(IXamlType, IXamlLocal)>();
 
         public sealed class PooledLocal : IDisposable
@@ -45,14 +46,15 @@ namespace XamlX.Transform
         }
 
         public XamlEmitContext(IXamlILEmitter emitter, XamlTransformerConfiguration configuration,
-            XamlContext runtimeContext, IXamlLocal contextLocal,
-            IEnumerable<object> emitters)
+            XamlContext runtimeContext, IXamlLocal contextLocal, 
+            Func<string, IXamlType, IXamlTypeBuilder> createSubType, IEnumerable<object> emitters)
         {
             Emitter = emitter;
-            _emitters = emitters.ToList();
+            Emitters = emitters.ToList();
             Configuration = configuration;
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
+            CreateSubType = createSubType;
         }
 
         public void StLocal(XamlAstCompilerLocalNode node)
@@ -134,7 +136,7 @@ namespace XamlX.Transform
         private XamlNodeEmitResult EmitCore(IXamlAstNode value, IXamlILEmitter codeGen)
         {
             XamlNodeEmitResult res = null;
-            foreach (var e in _emitters)
+            foreach (var e in Emitters)
             {
                 if (e is IXamlAstNodeEmitter ve)
                 {

@@ -29,11 +29,12 @@ namespace XamlParserTests
 
     class DictionaryServiceProvider : Dictionary<Type, object>, IServiceProvider
     {
-        
+        public IServiceProvider Parent { get; set; }
         public object GetService(Type serviceType)
         {
-            TryGetValue(serviceType, out var impl);
-            return impl;
+            if(TryGetValue(serviceType, out var impl))
+               return impl;
+            return Parent?.GetService(serviceType);
         }
     }
 
