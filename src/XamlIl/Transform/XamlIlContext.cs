@@ -37,6 +37,7 @@ namespace XamlIl.Transform
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
             var so = typeSystem.GetType("System.Object");
             var systemType = typeSystem.GetType("System.Type");
+            var getServiceInterfaceMethod = mappings.ServiceProvider.FindMethod("GetService", so, false, systemType);
 
             var ownServices = new List<IXamlIlType>();
             var ctorCallbacks = new List<Action<IXamlIlEmitter>>();
@@ -45,8 +46,39 @@ namespace XamlIl.Transform
             if (mappings.RootObjectProvider != null)
             {
                 builder.AddInterfaceImplementation(mappings.RootObjectProvider);
-                ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, "RootObject")
-                    .Generator.LdThisFld(RootObjectField).Ret();
+                var rootGen = ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, "RootObject")
+                    .Generator;
+                var tryParent = rootGen.DefineLabel();
+                var fail = rootGen.DefineLabel();
+                var parentRootProvider = rootGen.DefineLocal(mappings.RootObjectProvider);
+                rootGen
+                    // if(RootObject!=null) return RootObject;    
+                    .LdThisFld(RootObjectField)
+                    .Brfalse(tryParent)
+                    .LdThisFld(RootObjectField)
+                    .Ret()
+                    // if(_sp == null) goto fail;
+                    .MarkLabel(tryParent)
+                    .LdThisFld(_parentServiceProviderField)
+                    .Brfalse(fail)
+                    // parentProv =  (IRootObjectProvider)_sp.GetService(typeof(IRootObjectProvider));
+                    .LdThisFld(_parentServiceProviderField)
+                    .Ldtype(mappings.RootObjectProvider)
+                    .EmitCall(getServiceInterfaceMethod)
+                    .Castclass(mappings.RootObjectProvider)
+                    .Stloc(parentRootProvider)
+                    // if(parentProv == null) goto fail;
+                    .Ldloc(parentRootProvider)
+                    .Brfalse(fail)
+                    // return parentProv.Root;
+                    .Ldloc(parentRootProvider)
+                    .EmitCall(mappings.RootObjectProvider.FindMethod(m => m.Name == "get_RootObject"))
+                    .Ret()
+                    // fail:
+                    .MarkLabel(fail)
+                    .Ldnull()
+                    .Ret();
+                
                 ownServices.Add(mappings.RootObjectProvider);
             }
 
@@ -97,7 +129,6 @@ namespace XamlIl.Transform
                 "GetService", true, false, true);
 
             ownServices = ownServices.Where(s => s != null).ToList();
-            var getServiceInterfaceMethod = mappings.ServiceProvider.FindMethod("GetService", so, false, systemType);
             if (ownServices.Count != 0)
             {
                 var compare = systemType.FindMethod("Equals", typeSystem.GetType("System.Boolean"),
