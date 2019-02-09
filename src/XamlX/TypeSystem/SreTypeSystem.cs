@@ -181,6 +181,8 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlXType> Interfaces =>
                 _interfaces ?? (_interfaces = Type.GetInterfaces().Select(System.ResolveType).ToList());
 
+            public bool IsInterface => Type.IsInterface;
+
             public IReadOnlyList<IXamlXType> GenericArguments
             {
                 get

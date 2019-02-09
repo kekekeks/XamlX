@@ -24,6 +24,9 @@ namespace XamlX.TypeSystem
         public static IXamlXEmitter Ldloc(this IXamlXEmitter emitter, IXamlXLocal local)
             => emitter.Emit(OpCodes.Ldloc, local);
         
+        public static IXamlXEmitter Ldloca(this IXamlXEmitter emitter, IXamlXLocal local)
+            => emitter.Emit(OpCodes.Ldloca, local);
+        
         public static IXamlXEmitter Stloc(this IXamlXEmitter emitter, IXamlXLocal local)
             => emitter.Emit(OpCodes.Stloc, local);
 
@@ -88,8 +91,15 @@ namespace XamlX.TypeSystem
                 .FindMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetMethodFromHandle");
             return emitter.Ldtoken(method).EmitCall(conv);
         }
+        
+        public static IXamlXEmitter Isinst(this IXamlXEmitter emitter, IXamlXType type)
+            => emitter.Emit(OpCodes.Isinst, type);
 
-
+        public static IXamlXEmitter Box(this IXamlXEmitter emitter, IXamlXType type)
+            => emitter.Emit(OpCodes.Box, type);
+        
+        public static IXamlXEmitter Unbox_Any(this IXamlXEmitter emitter, IXamlXType type)
+            => emitter.Emit(OpCodes.Unbox_Any, type);
 
 
 

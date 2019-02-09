@@ -39,7 +39,7 @@ namespace XamlParserTests
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlParserTests.IXamlParentStack"),
-                    ApplyNonMatchingMarkupExtension = typeSystem.GetType("XamlParserTests.CompilerTestBase")
+                    MarkupExtensionCustomResultHandler = typeSystem.GetType("XamlParserTests.CompilerTestBase")
                         .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
                 }
             );

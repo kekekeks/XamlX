@@ -279,15 +279,29 @@ namespace XamlX.Transform
                     throw new XamlXLoadException(
                         $"Emit of node {value} resulted in void while caller expected {expectedType.GetFqn()}", value);
 
-                if (!expectedType.IsAssignableFrom(returnedType))
+                if (!returnedType.Equals(expectedType))
                 {
-                    throw new XamlXLoadException(
-                        $"Emit of node {value} resulted in  {returnedType.GetFqn()} which is not convertible to expected {expectedType.GetFqn()}",
-                        value);
+                    PooledLocal local = null;
+                    // ReSharper disable once ExpressionIsAlwaysNull
+                    // Value is assigned inside the closure in certain conditions
+                    using (local)
+                        TypeSystemHelpers.EmitConvert(value, returnedType, expectedType, ldaddr =>
+                        {
+                            if (ldaddr && returnedType.IsValueType)
+                            {
+                                // We need to store the value to a temporary variable, since *address*
+                                // is required (probably for  method call on the value type)
+                                local = GetLocal(codeGen, returnedType);
+                                codeGen.Generator
+                                    .Stloc(local.Local)
+                                    .Ldloca(local.Local);
+
+                            }
+                            // Otherwise do nothing, value is already at the top of the stack
+                            return codeGen.Generator;
+                        });
                 }
 
-                if (returnedType.IsValueType && !expectedType.IsValueType)
-                    codeGen.Generator.Emit(OpCodes.Box, returnedType);
             }
 
             return res;
