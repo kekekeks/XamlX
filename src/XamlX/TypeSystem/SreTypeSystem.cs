@@ -348,9 +348,9 @@ namespace XamlX.TypeSystem
             public bool Equals(IXamlXField other) => ((SreField) other)?.Field.Equals(Field) == true;
         }
 
-        public IXamlXCodeGen CreateCodeGen(MethodBuilder mb)
+        public IXamlXEmitter CreateCodeGen(MethodBuilder mb)
         {
-            return new CodeGen(this, mb);
+            return new IlGen(this, mb.GetILGenerator());
         }
 
         public Type GetType(IXamlXType t) => ((SreType) t).Type;
@@ -579,19 +579,6 @@ namespace XamlX.TypeSystem
                 var builder  = _tb.DefineNestedType(name, attrs,
                     ((SreType) baseType).Type);
                 return new SreTypeBuilder(_system, builder);
-            }
-        }
-
-        class CodeGen : IXamlXCodeGen
-        {
-            public CodeGen(SreTypeSystem system, MethodBuilder mb)
-            {
-                Generator = new IlGen(system, mb.GetILGenerator());
-            }
-            public IXamlXEmitter Generator { get; }
-            public void EmitClosure(IEnumerable<IXamlXType> fields)
-            {
-                throw new NotImplementedException();
             }
         }
     }

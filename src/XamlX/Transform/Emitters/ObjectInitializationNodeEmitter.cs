@@ -7,7 +7,7 @@ namespace XamlX.Transform.Emitters
 {
     public class ObjectInitializationNodeEmitter : IXamlXAstNodeEmitter
     {
-        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             if (!(node is XamlXObjectInitializationNode init))
                 return null;
@@ -17,7 +17,7 @@ namespace XamlX.Transform.Emitters
             if (supportsInitialize)
             {
 
-                codeGen.Generator
+                codeGen
                     // We need two copies of the object for Begin/EndInit
                     .Emit(OpCodes.Dup)
                     .Emit(OpCodes.Dup)
@@ -32,7 +32,7 @@ namespace XamlX.Transform.Emitters
                     .MakeGenericType(new[] {context.Configuration.WellKnownTypes.Object});
                     
                 using(var local = context.GetLocal(codeGen, init.Type))
-                codeGen.Generator
+                codeGen
                     .Stloc(local.Local)
                     .Ldloc(context.ContextLocal).Ldfld(context.RuntimeContext.ParentListField)
                     .Ldloc(local.Local)
@@ -46,7 +46,7 @@ namespace XamlX.Transform.Emitters
 
             if (addToParentStack)
             {
-                codeGen.Generator
+                codeGen
                     .Ldloc(context.ContextLocal).Ldfld(context.RuntimeContext.ParentListField)
                     .Ldloc(context.ContextLocal).Ldfld(context.RuntimeContext.ParentListField)
                     .EmitCall(objectListType.FindMethod(m => m.Name == "get_Count"))
@@ -55,7 +55,7 @@ namespace XamlX.Transform.Emitters
             }
             
             if (supportsInitialize)
-                codeGen.Generator
+                codeGen
                     .EmitCall(supportInitType.FindMethod(m => m.Name == "EndInit"));
             
             

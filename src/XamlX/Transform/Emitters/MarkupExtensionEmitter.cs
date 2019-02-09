@@ -8,11 +8,11 @@ namespace XamlX.Transform.Emitters
 {
     public class MarkupExtensionEmitter : IXamlXAstNodeEmitter
     {
-        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             if (!(node is XamlXMarkupExtensionNode me))
                 return null;
-            var ilgen = codeGen.Generator;
+            var ilgen = codeGen;
             var so = context.Configuration.WellKnownTypes.Object;
             var ptype = me.Manipulation?.Parameters[0] ?? me.Property.PropertyType;
             var rtype = me.ProvideValue.ReturnType;
@@ -94,12 +94,12 @@ namespace XamlX.Transform.Emitters
                     void EmitCustomActionCall()
                     {
                         EmitPropertyDescriptor();
-                        codeGen.Generator
+                        codeGen
                             .Emit(OpCodes.Ldloc, context.ContextLocal)
                             .Emit(OpCodes.Ldloc, resultLocal);
                         if (rtype.IsValueType)
-                            codeGen.Generator.Emit(OpCodes.Box, rtype);
-                        codeGen.Generator
+                            codeGen.Emit(OpCodes.Box, rtype);
+                        codeGen
                             .Emit(OpCodes.Call, context.Configuration.TypeMappings.MarkupExtensionCustomResultHandler)
                             .Emit(OpCodes.Br, exit);
                     }
@@ -116,7 +116,7 @@ namespace XamlX.Transform.Emitters
                     var afterCustomLabel = ilgen.DefineLabel();
                     foreach (var ct in customTypes)
                     {
-                        codeGen.Generator
+                        codeGen
                             .Ldloc(resultLocal)
                             .Isinst(ct)
                             .Brtrue(callCustomLabel);
@@ -157,7 +157,7 @@ namespace XamlX.Transform.Emitters
         }
 
         /*
-        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             if (!(node is XamlXMarkupExtensionNode me))
                 return null;
@@ -173,10 +173,10 @@ namespace XamlX.Transform.Emitters
             void EmitPropertyDescriptor()
             {
                 if (me.Property is XamlXAstAttachedProperty)
-                    codeGen.Generator.Ldtoken(me.Property.Getter ?? me.Property.Setter)
+                    codeGen.Ldtoken(me.Property.Getter ?? me.Property.Setter)
                         .Emit(OpCodes.Box, context.Configuration.TypeSystem.GetType("System.RuntimeMethodHandle"));
                 else
-                    codeGen.Generator.Ldstr(me.Property?.Name);
+                    codeGen.Ldstr(me.Property?.Name);
             }
             
             using (var resultLocalContainer = context.GetLocal(codeGen, rtype))   
@@ -185,34 +185,34 @@ namespace XamlX.Transform.Emitters
                 using (var targetObjectLocal = needProvideValueTarget ? context.GetLocal(codeGen, so) : null)
                 {
                     if (needProvideValueTarget)
-                        codeGen.Generator
+                        codeGen
                             .Dup().Stloc(targetObjectLocal.Local);
 
                     context.Emit(me.Value, codeGen, me.Value.Type.GetClrType());
                     if (me.ProvideValue.Parameters.Count != 0)
-                        codeGen.Generator
+                        codeGen
                             .Emit(OpCodes.Ldloc, context.ContextLocal);
 
                     if (needProvideValueTarget)
                     {
-                        codeGen.Generator
+                        codeGen
                             .Ldloc(context.ContextLocal)
                             .Ldloc(targetObjectLocal.Local)
                             .Stfld(context.RuntimeContext.PropertyTargetObject)
                             .Ldloc(context.ContextLocal);
                         EmitPropertyDescriptor();
-                        codeGen.Generator
+                        codeGen
                             .Stfld(context.RuntimeContext.PropertyTargetProperty);
                     }
 
                     
-                    codeGen.Generator
+                    codeGen
                         .Emit(OpCodes.Call, me.ProvideValue)
                         .Emit(OpCodes.Stloc, resultLocal);
 
                     if (needProvideValueTarget)
                     {
-                        codeGen.Generator
+                        codeGen
                             .Ldloc(context.ContextLocal)
                             .Ldnull()
                             .Stfld(context.RuntimeContext.PropertyTargetObject)
@@ -232,23 +232,23 @@ namespace XamlX.Transform.Emitters
                         
                         if (me.Property != null)
                             using (var res = context.GetLocal(codeGen, ptype))
-                                codeGen.Generator
+                                codeGen
                                     .Emit(OpCodes.Stloc, res.Local)
                                     .EmitCall(me.Property.Getter)
                                     .Emit(OpCodes.Ldloc, res.Local);
-                        codeGen.Generator
+                        codeGen
                             .EmitCall(me.Manipulation, true);
-                        return codeGen.Generator;
+                        return codeGen;
                     }
 
-                    return codeGen.Generator.EmitCall(me.Property.Setter);
+                    return codeGen.EmitCall(me.Property.Setter);
                 }
 
 
                 // Now we have the value returned by markup extension in resultLocal
 
 
-                var exit = codeGen.Generator.DefineLabel();
+                var exit = codeGen.DefineLabel();
 
                 // This is needed for custom conversions of Binding to object
                 var customTypes = context.Configuration.TypeMappings.CustomConvertedMarkupExtensionReturnTypes;
@@ -271,7 +271,7 @@ namespace XamlX.Transform.Emitters
                     foreach (var ct in customTypes)
                     {
 
-                        codeGen.Generator
+                        codeGen
                             .Ldloc(resultLocal)
                             .Isinst(ct)
                             .Brtrue(emitCustomCallLabel);
@@ -282,7 +282,7 @@ namespace XamlX.Transform.Emitters
                 //Simplest case: exact type match
                 if (ptype.Equals(rtype))
                 {
-                    codeGen.Generator
+                    codeGen
                         .Emit(OpCodes.Ldloc, resultLocal);
                     CallSetter();
                     return XamlXNodeEmitResult.Void;
@@ -293,7 +293,7 @@ namespace XamlX.Transform.Emitters
                     // If both are value types, try convert non-nullable to nullable
                     if (ptype.IsNullableOf(rtype))
                     {
-                        codeGen.Generator
+                        codeGen
                             .Emit(OpCodes.Ldloc, resultLocal)
                             .Emit(OpCodes.Newobj,
                                 ptype.Constructors.First(c =>
@@ -306,7 +306,7 @@ namespace XamlX.Transform.Emitters
                     // If target is object, simply box
                     if (ptype.Equals(context.Configuration.WellKnownTypes.Object))
                     {
-                        codeGen.Generator
+                        codeGen
                             .Emit(OpCodes.Ldloc, resultLocal)
                             .Emit(OpCodes.Box, rtype);
                         CallSetter();
@@ -317,8 +317,8 @@ namespace XamlX.Transform.Emitters
                     // Cast attempt only makes sense if it's an object
                     if (rtype.Equals(context.Configuration.WellKnownTypes.Object))
                     {
-                        var notMatchedType = codeGen.Generator.DefineLabel();
-                        codeGen.Generator
+                        var notMatchedType = codeGen.DefineLabel();
+                        codeGen
                             .Emit(OpCodes.Ldloc, resultLocal)
                             .Emit(OpCodes.Isinst, ptype)
                             .Emit(OpCodes.Brfalse, notMatchedType)
@@ -332,8 +332,8 @@ namespace XamlX.Transform.Emitters
                 else
                 {
                     // if(res==null) target.Property = null;
-                    var notNull = codeGen.Generator.DefineLabel();
-                    codeGen.Generator
+                    var notNull = codeGen.DefineLabel();
+                    codeGen
                         .Emit(OpCodes.Ldloc, resultLocal)
                         .Emit(OpCodes.Brtrue, notNull)
                         .Emit(OpCodes.Ldloc, resultLocal);
@@ -342,14 +342,14 @@ namespace XamlX.Transform.Emitters
                         .MarkLabel(notNull);
 
                     // if (res is T matched)  target.Property = matched;
-                    var nonMatchedType = codeGen.Generator.DefineLabel();
-                    codeGen.Generator
+                    var nonMatchedType = codeGen.DefineLabel();
+                    codeGen
                         .Emit(OpCodes.Ldloc, resultLocal)
                         .Emit(OpCodes.Isinst, ptype)
                         .Emit(OpCodes.Dup)
                         .Emit(OpCodes.Brfalse, nonMatchedType);
                     CallSetter();
-                    codeGen.Generator.Emit(OpCodes.Br, exit)
+                    codeGen.Emit(OpCodes.Br, exit)
                         .MarkLabel(nonMatchedType)
                         .Emit(OpCodes.Pop);
                 }
@@ -357,16 +357,16 @@ namespace XamlX.Transform.Emitters
 /*
                 // Cast attempts have failed, call external method
                 EmitPropertyDescriptor();
-                codeGen.Generator
+                codeGen
                     .Emit(OpCodes.Ldloc, context.ContextLocal)
                     .Emit(OpCodes.Ldloc, resultLocal);
                 if (rtype.IsValueType)
-                    codeGen.Generator.Emit(OpCodes.Box, rtype);
-                codeGen.Generator
+                    codeGen.Emit(OpCodes.Box, rtype);
+                codeGen
                     .Emit(OpCodes.Call, context.Configuration.TypeMappings.ApplyNonMatchingMarkupExtension)
                     .Emit(OpCodes.Br, exit);
                 
-                codeGen.Generator.MarkLabel(exit);
+                codeGen.MarkLabel(exit);
             }
 
             return XamlXNodeEmitResult.Void;

@@ -73,15 +73,15 @@ namespace XamlX.Transform
         /// </summary>
 
 
-        XamlXEmitContext InitCodeGen(IXamlXCodeGen codeGen, XamlXContext context,
+        XamlXEmitContext InitCodeGen(IXamlXEmitter codeGen, XamlXContext context,
             bool needContextLocal)
         {
             IXamlXLocal contextLocal = null;
 
             if (needContextLocal)
             {
-                contextLocal = codeGen.Generator.DefineLocal(context.ContextType);
-                codeGen.Generator
+                contextLocal = codeGen.DefineLocal(context.ContextType);
+                codeGen
                     .Emit(OpCodes.Ldarg_0)
                     .Emit(OpCodes.Newobj, context.Constructor)
                     .Emit(OpCodes.Stloc, contextLocal);
@@ -91,16 +91,16 @@ namespace XamlX.Transform
             return emitContext;
         }
         
-        void CompileBuild(IXamlXAstValueNode rootInstance, IXamlXCodeGen codeGen, XamlXContext context,
+        void CompileBuild(IXamlXAstValueNode rootInstance, IXamlXEmitter codeGen, XamlXContext context,
             IXamlXMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlXAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
             var emitContext = InitCodeGen(codeGen, context, needContextLocal);
 
 
-            var rv = codeGen.Generator.DefineLocal(rootInstance.Type.GetClrType());
+            var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
             emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
-            codeGen.Generator
+            codeGen
                 .Emit(OpCodes.Stloc, rv)
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldloc, rv)
@@ -113,17 +113,17 @@ namespace XamlX.Transform
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
 
-        void CompilePopulate(IXamlXAstManipulationNode manipulation, IXamlXCodeGen codeGen, XamlXContext context)
+        void CompilePopulate(IXamlXAstManipulationNode manipulation, IXamlXEmitter codeGen, XamlXContext context)
         {
             var emitContext = InitCodeGen(codeGen, context, true);
 
-            codeGen.Generator
+            codeGen
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.RootObjectField)
                 .Emit(OpCodes.Ldarg_1);
             emitContext.Emit(manipulation, codeGen, null);
-            codeGen.Generator.Emit(OpCodes.Ret);
+            codeGen.Emit(OpCodes.Ret);
         }
 
         public void Compile(IXamlXAstNode root, IXamlXTypeBuilder typeBuilder, XamlXContext contextType,
@@ -133,11 +133,11 @@ namespace XamlX.Transform
             var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
                 populateMethodName, true, true, false);
-            CompilePopulate(rootGrp.Manipulation, populateMethod, contextType);
+            CompilePopulate(rootGrp.Manipulation, populateMethod.Generator, contextType);
 
             var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                 new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-            CompileBuild(rootGrp.Value, createMethod, contextType, populateMethod);
+            CompileBuild(rootGrp.Value, createMethod.Generator, contextType, populateMethod);
         }
     }
 
@@ -180,22 +180,22 @@ namespace XamlX.Transform
     {
         private readonly List<object> _emitters;
 
-        private readonly Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXCodeGen codegen)>
-            _locals = new Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXCodeGen codegen)>();
+        private readonly Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXEmitter codegen)>
+            _locals = new Dictionary<XamlXAstCompilerLocalNode, (IXamlXLocal local, IXamlXEmitter codegen)>();
         public XamlXTransformerConfiguration Configuration { get; }
         public XamlXContext RuntimeContext { get; }
         public IXamlXLocal ContextLocal { get; }
-        private List<(IXamlXType type, IXamlXCodeGen codeGen, IXamlXLocal local)> _localsPool = 
-            new List<(IXamlXType, IXamlXCodeGen, IXamlXLocal)>();
+        private List<(IXamlXType type, IXamlXEmitter codeGen, IXamlXLocal local)> _localsPool = 
+            new List<(IXamlXType, IXamlXEmitter, IXamlXLocal)>();
 
         public sealed class PooledLocal : IDisposable
         {
             public IXamlXLocal Local { get; private set; }
             private readonly XamlXEmitContext _parent;
             private readonly IXamlXType _type;
-            private readonly IXamlXCodeGen _codeGen;
+            private readonly IXamlXEmitter _codeGen;
 
-            public PooledLocal(XamlXEmitContext parent,  IXamlXType type, IXamlXCodeGen codeGen, IXamlXLocal local)
+            public PooledLocal(XamlXEmitContext parent,  IXamlXType type, IXamlXEmitter codeGen, IXamlXLocal local)
             {
                 Local = local;
                 _parent = parent;
@@ -222,7 +222,7 @@ namespace XamlX.Transform
             ContextLocal = contextLocal;
         }
 
-        public void StLocal(XamlXAstCompilerLocalNode node,  IXamlXCodeGen codeGen)
+        public void StLocal(XamlXAstCompilerLocalNode node,  IXamlXEmitter codeGen)
         {
             if (_locals.TryGetValue(node, out var local))
             {
@@ -230,24 +230,24 @@ namespace XamlX.Transform
                     throw new XamlXLoadException("Local node is assigned to a different codegen", node);
             }
             else
-                _locals[node] = local = (codeGen.Generator.DefineLocal(node.Type), codeGen);
+                _locals[node] = local = (codeGen.DefineLocal(node.Type), codeGen);
 
-            codeGen.Generator.Emit(OpCodes.Stloc, local.local);
+            codeGen.Emit(OpCodes.Stloc, local.local);
         }
 
-        public void LdLocal(XamlXAstCompilerLocalNode node, IXamlXCodeGen codeGen)
+        public void LdLocal(XamlXAstCompilerLocalNode node, IXamlXEmitter codeGen)
         {
             if (_locals.TryGetValue(node, out var local))
             {
                 if (local.codegen != codeGen)
                     throw new XamlXLoadException("Local node is assigned to a different codegen", node);
-                codeGen.Generator.Emit(OpCodes.Ldloc, local.local);
+                codeGen.Emit(OpCodes.Ldloc, local.local);
             }
             else
                 throw new XamlXLoadException("Attempt to read uninitialized local variable", node);
         }
 
-        public PooledLocal GetLocal(IXamlXCodeGen codeGen, IXamlXType type)
+        public PooledLocal GetLocal(IXamlXEmitter codeGen, IXamlXType type)
         {
             for (var c = 0; c < _localsPool.Count; c++)
             {
@@ -259,11 +259,11 @@ namespace XamlX.Transform
                 }
             }
 
-            return new PooledLocal(this, type, codeGen, codeGen.Generator.DefineLocal(type));
+            return new PooledLocal(this, type, codeGen, codeGen.DefineLocal(type));
 
         }
         
-        public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXCodeGen codeGen, IXamlXType expectedType)
+        public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXEmitter codeGen, IXamlXType expectedType)
         {
             var res = EmitCore(value, codeGen);
             var returnedType = res.ReturnType;
@@ -292,13 +292,13 @@ namespace XamlX.Transform
                                 // We need to store the value to a temporary variable, since *address*
                                 // is required (probably for  method call on the value type)
                                 local = GetLocal(codeGen, returnedType);
-                                codeGen.Generator
+                                codeGen
                                     .Stloc(local.Local)
                                     .Ldloca(local.Local);
 
                             }
                             // Otherwise do nothing, value is already at the top of the stack
-                            return codeGen.Generator;
+                            return codeGen;
                         });
                 }
 
@@ -307,7 +307,7 @@ namespace XamlX.Transform
             return res;
         }
 
-        private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXCodeGen codeGen)
+        private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXEmitter codeGen)
         {
             XamlXNodeEmitResult res = null;
             foreach (var e in _emitters)
@@ -348,12 +348,12 @@ namespace XamlX.Transform
     
     public interface IXamlXAstNodeEmitter
     {
-        XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXCodeGen codeGen);
+        XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXEmitter codeGen);
     }
 
     public interface IXamlXAstEmitableNode
     {
-        XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen);
+        XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen);
     }
     
 }

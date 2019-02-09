@@ -13,7 +13,7 @@ namespace XamlX.Ast
         }
 
         IXamlXAstTypeReference IXamlXAstValueNode.Type => new XamlXAstClrTypeReference(this, Type);
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             context.LdLocal(this, codeGen);
             return XamlXNodeEmitResult.Type(Type);
@@ -38,10 +38,10 @@ namespace XamlX.Ast
             Local = (XamlXAstCompilerLocalNode) Local.Visit(visitor);
         }
 
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
-            codeGen.Generator.Emit(OpCodes.Dup);
+            codeGen.Emit(OpCodes.Dup);
             context.StLocal(Local, codeGen);
             return rv;
         }
@@ -57,10 +57,10 @@ namespace XamlX.Ast
             Imperative = imperative;
         }
 
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             // Discard the stack value we are "supposed" to manipulate
-            codeGen.Generator.Emit(OpCodes.Pop);
+            codeGen.Emit(OpCodes.Pop);
             context.Emit(Imperative, codeGen, null);
             return XamlXNodeEmitResult.Void;
         }
@@ -84,7 +84,7 @@ namespace XamlX.Ast
             Manipulation = (IXamlXAstManipulationNode) Manipulation.Visit(visitor);
         }
 
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
@@ -100,9 +100,9 @@ namespace XamlX.Ast
         }
 
         public IXamlXAstTypeReference Type { get; }
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
-            codeGen.Generator.Ldloc(context.ContextLocal);
+            codeGen.Ldloc(context.ContextLocal);
             return XamlXNodeEmitResult.Type(Type.GetClrType());
         }
     }
@@ -123,11 +123,11 @@ namespace XamlX.Ast
             Type = (IXamlXAstTypeReference) Type.Visit(visitor);
         }
 
-        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXCodeGen codeGen)
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
             var t = Type.GetClrType();
-            codeGen.Generator.Emit(OpCodes.Castclass, t);
+            codeGen.Emit(OpCodes.Castclass, t);
             return XamlXNodeEmitResult.Type(t);
         }
     }
