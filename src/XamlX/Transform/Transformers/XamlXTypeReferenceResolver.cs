@@ -32,36 +32,24 @@ namespace XamlX.Transform.Transformers
             if (xmlns == XamlNamespaces.Xaml2006)
                 found = context.Configuration.TypeSystem.FindType("System." + name);
 
-            // Try registered xmlns
-            if (found == null && context.Configuration.XmlnsMappings.Namespaces.TryGetValue(xmlns, out var lst))
+
+            if (found == null)
             {
-                foreach (var pair in lst)
-                {
-                    found = Attempt(pair.asm.FindType,pair.ns + "." + name);
-                    if (found != null)
-                        break;
-                }
+                var resolvedNamespaces = XamlXNamespaceInfoHelper.TryResolve(context.Configuration, xmlns);
+                if (resolvedNamespaces?.Count > 0)
+                    foreach (var resolvedNs in resolvedNamespaces)
+                    {
+                        var rname = resolvedNs.ClrNamespace + "." + name;
+                        if (resolvedNs.Assembly != null)
+                            found = Attempt(resolvedNs.Assembly.FindType, rname);
+                        else
+                            found = Attempt(x =>
+                                context.Configuration.TypeSystem.FindType(x, resolvedNs.AssemblyName), rname);
+                        if (found != null)
+                            break;
+                    }
             }
 
-            // Try to resolve from clr-namespace
-            if (found == null && xmlns.StartsWith(clrNamespace))
-            {
-                var ns = xmlns.Substring(clrNamespace.Length);
-
-                // We are completely ignoring `;assembly=` part because of type forwarding shenanigans with
-                // netstandard and .NET Core
-                
-                var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, StringComparison.Ordinal);
-                string asm = null;
-                if (indexOfAssemblyPrefix != -1)
-                {
-                    asm = ns.Substring(indexOfAssemblyPrefix + assemblyNamePrefix.Length).Trim();
-                    ns = ns.Substring(0, indexOfAssemblyPrefix);
-                }
-
-                found = Attempt(x =>
-                    context.Configuration.TypeSystem.FindType(x, asm), $"{ns}.{name}");
-            }
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);
             if (found != null)

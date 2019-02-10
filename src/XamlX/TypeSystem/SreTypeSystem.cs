@@ -530,7 +530,7 @@ namespace XamlX.TypeSystem
                 bool isInterfaceImpl, IXamlXMethod overrideMethod)
             {
                 var ret = ((SreType) returnType).Type;
-                var argTypes = args.Cast<SreType>().Select(t => t.Type);
+                var argTypes = args?.Cast<SreType>().Select(t => t.Type) ?? Type.EmptyTypes;
                 var m = _tb.DefineMethod(name, 
                     (isPublic ? MethodAttributes.Public : MethodAttributes.Private)
                     |(isStatic ? MethodAttributes.Static : default(MethodAttributes))
@@ -563,9 +563,12 @@ namespace XamlX.TypeSystem
             }
 
             
-            public IXamlXConstructorBuilder DefineConstructor(params IXamlXType[] args)
+            public IXamlXConstructorBuilder DefineConstructor(bool isStatic, params IXamlXType[] args)
             {
-                var ctor = _tb.DefineConstructor(MethodAttributes.Public,
+                var attrs = MethodAttributes.Public;
+                if (isStatic)
+                    attrs |= MethodAttributes.Static;
+                var ctor = _tb.DefineConstructor(attrs,
                     CallingConventions.Standard,
                     args.Cast<SreType>().Select(t => t.Type).ToArray());
                 return new SreConstructorBuilder(_system, ctor);

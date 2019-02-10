@@ -72,12 +72,10 @@ namespace Benchmarks
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
             
-            var contextClass = XamlXContext.GenerateContextClass(((SreTypeSystem) typeSystem).CreateTypeBuilder(
-                    dm.DefineType(t.Name + "_Context", TypeAttributes.Public)),
-                typeSystem, configuration.TypeMappings, parsedTsType);
             
             var parserTypeBuilder = ((SreTypeSystem) typeSystem).CreateTypeBuilder(t);
-            compiler.Compile(parsed.Root, parserTypeBuilder, contextClass, "Populate", "Build");
+            compiler.Compile(parsed, parserTypeBuilder, "Populate", "Build",
+                "XamlXRuntimeContext", "XamlXNamespaceInfo");
             
             var created = t.CreateType();
 

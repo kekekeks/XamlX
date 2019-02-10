@@ -26,6 +26,8 @@ namespace XamlX.Transform
         public IXamlXType ProvideValueTarget { get; set; }
         public IXamlXType RootObjectProvider { get; set; }
         public IXamlXType ParentStackProvider { get; set; }
+        public IXamlXType XmlNamespaceInfoProvider { get; set; }
+        
         public IXamlXCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>
         /// Expected signature:
