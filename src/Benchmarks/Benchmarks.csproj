@@ -11,8 +11,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\XamlX.Runtime\XamlX.Runtime.csproj" />
       <ProjectReference Include="..\XamlX\XamlX.csproj" />
-        <EmbeddedResource Include="*.xml" />
+      <EmbeddedResource Include="*.xml" />
     </ItemGroup>
 
 </Project>

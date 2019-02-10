@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Parsers;
+using XamlX.Runtime;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -16,7 +18,6 @@ namespace Benchmarks
     {
         
     }
-    
     
     public class BenchCompiler
     {
@@ -32,6 +33,9 @@ namespace Benchmarks
                 foreach (var p in xt.GetProperties())
                     p.GetCustomAttributes();
             }
+            typeof(IXamlXParentStackProviderV1).Assembly.GetCustomAttributes();
+            
+            
             var typeSystem = new SreTypeSystem();
             var configuration = new XamlTransformerConfiguration(typeSystem,
                 typeSystem.FindAssembly("Benchmarks"),
@@ -45,7 +49,8 @@ namespace Benchmarks
                     {
                         typeSystem.GetType("Benchmarks.ContentAttribute")
                     },
-                    RootObjectProvider = typeSystem.GetType("Portable.Xaml.IRootObjectProvider")
+                    RootObjectProvider = typeSystem.GetType("Portable.Xaml.IRootObjectProvider"),
+                    ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlXParentStackProviderV1")
                 });
             var parsed = XDocumentXamlParser.Parse(xaml);
             
