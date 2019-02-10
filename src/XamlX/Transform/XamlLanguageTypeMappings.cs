@@ -27,6 +27,7 @@ namespace XamlX.Transform
         public IXamlType RootObjectProvider { get; set; }
         public IXamlType ParentStackProvider { get; set; }
         public IXamlType XmlNamespaceInfoProvider { get; set; }
+        public IXamlType UriContextProvider { get; set; }
         
         public IXamlCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>

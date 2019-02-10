@@ -127,7 +127,8 @@ namespace XamlX.Transform
         }
 
         public void Compile(XamlDocument doc, IXamlTypeBuilder typeBuilder,
-            string populateMethodName, string createMethodName, string contextClassName, string namespaceInfoClassName)
+            string populateMethodName, string createMethodName, string contextClassName, string namespaceInfoClassName,
+            string baseUri)
         {
             var rootGrp = (XamlValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlField>();
@@ -145,7 +146,7 @@ namespace XamlX.Transform
                 contextClassName, false);
 
             var contextType = XamlContext.GenerateContextClass(contextBuilder, _configuration.TypeSystem,
-                _configuration.TypeMappings, rootGrp.Type.GetClrType(), staticProviders);
+                _configuration.TypeMappings, rootGrp.Type.GetClrType(), staticProviders, baseUri);
 
             var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
