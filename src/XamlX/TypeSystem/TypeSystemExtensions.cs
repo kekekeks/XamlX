@@ -15,11 +15,17 @@ namespace XamlX.TypeSystem
         public static IXamlILEmitter Ldfld(this IXamlILEmitter emitter, IXamlField field)
             => emitter.Emit(OpCodes.Ldfld, field);
         
+        public static IXamlILEmitter Ldsfld(this IXamlILEmitter emitter, IXamlField field)
+            => emitter.Emit(OpCodes.Ldsfld, field);
+        
         public static IXamlILEmitter LdThisFld(this IXamlILEmitter emitter, IXamlField field)
             => emitter.Ldarg_0().Emit(OpCodes.Ldfld, field);
         
         public static IXamlILEmitter Stfld(this IXamlILEmitter emitter, IXamlField field)
             => emitter.Emit(OpCodes.Stfld, field);
+            
+        public static IXamlILEmitter Stsfld(this IXamlILEmitter emitter, IXamlField field)
+            => emitter.Emit(OpCodes.Stsfld, field);
 
         public static IXamlILEmitter Ldloc(this IXamlILEmitter emitter, IXamlLocal local)
             => emitter.Emit(OpCodes.Ldloc, local);
@@ -71,6 +77,9 @@ namespace XamlX.TypeSystem
         
         public static IXamlILEmitter Dup(this IXamlILEmitter emitter)
             => emitter.Emit(OpCodes.Dup);
+        
+        public static IXamlILEmitter Pop(this IXamlILEmitter emitter)
+            => emitter.Emit(OpCodes.Pop);
         
         public static IXamlILEmitter Ldtoken(this IXamlILEmitter emitter, IXamlType type)
             => emitter.Emit(OpCodes.Ldtoken, type);

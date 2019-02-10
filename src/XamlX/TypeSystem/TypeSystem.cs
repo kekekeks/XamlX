@@ -142,7 +142,7 @@ namespace XamlX.TypeSystem
             bool isInterfaceImpl, IXamlMethod overrideMethod = null);
 
         IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
-        IXamlConstructorBuilder DefineConstructor(params IXamlType[] args);
+        IXamlConstructorBuilder DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
         IXamlTypeBuilder DefineSubType(IXamlType baseType, string name, bool isPublic);
     }
@@ -265,8 +265,10 @@ namespace XamlX.TypeSystem
             return null;
         }
         
-        public static IXamlConstructor FindConstructor(this IXamlType type, List<IXamlType> args)
+        public static IXamlConstructor FindConstructor(this IXamlType type, List<IXamlType> args = null)
         {
+            if(args == null)
+                args = new List<IXamlType>();
             foreach (var ctor in type.Constructors.Where(c => c.IsPublic
                                                               && !c.IsStatic
                                                               && c.Parameters.Count == args.Count))

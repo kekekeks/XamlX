@@ -126,10 +126,27 @@ namespace XamlX.Transform
             codeGen.Emit(OpCodes.Ret);
         }
 
-        public void Compile(IXamlAstNode root, IXamlTypeBuilder typeBuilder, XamlContext contextType,
-            string populateMethodName, string createMethodName)
+        public void Compile(XamlDocument doc, IXamlTypeBuilder typeBuilder,
+            string populateMethodName, string createMethodName, string contextClassName, string namespaceInfoClassName)
         {
-            var rootGrp = (XamlValueWithManipulationNode) root;
+            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
+            var staticProviders = new List<IXamlField>();
+
+            IXamlTypeBuilder namespaceInfoBuilder = null;
+            if (_configuration.TypeMappings.XmlNamespaceInfoProvider != null)
+            {
+                namespaceInfoBuilder = typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
+                    namespaceInfoClassName, false);
+                staticProviders.Add(
+                    XamlNamespaceInfoHelper.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
+            }
+            
+            var contextBuilder = typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
+                contextClassName, false);
+
+            var contextType = XamlContext.GenerateContextClass(contextBuilder, _configuration.TypeSystem,
+                _configuration.TypeMappings, rootGrp.Type.GetClrType(), staticProviders);
+
             var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
                 populateMethodName, true, true, false);
@@ -142,6 +159,8 @@ namespace XamlX.Transform
             var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                 new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
             CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, contextType, populateMethod);
+            namespaceInfoBuilder?.CreateType();
+            contextType.CreateAllTypes();
         }
     }
 
