@@ -204,6 +204,7 @@ namespace XamlIl.Transform
         public IXamlIlType Object { get; }
         public IXamlIlType String { get; }
         public IXamlIlType Void { get; }
+        public IXamlIlType Boolean { get; }
         public IXamlIlType NullableT { get; }
         public IXamlIlType CultureInfo { get; }
         public IXamlIlType IFormatProvider { get; }
@@ -213,6 +214,7 @@ namespace XamlIl.Transform
             Void = typeSystem.GetType("System.Void");
             String = typeSystem.GetType("System.String");
             Object = typeSystem.GetType("System.Object");
+            Boolean = typeSystem.GetType("System.Boolean");
             CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
             IFormatProvider = typeSystem.GetType("System.IFormatProvider");
             IList = typeSystem.GetType("System.Collections.IList");

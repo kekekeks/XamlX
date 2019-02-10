@@ -43,6 +43,7 @@ namespace XamlParserTests
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlParentStackProviderV1"),
+                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlXmlNamespaceInfoProviderV1"),
                     MarkupExtensionCustomResultHandler = typeSystem.GetType("XamlParserTests.CompilerTestBase")
                         .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
                 }
@@ -89,12 +90,9 @@ namespace XamlParserTests
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
             
-            var contextClass = XamlIlContext.GenerateContextClass(((SreTypeSystem) _typeSystem).CreateTypeBuilder(
-                    dm.DefineType(t.Name + "_Context", TypeAttributes.Public)),
-                _typeSystem, Configuration.TypeMappings, parsedTsType);
-            
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
-            compiler.Compile(parsed.Root, parserTypeBuilder, contextClass, "Populate", "Build");
+            compiler.Compile(parsed, parserTypeBuilder, "Populate", "Build",
+                "XamlIlRuntimeContext", "XamlIlNamespaceInfo");
             
             var created = t.CreateType();
             #if !NETCOREAPP

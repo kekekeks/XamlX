@@ -191,6 +191,50 @@ namespace XamlParserTests
                 return "Value";
             }, null);
         }
-        
+
+
+        [Fact]
+        public void Namespace_Info_Should_Be_Preserved()
+        {
+            CompileAndRun(@"
+<ServiceProviderTestsClass 
+    xmlns='test'
+    xmlns:clr1='clr-namespace:System.Collections.Generic;assembly=netstandard'
+    xmlns:clr2='clr-namespace:Dummy;assembly=XamlParserTests'
+    Property='{Callback}'/>", sp =>
+            {
+                var nsList = sp.GetService<IXamlIlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                Helpers.StructDiff(nsList,
+                    new Dictionary<string, List<XamlIlXmlNamespaceInfoV1>>
+                    {
+                        [""] = new List<XamlIlXmlNamespaceInfoV1>
+                        {
+                            new XamlIlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "XamlParserTests",
+                                ClrAssemblyName = "XamlParserTests"
+                            }
+                        },
+                        ["clr1"] = new List<XamlIlXmlNamespaceInfoV1>
+                        {
+                            new XamlIlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "System.Collections.Generic",
+                                ClrAssemblyName = "netstandard"
+                            }
+                        },
+                        ["clr2"] = new List<XamlIlXmlNamespaceInfoV1>
+                        {
+                            new XamlIlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "Dummy",
+                                ClrAssemblyName = "XamlParserTests"
+                            }
+                        }
+                    });
+                
+                return "Value";
+            }, null);
+        }
     }
 }

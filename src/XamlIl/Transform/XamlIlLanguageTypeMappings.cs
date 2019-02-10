@@ -26,6 +26,8 @@ namespace XamlIl.Transform
         public IXamlIlType ProvideValueTarget { get; set; }
         public IXamlIlType RootObjectProvider { get; set; }
         public IXamlIlType ParentStackProvider { get; set; }
+        public IXamlIlType XmlNamespaceInfoProvider { get; set; }
+        
         public IXamlIlCustomAttributeResolver CustomAttributeResolver { get; set; }
         /// <summary>
         /// Expected signature:
