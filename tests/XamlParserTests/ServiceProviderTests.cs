@@ -236,5 +236,18 @@ namespace XamlParserTests
                 return "Value";
             }, null);
         }
+        
+        [Fact]
+        public void Uri_Context_Is_Usable()
+        {
+            bool ok = false;
+            CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
+            {
+                Assert.Equal("http://example.com/", sp.GetService<ITestUriContext>().BaseUri.ToString());
+                ok = true;
+                return "Value";
+            }, null);
+            Assert.True(ok);
+        }
     }
 }

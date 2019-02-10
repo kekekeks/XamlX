@@ -41,6 +41,7 @@ namespace XamlParserTests
                         typeSystem.GetType("XamlParserTests.DeferredContentAttribute")
                     },
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
+                    UriContextProvider = typeSystem.GetType("XamlParserTests.ITestUriContext"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlParentStackProviderV1"),
                     XmlNamespaceInfoProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlXmlNamespaceInfoProviderV1"),
@@ -92,7 +93,8 @@ namespace XamlParserTests
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
             compiler.Compile(parsed, parserTypeBuilder, "Populate", "Build",
-                "XamlIlRuntimeContext", "XamlIlNamespaceInfo");
+                "XamlIlRuntimeContext", "XamlIlNamespaceInfo",
+                "http://example.com/");
             
             var created = t.CreateType();
             #if !NETCOREAPP

@@ -42,4 +42,9 @@ namespace XamlParserTests
         object TargetProperty { get; }
     }
     
+    public interface ITestUriContext
+    {
+        Uri BaseUri { get; set; }
+    }
+    
 }

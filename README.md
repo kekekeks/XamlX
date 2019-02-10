@@ -42,7 +42,10 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - XAML parents stack (see IXamlParentsStack in tests) as an lightweight alternative for IAmbientProvider
 - Support for mc:Ignorable
 - IProvideValueTarget (property name is provided for regular properties, RuntimeMethodInfo is provided for attached ones)
+- IUriContext
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
+- Runtime xmlns information via `IXamlIlXmlNamespaceInfoProvider` (provides `Dictionary<string, List<(string clrNamespace, string asm)>`)
+
 - xml:space Handling in XAML (automatically via XmlReader)
 
 ## Architecture
@@ -68,13 +71,12 @@ Features marked with *[opt]* are considered optional and will be implemented aft
 
 
 These are questinable due to heavy reliance on reflection:
-- IXamlTypeResolver
+- IXamlTypeResolver (can be implemented in runtime via `IXamlIlXmlNamespaceInfoProviderV1`) *[dontneed]*
 - IXamlNameResolver (probably without forward references) *[dontneed]*
 - IXamlNamespaceResolver *[dontneed]*
 
 
 These are framework-specific and can be implemented via custom transformers/emitters or custom IServiceProvider
-- IUriContext
 - x:Property Directive
 - x:Uid Directive
 - x:XData Intrinsic XAML Type
