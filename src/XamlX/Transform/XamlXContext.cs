@@ -24,14 +24,14 @@ namespace XamlX.Transform
 
         public static XamlXContext GenerateContextClass(IXamlXTypeBuilder builder,
             IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings,
-            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders) 
-            => new XamlXContext(builder, typeSystem, mappings, rootType, staticProviders);
+            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders, string baseUri) 
+            => new XamlXContext(builder, typeSystem, mappings, rootType, staticProviders, baseUri);
 
         public List<Action> CreateCallbacks = new List<Action>();
         
-        private XamlXContext(IXamlXTypeBuilder builder, 
+        private XamlXContext(IXamlXTypeBuilder builder,
             IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings,
-            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders)
+            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders, string baseUri)
         {
             RootObjectField = builder.DefineField(rootType, "RootObject", true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
@@ -122,6 +122,44 @@ namespace XamlX.Transform
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetProperty")
                     .Generator.LdThisFld(PropertyTargetProperty).Ret();
                 ownServices.Add(mappings.ProvideValueTarget);
+            }
+
+            if (mappings.UriContextProvider != null)
+            {
+                var systemUri = typeSystem.GetType("System.Uri");
+                var cached = builder.DefineField(systemUri, "_baseUri", false, false);
+                builder.AddInterfaceImplementation(mappings.UriContextProvider);
+                var getter = builder.DefineMethod(systemUri, new IXamlXType[0], "get_BaseUri", true, false, true);
+                var setter = builder.DefineMethod(typeSystem.GetType("System.Void"), new[] {systemUri},
+                    "set_BaseUri", true, false, true);
+
+
+                var noCache = getter.Generator.DefineLabel();
+                getter.Generator
+                    .LdThisFld(cached)
+                    .Brfalse(noCache)
+                    .LdThisFld(cached)
+                    .Ret()
+                    .MarkLabel(noCache)
+                    .Ldarg_0()
+                    .Ldstr(baseUri)
+                    .Newobj(systemUri.FindConstructor(new List<IXamlXType>
+                    {
+                        typeSystem.GetType("System.String")
+                    }))
+                    .Stfld(cached)
+                    .LdThisFld(cached)
+                    .Ret();
+
+                setter.Generator
+                    .Ldarg_0()
+                    .Ldarg(1)
+                    .Stfld(cached)
+                    .Ret();
+                builder.DefineProperty(systemUri, "BaseUri", setter, getter);
+                
+                    
+                ownServices.Add(mappings.UriContextProvider);    
             }
             
             builder.AddInterfaceImplementation(mappings.ServiceProvider);
