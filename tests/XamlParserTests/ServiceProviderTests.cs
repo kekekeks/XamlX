@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using XamlX.Runtime;
 using XamlX.TypeSystem;
 using Xunit;
 
@@ -31,14 +32,14 @@ namespace XamlParserTests
     
     public class ServiceProviderTests : CompilerTestBase
     {
-        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStack parentStack)
+        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlXParentStackProviderV1 parentStack)
             => Compile(xaml).create(new DictionaryServiceProvider
             {
                 [typeof(CallbackExtensionCallback)] = cb,
-                [typeof(IXamlParentStack)] = parentStack
+                [typeof(IXamlXParentStackProviderV1)] = parentStack
             });
 
-        class ListParentsProvider : List<object>, IXamlParentStack
+        class ListParentsProvider : List<object>, IXamlXParentStackProviderV1
         {
             public IEnumerable<object> Parents => this;
         }
@@ -62,7 +63,7 @@ namespace XamlParserTests
             {
                 //Manual unrolling of enumerable, useful for state tracking
                 var stack = new List<object>();
-                var parentsEnumerable = sp.GetService<IXamlParentStack>().Parents;
+                var parentsEnumerable = sp.GetService<IXamlXParentStackProviderV1>().Parents;
                 using (var parentsEnumerator = parentsEnumerable.GetEnumerator())
                 {
                     while (parentsEnumerator.MoveNext())
