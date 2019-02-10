@@ -36,11 +36,6 @@ namespace XamlParserTests
         object RootObject { get; }
     }
 
-    public interface IXamlParentStack
-    {
-        IEnumerable<object> Parents { get; }
-    }
-
     public interface ITestProvideValueTarget
     {
         object TargetObject { get; }
