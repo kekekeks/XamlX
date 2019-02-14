@@ -22,6 +22,8 @@ namespace XamlX.Transform.Emitters
 
             void EmitPropertyDescriptor()
             {
+                if(context.Configuration.TypeMappings.ProvideValueTargetPropertyEmitter(context, me.Property))
+                    return;
                 if (me.Property is XamlXAstAttachedProperty)
                     ilgen.Ldtoken(me.Property.Getter ?? me.Property.Setter)
                         .Emit(OpCodes.Box, context.Configuration.TypeSystem.GetType("System.RuntimeMethodHandle"));
