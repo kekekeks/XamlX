@@ -15,5 +15,12 @@
       <ProjectReference Include="..\XamlIl\XamlIl.csproj" />
       <EmbeddedResource Include="*.xml" />
     </ItemGroup>
-
+    <Target Name="Precompile" AfterTargets="CoreCompile">
+        <Message Importance="high" Text="Precompiling $(TargetPath)" />
+        <PropertyGroup>
+            <PrecompileTarget>$(MSBuildThisFileDirectory)/@(IntermediateAssembly)</PrecompileTarget>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(PrecompileTarget).refs" Lines="@(ReferencePathWithRefAssemblies)" Overwrite="true" />
+        <Exec Command="dotnet   '$(MSBuildThisFileDirectory)\..\BenchmarksCompiler\bin\$(Configuration)\netcoreapp2.2\BenchmarksCompiler.dll' '$(PrecompileTarget)'" LogStandardErrorAsError="true" StandardErrorImportance="high" />
+    </Target>
 </Project>

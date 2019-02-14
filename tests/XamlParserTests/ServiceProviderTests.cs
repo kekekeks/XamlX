@@ -203,6 +203,11 @@ namespace XamlParserTests
     xmlns:clr2='clr-namespace:Dummy;assembly=XamlParserTests'
     Property='{Callback}'/>", sp =>
             {
+                var npl = sp.GetType().DeclaringType.GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public);
+                var np = npl
+                    .First(t => typeof(IXamlIlXmlNamespaceInfoProviderV1).IsAssignableFrom(t));
+                var f = np.GetFields(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+                var wtf = f[0].GetValue(null);
                 var nsList = sp.GetService<IXamlIlXmlNamespaceInfoProviderV1>().XmlNamespaces;
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, List<XamlIlXmlNamespaceInfoV1>>
@@ -212,7 +217,7 @@ namespace XamlParserTests
                             new XamlIlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "XamlParserTests",
-                                ClrAssemblyName = "XamlParserTests"
+                                ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
                             }
                         },
                         ["clr1"] = new List<XamlIlXmlNamespaceInfoV1>

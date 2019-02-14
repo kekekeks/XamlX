@@ -2,8 +2,13 @@
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains;
+using BenchmarkDotNet.Toolchains.CsProj;
+using BenchmarkDotNet.Toolchains.DotNetCli;
+using BenchmarkDotNet.Toolchains.InProcess;
 
 namespace Benchmarks
 {
@@ -16,10 +21,10 @@ namespace Benchmarks
 			{
 				//var benchmark = new LoadSimpleBenchmark();
 				var benchmark = new LoadComplexBenchmark();
-				benchmark.XamlIl();
+				benchmark.XamlIlPrecompiled();
 				for (int i = 0; i < 1000; i++)
 				{
-					benchmark.XamlIl();
+					benchmark.XamlIlPrecompiled();
 				}
 				return;
 			}
@@ -34,10 +39,20 @@ namespace Benchmarks
 
 			var config = ManualConfig
 				.Create(DefaultConfig.Instance)
-				.With(Job.Default)
 				.With(MemoryDiagnoser.Default)
 				.With(StatisticColumn.OperationsPerSecond)
 				.With(RankColumn.Arabic);
+			if (args?.FirstOrDefault() == "--inproc")
+			{
+				args = args.Skip(1).ToArray();
+				config = config
+					.With(Job.Default.With(InProcessToolchain.Instance));
+			}
+			else
+				config =config
+					.With(Job.Default.With(Runtime.Core).With(CsProjCoreToolchain.NetCoreApp22).AsBaseline().WithId("Core 2.2"))
+					.With(Job.Default.With(Runtime.Mono));
+				
 
 			var switcher = new BenchmarkSwitcher(types.ToArray());
 			switcher.Run(args, config);

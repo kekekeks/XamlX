@@ -11,12 +11,12 @@ using XamlIl.TypeSystem;
 
 namespace XamlParserTests
 {
-    public class CompilerTestBase
+    public partial class CompilerTestBase
     {
         private readonly IXamlIlTypeSystem _typeSystem;
         public XamlIlTransformerConfiguration Configuration { get; }
 
-        public CompilerTestBase(IXamlIlTypeSystem typeSystem)
+        private CompilerTestBase(IXamlIlTypeSystem typeSystem)
         {
             _typeSystem = typeSystem;
             Configuration = new XamlIlTransformerConfiguration(typeSystem,
@@ -57,30 +57,32 @@ namespace XamlParserTests
             throw new InvalidCastException();
         }
 
-        public CompilerTestBase() : this(new SreTypeSystem())
-        {
-            
-        }
-        static object s_asmLock = new object();
+        
         protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
+        XamlIlDocument Compile(IXamlIlTypeBuilder builder, string xaml)
+        {
+            var parsed = XDocumentXamlIlParser.Parse(xaml);
+            var compiler = new XamlIlCompiler(Configuration, true);
+            compiler.Transform(parsed);
+            compiler.Compile(parsed, builder, "Populate", "Build",
+                "XamlIlRuntimeContext", "XamlIlNamespaceInfo",
+                "http://example.com/");
+            return parsed;
+        }
+        static object s_asmLock = new object();
+        
+#if !CECIL
+        public CompilerTestBase() : this(new SreTypeSystem())
+        {
+            
+        }
         
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
         {
-            var parsed = XDocumentXamlIlParser.Parse(xaml);
-            
-            var compiler = new XamlIlCompiler(Configuration, true);
-            compiler.Transform(parsed, parsed.NamespaceAliases);
-            
-            
-            var parsedTsType = ((IXamlIlAstValueNode) parsed.Root).Type.GetClrType();
-            var parsedType =
-                ((SreTypeSystem) _typeSystem).GetType(parsedTsType);
-            
-            #if !NETCOREAPP
-            
+            #if !NETCOREAPP && !NETSTANDARD
             var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
                 AssemblyBuilderAccess.RunAndSave,
                 Directory.GetCurrentDirectory());
@@ -92,35 +94,38 @@ namespace XamlParserTests
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
-            compiler.Compile(parsed, parserTypeBuilder, "Populate", "Build",
-                "XamlIlRuntimeContext", "XamlIlNamespaceInfo",
-                "http://example.com/");
-            
-            var created = t.CreateType();
-            #if !NETCOREAPP
+
+            var parsed = Compile(parserTypeBuilder, xaml);
+
+            var created = t.CreateTypeInfo();
+            #if !NETCOREAPP && !NETSTANDARD
             dm.CreateGlobalFunctions();
             // Useful for debugging the actual MSIL, don't remove
             lock (s_asmLock)
                 da.Save("testasm.dll");
             #endif
-            
-            
-            
+
+            return GetCallbacks(created);
+        }
+        #endif
+
+        (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate)
+            GetCallbacks(Type created)
+        {
             var isp = Expression.Parameter(typeof(IServiceProvider));
             var createCb = Expression.Lambda<Func<IServiceProvider, object>>(
                 Expression.Convert(Expression.Call(
                     created.GetMethod("Build"), isp), typeof(object)), isp).Compile();
             
-
             var epar = Expression.Parameter(typeof(object));
+            var populate = created.GetMethod("Populate");
             isp = Expression.Parameter(typeof(IServiceProvider));
             var populateCb = Expression.Lambda<Action<IServiceProvider, object>>(
-                Expression.Call(created.GetMethod("Populate"), isp, Expression.Convert(epar, parsedType)),
+                Expression.Call(populate, isp, Expression.Convert(epar, populate.GetParameters()[1].ParameterType)),
                 isp, epar).Compile();
             
             return (createCb, populateCb);
         }
-        
         
     }
 }

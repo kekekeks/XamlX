@@ -12,6 +12,7 @@ namespace XamlIl.TypeSystem
         object Id { get; }
         string Name { get; }
         string Namespace { get; }
+        string FullName { get; }
         IXamlIlAssembly Assembly { get; }
         IReadOnlyList<IXamlIlProperty> Properties { get; }
         IReadOnlyList<IXamlIlField> Fields { get; }
@@ -72,7 +73,6 @@ namespace XamlIl.TypeSystem
     public interface IXamlIlAssembly : IEquatable<IXamlIlAssembly>
     {
         string Name { get; }
-        IReadOnlyList<IXamlIlType> Types { get; }
         IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; }
         IXamlIlType FindType(string fullName);
     }
@@ -159,6 +159,7 @@ namespace XamlIl.TypeSystem
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
         public string Namespace { get; } = "";
+        public string FullName => Name;
         public IXamlIlAssembly Assembly { get; } = null;
         public IReadOnlyList<IXamlIlProperty> Properties { get; } = new IXamlIlProperty[0];
         public IReadOnlyList<IXamlIlField> Fields { get; } = new List<IXamlIlField>();
@@ -310,6 +311,24 @@ namespace XamlIl.TypeSystem
 
         public static IXamlIlType MakeGenericType(this IXamlIlType type, params IXamlIlType[] typeArguments)
             => type.MakeGenericType(typeArguments);
+
+        public static IEnumerable<IXamlIlType> GetAllInterfaces(this IXamlIlType type)
+        {
+            foreach (var i in type.Interfaces)
+                yield return i;
+            if(type.BaseType!=null)
+                foreach (var i in type.BaseType.GetAllInterfaces())
+                    yield return i;
+        }
+
+        public static IEnumerable<IXamlIlProperty> GetAllProperties(this IXamlIlType t)
+        {
+            foreach (var p in t.Properties)
+                yield return p;
+            if(t.BaseType!=null)
+                foreach (var p in t.BaseType.GetAllProperties())
+                    yield return p;
+        }
         
         public static IXamlIlEmitter DebugHatch(this IXamlIlEmitter emitter, string message)
         {
