@@ -12,6 +12,7 @@ namespace XamlX.TypeSystem
         object Id { get; }
         string Name { get; }
         string Namespace { get; }
+        string FullName { get; }
         IXamlAssembly Assembly { get; }
         IReadOnlyList<IXamlProperty> Properties { get; }
         IReadOnlyList<IXamlField> Fields { get; }
@@ -72,7 +73,6 @@ namespace XamlX.TypeSystem
     public interface IXamlAssembly : IEquatable<IXamlAssembly>
     {
         string Name { get; }
-        IReadOnlyList<IXamlType> Types { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
         IXamlType FindType(string fullName);
     }
@@ -159,6 +159,7 @@ namespace XamlX.TypeSystem
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
         public string Namespace { get; } = "";
+        public string FullName => Name;
         public IXamlAssembly Assembly { get; } = null;
         public IReadOnlyList<IXamlProperty> Properties { get; } = new IXamlProperty[0];
         public IReadOnlyList<IXamlField> Fields { get; } = new List<IXamlField>();
@@ -310,6 +311,24 @@ namespace XamlX.TypeSystem
 
         public static IXamlType MakeGenericType(this IXamlType type, params IXamlType[] typeArguments)
             => type.MakeGenericType(typeArguments);
+
+        public static IEnumerable<IXamlType> GetAllInterfaces(this IXamlType type)
+        {
+            foreach (var i in type.Interfaces)
+                yield return i;
+            if(type.BaseType!=null)
+                foreach (var i in type.BaseType.GetAllInterfaces())
+                    yield return i;
+        }
+
+        public static IEnumerable<IXamlProperty> GetAllProperties(this IXamlType t)
+        {
+            foreach (var p in t.Properties)
+                yield return p;
+            if(t.BaseType!=null)
+                foreach (var p in t.BaseType.GetAllProperties())
+                    yield return p;
+        }
         
         public static IXamlILEmitter DebugHatch(this IXamlILEmitter emitter, string message)
         {

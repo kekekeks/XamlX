@@ -34,7 +34,7 @@ namespace XamlX.Transform.Transformers
                 // Can set normal properties of ancestor types and self
                 if (declaringType.IsAssignableFrom(targetType))
                 {
-                    var found = declaringType.Properties.FirstOrDefault(p =>
+                    var found = declaringType.GetAllProperties().FirstOrDefault(p =>
                         p.Name == prop.Name
                         && ((p.Getter != null && !p.Getter.IsStatic && p.Getter.Parameters.Count == 0)
                             || p.Setter != null && !p.Setter.IsStatic && p.Setter.Parameters.Count == 1));

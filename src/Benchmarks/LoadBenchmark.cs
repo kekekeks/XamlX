@@ -54,6 +54,18 @@ namespace Benchmarks
 			_compiled = _compiled ?? BenchCompiler.Compile(new StreamReader(GetStream()).ReadToEnd());
 			_compiled(null);
 		}
+
+		public virtual object LoadXamlXPrecompiled(IServiceProvider sp)
+		{
+			// This method will be overridden by Cecil
+			throw new NotImplementedException();
+		}
+		
+		[Benchmark]
+		public void XamlXPrecompiled()
+		{
+			LoadXamlXPrecompiled(null);
+		}
 		
 	}
 }

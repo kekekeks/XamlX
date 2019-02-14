@@ -155,26 +155,28 @@ namespace XamlX.TypeSystem
             public bool Equals(IXamlType other) => Type == (other as SreType)?.Type;
 
             public object Id => Type;
-            
+
+            public string FullName => Type.FullName;
             public string Namespace => Type.Namespace;
             public IXamlAssembly Assembly { get; }
 
             public IReadOnlyList<IXamlProperty> Properties =>
                 _properties ?? (_properties = Type
                     .GetProperties(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance |
-                                   BindingFlags.NonPublic)
+                                   BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
                     .Select(p => new SreProperty(System, p)).ToList());
 
             public IReadOnlyList<IXamlField> Fields =>
                 _fields ?? (_fields = Type.GetFields(BindingFlags.Public | BindingFlags.Static
                                                                          | BindingFlags.Instance |
-                                                                         BindingFlags.NonPublic)
+                                                                         BindingFlags.NonPublic
+                                                                         | BindingFlags.DeclaredOnly)
                     .Select(f => new SreField(System, f)).ToList());
 
             public IReadOnlyList<IXamlMethod> Methods =>
                 _methods ?? (_methods = Type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic |
                                                         BindingFlags.Static |
-                                                        BindingFlags.Instance)
+                                                        BindingFlags.Instance | BindingFlags.DeclaredOnly)
                     .Select(m => new SreMethod(System, m)).ToList());
 
             public IReadOnlyList<IXamlConstructor> Constructors =>

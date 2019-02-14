@@ -78,7 +78,7 @@ namespace XamlX.Ast
         IXamlMember ResolveMember(IXamlType type)
         {
             return type.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
-                   (IXamlMember) type.Properties.FirstOrDefault(p =>
+                   (IXamlMember) type.GetAllProperties().FirstOrDefault(p =>
                        p.Name == Member && p.Getter != null && p.Getter.IsPublic && p.Getter.IsStatic);
         }
         
