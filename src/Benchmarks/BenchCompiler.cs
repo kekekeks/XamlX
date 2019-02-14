@@ -37,25 +37,11 @@ namespace Benchmarks
             
             
             var typeSystem = new SreTypeSystem();
-            var configuration = new XamlXTransformerConfiguration(typeSystem,
-                typeSystem.FindAssembly("Benchmarks"),
-                new XamlXLanguageTypeMappings(typeSystem)
-                {
-                    XmlnsAttributes =
-                    {
-                        typeSystem.GetType("Portable.Xaml.Markup.XmlnsDefinitionAttribute"),
-                    },
-                    ContentAttributes =
-                    {
-                        typeSystem.GetType("Benchmarks.ContentAttribute")
-                    },
-                    RootObjectProvider = typeSystem.GetType("Portable.Xaml.IRootObjectProvider"),
-                    ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlXParentStackProviderV1")
-                });
+            var configuration = BenchmarksXamlXConfiguration.Configure(typeSystem);
             var parsed = XDocumentXamlXParser.Parse(xaml);
             
             var compiler = new XamlXCompiler(configuration, true);
-            compiler.Transform(parsed, parsed.NamespaceAliases);
+            compiler.Transform(parsed);
             
             
             var parsedTsType = ((IXamlXAstValueNode) parsed.Root).Type.GetClrType();

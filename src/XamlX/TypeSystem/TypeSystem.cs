@@ -12,6 +12,7 @@ namespace XamlX.TypeSystem
         object Id { get; }
         string Name { get; }
         string Namespace { get; }
+        string FullName { get; }
         IXamlXAssembly Assembly { get; }
         IReadOnlyList<IXamlXProperty> Properties { get; }
         IReadOnlyList<IXamlXField> Fields { get; }
@@ -72,7 +73,6 @@ namespace XamlX.TypeSystem
     public interface IXamlXAssembly : IEquatable<IXamlXAssembly>
     {
         string Name { get; }
-        IReadOnlyList<IXamlXType> Types { get; }
         IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; }
         IXamlXType FindType(string fullName);
     }
@@ -159,6 +159,7 @@ namespace XamlX.TypeSystem
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
         public string Namespace { get; } = "";
+        public string FullName => Name;
         public IXamlXAssembly Assembly { get; } = null;
         public IReadOnlyList<IXamlXProperty> Properties { get; } = new IXamlXProperty[0];
         public IReadOnlyList<IXamlXField> Fields { get; } = new List<IXamlXField>();
@@ -310,6 +311,24 @@ namespace XamlX.TypeSystem
 
         public static IXamlXType MakeGenericType(this IXamlXType type, params IXamlXType[] typeArguments)
             => type.MakeGenericType(typeArguments);
+
+        public static IEnumerable<IXamlXType> GetAllInterfaces(this IXamlXType type)
+        {
+            foreach (var i in type.Interfaces)
+                yield return i;
+            if(type.BaseType!=null)
+                foreach (var i in type.BaseType.GetAllInterfaces())
+                    yield return i;
+        }
+
+        public static IEnumerable<IXamlXProperty> GetAllProperties(this IXamlXType t)
+        {
+            foreach (var p in t.Properties)
+                yield return p;
+            if(t.BaseType!=null)
+                foreach (var p in t.BaseType.GetAllProperties())
+                    yield return p;
+        }
         
         public static IXamlXEmitter DebugHatch(this IXamlXEmitter emitter, string message)
         {

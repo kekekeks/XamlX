@@ -51,10 +51,9 @@ namespace XamlX.Transform
             }
         }
 
-        public void Transform(XamlXDocument doc,
-            Dictionary<string, string> namespaceAliases, bool strict = true)
+        public void Transform(XamlXDocument doc,bool strict = true)
         {
-            var ctx = new XamlXAstTransformationContext(_configuration, namespaceAliases, strict);
+            var ctx = new XamlXAstTransformationContext(_configuration, doc.NamespaceAliases, strict);
 
             var root = doc.Root;
             foreach (var transformer in Transformers)
