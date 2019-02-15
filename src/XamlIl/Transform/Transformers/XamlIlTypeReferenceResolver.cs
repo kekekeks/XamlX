@@ -8,23 +8,19 @@ namespace XamlIl.Transform.Transformers
 {
     public class XamlIlTypeReferenceResolver : IXamlIlAstTransformer
     {
-        IXamlIlType ResolveType(XamlIlAstTransformationContext context,
-            string xmlns, string name, List<XamlIlAstXmlTypeReference> typeArguments, IXamlIlLineInfo lineInfo)
+        public static IXamlIlType ResolveType(XamlIlAstTransformationContext context,
+            string xmlns, string name, List<XamlIlAstXmlTypeReference> typeArguments, IXamlIlLineInfo lineInfo,
+            bool strict)
         {
             var targs = typeArguments
-                .Select(ta => ResolveType(context, ta.XmlNamespace, ta.Name, ta.GenericArguments, lineInfo))
+                .Select(ta => ResolveType(context, ta.XmlNamespace, ta.Name, ta.GenericArguments, lineInfo, strict))
                 .ToList();
             
-                
-            const string clrNamespace = "clr-namespace:";
-            const string assemblyNamePrefix = ";assembly=";
-
             IXamlIlType Attempt(Func<string, IXamlIlType> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
                 return cb(xname + "Extension" + suffix) ?? cb(xname + suffix);
             }
-            
             
             IXamlIlType found = null;
             
@@ -54,17 +50,35 @@ namespace XamlIl.Transform.Transformers
                 found = found?.MakeGenericType(targs);
             if (found != null)
                 return found;
-            if (context.StrictMode)
+            if (strict)
                 throw new XamlIlParseException(
                     $"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
             return null;
+        }
+
+        public static IXamlIlType ResolveType(XamlIlAstTransformationContext context,
+            string xmlName, IXamlIlLineInfo lineInfo,
+            bool strict)
+        {
+            var pair = xmlName.Split(new[] {':'}, 2);
+            var (shortNs, name) = pair.Length == 1 ? ("", pair[0]) : (pair[0], pair[1]);
+            if (!context.NamespaceAliases.TryGetValue(shortNs, out var xmlns))
+            {
+                if (strict)
+                    throw new XamlIlParseException(
+                        $"Unable to resolve type namespace alias {shortNs}", lineInfo);
+                return null;
+            }
+
+            return ResolveType(context, xmlns, name, new List<XamlIlAstXmlTypeReference>(), lineInfo, strict);
         }
 
         public IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node)
         {
             if (node is XamlIlAstXmlTypeReference xmlref)
             {
-                var type = ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.GenericArguments, xmlref);
+                var type = ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.GenericArguments, xmlref,
+                    context.StrictMode);
                 return new XamlIlAstClrTypeReference(xmlref, type);
             }
             return node;

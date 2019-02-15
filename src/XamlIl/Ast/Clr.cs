@@ -153,14 +153,16 @@ namespace XamlIl.Ast
     public class XamlIlAstNewClrObjectNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public XamlIlAstNewClrObjectNode(IXamlIlLineInfo lineInfo,
-            IXamlIlAstTypeReference type,
+            IXamlIlType type, IXamlIlConstructor ctor,
             List<IXamlIlAstValueNode> arguments) : base(lineInfo)
         {
-            Type = type;
+            Type = new XamlIlAstClrTypeReference(lineInfo, type);
+            Constructor = ctor;
             Arguments = arguments;
         }
 
         public IXamlIlAstTypeReference Type { get; set; }
+        public IXamlIlConstructor Constructor { get; }
         public List<IXamlIlAstValueNode> Arguments { get; set; } = new List<IXamlIlAstValueNode>();
 
         public override void VisitChildren(Visitor visitor)

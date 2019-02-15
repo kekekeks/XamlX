@@ -19,7 +19,7 @@ namespace XamlIl.Transform.Transformers
                     "Value types and System.String can only be loaded via converters. We don't want to mess with ldloca.s, ldflda and other weird stuff",
                     node);
 
-            if (context.Configuration.TryGetCorrectlyTypedValue(vn, on.Type.GetClrType(), out var rv))
+            if (XamlIlTransformHelpers.TryGetCorrectlyTypedValue(context, vn, on.Type.GetClrType(), out var rv))
                 return rv;
             throw new XamlIlLoadException(
                 $"Unable to convert value {(vn as XamlIlAstTextNode)?.Text}) to {on.Type.GetClrType()}", vn);
