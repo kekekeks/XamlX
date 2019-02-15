@@ -18,7 +18,7 @@ namespace XamlX.Ast
         public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             codeGen.Emit(OpCodes.Ldnull);
-            return XamlXNodeEmitResult.Type(XamlXPseudoType.Null);
+            return XamlXNodeEmitResult.Type(0, XamlXPseudoType.Null);
         }
     }
 
@@ -55,7 +55,7 @@ namespace XamlX.Ast
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
                 .Emit(OpCodes.Call, method);
-            return XamlXNodeEmitResult.Type(_systemType);
+            return XamlXNodeEmitResult.Type(0, _systemType);
         }
     }
 
@@ -89,7 +89,7 @@ namespace XamlX.Ast
             if (member is IXamlXProperty prop)
             {
                 codeGen.Emit(OpCodes.Call, prop.Getter);
-                return XamlXNodeEmitResult.Type(prop.Getter.ReturnType);
+                return XamlXNodeEmitResult.Type(0, prop.Getter.ReturnType);
             }
             else if (member is IXamlXField field)
             {
@@ -99,7 +99,7 @@ namespace XamlX.Ast
                 }
                 else
                     codeGen.Emit(OpCodes.Ldsfld, field);
-                return XamlXNodeEmitResult.Type(field.FieldType);
+                return XamlXNodeEmitResult.Type(0, field.FieldType);
             }
             else
                 throw new XamlXLoadException(
@@ -147,7 +147,7 @@ namespace XamlX.Ast
                 codeGen.Emit(OpCodes.Ldc_R8, d);
             else
                 codeGen.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
-            return XamlXNodeEmitResult.Type(Type.GetClrType());
+            return XamlXNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -165,7 +165,7 @@ namespace XamlX.Ast
             codeGen
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.RootObjectField);
-            return XamlXNodeEmitResult.Type(Type.GetClrType());
+            return XamlXNodeEmitResult.Type(0, Type.GetClrType());
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
@@ -196,7 +196,7 @@ namespace XamlX.Ast
                 .Ldftn(Method)
                 .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            return XamlXNodeEmitResult.Type(DelegateType);
+            return XamlXNodeEmitResult.Type(0, DelegateType);
         }
     }
 }

@@ -57,18 +57,18 @@ namespace XamlX.Transform
             CreateSubType = createSubType;
         }
 
-        public void StLocal(XamlXAstCompilerLocalNode node)
+        public void StLocal(XamlXAstCompilerLocalNode node, IXamlXEmitter codeGen)
         {
             if (!_locals.TryGetValue(node, out var local))
-                _locals[node] = local = Emitter.DefineLocal(node.Type);
+                _locals[node] = local = codeGen.DefineLocal(node.Type);
 
-            Emitter.Emit(OpCodes.Stloc, local);
+            codeGen.Emit(OpCodes.Stloc, local);
         }
 
-        public void LdLocal(XamlXAstCompilerLocalNode node)
+        public void LdLocal(XamlXAstCompilerLocalNode node, IXamlXEmitter codeGen)
         {
             if (_locals.TryGetValue(node, out var local))
-                Emitter.Emit(OpCodes.Ldloc, local);
+                codeGen.Emit(OpCodes.Ldloc, local);
             else
                 throw new XamlXLoadException("Attempt to read uninitialized local variable", node);
         }
@@ -91,9 +91,14 @@ namespace XamlX.Transform
         
         public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXEmitter codeGen, IXamlXType expectedType)
         {
+            var parent = codeGen as CheckingIlEmitter;
+            parent?.Pause();
             var checkedEmitter = new CheckingIlEmitter(codeGen); 
             var res = EmitCore(value, checkedEmitter);
-            checkedEmitter.Check();
+            var expectedBalance = res.ProducedItems - res.ConsumedItems;
+            checkedEmitter.Check(res.ProducedItems - res.ConsumedItems);
+            parent?.Resume();
+            parent?.ExplicitStack(expectedBalance);
 
             var returnedType = res.ReturnType;
 

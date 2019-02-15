@@ -61,7 +61,7 @@ namespace XamlX.Transform.Emitters
                     .EmitCall(supportInitType.FindMethod(m => m.Name == "EndInit"));
             
             
-            return XamlXNodeEmitResult.Void;
+            return XamlXNodeEmitResult.Void(1);
         }
     }
 }

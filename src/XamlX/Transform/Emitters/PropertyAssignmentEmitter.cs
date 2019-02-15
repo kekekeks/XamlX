@@ -15,7 +15,7 @@ namespace XamlX.Transform.Emitters
             context.Emit(an.Value, codeGen, an.Property.Setter.Parameters.Last()); 
             codeGen.Emit(callOp, an.Property.Setter);
 
-            return XamlXNodeEmitResult.Void;
+            return XamlXNodeEmitResult.Void(1);
         }
     }
 }

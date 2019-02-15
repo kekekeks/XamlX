@@ -13,7 +13,7 @@ namespace XamlX.Transform.Emitters
             if (!text.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String))
                 throw new XamlXLoadException("Text node type wasn't resolved to well-known System.String", node);
             codeGen.Emit(OpCodes.Ldstr, text.Text);
-            return XamlXNodeEmitResult.Type(text.Type.GetClrType());
+            return XamlXNodeEmitResult.Type(0, text.Type.GetClrType());
         }
     }
 }

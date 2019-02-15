@@ -27,7 +27,7 @@ namespace XamlX.Transform.Emitters
                 .Emit(OpCodes.Newobj, ctor);
 
 
-            return XamlXNodeEmitResult.Type(type);
+            return XamlXNodeEmitResult.Type(0, type);
         }
     }
 }

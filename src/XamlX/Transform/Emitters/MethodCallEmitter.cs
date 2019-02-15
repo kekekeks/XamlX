@@ -11,8 +11,6 @@ namespace XamlX.Transform.Emitters
             if (!(node is XamlXMethodCallBaseNode mc))
                 return null;
 
-
-
             bool thisArgFromArgs = node is XamlXStaticOrTargetedReturnMethodCallNode;
             bool expectsVoid = node is XamlXNoReturnMethodCallNode;
 
@@ -34,9 +32,10 @@ namespace XamlX.Transform.Emitters
                 throw new XamlXLoadException(
                     $"XamlXStaticReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);
 
+            var consumed = thisArgFromArgs ? 0 : 1;
             return isVoid || expectsVoid
-                ? XamlXNodeEmitResult.Void
-                : XamlXNodeEmitResult.Type(mc.Method.ReturnType);
+                ? XamlXNodeEmitResult.Void(consumed)
+                : XamlXNodeEmitResult.Type(consumed, mc.Method.ReturnType);
         }
     }
 }
