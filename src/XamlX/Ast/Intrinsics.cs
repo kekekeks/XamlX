@@ -150,4 +150,53 @@ namespace XamlX.Ast
             return XamlNodeEmitResult.Type(Type.GetClrType());
         }
     }
+
+    public class XamlRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    {
+        public XamlRootObjectNode(XamlAstObjectNode root) : base(root)
+        {
+            Type = root.Type;
+        }
+
+        public IXamlAstTypeReference Type { get; set; }
+
+        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        {
+            codeGen
+                .Ldloc(context.ContextLocal)
+                .Ldfld(context.RuntimeContext.RootObjectField);
+            return XamlNodeEmitResult.Type(Type.GetClrType());
+        }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Type = (IXamlAstTypeReference) Type.Visit(visitor);
+        }
+    }
+
+    public class XamlLoadMethodDelegateNode : XamlValueWithSideEffectNodeBase,
+        IXamlAstEmitableNode
+    {
+        public IXamlType DelegateType { get; }
+        public IXamlMethod Method { get; }
+
+        public XamlLoadMethodDelegateNode(IXamlLineInfo lineInfo, IXamlAstValueNode value,
+            IXamlType delegateType, IXamlMethod method) : base(lineInfo, value)
+        {
+            DelegateType = delegateType;
+            Method = method;
+            Type = new XamlAstClrTypeReference(value, DelegateType);
+        }
+
+        public override IXamlAstTypeReference Type { get; }
+        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        {
+            context.Emit(Value, codeGen, Method.DeclaringType);
+            codeGen
+                .Ldftn(Method)
+                .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
+                    ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            return XamlNodeEmitResult.Type(DelegateType);
+        }
+    }
 }

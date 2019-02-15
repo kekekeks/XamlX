@@ -137,7 +137,7 @@ namespace XamlX.Transform.Emitters
                 }
                 
 
-                TypeSystemHelpers.EmitConvert(node, rtype, ptype,
+                TypeSystemHelpers.EmitConvert(context, node, rtype, ptype,
                     lda => ilgen.Emit(lda ? OpCodes.Ldloca : OpCodes.Ldloc, resultLocal));
 
                 // Call some method either on the target or on target's property

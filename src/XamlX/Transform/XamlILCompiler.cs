@@ -26,7 +26,7 @@ namespace XamlX.Transform
                     new XamlXArgumentsTransformer(),
                     new XamlTypeReferenceResolver(),
                     new XamlPropertyReferenceResolver(),
-                    new XamlXStructConvertTransformer(),
+                    new XamlContentConvertTransformer(),
                     new XamlNewObjectTransformer(),
                     new XamlXXamlPropertyValueTransformer(),
                     new XamlDeferredContentTransformer(),
@@ -51,11 +51,15 @@ namespace XamlX.Transform
             }
         }
 
+        public XamlAstTransformationContext CreateTransformationContext(XamlDocument doc, bool strict)
+            => new XamlAstTransformationContext(_configuration, doc.NamespaceAliases, strict);
+        
         public void Transform(XamlDocument doc,bool strict = true)
         {
-            var ctx = new XamlAstTransformationContext(_configuration, doc.NamespaceAliases, strict);
+            var ctx = CreateTransformationContext(doc, strict);
 
             var root = doc.Root;
+            ctx.RootObject = new XamlRootObjectNode((XamlAstObjectNode)root);
             foreach (var transformer in Transformers)
             {
                 root = root.Visit(n => transformer.Transform(ctx, n));

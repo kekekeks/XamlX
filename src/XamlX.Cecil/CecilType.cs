@@ -69,6 +69,12 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlProperty> Properties =>
                 _properties ?? (_properties =
                     Definition.Properties.Select(p => new CecilProperty(TypeSystem, p, Reference)).ToList());
+            
+            protected IReadOnlyList<IXamlEventInfo> _events;
+
+            public IReadOnlyList<IXamlEventInfo> Events =>
+                _events ?? (_events =
+                    Definition.Events.Select(p => new CecilEvent(TypeSystem, p, Reference)).ToList());
 
             private IReadOnlyList<IXamlType> _genericArguments;
 
