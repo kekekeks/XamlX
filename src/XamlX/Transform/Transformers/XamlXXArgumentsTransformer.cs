@@ -9,14 +9,15 @@ namespace XamlX.Transform.Transformers
         {
             if (node is XamlXAstObjectNode ni)
             {
-                var argDirectives = ni.Children.OfType<XamlXAstXmlDirective>()
-                    .Where(d => d.Namespace == XamlNamespaces.Xaml2006 && d.Name == "Arguments").ToList();
+                var argDirectives = ni.Children.OfType<XamlXAstObjectNode>()
+                    .Where(d => d.Type is XamlXAstXmlTypeReference xref
+                                && xref.XmlNamespace == XamlNamespaces.Xaml2006 && xref.Name == "Arguments").ToList();
                 if (argDirectives.Count > 1 && context.StrictMode)
                     throw new XamlXParseException("x:Arguments directive is specified more than once",
                         argDirectives[1]);
                 if (argDirectives.Count == 0)
                     return node;
-                ni.Arguments = argDirectives[0].Values;
+                ni.Arguments = argDirectives[0].Children.OfType<IXamlXAstValueNode>().ToList();
                 ni.Children.Remove(argDirectives[0]);
             }
             return node;
