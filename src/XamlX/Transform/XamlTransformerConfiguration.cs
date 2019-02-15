@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using XamlX.Ast;
+using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -107,103 +108,6 @@ namespace XamlX.Transform
             foreach(var t in types)
             foreach (var a in GetCustomAttribute(prop, t))
                 yield return a;
-        }
-       
-        public bool TryGetCorrectlyTypedValue(IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode rv)
-        {
-            rv = null;
-            if (type.IsAssignableFrom(node.Type.GetClrType()))
-            {
-                rv = node;
-                return true;
-            }
-
-            if (CustomValueConverter?.Invoke(node, type, out rv) == true)
-                return true;
-
-            var nodeType = node.Type.GetClrType();
-            // Implicit type converters
-            if (!nodeType.Equals(WellKnownTypes.String))
-                return false;
-
-            if (type.IsEnum && node is XamlAstTextNode etn)
-            {
-                var enumValue = type.Fields.FirstOrDefault(f => f.Name == etn.Text);
-                if (enumValue != null)
-                {
-                    rv = TypeSystemHelpers.GetLiteralFieldConstantNode(enumValue, node);
-                    return true;
-                }
-            }
-
-            var candidates = type.Methods.Where(m => m.Name == "Parse"
-                                                     && m.ReturnType.Equals(type)
-                                                     && m.Parameters.Count > 0
-                                                     && m.Parameters[0].Equals(WellKnownTypes.String)).ToList();
-
-            // Well known types
-            if (node is XamlAstTextNode tn &&
-                TypeSystemHelpers.ParseConstantIfTypeAllows(tn.Text, type, tn, out var constantNode))
-            {
-                rv = constantNode;
-                return true;
-            }
-
-            IXamlAstValueNode CreateInvariantCulture() =>
-                new XamlStaticOrTargetedReturnMethodCallNode(node,
-                    WellKnownTypes.CultureInfo.Methods.First(x =>
-                        x.IsPublic && x.IsStatic && x.Name == "get_InvariantCulture"), null);
-            
-            // Types with parse method
-            var parser = candidates.FirstOrDefault(m =>
-                             m.Parameters.Count == 2 &&
-                             (
-                                 m.Parameters[1].Equals(WellKnownTypes.CultureInfo)
-                                 || m.Parameters[1].Equals(WellKnownTypes.IFormatProvider)
-                             )
-                         )
-                         ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1);
-            if (parser != null)
-            {
-                var args = new List<IXamlAstValueNode> {node};
-                if (parser.Parameters.Count == 2) 
-                    args.Add(CreateInvariantCulture());
-
-                rv = new XamlStaticOrTargetedReturnMethodCallNode(node, parser, args);
-                return true;
-            }
-
-            if (TypeMappings.TypeDescriptorContext != null)
-            {
-                var typeConverterAttribute =
-                    GetCustomAttribute(type, TypeMappings.TypeConverterAttributes).FirstOrDefault();
-                if (typeConverterAttribute != null)
-                {
-                    var arg = typeConverterAttribute.Parameters.FirstOrDefault();
-                    var converterType = (arg as IXamlType) ?? (arg is String sarg ? TypeSystem.FindType(sarg) : null);
-                    if (converterType != null)
-                    {
-                        var converterMethod = converterType.FindMethod("ConvertFrom", WellKnownTypes.Object, false,
-                            TypeMappings.TypeDescriptorContext, WellKnownTypes.CultureInfo, WellKnownTypes.Object);
-                        rv =
-                            new XamlAstRuntimeCastNode(node,
-                                new XamlStaticOrTargetedReturnMethodCallNode(node, converterMethod,
-                                    new[]
-                                    {
-                                        new XamlAstNewClrObjectNode(node,
-                                            new XamlAstClrTypeReference(node, converterType),
-                                            new List<IXamlAstValueNode>()),
-                                        new XamlAstContextLocalNode(node, TypeMappings.TypeDescriptorContext),
-                                        CreateInvariantCulture(),
-                                        node
-                                    }), new XamlAstClrTypeReference(node, type));
-                        return true;
-                    }
-                }
-            }
-
-            //TODO: TypeConverter's
-            return false;
         }
     }
 

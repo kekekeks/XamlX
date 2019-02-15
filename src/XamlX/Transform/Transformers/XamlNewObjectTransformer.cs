@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
 {
     public class XamlNewObjectTransformer : IXamlAstTransformer
     {
-        void SubTransform(XamlAstTransformationContext context, XamlAstObjectNode ni)
+        void TransformContent(XamlAstTransformationContext context, XamlAstObjectNode ni)
         {
             var valueIndexes = new List<int>();
             for (var c = 0; c < ni.Children.Count; c++)
@@ -36,15 +36,50 @@ namespace XamlX.Transform.Transformers
                     num => VNode(valueIndexes[num]),
                     (i, v) => ni.Children[valueIndexes[i]] = v);
         }
+
+        IXamlConstructor TransformArgumentsAndGetConstructor(XamlAstTransformationContext context,
+            XamlAstObjectNode n)
+        {
+            var type = n.Type.GetClrType();
+               
+            var argTypes = n.Arguments.Select(a => a.Type.GetClrType()).ToList();
+            var ctor = type.FindConstructor(argTypes);
+            if (ctor == null)
+            {
+                if (argTypes.Count != 0)
+                {
+                    ctor = type.Constructors.FirstOrDefault(x =>
+                        !x.IsStatic && x.IsPublic && x.Parameters.Count == argTypes.Count);
+                    
+                }
+
+                if (ctor == null)
+                    throw new XamlLoadException(
+                        $"Unable to find public constructor for type {type.GetFqn()}({string.Join(", ", argTypes.Select(at => at.GetFqn()))})",
+                        n);
+            }
+
+            for (var c = 0; c < n.Arguments.Count; c++)
+            {
+                if (!XamlTransformHelpers.TryGetCorrectlyTypedValue(context, n.Arguments[c], ctor.Parameters[c], out var arg))
+                    throw new XamlLoadException(
+                        $"Unable to convert {n.Arguments[c].Type.GetClrType().GetFqn()} to {ctor.Parameters[c].GetFqn()} for constructor of {n.Type.GetClrType().GetFqn()}",
+                        n.Arguments[c]);
+                n.Arguments[c] = arg;
+            }
+
+            return ctor;
+        }
         
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstObjectNode ni)
             {
-                SubTransform(context, ni);
-
+                TransformContent(context, ni);
+                var ctor = TransformArgumentsAndGetConstructor(context, ni);
+                
                 return new XamlValueWithManipulationNode(ni,
-                    new XamlAstNewClrObjectNode(ni, ni.Type, ni.Arguments),
+                    new XamlAstNewClrObjectNode(ni, ni.Type.GetClrType(), ctor, ni.Arguments),
                     new XamlObjectInitializationNode(ni,
                         new XamlManipulationGroupNode(ni)
                         {
