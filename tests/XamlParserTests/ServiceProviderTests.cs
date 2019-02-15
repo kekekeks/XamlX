@@ -209,8 +209,11 @@ namespace XamlParserTests
                 var f = np.GetFields(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
                 var wtf = f[0].GetValue(null);
                 var nsList = sp.GetService<IXamlXXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                // Direct calls without struct diff because of EntryPointNotFoundException issue before
+                Assert.True(nsList.TryGetValue("clr1", out var xlst));
+                Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
                 Helpers.StructDiff(nsList,
-                    new Dictionary<string, List<XamlXXmlNamespaceInfoV1>>
+                    new Dictionary<string, IReadOnlyList<XamlXXmlNamespaceInfoV1>>
                     {
                         [""] = new List<XamlXXmlNamespaceInfoV1>
                         {
