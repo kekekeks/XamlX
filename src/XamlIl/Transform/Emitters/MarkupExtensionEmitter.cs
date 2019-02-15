@@ -15,9 +15,10 @@ namespace XamlIl.Transform.Emitters
             var ilgen = codeGen;
             var so = context.Configuration.WellKnownTypes.Object;
             var ptype = me.Manipulation?.Parameters[0] ?? me.Property.PropertyType;
-            var rtype = me.ProvideValue.ReturnType;
-            var needProvideValueTarget = me.ProvideValue.Parameters.Count != 0 &&
-                                         context.RuntimeContext.PropertyTargetObject != null
+            var rtype = me.ProvideValue?.ReturnType ?? me.Value.Type.GetClrType();
+            var needProvideValueTarget = me.ProvideValue != null
+                                         && me.ProvideValue.Parameters.Count != 0
+                                         && context.RuntimeContext.PropertyTargetObject != null
                                          && me.Property != null;
 
             void EmitPropertyDescriptor()
@@ -44,7 +45,7 @@ namespace XamlIl.Transform.Emitters
                             .Dup().Stloc(targetObjectLocal.Local);
 
                     context.Emit(me.Value, codeGen, me.Value.Type.GetClrType());
-                    if (me.ProvideValue.Parameters.Count != 0)
+                    if (me.ProvideValue?.Parameters.Count > 0)
                         ilgen
                             .Emit(OpCodes.Ldloc, context.ContextLocal);
 
@@ -60,9 +61,10 @@ namespace XamlIl.Transform.Emitters
                             .Stfld(context.RuntimeContext.PropertyTargetProperty);
                     }
 
-
+                    if (me.ProvideValue != null)
+                        ilgen
+                            .Emit(OpCodes.Call, me.ProvideValue);
                     ilgen
-                        .Emit(OpCodes.Call, me.ProvideValue)
                         .Emit(OpCodes.Stloc, resultLocal);
 
                     if (needProvideValueTarget)
