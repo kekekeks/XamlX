@@ -33,17 +33,22 @@ namespace XamlX.Transform.Transformers
             {
                 var resolvedNamespaces = XamlXNamespaceInfoHelper.TryResolve(context.Configuration, xmlns);
                 if (resolvedNamespaces?.Count > 0)
-                    foreach (var resolvedNs in resolvedNamespaces)
+                    found = Attempt(formedName =>
                     {
-                        var rname = resolvedNs.ClrNamespace + "." + name;
-                        if (resolvedNs.Assembly != null)
-                            found = Attempt(resolvedNs.Assembly.FindType, rname);
-                        else
-                            found = Attempt(x =>
-                                context.Configuration.TypeSystem.FindType(x, resolvedNs.AssemblyName), rname);
-                        if (found != null)
-                            break;
-                    }
+                        foreach (var resolvedNs in resolvedNamespaces)
+                        {
+                            var rname = resolvedNs.ClrNamespace + "." + formedName;
+                            IXamlXType subRes;
+                            if (resolvedNs.Assembly != null)
+                                subRes = resolvedNs.Assembly.FindType(rname);
+                            else
+                                subRes = context.Configuration.TypeSystem.FindType(rname, resolvedNs.AssemblyName);
+                            if (subRes != null)
+                                return subRes;
+                        }
+
+                        return null;
+                    }, name);
             }
 
             if (typeArguments.Count != 0)
