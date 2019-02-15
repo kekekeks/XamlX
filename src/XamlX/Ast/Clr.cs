@@ -70,10 +70,10 @@ namespace XamlX.Ast
 
     public abstract class XamlMethodCallBaseNode : XamlAstNode
     {
-        public IXamlMethod Method { get; set; }
+        public IXamlWrappedMethod Method { get; set; }
         public List<IXamlAstValueNode> Arguments { get; set; }
         public XamlMethodCallBaseNode(IXamlLineInfo lineInfo, 
-            IXamlMethod method, IEnumerable<IXamlAstValueNode> args) 
+            IXamlWrappedMethod method, IEnumerable<IXamlAstValueNode> args) 
             : base(lineInfo)
         {
             Method = method;
@@ -89,17 +89,30 @@ namespace XamlX.Ast
     public class XamlNoReturnMethodCallNode : XamlMethodCallBaseNode, IXamlAstManipulationNode
     {
         public XamlNoReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method, IEnumerable<IXamlAstValueNode> args)
+            : base(lineInfo, new XamlWrappedMethod(method), args)
+        {
+        }
+        
+        public XamlNoReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlWrappedMethod method, IEnumerable<IXamlAstValueNode> args)
             : base(lineInfo, method, args)
         {
         }
     }
-    
+
     public class XamlStaticOrTargetedReturnMethodCallNode : XamlMethodCallBaseNode, IXamlAstValueNode
     {
-        public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method, IEnumerable<IXamlAstValueNode> args)
+        public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlWrappedMethod method,
+            IEnumerable<IXamlAstValueNode> args)
             : base(lineInfo, method, args)
         {
             Type = new XamlAstClrTypeReference(lineInfo, method.ReturnType);
+        }
+
+        public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method,
+            IEnumerable<IXamlAstValueNode> args)
+            : this(lineInfo, new XamlWrappedMethod(method), args)
+        {
+            
         }
 
         public IXamlAstTypeReference Type { get; }
@@ -182,10 +195,10 @@ namespace XamlX.Ast
         public IXamlAstValueNode Value { get; set; }
         public IXamlProperty Property { get; set; }
         public IXamlMethod ProvideValue { get; }
-        public IXamlMethod Manipulation { get; set; }
+        public IXamlWrappedMethod Manipulation { get; set; }
 
         public XamlMarkupExtensionNode(IXamlLineInfo lineInfo, IXamlProperty property, IXamlMethod provideValue,
-            IXamlAstValueNode value, IXamlMethod manipulation) : base(lineInfo)
+            IXamlAstValueNode value, IXamlWrappedMethod manipulation) : base(lineInfo)
         {
             Property = property;
             ProvideValue = provideValue;
@@ -229,6 +242,86 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; }
     }
+    
+    
+    public interface IXamlWrappedMethod
+    {
+        string Name { get; }
+        IXamlType ReturnType { get; }
+        IReadOnlyList<IXamlType> ParametersWithThis { get; }
+        void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult);
+    }
+
+    public class XamlWrappedMethod : IXamlWrappedMethod
+    {
+        private readonly IXamlMethod _method;
+
+        public XamlWrappedMethod(IXamlMethod method)
+        {
+            _method = method;
+            ParametersWithThis =
+                method.IsStatic ? method.Parameters : new[] {method.DeclaringType}.Concat(method.Parameters).ToList();
+            ReturnType = method.ReturnType;
+        }
+
+        public string Name => _method.Name;
+        public IXamlType ReturnType { get; }
+        public IReadOnlyList<IXamlType> ParametersWithThis { get; }
+        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        {
+            codeGen.EmitCall(_method, swallowResult);
+        }
+    }
+
+    public class XamlWrappedMethodWithCasts : IXamlWrappedMethod
+    {
+        private readonly IXamlWrappedMethod _method;
+
+        public XamlWrappedMethodWithCasts(IXamlWrappedMethod method, IEnumerable<IXamlType> newArgumentTypes)
+        {
+            _method = method;
+            ParametersWithThis = newArgumentTypes.ToList();
+            if (_method.ParametersWithThis.Count != ParametersWithThis.Count)
+                throw new ArgumentException("Method argument count mismatch");
+        }
+
+        public string Name => _method.Name;
+        public IXamlType ReturnType => _method.ReturnType;
+        public IReadOnlyList<IXamlType> ParametersWithThis { get; }
+        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        {
+            int firstCast = -1; 
+            for (var c = ParametersWithThis.Count - 1; c >= 0; c--)
+            {
+                if (!_method.ParametersWithThis[c].Equals(ParametersWithThis[c]))
+                    firstCast = c;
+            }
+
+            if (firstCast != -1)
+            {
+                var locals = new Stack<XamlEmitContext.PooledLocal>();
+                for (var c = ParametersWithThis.Count - 1; c >= firstCast; c--)
+                {
+                    codeGen.Castclass(ParametersWithThis[c]);
+                    if (c > firstCast)
+                    {
+                        var l = context.GetLocal(ParametersWithThis[c]);
+                        codeGen.Stloc(l.Local);
+                        locals.Push(l);
+                    }
+                }
+
+                while (locals.Count!=0)
+                {
+                    using (var l = locals.Pop())
+                        codeGen.Ldloc(l.Local);
+                }
+            }
+
+            _method.Emit(context, codeGen, swallowResult);
+        }
+    }
+    
 
     public class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
     {
