@@ -77,11 +77,20 @@ namespace XamlX.Transform.Transformers
         {
             if (node is XamlXAstXmlTypeReference xmlref)
             {
-                var type = ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.GenericArguments, xmlref,
-                    context.StrictMode);
-                return new XamlXAstClrTypeReference(xmlref, type);
+                var type = ResolveType(context, xmlref, context.StrictMode);
+                if (type == null)
+                    return node;
+                return new XamlXAstClrTypeReference(node, type);
             }
+
             return node;
+        }
+
+        public static IXamlXType ResolveType(XamlXAstTransformationContext context,
+            XamlXAstXmlTypeReference xmlref, bool strict)
+        {
+            return ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.GenericArguments, xmlref, strict);
+
         }
     }
 }

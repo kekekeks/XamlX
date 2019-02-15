@@ -114,7 +114,7 @@ namespace XamlX.Transform
                     // ReSharper disable once ExpressionIsAlwaysNull
                     // Value is assigned inside the closure in certain conditions
                     using (local)
-                        TypeSystemHelpers.EmitConvert(value, returnedType, expectedType, ldaddr =>
+                        TypeSystemHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
                         {
                             if (ldaddr && returnedType.IsValueType)
                             {

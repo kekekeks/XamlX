@@ -144,6 +144,7 @@ namespace XamlX.TypeSystem
             private IReadOnlyList<IXamlXConstructor> _constructors;
             private IReadOnlyList<IXamlXType> _genericArguments;
             private IReadOnlyList<IXamlXType> _interfaces;
+            private IReadOnlyList<IXamlXEventInfo> _events;
             public Type Type { get; }
 
             public SreType(SreTypeSystem system, SreAssembly asm, Type type): base(system, type)
@@ -186,6 +187,11 @@ namespace XamlX.TypeSystem
 
             public IReadOnlyList<IXamlXType> Interfaces =>
                 _interfaces ?? (_interfaces = Type.GetInterfaces().Select(System.ResolveType).ToList());
+
+            public IReadOnlyList<IXamlXEventInfo> Events =>
+                _events ?? (_events = Type
+                    .GetEvents(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
+                    .Select(e => new SreEvent(System, e)).ToList());
 
             public bool IsInterface => Type.IsInterface;
 
@@ -327,6 +333,18 @@ namespace XamlX.TypeSystem
             public IXamlXType PropertyType => System.ResolveType(Member.PropertyType);
             public IXamlXMethod Setter { get; }
             public IXamlXMethod Getter { get; }
+        }
+
+        class SreEvent : SreMemberInfo, IXamlXEventInfo
+        {
+            public EventInfo Event { get; }
+            public SreEvent(SreTypeSystem system, EventInfo ev) : base(system, ev)
+            {
+                Event = ev;
+                Add = new SreMethod(system, ev.AddMethod);
+            }
+            public IXamlXMethod Add { get; }
+            public bool Equals(IXamlXEventInfo other) => (other as SreEvent)?.Event.Equals(Event) == true;
         }
         
         class SreField : SreMemberInfo, IXamlXField

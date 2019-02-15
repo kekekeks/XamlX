@@ -243,7 +243,13 @@ namespace XamlX.Transform
                 return true;
             }
 
-            if (cfg.CustomValueConverter?.Invoke(node, type, out rv) == true)
+            
+            // Since we are doing a conversion anyway, it makes sense to check for the underlying nullable type
+            if (type.GenericTypeDefinition?.Equals(cfg.WellKnownTypes.NullableT) == true) 
+                type = type.GenericArguments[0];
+            
+            
+            if (cfg.CustomValueConverter?.Invoke(context, node, type, out rv) == true)
                 return true;
 
             var nodeType = node.Type.GetClrType();
@@ -276,6 +282,19 @@ namespace XamlX.Transform
                     var resolvedType = XamlXTypeReferenceResolver.ResolveType(context, tn.Text, tn, true);
                     rv = new XamlXTypeExtensionNode(tn, new XamlXAstClrTypeReference(tn, resolvedType), type);
                     return true;
+                }
+
+                if (cfg.WellKnownTypes.Delegate.IsAssignableFrom(type))
+                {
+                    var invoke = type.FindMethod(m => m.Name == "Invoke");
+                    var rootType = context.RootObject.Type.GetClrType();
+                    var handler = 
+                        rootType.FindMethod(tn.Text, invoke.ReturnType, false, invoke.Parameters.ToArray());
+                    if (handler != null)
+                    {
+                        rv = new XamlXLoadMethodDelegateNode(tn, context.RootObject, type, handler);
+                        return true;
+                    }
                 }
             }
 

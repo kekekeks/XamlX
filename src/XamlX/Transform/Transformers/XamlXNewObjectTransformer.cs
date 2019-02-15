@@ -75,6 +75,12 @@ namespace XamlX.Transform.Transformers
         {
             if (node is XamlXAstObjectNode ni)
             {
+                var t = ni.Type.GetClrType();
+                if (t.IsValueType)
+                    throw new XamlXLoadException(
+                        "Value types can only be loaded via converters. We don't want to mess with ldloca.s, ldflda and other weird stuff",
+                        node);
+
                 TransformContent(context, ni);
                 var ctor = TransformArgumentsAndGetConstructor(context, ni);
                 
