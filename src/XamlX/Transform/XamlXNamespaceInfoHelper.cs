@@ -35,7 +35,7 @@ namespace XamlX.Transform
                 var ns = xmlns.Substring(clrNamespace.Length);
                 
                 var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, StringComparison.Ordinal);
-                string asm = null;
+                string asm = config.DefaultAssembly?.Name;
                 if (indexOfAssemblyPrefix != -1)
                 {
                     asm = ns.Substring(indexOfAssemblyPrefix + assemblyNamePrefix.Length).Trim();
