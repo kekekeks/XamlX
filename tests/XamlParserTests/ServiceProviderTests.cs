@@ -53,14 +53,18 @@ namespace XamlParserTests
             public IEnumerable<object> Parents => this;
         }
         
-        [Fact]
-        public void Parent_Stack_Should_Provide_Info_About_Parents()
+        [Theory,
+        InlineData(true),
+        InlineData(false)]
+        public void Parent_Stack_Should_Provide_Info_About_Parents(bool importParents)
         {
-            var importedParents = new ListParentsProvider
-            {
-                "Parent1",
-                "Parent2"
-            };
+            var importedParents = importParents
+                ? new ListParentsProvider
+                {
+                    "Parent1",
+                    "Parent2"
+                }
+                : null;
             int num = 0;
             CompileAndRun(@"
 <ServiceProviderTestsClass xmlns='test' Id='root' Property='{Callback}'>
@@ -78,24 +82,29 @@ namespace XamlParserTests
                     while (parentsEnumerator.MoveNext())
                         stack.Add(parentsEnumerator.Current);
                 }
-                
-                        
-                Assert.Equal("Parent1", stack[stack.Count - 2]);
-                Assert.Equal("Parent2", stack.Last());
+
+                var baseCount = 0;
+                if (importParents)
+                {
+                    baseCount = 2;
+                    Assert.Equal("Parent1", stack[stack.Count - 2]);
+                    Assert.Equal("Parent2", stack.Last());
+                }
+
                 if (num == 0)
                 {
-                    Assert.Equal(3, stack.Count);
+                    Assert.Equal(baseCount + 1, stack.Count);
                     Assert.Equal("root", ((ServiceProviderTestsClass) stack[0]).Id);
                 }
                 else if (num == 1)
                 {
-                    Assert.Equal(4, stack.Count);
+                    Assert.Equal(baseCount + 2, stack.Count);
                     Assert.Equal("direct", ((ServiceProviderTestsClass) stack[0]).Id);
                     Assert.Equal("root", ((ServiceProviderTestsClass) stack[1]).Id);
                 }
                 else if (num == 2)
                 {
-                    Assert.Equal(4, stack.Count);
+                    Assert.Equal(baseCount + 2, stack.Count);
                     Assert.Equal("content", ((ServiceProviderTestsClass) stack[0]).Id);
                     Assert.Equal("root", ((ServiceProviderTestsClass) stack[1]).Id);
                 }
