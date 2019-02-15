@@ -22,7 +22,7 @@ namespace XamlIl.Transform.Transformers
             IXamlIlType Attempt(Func<string, IXamlIlType> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
-                return cb(xname + suffix) ?? cb(xname + "Extension" + suffix);
+                return cb(xname + "Extension" + suffix) ?? cb(xname + suffix);
             }
             
             
