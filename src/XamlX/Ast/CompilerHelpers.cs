@@ -15,8 +15,8 @@ namespace XamlX.Ast
         IXamlAstTypeReference IXamlAstValueNode.Type => new XamlAstClrTypeReference(this, Type);
         public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
-            context.LdLocal(this);
-            return XamlNodeEmitResult.Type(Type);
+            context.LdLocal(this, codeGen);
+            return XamlNodeEmitResult.Type(0, Type);
         }
     }
 
@@ -42,8 +42,8 @@ namespace XamlX.Ast
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
-            context.StLocal(Local);
-            return rv;
+            context.StLocal(Local, codeGen);
+            return XamlNodeEmitResult.Type(0, rv.ReturnType);
         }
     }
 
@@ -62,7 +62,7 @@ namespace XamlX.Ast
             // Discard the stack value we are "supposed" to manipulate
             codeGen.Emit(OpCodes.Pop);
             context.Emit(Imperative, codeGen, null);
-            return XamlNodeEmitResult.Void;
+            return XamlNodeEmitResult.Void(1);
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
@@ -93,7 +93,7 @@ namespace XamlX.Ast
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
-            return XamlNodeEmitResult.Void;
+            return XamlNodeEmitResult.Void(0);
         }
     }
 
@@ -108,7 +108,7 @@ namespace XamlX.Ast
         public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             codeGen.Ldloc(context.ContextLocal);
-            return XamlNodeEmitResult.Type(Type.GetClrType());
+            return XamlNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -136,7 +136,7 @@ namespace XamlX.Ast
                 codeGen.Unbox_Any(t);
             else
                 codeGen.Castclass(t);            
-            return XamlNodeEmitResult.Type(t);
+            return XamlNodeEmitResult.Type(0, t);
         }
     }
 

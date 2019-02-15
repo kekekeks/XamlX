@@ -22,7 +22,7 @@ namespace XamlX.Transform.Emitters
                 }
             }
 
-            return XamlNodeEmitResult.Void;
+            return XamlNodeEmitResult.Void(1);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace XamlX.Transform.Emitters
                 pvm.Property.Getter);
             context.Emit(pvm.Manipulation, codeGen, null);
             
-            return XamlNodeEmitResult.Void;
+            return XamlNodeEmitResult.Void(1);
         }
     }
 }

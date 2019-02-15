@@ -117,7 +117,7 @@ namespace XamlX.Transform.Emitters
                     {
                         EmitCustomActionCall();
                         ilgen.MarkLabel(exit);
-                        return XamlNodeEmitResult.Void;
+                        return XamlNodeEmitResult.Void(1);
                     }
                     
                     var callCustomLabel = ilgen.DefineLabel();
@@ -160,7 +160,7 @@ namespace XamlX.Transform.Emitters
 
             }
 
-            return XamlNodeEmitResult.Void;
+            return XamlNodeEmitResult.Void(1);
         }
     }
 }

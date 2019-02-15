@@ -416,7 +416,7 @@ namespace XamlX.Ast
             }
             
             subType.CreateType();
-            return XamlNodeEmitResult.Type(funcType);
+            return XamlNodeEmitResult.Type(0, funcType);
         }
     }
 }

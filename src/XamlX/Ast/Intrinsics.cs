@@ -18,7 +18,7 @@ namespace XamlX.Ast
         public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             codeGen.Emit(OpCodes.Ldnull);
-            return XamlNodeEmitResult.Type(XamlPseudoType.Null);
+            return XamlNodeEmitResult.Type(0, XamlPseudoType.Null);
         }
     }
 
@@ -55,7 +55,7 @@ namespace XamlX.Ast
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
                 .Emit(OpCodes.Call, method);
-            return XamlNodeEmitResult.Type(_systemType);
+            return XamlNodeEmitResult.Type(0, _systemType);
         }
     }
 
@@ -89,7 +89,7 @@ namespace XamlX.Ast
             if (member is IXamlProperty prop)
             {
                 codeGen.Emit(OpCodes.Call, prop.Getter);
-                return XamlNodeEmitResult.Type(prop.Getter.ReturnType);
+                return XamlNodeEmitResult.Type(0, prop.Getter.ReturnType);
             }
             else if (member is IXamlField field)
             {
@@ -99,7 +99,7 @@ namespace XamlX.Ast
                 }
                 else
                     codeGen.Emit(OpCodes.Ldsfld, field);
-                return XamlNodeEmitResult.Type(field.FieldType);
+                return XamlNodeEmitResult.Type(0, field.FieldType);
             }
             else
                 throw new XamlLoadException(
@@ -147,7 +147,7 @@ namespace XamlX.Ast
                 codeGen.Emit(OpCodes.Ldc_R8, d);
             else
                 codeGen.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
-            return XamlNodeEmitResult.Type(Type.GetClrType());
+            return XamlNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -165,7 +165,7 @@ namespace XamlX.Ast
             codeGen
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.RootObjectField);
-            return XamlNodeEmitResult.Type(Type.GetClrType());
+            return XamlNodeEmitResult.Type(0, Type.GetClrType());
         }
 
         public override void VisitChildren(XamlXAstVisitorDelegate visitor)
@@ -196,7 +196,7 @@ namespace XamlX.Ast
                 .Ldftn(Method)
                 .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            return XamlNodeEmitResult.Type(DelegateType);
+            return XamlNodeEmitResult.Type(0, DelegateType);
         }
     }
 }
