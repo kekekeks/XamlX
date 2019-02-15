@@ -11,25 +11,25 @@ namespace XamlIl.Transform.Emitters
             if (!(node is XamlIlMethodCallBaseNode mc))
                 return null;
 
-            bool thisArgFromStack = node is XamlIlStaticOrTargetedReturnMethodCallNode && !mc.Method.IsStatic;
+
+
+            bool thisArgFromArgs = node is XamlIlStaticOrTargetedReturnMethodCallNode;
             bool expectsVoid = node is XamlIlNoReturnMethodCallNode;
 
 
-            if (thisArgFromStack)
-                context.Emit(mc.Arguments[0], codeGen, mc.Method.DeclaringType);
+            for (var c = 0; c < mc.Arguments.Count; c++)
+            {
+                var off = thisArgFromArgs ? 0 : 1;
+                var expectedType = mc.Method.ParametersWithThis[c + off];
+                context.Emit(mc.Arguments[c], codeGen, expectedType);
+            }
 
-            for (var c = thisArgFromStack ? 1 : 0; c < mc.Arguments.Count; c++)
-                context.Emit(mc.Arguments[c], codeGen, mc.Method.Parameters[c - (thisArgFromStack ? 1 : 0)]);
+            
 
 
-
-            codeGen.Emit(mc.Method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, mc.Method);
+            mc.Method.Emit(context, codeGen, expectsVoid);
             
             var isVoid = mc.Method.ReturnType.Equals(context.Configuration.WellKnownTypes.Void);
-            if (expectsVoid && !isVoid)
-                codeGen.Emit(OpCodes.Pop);
-            
-            
             if (!expectsVoid && isVoid)
                 throw new XamlIlLoadException(
                     $"XamlIlStaticReturnMethodCallNode expects a value while {mc.Method.Name} returns void", node);

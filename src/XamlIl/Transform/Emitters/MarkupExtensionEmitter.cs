@@ -14,7 +14,7 @@ namespace XamlIl.Transform.Emitters
                 return null;
             var ilgen = codeGen;
             var so = context.Configuration.WellKnownTypes.Object;
-            var ptype = me.Manipulation?.Parameters[0] ?? me.Property.PropertyType;
+            var ptype = me.Manipulation?.ParametersWithThis[1] ?? me.Property.PropertyType;
             var rtype = me.ProvideValue?.ReturnType ?? me.Value.Type.GetClrType();
             var needProvideValueTarget = me.ProvideValue != null
                                          && me.ProvideValue.Parameters.Count != 0
@@ -150,8 +150,7 @@ namespace XamlIl.Transform.Emitters
                                 .Emit(OpCodes.Stloc, res.Local)
                                 .EmitCall(me.Property.Getter)
                                 .Emit(OpCodes.Ldloc, res.Local);
-                    ilgen
-                        .EmitCall(me.Manipulation, true);
+                    me.Manipulation.Emit(context, ilgen, true);
                 }
                 // Call property setter on the target
                 else

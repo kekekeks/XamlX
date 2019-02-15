@@ -114,6 +114,8 @@ namespace XamlIl.Transform
     public class XamlIlTypeWellKnownTypes
     {
         public IXamlIlType IList { get; }
+        public IXamlIlType IEnumerable { get; }
+        public IXamlIlType IEnumerableT { get; }
         public IXamlIlType IListOfT { get; }
         public IXamlIlType Object { get; }
         public IXamlIlType String { get; }
@@ -132,7 +134,9 @@ namespace XamlIl.Transform
             CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
             IFormatProvider = typeSystem.GetType("System.IFormatProvider");
             IList = typeSystem.GetType("System.Collections.IList");
+            IEnumerable = typeSystem.GetType("System.Collections.IEnumerable");
             IListOfT = typeSystem.GetType("System.Collections.Generic.IList`1");
+            IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
             NullableT = typeSystem.GetType("System.Nullable`1");
         }
     }
