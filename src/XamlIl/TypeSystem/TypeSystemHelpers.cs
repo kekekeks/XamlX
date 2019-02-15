@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
-using Avalonia.Markup.Xaml;
 using XamlIl.Ast;
 using XamlIl.Transform;
 
