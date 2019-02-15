@@ -15,6 +15,7 @@ namespace XamlParserTests
         public double DoubleProperty { get; set; }
         public float FloatProperty { get; set; }
         public TimeSpan TimeSpanProperty { get; set; }
+        public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
         public ConvertersTestsClassWithConverter ConverterProperty { get; set; }
     }
@@ -71,8 +72,9 @@ namespace XamlParserTests
             InlineData("CustomProperty", "Custom"),
             InlineData("TimeSpanProperty", "01:10:00"),
             InlineData("ConverterProperty", "CustomConverter"),
+            InlineData("UriKindProperty", "Relative"),
         ]
-        public void Parse_Converters_Are_Operational(string property, string value)
+        public void Converters_Are_Operational(string property, string value)
         {
             var res = (ConvertersTestClass) CompileAndRun($@"
 <ConvertersTestClass
