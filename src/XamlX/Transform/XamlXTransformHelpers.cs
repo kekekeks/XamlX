@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
+using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -23,7 +24,7 @@ namespace XamlX.Transform
             // Direct property assignment?
             else if (contentProperty.Setter?.IsPublic == true
                 && count == 1
-                && context.Configuration.TryGetCorrectlyTypedValue(getNode(0),
+                && TryGetCorrectlyTypedValue(context, getNode(0),
                     contentProperty.PropertyType,
                     out var value))
                 setNode(0,
@@ -201,6 +202,116 @@ namespace XamlX.Transform
                 return false;
             o = new XamlXMarkupExtensionNode(node, prop, provideValue, node, null);
             return true;
+        }
+
+        public static bool TryGetCorrectlyTypedValue(XamlXAstTransformationContext context,
+            IXamlXAstValueNode node, IXamlXType type, out IXamlXAstValueNode rv)
+        {
+            var cfg = context.Configuration;
+            rv = null;
+            if (type.IsAssignableFrom(node.Type.GetClrType()))
+            {
+                rv = node;
+                return true;
+            }
+
+            if (cfg.CustomValueConverter?.Invoke(node, type, out rv) == true)
+                return true;
+
+            var nodeType = node.Type.GetClrType();
+            // Implicit type converters
+            if (!nodeType.Equals(cfg.WellKnownTypes.String))
+                return false;
+
+
+            if (node is XamlXAstTextNode tn)
+            {
+                if (type.IsEnum)
+                {
+                    var enumValue = type.Fields.FirstOrDefault(f => f.Name == tn.Text);
+                    if (enumValue != null)
+                    {
+                        rv = TypeSystemHelpers.GetLiteralFieldConstantNode(enumValue, node);
+                        return true;
+                    }
+                }
+
+                // Well known types
+                if (TypeSystemHelpers.ParseConstantIfTypeAllows(tn.Text, type, tn, out var constantNode))
+                {
+                    rv = constantNode;
+                    return true;
+                }
+
+                if (type.FullName == "System.Type")
+                {
+                    var resolvedType = XamlXTypeReferenceResolver.ResolveType(context, tn.Text, tn, true);
+                    rv = new XamlXTypeExtensionNode(tn, new XamlXAstClrTypeReference(tn, resolvedType), type);
+                    return true;
+                }
+            }
+
+            IXamlXAstValueNode CreateInvariantCulture() =>
+                new XamlXStaticOrTargetedReturnMethodCallNode(node,
+                    cfg.WellKnownTypes.CultureInfo.Methods.First(x =>
+                        x.IsPublic && x.IsStatic && x.Name == "get_InvariantCulture"), null);
+
+            var candidates = type.Methods.Where(m => m.Name == "Parse"
+                                                     && m.ReturnType.Equals(type)
+                                                     && m.Parameters.Count > 0
+                                                     && m.Parameters[0].Equals(cfg.WellKnownTypes.String)).ToList();
+
+            // Types with parse method
+            var parser = candidates.FirstOrDefault(m =>
+                             m.Parameters.Count == 2 &&
+                             (
+                                 m.Parameters[1].Equals(cfg.WellKnownTypes.CultureInfo)
+                                 || m.Parameters[1].Equals(cfg.WellKnownTypes.IFormatProvider)
+                             )
+                         )
+                         ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1);
+            if (parser != null)
+            {
+                var args = new List<IXamlXAstValueNode> {node};
+                if (parser.Parameters.Count == 2)
+                    args.Add(CreateInvariantCulture());
+
+                rv = new XamlXStaticOrTargetedReturnMethodCallNode(node, parser, args);
+                return true;
+            }
+
+            if (cfg.TypeMappings.TypeDescriptorContext != null)
+            {
+                var typeConverterAttribute =
+                    cfg.GetCustomAttribute(type, cfg.TypeMappings.TypeConverterAttributes).FirstOrDefault();
+                if (typeConverterAttribute != null)
+                {
+                    var arg = typeConverterAttribute.Parameters.FirstOrDefault();
+                    var converterType = (arg as IXamlXType) ??
+                                        (arg is String sarg ? cfg.TypeSystem.FindType(sarg) : null);
+                    if (converterType != null)
+                    {
+                        var converterMethod = converterType.FindMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
+                            cfg.TypeMappings.TypeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
+                            cfg.WellKnownTypes.Object);
+                        rv =
+                            new XamlXAstRuntimeCastNode(node,
+                                new XamlXStaticOrTargetedReturnMethodCallNode(node, converterMethod,
+                                    new[]
+                                    {
+                                        new XamlXAstNewClrObjectNode(node,
+                                            converterType, null,
+                                            new List<IXamlXAstValueNode>()),
+                                        new XamlXAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
+                                        CreateInvariantCulture(),
+                                        node
+                                    }), new XamlXAstClrTypeReference(node, type));
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

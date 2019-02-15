@@ -15,6 +15,7 @@ namespace XamlParserTests
         public double DoubleProperty { get; set; }
         public float FloatProperty { get; set; }
         public TimeSpan TimeSpanProperty { get; set; }
+        public Type TypeProperty { get; set; }
         public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
         public ConvertersTestsClassWithConverter ConverterProperty { get; set; }
@@ -63,18 +64,28 @@ namespace XamlParserTests
                 return new ConvertersTestsClassWithConverter {Value = (string) value};
             }
         }
-        
+
         [Theory,
-            InlineData("Int64Property", "1"),
-            InlineData("BoolProperty", "True"),
-            InlineData("DoubleProperty", "1.5"),
-            InlineData("FloatProperty", "2.5"),
-            InlineData("CustomProperty", "Custom"),
-            InlineData("TimeSpanProperty", "01:10:00"),
-            InlineData("ConverterProperty", "CustomConverter"),
-            InlineData("UriKindProperty", "Relative"),
+         InlineData("Int64Property", "1"),
+         InlineData("BoolProperty", "True"),
+         InlineData("DoubleProperty", "1.5"),
+         InlineData("FloatProperty", "2.5"),
+         InlineData("CustomProperty", "Custom"),
+         InlineData("TimeSpanProperty", "01:10:00"),
+         InlineData("ConverterProperty", "CustomConverter"),
+         InlineData("UriKindProperty", "Relative"),
         ]
         public void Converters_Are_Operational(string property, string value)
+            => CheckConversion(property, value, value);
+
+        [Fact]
+        public void Type_Properties_Are_Converted()
+        {
+            CheckConversion("TypeProperty", "ConvertersTestClass", 
+                typeof(ConvertersTestClass).ToString());
+        }
+        
+        public void CheckConversion(string property, string value, string expected)
         {
             var res = (ConvertersTestClass) CompileAndRun($@"
 <ConvertersTestClass
@@ -88,7 +99,7 @@ namespace XamlParserTests
                 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
                 var v = res.GetType().GetProperty(property).GetValue(res);
                 var ts = v.ToString();
-                Assert.Equal(value, ts);
+                Assert.Equal(expected, ts);
             }
             finally
             {
