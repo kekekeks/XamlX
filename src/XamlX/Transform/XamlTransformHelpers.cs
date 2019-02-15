@@ -185,7 +185,8 @@ namespace XamlX.Transform
         {
             o = null;
             var nodeType = node.Type.GetClrType();
-            var candidates = nodeType.Methods.Where(m => m.Name == "ProvideValue" && m.IsPublic && !m.IsStatic)
+            var candidates = nodeType.Methods.Where(m =>
+                    (m.Name == "ProvideValue" || m.Name == "ProvideTypedValue") && m.IsPublic && !m.IsStatic)
                 .ToList();
             var so = context.Configuration.WellKnownTypes.Object;
             var sp = context.Configuration.TypeMappings.ServiceProvider;
