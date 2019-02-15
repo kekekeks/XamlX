@@ -126,6 +126,16 @@ namespace XamlX.Transform
             if (!nodeType.Equals(WellKnownTypes.String))
                 return false;
 
+            if (type.IsEnum && node is XamlAstTextNode etn)
+            {
+                var enumValue = type.Fields.FirstOrDefault(f => f.Name == etn.Text);
+                if (enumValue != null)
+                {
+                    rv = TypeSystemHelpers.GetLiteralFieldConstantNode(enumValue, node);
+                    return true;
+                }
+            }
+
             var candidates = type.Methods.Where(m => m.Name == "Parse"
                                                      && m.ReturnType.Equals(type)
                                                      && m.Parameters.Count > 0

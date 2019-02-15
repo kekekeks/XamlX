@@ -22,6 +22,35 @@ namespace XamlX.TypeSystem
             return (long) Convert.ChangeType(literal, typeof(long));
         }
 
+        public static void EmitFieldLiteral(IXamlField field, IXamlILEmitter codeGen)
+        {
+            var ftype = field.FieldType.IsEnum ? field.FieldType.GetEnumUnderlyingType() : field.FieldType;
+                    
+            if (ftype.Name == "UInt64" || ftype.Name == "Int64")
+                codeGen.Emit(OpCodes.Ldc_I8,
+                    TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
+            else if (ftype.Name == "Double")
+                codeGen.Emit(OpCodes.Ldc_R8, (double) field.GetLiteralValue());
+            else if (ftype.Name == "Single")
+                codeGen.Emit(OpCodes.Ldc_R4, (float) field.GetLiteralValue());
+            else if (ftype.Name == "String")
+                codeGen.Emit(OpCodes.Ldstr, (string) field.GetLiteralValue());
+            else
+                codeGen.Emit(OpCodes.Ldc_I4,
+                    TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
+        }
+
+        public static XamlConstantNode GetLiteralFieldConstantNode(IXamlField field, IXamlLineInfo info)
+        {
+            var value = field.GetLiteralValue();
+            
+            //This code is needed for SRE backend that returns an actual enum instead of just int
+            if (value.GetType().IsEnum) 
+                value = Convert.ChangeType(value, value.GetType().GetEnumUnderlyingType());
+            
+            return new XamlConstantNode(info, field.FieldType, value);
+        }
+
         public static bool ParseConstantIfTypeAllows(string s, IXamlType type, IXamlLineInfo info, out XamlConstantNode rv)
         {
             rv = null;
