@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace XamlParserTests
@@ -36,8 +37,18 @@ namespace XamlParserTests
         public string Value { get; set; }
         public override string ToString() => Value;
     }
-    
-    
+
+    public class ConvertersTestsClassWithConstructor
+    {
+        public int Int;
+        public TimeSpan Converted;
+
+        public ConvertersTestsClassWithConstructor(int i, TimeSpan converted)
+        {
+            Int = i;
+            Converted = converted;
+        }
+    }
     
     public class ConvertersTests : CompilerTestBase
     {
@@ -117,7 +128,23 @@ namespace XamlParserTests
                 CultureInfo.CurrentCulture = old;
             }
         }
-        
-        
+
+        [Fact]
+        public void Constructor_Parameters_Should_Be_Converted()
+        {
+            var res = (ConvertersTestsClassWithConstructor) CompileAndRun($@"
+<ConvertersTestsClassWithConstructor
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'>
+    <x:Arguments>
+        <sys:String>123</sys:String>
+        <sys:String>01:10:00</sys:String>
+    </x:Arguments>
+</ConvertersTestsClassWithConstructor>");
+            Assert.Equal(123, res.Int);
+            Assert.Equal("01:10:00", res.Converted.ToString());
+            
+        }
     }
 }
