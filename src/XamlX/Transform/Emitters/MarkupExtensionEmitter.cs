@@ -111,6 +111,7 @@ namespace XamlX.Transform.Emitters
                     if (customTypes.Any(ct => ct.IsAssignableFrom(rtype)))
                     {
                         EmitCustomActionCall();
+                        ilgen.MarkLabel(exit);
                         return XamlXNodeEmitResult.Void;
                     }
                     
