@@ -432,6 +432,8 @@ namespace XamlX.Transform
                 .Ldc_I4(1).Ret()
                 // tryParent:
                 .MarkLabel(tryParentState)
+                // if(parent._parentServiceProvider == null) goto eof;
+                .LdThisFld(parent).Ldfld(_parentServiceProviderField).Brfalse(eof)
                 // parentProv = (IParentStackProvider)parent.GetService(typeof(IParentStackProvider));
                 .LdThisFld(parent).Ldfld(_parentServiceProviderField).Ldtype(mappings.ParentStackProvider)
                 .EmitCall(mappings.ServiceProvider.FindMethod("GetService", so, false,
