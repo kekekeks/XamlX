@@ -39,7 +39,7 @@ namespace XamlX.TypeSystem
         public static IXamlILEmitter Ldnull(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldnull);
 
         public static IXamlILEmitter Ldstr(this IXamlILEmitter emitter, string arg)
-            => emitter.Emit(OpCodes.Ldstr, arg);
+            => arg == null ? emitter.Ldnull() : emitter.Emit(OpCodes.Ldstr, arg);
         
         public static IXamlILEmitter Ldc_I4(this IXamlILEmitter emitter, int arg)
             => arg == 0
