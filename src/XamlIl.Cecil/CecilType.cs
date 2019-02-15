@@ -95,7 +95,8 @@ namespace XamlIl.TypeSystem
                     return true;
                 if (type.IsValueType && type.GenericTypeDefinition?.FullName == "System.Nullable`1")
                     return true;
-
+                if (FullName == "System.Object" && type.IsInterface)
+                    return true;
                 var baseType = type;
                 while (baseType != null)
                 {
