@@ -22,9 +22,12 @@ namespace XamlIl.Transform.Emitters
 
             void EmitPropertyDescriptor()
             {
-                if(context.Configuration.TypeMappings.ProvideValueTargetPropertyEmitter(context, me.Property))
+                if (me.Property == null)
+                    ilgen.Ldnull();
+                else if (context.Configuration.TypeMappings.ProvideValueTargetPropertyEmitter
+                             ?.Invoke(context, codeGen, me.Property) == true)
                     return;
-                if (me.Property is XamlIlAstAttachedProperty)
+                else if (me.Property is XamlIlAstAttachedProperty)
                     ilgen.Ldtoken(me.Property.Getter ?? me.Property.Setter)
                         .Emit(OpCodes.Box, context.Configuration.TypeSystem.GetType("System.RuntimeMethodHandle"));
                 else
