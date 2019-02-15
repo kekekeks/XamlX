@@ -150,4 +150,53 @@ namespace XamlIl.Ast
             return XamlIlNodeEmitResult.Type(Type.GetClrType());
         }
     }
+
+    public class XamlIlRootObjectNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+    {
+        public XamlIlRootObjectNode(XamlIlAstObjectNode root) : base(root)
+        {
+            Type = root.Type;
+        }
+
+        public IXamlIlAstTypeReference Type { get; set; }
+
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
+        {
+            codeGen
+                .Ldloc(context.ContextLocal)
+                .Ldfld(context.RuntimeContext.RootObjectField);
+            return XamlIlNodeEmitResult.Type(Type.GetClrType());
+        }
+
+        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        {
+            Type = (IXamlIlAstTypeReference) Type.Visit(visitor);
+        }
+    }
+
+    public class XamlIlLoadMethodDelegateNode : XamlIlValueWithSideEffectNodeBase,
+        IXamlIlAstEmitableNode
+    {
+        public IXamlIlType DelegateType { get; }
+        public IXamlIlMethod Method { get; }
+
+        public XamlIlLoadMethodDelegateNode(IXamlIlLineInfo lineInfo, IXamlIlAstValueNode value,
+            IXamlIlType delegateType, IXamlIlMethod method) : base(lineInfo, value)
+        {
+            DelegateType = delegateType;
+            Method = method;
+            Type = new XamlIlAstClrTypeReference(value, DelegateType);
+        }
+
+        public override IXamlIlAstTypeReference Type { get; }
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
+        {
+            context.Emit(Value, codeGen, Method.DeclaringType);
+            codeGen
+                .Ldftn(Method)
+                .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
+                    ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            return XamlIlNodeEmitResult.Type(DelegateType);
+        }
+    }
 }

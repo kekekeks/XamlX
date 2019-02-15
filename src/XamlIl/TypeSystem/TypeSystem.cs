@@ -15,6 +15,7 @@ namespace XamlIl.TypeSystem
         string FullName { get; }
         IXamlIlAssembly Assembly { get; }
         IReadOnlyList<IXamlIlProperty> Properties { get; }
+        IReadOnlyList<IXamlIlEventInfo> Events { get; }
         IReadOnlyList<IXamlIlField> Fields { get; }
         IReadOnlyList<IXamlIlMethod> Methods { get; }
         IReadOnlyList<IXamlIlConstructor> Constructors { get; }
@@ -29,7 +30,6 @@ namespace XamlIl.TypeSystem
         IReadOnlyList<IXamlIlType> Interfaces { get; }
         bool IsInterface { get; }
         IXamlIlType GetEnumUnderlyingType();
-        
     }
 
     public interface IXamlIlMethod : IEquatable<IXamlIlMethod>, IXamlIlMember
@@ -59,6 +59,11 @@ namespace XamlIl.TypeSystem
         IXamlIlMethod Setter { get; }
         IXamlIlMethod Getter { get; }
         IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; }
+    }
+
+    public interface IXamlIlEventInfo : IEquatable<IXamlIlEventInfo>, IXamlIlMember
+    {
+        IXamlIlMethod Add { get; }
     }
 
     public interface IXamlIlField : IEquatable<IXamlIlField>, IXamlIlMember
@@ -162,6 +167,7 @@ namespace XamlIl.TypeSystem
         public string FullName => Name;
         public IXamlIlAssembly Assembly { get; } = null;
         public IReadOnlyList<IXamlIlProperty> Properties { get; } = new IXamlIlProperty[0];
+        public IReadOnlyList<IXamlIlEventInfo> Events { get; } = new IXamlIlEventInfo[0];
         public IReadOnlyList<IXamlIlField> Fields { get; } = new List<IXamlIlField>();
         public IReadOnlyList<IXamlIlMethod> Methods { get; } = new IXamlIlMethod[0];
         public IReadOnlyList<IXamlIlConstructor> Constructors { get; } = new IXamlIlConstructor[0];
@@ -327,6 +333,15 @@ namespace XamlIl.TypeSystem
                 yield return p;
             if(t.BaseType!=null)
                 foreach (var p in t.BaseType.GetAllProperties())
+                    yield return p;
+        }
+        
+        public static IEnumerable<IXamlIlEventInfo> GetAllEvents(this IXamlIlType t)
+        {
+            foreach (var p in t.Events)
+                yield return p;
+            if(t.BaseType!=null)
+                foreach (var p in t.BaseType.GetAllEvents())
                     yield return p;
         }
         

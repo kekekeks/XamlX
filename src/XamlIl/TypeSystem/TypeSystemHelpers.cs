@@ -2,7 +2,9 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
+using Avalonia.Markup.Xaml;
 using XamlIl.Ast;
+using XamlIl.Transform;
 
 namespace XamlIl.TypeSystem
 {
@@ -94,11 +96,32 @@ namespace XamlIl.TypeSystem
             return false;
         }
         
-        public static void EmitConvert(IXamlIlLineInfo node, IXamlIlType what,
+        public static void EmitConvert(XamlIlEmitContext context, IXamlIlLineInfo node, IXamlIlType what,
             IXamlIlType to, Func<bool, IXamlIlEmitter> ld)
         {
             if (what.Equals(to))
                 ld(false);
+            else if (what == XamlIlPseudoType.Null)
+            {
+                
+                if (what.IsValueType)
+                {
+                    if (what.GenericTypeDefinition.Equals(context.Configuration.WellKnownTypes.NullableT))
+                    {
+                        using (var loc = context.GetLocal(what))
+                            ld(false)
+                                .Pop()
+                                .Ldloca(loc.Local)
+                                .Emit(OpCodes.Initobj, what)
+                                .Ldloc(loc.Local);
+
+                    }
+                    else
+                        throw new XamlIlLoadException("Unable to convert {x:Null} to " + what.GetFqn(), node);
+                }
+                else
+                    ld(false);
+            }
             else if (what.IsValueType && to.IsValueType)
             {
                 if (to.IsNullableOf(what))

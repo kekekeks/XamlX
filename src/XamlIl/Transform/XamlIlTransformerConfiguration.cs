@@ -22,7 +22,8 @@ namespace XamlIl.Transform
         /// <typeparam name="T"></typeparam>
         public void AddExtra<T>(T extra) => _extras[typeof(T)] = extra;
 
-        public delegate bool XamlIlValueConverter(IXamlIlAstValueNode node, IXamlIlType type, out IXamlIlAstValueNode result);
+        public delegate bool XamlIlValueConverter(XamlIlAstTransformationContext context,
+            IXamlIlAstValueNode node, IXamlIlType type, out IXamlIlAstValueNode result);
         
         public IXamlIlTypeSystem TypeSystem { get; }
         public IXamlIlAssembly DefaultAssembly { get; }
@@ -121,9 +122,11 @@ namespace XamlIl.Transform
         public IXamlIlType String { get; }
         public IXamlIlType Void { get; }
         public IXamlIlType Boolean { get; }
+        public IXamlIlType Double { get; }
         public IXamlIlType NullableT { get; }
         public IXamlIlType CultureInfo { get; }
         public IXamlIlType IFormatProvider { get; }
+        public IXamlIlType Delegate { get; }
 
         public XamlIlTypeWellKnownTypes(IXamlIlTypeSystem typeSystem)
         {
@@ -131,6 +134,7 @@ namespace XamlIl.Transform
             String = typeSystem.GetType("System.String");
             Object = typeSystem.GetType("System.Object");
             Boolean = typeSystem.GetType("System.Boolean");
+            Double = typeSystem.GetType("System.Double");
             CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
             IFormatProvider = typeSystem.GetType("System.IFormatProvider");
             IList = typeSystem.GetType("System.Collections.IList");
@@ -138,6 +142,7 @@ namespace XamlIl.Transform
             IListOfT = typeSystem.GetType("System.Collections.Generic.IList`1");
             IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
             NullableT = typeSystem.GetType("System.Nullable`1");
+            Delegate = typeSystem.GetType("System.Delegate");
         }
     }
 }

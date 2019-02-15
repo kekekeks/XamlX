@@ -40,12 +40,18 @@ namespace XamlIl.Transform.Transformers
                             || p.Setter != null && !p.Setter.IsStatic && p.Setter.Parameters.Count == 1));
                     if (found != null)
                         return new XamlIlAstClrPropertyReference(prop, found);
+                    var clrEvent = declaringType.GetAllEvents().FirstOrDefault(p => p.Name == prop.Name
+                                                                                    && p.Add != null);
+                    if (clrEvent != null)
+                        return new XamlIlAstClrPropertyReference(prop,
+                            new XamlIlAstCustomProperty(prop.Name, clrEvent.Add, null));
                 }
 
                 // Look for attached properties on declaring type
-                IXamlIlMethod setter = null, getter = null;
+                IXamlIlMethod setter = null, getter = null, adder = null;
                 var setterName = "Set" + prop.Name;
                 var getterName = "Get" + prop.Name;
+                var adderName = "Add" + prop.Name + "Handler";
                 foreach (var m in declaringType.Methods)
                 {
                     if (m.IsPublic && m.IsStatic)
@@ -57,26 +63,39 @@ namespace XamlIl.Transform.Transformers
                         if (m.Name == setterName && m.Parameters.Count == 2 &&
                             m.Parameters[0].IsAssignableFrom(targetType))
                             setter = m;
+
+                        if (m.Name == adderName
+                            && m.Parameters.Count == 2
+                            && m.Parameters[0].IsAssignableFrom(targetType))
+                            adder = m;
                     }
                 }
 
-                if (setter == null && getter == null)
-                {
-                    if (context.StrictMode)
-                        throw new XamlIlParseException(
-                            $"Unable to resolve suitable regular or attached property {prop.Name} on type {declaringType.GetFqn()}",
-                            node);
-                    return null;
-                }
+                if (setter != null || getter != null)
+                    return new XamlIlAstClrPropertyReference(prop, new XamlIlAstAttachedProperty(prop.Name, setter, getter));
 
-                return new XamlIlAstClrPropertyReference(prop, new XamlIlAstAttachedProperty(prop.Name, setter, getter));
+                if (adder != null)
+                    return new XamlIlAstClrPropertyReference(prop, new XamlIlAstCustomProperty(prop.Name, adder, null));
+
+                if (context.StrictMode)
+                    throw new XamlIlParseException(
+                        $"Unable to resolve suitable regular or attached property {prop.Name} on type {declaringType.GetFqn()}",
+                        node);
+                return null;
             }
 
             return node;
         }
     }
 
-    class XamlIlAstAttachedProperty : IXamlIlProperty
+    class XamlIlAstAttachedProperty : XamlIlAstCustomProperty
+    {
+        public XamlIlAstAttachedProperty(string name, IXamlIlMethod setter, IXamlIlMethod getter) : base(name, setter, getter)
+        {
+        }
+    }
+    
+    class XamlIlAstCustomProperty : IXamlIlProperty
     {
         public bool Equals(IXamlIlProperty other)
         {
@@ -93,12 +112,12 @@ namespace XamlIl.Transform.Transformers
         public IXamlIlMethod Getter { get; }
         public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; set; } = new IXamlIlCustomAttribute[0];
 
-        public XamlIlAstAttachedProperty(string name, IXamlIlMethod setter, IXamlIlMethod getter)
+        public XamlIlAstCustomProperty(string name, IXamlIlMethod setter, IXamlIlMethod getter)
         {
             Name = name;
             Setter = setter;
             Getter = getter;
-            PropertyType = getter != null ? getter.ReturnType : setter.Parameters[1];
+            PropertyType = getter != null ? getter.ReturnType : setter.Parameters.Last();
         }
     }
 

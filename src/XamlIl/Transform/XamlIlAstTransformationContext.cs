@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using XamlIl.Ast;
+using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
@@ -9,6 +10,7 @@ namespace XamlIl.Transform
         private Dictionary<Type, object> _items = new Dictionary<Type, object>();
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public XamlIlTransformerConfiguration Configuration { get; }
+        public IXamlIlAstValueNode RootObject { get; set; }
         public bool StrictMode { get; }
 
         public IXamlIlAstNode Error(IXamlIlAstNode node, Exception e)
