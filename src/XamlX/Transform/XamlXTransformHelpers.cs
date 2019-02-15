@@ -69,9 +69,9 @@ namespace XamlX.Transform
         {
             var so = context.Configuration.WellKnownTypes.Object;
             rv = null;
-            IXamlXMethod FindAdder(IXamlXType valueType, IXamlXType keyType = null)
+            IXamlXWrappedMethod FindAdderImpl(IXamlXType targetType, IXamlXType valueType, IXamlXType keyType = null)
             {
-                var candidates = targetPropertyType.FindMethods(m =>
+                var candidates = targetType.FindMethods(m =>
                         !m.IsStatic && m.IsPublic
                                     && (m.Name == "Add" || m.Name.EndsWith(".Add"))).ToList();
 
@@ -90,17 +90,44 @@ namespace XamlX.Transform
                     {
                         if (keyType == null && m.Parameters.Count == 1
                                             && CheckArg(m.Parameters[0], allowObj))
-                            return m;
+                            return new XamlXWrappedMethod(m);
                         if (keyType != null && m.Parameters.Count == 2
                                                  && m.Parameters[0].IsAssignableFrom(keyType)
                                                  && CheckArg(m.Parameters[1], allowObj))
-                            return m;
+                            return new XamlXWrappedMethod(m);
 
                     }
                 }
 
                 return null;
             }
+
+            IXamlXWrappedMethod FindAdderWithCast(IXamlXType originalType, IXamlXType newTargetType, IXamlXType valueType)
+            {
+                var m = FindAdderImpl(newTargetType, valueType);
+                if (m == null)
+                    return null;
+                return new XamlXWrappedMethodWithCasts(m, new[] {originalType, m.ParametersWithThis[1]});
+
+            }
+            
+            IXamlXWrappedMethod FindAdder(IXamlXType valueType, IXamlXType keyType = null)
+            {
+                if(keyType == null)
+                {
+                    if (targetPropertyType.Equals(context.Configuration.WellKnownTypes.IEnumerable))
+                        return FindAdderWithCast(targetPropertyType, context.Configuration.WellKnownTypes.IList,
+                            valueType);
+                    if (targetPropertyType.GenericTypeDefinition?.Equals(context.Configuration.WellKnownTypes
+                            .IEnumerableT) == true)
+                        return FindAdderWithCast(
+                            targetPropertyType,
+                            context.Configuration.WellKnownTypes.IListOfT
+                                .MakeGenericType(targetPropertyType.GenericArguments[0]), valueType);
+                }
+                return FindAdderImpl(targetPropertyType, valueType, keyType);
+            }
+            
             if (TryConvertMarkupExtension(context, value, targetProperty, out var ext))
             {
                 var adder = FindAdder(ext.ProvideValue.ReturnType);
