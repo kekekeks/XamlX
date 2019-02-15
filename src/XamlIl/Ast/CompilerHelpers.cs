@@ -15,8 +15,8 @@ namespace XamlIl.Ast
         IXamlIlAstTypeReference IXamlIlAstValueNode.Type => new XamlIlAstClrTypeReference(this, Type);
         public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
-            context.LdLocal(this);
-            return XamlIlNodeEmitResult.Type(Type);
+            context.LdLocal(this, codeGen);
+            return XamlIlNodeEmitResult.Type(0, Type);
         }
     }
 
@@ -42,8 +42,8 @@ namespace XamlIl.Ast
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
-            context.StLocal(Local);
-            return rv;
+            context.StLocal(Local, codeGen);
+            return XamlIlNodeEmitResult.Type(0, rv.ReturnType);
         }
     }
 
@@ -62,7 +62,7 @@ namespace XamlIl.Ast
             // Discard the stack value we are "supposed" to manipulate
             codeGen.Emit(OpCodes.Pop);
             context.Emit(Imperative, codeGen, null);
-            return XamlIlNodeEmitResult.Void;
+            return XamlIlNodeEmitResult.Void(1);
         }
 
         public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
@@ -93,7 +93,7 @@ namespace XamlIl.Ast
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
-            return XamlIlNodeEmitResult.Void;
+            return XamlIlNodeEmitResult.Void(0);
         }
     }
 
@@ -108,7 +108,7 @@ namespace XamlIl.Ast
         public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             codeGen.Ldloc(context.ContextLocal);
-            return XamlIlNodeEmitResult.Type(Type.GetClrType());
+            return XamlIlNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -136,7 +136,7 @@ namespace XamlIl.Ast
                 codeGen.Unbox_Any(t);
             else
                 codeGen.Castclass(t);            
-            return XamlIlNodeEmitResult.Type(t);
+            return XamlIlNodeEmitResult.Type(0, t);
         }
     }
 

@@ -18,7 +18,7 @@ namespace XamlIl.Transform.Emitters
                 codeGen.Emit(OpCodes.Dup);
                 context.Emit(vwm.Manipulation, codeGen, null);
             }
-            return XamlIlNodeEmitResult.Type(created.ReturnType);
+            return XamlIlNodeEmitResult.Type(0, created.ReturnType);
         }
     }
 }

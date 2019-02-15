@@ -176,15 +176,21 @@ namespace XamlIl.Transform
 
     public class XamlIlNodeEmitResult
     {
+        public int ConsumedItems { get; }
         public IXamlIlType ReturnType { get; set; }
+        public int ProducedItems => ReturnType == null ? 0 : 1;
         public bool AllowCast { get; set; }
 
-        public XamlIlNodeEmitResult(IXamlIlType returnType = null)
+        public XamlIlNodeEmitResult(int consumedItems, IXamlIlType returnType = null)
         {
+            ConsumedItems = consumedItems;
             ReturnType = returnType;
         }
-        public static XamlIlNodeEmitResult Void { get; } = new XamlIlNodeEmitResult();
-        public static XamlIlNodeEmitResult Type(IXamlIlType type) => new XamlIlNodeEmitResult(type);
+
+        public static XamlIlNodeEmitResult Void(int consumedItems) => new XamlIlNodeEmitResult(consumedItems);
+
+        public static XamlIlNodeEmitResult Type(int consumedItems, IXamlIlType type) =>
+            new XamlIlNodeEmitResult(consumedItems, type);
     }
     
     public interface IXamlIlAstNodeEmitter

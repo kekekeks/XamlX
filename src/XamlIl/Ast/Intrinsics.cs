@@ -18,7 +18,7 @@ namespace XamlIl.Ast
         public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             codeGen.Emit(OpCodes.Ldnull);
-            return XamlIlNodeEmitResult.Type(XamlIlPseudoType.Null);
+            return XamlIlNodeEmitResult.Type(0, XamlIlPseudoType.Null);
         }
     }
 
@@ -55,7 +55,7 @@ namespace XamlIl.Ast
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
                 .Emit(OpCodes.Call, method);
-            return XamlIlNodeEmitResult.Type(_systemType);
+            return XamlIlNodeEmitResult.Type(0, _systemType);
         }
     }
 
@@ -89,7 +89,7 @@ namespace XamlIl.Ast
             if (member is IXamlIlProperty prop)
             {
                 codeGen.Emit(OpCodes.Call, prop.Getter);
-                return XamlIlNodeEmitResult.Type(prop.Getter.ReturnType);
+                return XamlIlNodeEmitResult.Type(0, prop.Getter.ReturnType);
             }
             else if (member is IXamlIlField field)
             {
@@ -99,7 +99,7 @@ namespace XamlIl.Ast
                 }
                 else
                     codeGen.Emit(OpCodes.Ldsfld, field);
-                return XamlIlNodeEmitResult.Type(field.FieldType);
+                return XamlIlNodeEmitResult.Type(0, field.FieldType);
             }
             else
                 throw new XamlIlLoadException(
@@ -147,7 +147,7 @@ namespace XamlIl.Ast
                 codeGen.Emit(OpCodes.Ldc_R8, d);
             else
                 codeGen.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
-            return XamlIlNodeEmitResult.Type(Type.GetClrType());
+            return XamlIlNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -165,7 +165,7 @@ namespace XamlIl.Ast
             codeGen
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.RootObjectField);
-            return XamlIlNodeEmitResult.Type(Type.GetClrType());
+            return XamlIlNodeEmitResult.Type(0, Type.GetClrType());
         }
 
         public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
@@ -196,7 +196,7 @@ namespace XamlIl.Ast
                 .Ldftn(Method)
                 .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            return XamlIlNodeEmitResult.Type(DelegateType);
+            return XamlIlNodeEmitResult.Type(0, DelegateType);
         }
     }
 }
