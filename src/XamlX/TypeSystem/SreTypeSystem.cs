@@ -590,5 +590,7 @@ namespace XamlX.TypeSystem
                 return new SreTypeBuilder(_system, builder);
             }
         }
+
+        public IXamlAssembly GetAssembly(Assembly asm) => ResolveAssembly(asm);
     }
 }
