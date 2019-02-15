@@ -91,7 +91,10 @@ namespace XamlIl.Transform
         
         public XamlIlNodeEmitResult Emit(IXamlIlAstNode value, IXamlIlEmitter codeGen, IXamlIlType expectedType)
         {
-            var res = EmitCore(value, codeGen);
+            var checkedEmitter = new CheckingIlEmitter(codeGen); 
+            var res = EmitCore(value, checkedEmitter);
+            checkedEmitter.Check();
+
             var returnedType = res.ReturnType;
 
             if (returnedType != null || expectedType != null)
