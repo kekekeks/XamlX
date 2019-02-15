@@ -20,7 +20,16 @@ namespace XamlParserTests
 
     public delegate object CallbackExtensionCallback(IServiceProvider provider);
 
-
+    public class UnknownServiceUsageExtension
+    {
+        public object Return { get; set; }
+        public object ProvideValue(IServiceProvider provider)
+        {
+            Assert.Null(provider.GetService(typeof(string)));
+            return Return;
+        }
+    }
+    
     public class ServiceProviderTestsClass
     {
         public string Id { get; set; }
@@ -256,6 +265,15 @@ namespace XamlParserTests
                 return "Value";
             }, null);
             Assert.True(ok);
+        }
+        
+        [Fact]
+        public void Unknown_Services_Should_Return_null()
+        {
+            var res = (ServiceProviderTestsClass)CompileAndRun(
+                @"<ServiceProviderTestsClass xmlns='test' Property='{UnknownServiceUsage Return=123}'/>");
+            Assert.Equal("123", res.Property);
+            
         }
     }
 }
