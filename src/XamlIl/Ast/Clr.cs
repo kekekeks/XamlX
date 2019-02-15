@@ -108,8 +108,13 @@ namespace XamlIl.Ast
     public class XamlIlManipulationGroupNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public List<IXamlIlAstManipulationNode> Children { get; set; } = new List<IXamlIlAstManipulationNode>();
-        public XamlIlManipulationGroupNode(IXamlIlLineInfo lineInfo) : base(lineInfo)
+
+        public XamlIlManipulationGroupNode(IXamlIlLineInfo lineInfo,
+            IEnumerable<IXamlIlAstManipulationNode> children = null)
+            : base(lineInfo)
         {
+            if (children != null)
+                Children.AddRange(children);
         }
 
         public override void VisitChildren(XamlIlAstVisitorDelegate visitor) => VisitList(Children, visitor);
