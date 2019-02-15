@@ -228,12 +228,17 @@ namespace XamlIl.Transform
                         .MarkLabel(next);
                 }
 
+            var noParentProvider = getServiceMethod.Generator.DefineLabel();
             getServiceMethod.Generator
-                .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Ldfld, _parentServiceProviderField)
-                .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Callvirt, getServiceInterfaceMethod)
-                .Emit(OpCodes.Ret);
+                .LdThisFld(_parentServiceProviderField)
+                .Brfalse(noParentProvider)
+                .LdThisFld(_parentServiceProviderField)
+                .Ldarg(1)
+                .EmitCall(getServiceInterfaceMethod)
+                .Emit(OpCodes.Ret)
+                .MarkLabel(noParentProvider)
+                .Ldnull()
+                .Ret();
 
             var ctor = builder.DefineConstructor(false, mappings.ServiceProvider);
             ctor.Generator
