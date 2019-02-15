@@ -590,5 +590,7 @@ namespace XamlIl.TypeSystem
                 return new SreTypeBuilder(_system, builder);
             }
         }
+
+        public IXamlIlAssembly GetAssembly(Assembly asm) => ResolveAssembly(asm);
     }
 }
