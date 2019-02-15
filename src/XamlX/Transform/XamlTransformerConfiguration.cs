@@ -31,7 +31,7 @@ namespace XamlX.Transform
         public XamlValueConverter CustomValueConverter { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
-            (XamlNamespaces.Xaml2006, "Arguments")
+            
         };
 
         public XamlTransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
