@@ -48,7 +48,7 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
-        public Func<XamlEmitContext, IXamlProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
+        public Func<XamlEmitContext, IXamlILEmitter, IXamlProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
     }
 
     public interface IXamlCustomAttributeResolver
