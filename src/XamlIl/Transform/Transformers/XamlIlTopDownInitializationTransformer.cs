@@ -19,7 +19,7 @@ namespace XamlIl.Transform.Transformers
                     foreach (var attrType in usableAttrs)
                     {
                         if (attr.Type.Equals(attrType))
-                            return attr.Parameters[0] as bool? == true;
+                            return attr.Parameters.Count == 0 || attr.Parameters[0] as bool? == true;
                     }
                 }
 
