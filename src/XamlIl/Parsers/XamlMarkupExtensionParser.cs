@@ -153,7 +153,12 @@ namespace XamlIl.Parsers
                 }
                 else if(state == ParserState.ParsingNamedArgumentName)
                 {
-                    if (ch == '{' || ch == '}')
+                    // Either after , or } from the previous argument value
+                    if (argumentName == null && ch == '}')
+                    {
+                        EndNode();
+                    }
+                    else if (ch == '{' || ch == '}')
                         throw new ParseException($"{ch} is not valid at the current state", c);
                     else if (ch == '=')
                         state = ParserState.ParsingNamedArgumentValue;
