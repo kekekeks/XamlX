@@ -64,6 +64,11 @@ namespace XamlX.Ast
             context.Emit(Imperative, codeGen, null);
             return XamlXNodeEmitResult.Void;
         }
+
+        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        {
+            Imperative = (IXamlXAstImperativeNode)Imperative.Visit(visitor);
+        }
     }
 
     public class XamlXAstImperativeValueManipulation : XamlXAstNode, IXamlXAstImperativeNode, IXamlXAstEmitableNode
