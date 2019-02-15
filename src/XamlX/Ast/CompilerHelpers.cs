@@ -127,7 +127,10 @@ namespace XamlX.Ast
         {
             context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
             var t = Type.GetClrType();
-            codeGen.Emit(OpCodes.Castclass, t);
+            if (t.IsValueType)
+                codeGen.Unbox_Any(t);
+            else
+                codeGen.Castclass(t);            
             return XamlXNodeEmitResult.Type(t);
         }
     }
