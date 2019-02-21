@@ -90,8 +90,11 @@ namespace XamlIl.Parsers
             void FinishStringArgument() => FinishArgument(argument?.Trim());
             void FinishArgument(object value)
             {
-                if(state == ParserState.ParsingPositionalArgument)
-                    current.PositionalArguments.Add(value);
+                if (state == ParserState.ParsingPositionalArgument)
+                {
+                    if (value != null)
+                        current.PositionalArguments.Add(value);
+                }
                 else if (state == ParserState.ParsingNamedArgumentValue)
                 {
                     state = ParserState.ParsingNamedArgumentName;
