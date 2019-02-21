@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using XamlX.Transform;
 using XamlX.TypeSystem;
-using Visitor = XamlX.Ast.XamlXAstVisitorDelegate;
+using Visitor = XamlX.Ast.IXamlXAstVisitor;
 
 namespace XamlX.Ast
 {
@@ -44,7 +44,7 @@ namespace XamlX.Ast
             Value = value;
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (IXamlXAstValueNode) Value.Visit(visitor);
         }
@@ -62,7 +62,7 @@ namespace XamlX.Ast
             Manipulation = manipulation;
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Manipulation = (IXamlXAstManipulationNode) Manipulation.Visit(visitor);
         }
@@ -80,7 +80,7 @@ namespace XamlX.Ast
             Arguments = args?.ToList() ?? new List<IXamlXAstValueNode>();
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             VisitList(Arguments, visitor);
         }
@@ -130,7 +130,7 @@ namespace XamlX.Ast
                 Children.AddRange(children);
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor) => VisitList(Children, visitor);
+        public override void VisitChildren(Visitor visitor) => VisitList(Children, visitor);
     }
 
     public abstract class XamlXValueWithSideEffectNodeBase : XamlXAstNode, IXamlXAstValueNode
@@ -143,7 +143,7 @@ namespace XamlX.Ast
         public IXamlXAstValueNode Value { get; set; }
         public virtual IXamlXAstTypeReference Type => Value.Type;
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (IXamlXAstValueNode) Value.Visit(visitor);
         }
@@ -161,7 +161,7 @@ namespace XamlX.Ast
             Manipulation = manipulation;
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             base.VisitChildren(visitor);
             Manipulation = (IXamlXAstManipulationNode) Manipulation?.Visit(visitor);
@@ -206,7 +206,7 @@ namespace XamlX.Ast
             Manipulation = manipulation;
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (IXamlXAstValueNode) Value.Visit(visitor);
         }
@@ -224,7 +224,7 @@ namespace XamlX.Ast
             Type = type;
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Manipulation = (IXamlXAstManipulationNode) Manipulation.Visit(visitor);
         }
@@ -337,7 +337,7 @@ namespace XamlX.Ast
             Type = new XamlXAstClrTypeReference(value, funcType);
         }
 
-        public override void VisitChildren(XamlXAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (IXamlXAstValueNode) Value.Visit(visitor);
         }
