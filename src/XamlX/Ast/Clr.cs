@@ -190,7 +190,7 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlMarkupExtensionNode : XamlAstNode, IXamlAstManipulationNode
+    public class XamlMarkupExtensionNode : XamlAstNode, IXamlAstManipulationNode, IXamlAstNodeNeedsParentStack
     {
         public IXamlAstValueNode Value { get; set; }
         public IXamlProperty Property { get; set; }
@@ -210,6 +210,8 @@ namespace XamlX.Ast
         {
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
+
+        public bool NeedsParentStack => ProvideValue?.Parameters.Count > 0;
     }
     
     public class XamlObjectInitializationNode : XamlAstNode, IXamlAstManipulationNode

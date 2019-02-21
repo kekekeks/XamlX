@@ -341,7 +341,7 @@ namespace XamlX.Transform
                         var converterMethod = converterType.FindMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
                             cfg.TypeMappings.TypeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
                             cfg.WellKnownTypes.Object);
-                        rv =
+                        rv = new XamlAstNeedsParentStackValueNode(node,
                             new XamlAstRuntimeCastNode(node,
                                 new XamlStaticOrTargetedReturnMethodCallNode(node, converterMethod,
                                     new[]
@@ -352,7 +352,7 @@ namespace XamlX.Transform
                                         new XamlAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
                                         CreateInvariantCulture(),
                                         node
-                                    }), new XamlAstClrTypeReference(node, type));
+                                    }), new XamlAstClrTypeReference(node, type)));
                         return true;
                     }
                 }
