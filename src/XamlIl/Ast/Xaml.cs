@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using XamlIl.TypeSystem;
 using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
@@ -75,10 +76,13 @@ namespace XamlIl.Ast
     {
         public string Text { get; set; }
 
-        public XamlIlAstTextNode(IXamlIlLineInfo lineInfo, string text) : base(lineInfo)
+        public XamlIlAstTextNode(IXamlIlLineInfo lineInfo, string text, IXamlIlType type = null) : base(lineInfo)
         {
             Text = text;
-            Type = new XamlIlAstXmlTypeReference(lineInfo, XamlNamespaces.Xaml2006, "String");
+            if (type != null)
+                Type = new XamlIlAstClrTypeReference(lineInfo, type);
+            else
+                Type = new XamlIlAstXmlTypeReference(lineInfo, XamlNamespaces.Xaml2006, "String");
         }
 
         public override void VisitChildren(Visitor visitor)
