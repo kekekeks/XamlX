@@ -31,7 +31,7 @@ namespace XamlParserTests
         t:Namespaced.AttachedProp='AttachedValue'
         d:Directive='DirectiveValue'
         d:DirectiveExt='{Extension 123}'>
-        <t:SubChild Prop='321'/>
+        <t:SubChild Prop='321' Root.AttachedProp='AttachedValue'/>
         <Child.DottedProp>DottedValue</Child.DottedProp>
         <Root.AttachedDottedProp>AttachedValue</Root.AttachedDottedProp>
         <Child.NodeListProp>
@@ -120,14 +120,18 @@ namespace XamlParserTests
                                         }
                                     }
                                 }),
-                                // <t:SubChild Prop='321'/>
+                                // <t:SubChild Prop='321' Root.AttachedProp='AttachedValue'/>
                                 new XamlIlAstObjectNode(ni, nsSubChildType)
                                 {
                                     Children =
                                     {
                                         new XamlIlAstXamlPropertyValueNode(ni, new XamlIlAstNamePropertyReference(ni,
                                                 nsSubChildType, "Prop", nsSubChildType),
-                                            new XamlIlAstTextNode(ni, "321"))
+                                            new XamlIlAstTextNode(ni, "321")),
+                                        // Root.AttachedProp='AttachedValue'
+                                        new XamlIlAstXamlPropertyValueNode(ni, new XamlIlAstNamePropertyReference(ni,
+                                                rootType, "AttachedProp", nsSubChildType),
+                                            new XamlIlAstTextNode(ni, "AttachedValue")),
                                     }
                                 },
                                 //<Child.DottedProp>DottedValue</Child.DottedProp>

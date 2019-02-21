@@ -164,7 +164,7 @@ namespace XamlIl.Parsers
                         {
                             var parts = pname.Split(new[] {'.'}, 2);
                             pname = parts[1];
-                            var ns = attr.Name.Namespace == "" ? el.Name.NamespaceName : attr.Name.NamespaceName;
+                            var ns = attr.Name.Namespace == "" ? el.GetDefaultNamespace().NamespaceName : attr.Name.NamespaceName;
                             ptype = new XamlIlAstXmlTypeReference(el.AsLi(), ns, parts[0]);
                         }
 
