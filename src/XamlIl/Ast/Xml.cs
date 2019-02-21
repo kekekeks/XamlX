@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Visitor = XamlIl.Ast.XamlIlAstVisitorDelegate;
+using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
     public class XamlIlAstXmlTypeReference : XamlIlAstNode, IXamlIlAstTypeReference

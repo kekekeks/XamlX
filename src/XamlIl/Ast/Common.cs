@@ -1,15 +1,20 @@
 
 using System.Collections.Generic;
 using XamlIl.TypeSystem;
-using Visitor = XamlIl.Ast.XamlIlAstVisitorDelegate;
+using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
-    public delegate IXamlIlAstNode XamlIlAstVisitorDelegate(IXamlIlAstNode node);
-    
     public interface IXamlIlLineInfo
     {
         int Line { get; set; }
         int Position { get; set; }   
+    }
+
+    public interface IXamlIlAstVisitor
+    {
+        IXamlIlAstNode Visit(IXamlIlAstNode node);
+        void Push(IXamlIlAstNode node);
+        void Pop();
     }
     
     public interface IXamlIlAstNode : IXamlIlLineInfo
@@ -36,8 +41,17 @@ namespace XamlIl.Ast
         
         public IXamlIlAstNode Visit(Visitor visitor)
         {
-            var node = visitor(this);
-            node.VisitChildren(visitor);
+            var node = visitor.Visit(this);
+            try
+            {
+                visitor.Push(node);
+                node.VisitChildren(visitor);
+            }
+            finally
+            {
+                visitor.Pop();
+            }
+
             return node;
         }
 

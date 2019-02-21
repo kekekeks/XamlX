@@ -1,7 +1,7 @@
 using System.Reflection.Emit;
 using XamlIl.Transform;
 using XamlIl.TypeSystem;
-
+using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
     public class XamlIlAstCompilerLocalNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
@@ -32,7 +32,7 @@ namespace XamlIl.Ast
             Local = local;
         }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             base.VisitChildren(visitor);
             Local = (XamlIlAstCompilerLocalNode) Local.Visit(visitor);
@@ -65,7 +65,7 @@ namespace XamlIl.Ast
             return XamlIlNodeEmitResult.Void(1);
         }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Imperative = (IXamlIlAstImperativeNode)Imperative.Visit(visitor);
         }
@@ -83,7 +83,7 @@ namespace XamlIl.Ast
             Manipulation = manipulation;
         }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (XamlIlAstCompilerLocalNode) Value.Visit(visitor);
             Manipulation = (IXamlIlAstManipulationNode) Manipulation.Visit(visitor);
@@ -122,7 +122,7 @@ namespace XamlIl.Ast
         public IXamlIlAstValueNode Value { get; set; }
         public IXamlIlAstTypeReference Type { get; set; }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = (IXamlIlAstValueNode) Value.Visit(visitor);
             Type = (IXamlIlAstTypeReference) Type.Visit(visitor);

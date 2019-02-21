@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using XamlIl.Transform;
 using XamlIl.TypeSystem;
-
+using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
     public class XamlIlNullExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
@@ -37,7 +37,7 @@ namespace XamlIl.Ast
         public IXamlIlAstTypeReference Type { get; }
         public IXamlIlAstTypeReference Value { get; set; }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Value = Value.Visit(visitor) as IXamlIlAstTypeReference;
         }
@@ -70,7 +70,7 @@ namespace XamlIl.Ast
         public string Member { get; set; }
         public IXamlIlAstTypeReference TargetType { get; set; }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             TargetType = (IXamlIlAstTypeReference) TargetType.Visit(visitor);
         }
@@ -168,7 +168,7 @@ namespace XamlIl.Ast
             return XamlIlNodeEmitResult.Type(0, Type.GetClrType());
         }
 
-        public override void VisitChildren(XamlIlAstVisitorDelegate visitor)
+        public override void VisitChildren(Visitor visitor)
         {
             Type = (IXamlIlAstTypeReference) Type.Visit(visitor);
         }
