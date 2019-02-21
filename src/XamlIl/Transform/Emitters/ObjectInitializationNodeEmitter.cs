@@ -27,7 +27,9 @@ namespace XamlIl.Transform.Emitters
             }
             
             IXamlIlType objectListType = null;
-            var addToParentStack = context.RuntimeContext.ParentListField != null && !init.Type.IsValueType;
+            var addToParentStack = context.RuntimeContext.ParentListField != null
+                                   && !init.Type.IsValueType
+                                   && context.GetOrCreateItem<XamlIlNeedsParentStackCache>().NeedsParentStack(node);
             if(addToParentStack)
             {
                 objectListType = context.Configuration.TypeSystem.GetType("System.Collections.Generic.List`1")
@@ -62,6 +64,56 @@ namespace XamlIl.Transform.Emitters
             
             
             return XamlIlNodeEmitResult.Void(1);
+        }
+    }
+    
+    class XamlIlNeedsParentStackCache : Dictionary<IXamlIlAstNode, bool>
+    {
+        public static void Verify(XamlIlContextBase ctx, IXamlIlAstNode node)
+        {
+            var cache = ctx.GetItem<XamlIlNeedsParentStackCache>();
+            // There is no parent stack
+            if (cache == null)
+                return;
+            if (!cache.ContainsKey(node))
+                throw new XamlIlLoadException("Node needs parent stack, but one doesn't seem to be provided", node);
+        }
+        class ParentStackVisitor : IXamlIlAstVisitor
+        {
+            private readonly XamlIlNeedsParentStackCache _cache;
+
+            public ParentStackVisitor(XamlIlNeedsParentStackCache cache)
+            {
+                _cache = cache;
+            }
+            Stack<IXamlIlAstNode> _parents = new Stack<IXamlIlAstNode>();
+            public IXamlIlAstNode Visit(IXamlIlAstNode node)
+            {
+                if (_cache.ContainsKey(node))
+                    return node;
+                if (node is IXamlIlAstNodeNeedsParentStack nps && nps.NeedsParentStack)
+                {
+                    _cache[node] = true;
+                    foreach (var parent in _parents)
+                        _cache[parent] = true;
+                }
+                else
+                    _cache[node] = false;
+
+                return node;
+            }
+
+            public void Push(IXamlIlAstNode node) => _parents.Push(node);
+
+            public void Pop() => _parents.Pop();
+        }
+
+        public bool NeedsParentStack(IXamlIlAstNode node)
+        {
+            if (TryGetValue(node, out var rv))
+                return rv;
+            node.Visit(new ParentStackVisitor(this));
+            return this[node];
         }
     }
 }

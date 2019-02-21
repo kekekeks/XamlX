@@ -190,7 +190,7 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstManipulationNode
+    public class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstManipulationNode, IXamlIlAstNodeNeedsParentStack
     {
         public IXamlIlAstValueNode Value { get; set; }
         public IXamlIlProperty Property { get; set; }
@@ -210,6 +210,8 @@ namespace XamlIl.Ast
         {
             Value = (IXamlIlAstValueNode) Value.Visit(visitor);
         }
+
+        public bool NeedsParentStack => ProvideValue?.Parameters.Count > 0;
     }
     
     public class XamlIlObjectInitializationNode : XamlIlAstNode, IXamlIlAstManipulationNode

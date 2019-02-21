@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using XamlIl.Transform;
+using XamlIl.Transform.Emitters;
 using XamlIl.TypeSystem;
 using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
@@ -138,6 +139,23 @@ namespace XamlIl.Ast
                 codeGen.Castclass(t);            
             return XamlIlNodeEmitResult.Type(0, t);
         }
+    }
+
+    public class XamlIlAstNeedsParentStackValueNode : XamlIlValueWithSideEffectNodeBase,
+        IXamlIlAstEmitableNode,
+        IXamlIlAstNodeNeedsParentStack
+    {
+        public XamlIlAstNeedsParentStackValueNode(IXamlIlLineInfo lineInfo, IXamlIlAstValueNode value) : base(lineInfo, value)
+        {
+        }
+
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
+        {
+            XamlIlNeedsParentStackCache.Verify(context, this);
+            return context.Emit(Value, codeGen, Value.Type.GetClrType());
+        }
+
+        public bool NeedsParentStack => true;
     }
 
 }

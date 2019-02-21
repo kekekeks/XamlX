@@ -69,6 +69,11 @@ namespace XamlIl.Ast
         
     }
 
+    public interface IXamlIlAstNodeNeedsParentStack
+    {
+        bool NeedsParentStack { get; }
+    }
+
     public interface IXamlIlAstImperativeNode : IXamlIlAstNode
     {
         

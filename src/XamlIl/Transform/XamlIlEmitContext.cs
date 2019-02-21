@@ -7,7 +7,7 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlEmitContext
+    public class XamlIlEmitContext : XamlIlContextBase
     {
         public List<object> Emitters { get; }
 
