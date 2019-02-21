@@ -35,6 +35,12 @@ namespace XamlX.Transform
             StrictMode = strictMode;
         }
 
+        public IEnumerable<IXamlXAstNode> ParentNodes()
+        {
+            for (var c = _parentNodes.Count - 1; c >= 0; c--)
+                yield return _parentNodes[c];
+        }
+
         public T GetItem<T>() => (T) _items[typeof(T)];
         public void SetItem<T>(T item) => _items[typeof(T)] = item;
 
