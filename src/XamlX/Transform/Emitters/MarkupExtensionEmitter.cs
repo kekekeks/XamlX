@@ -12,6 +12,7 @@ namespace XamlX.Transform.Emitters
         {
             if (!(node is XamlXMarkupExtensionNode me))
                 return null;
+            XamlXNeedsParentStackCache.Verify(context, node);
             var ilgen = codeGen;
             var so = context.Configuration.WellKnownTypes.Object;
             var ptype = me.Manipulation?.ParametersWithThis[1] ?? me.Property.PropertyType;

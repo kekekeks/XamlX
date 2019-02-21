@@ -5,9 +5,23 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
-    public class XamlXAstTransformationContext
+    public class XamlXContextBase
     {
-        private Dictionary<Type, object> _items = new Dictionary<Type, object>();
+        private Dictionary<Type, object> _items = new Dictionary<Type, object>();  
+        public T GetItem<T>() => (T) _items[typeof(T)];
+
+        public T GetOrCreateItem<T>() where T : new()
+        {
+            if (!_items.TryGetValue(typeof(T), out var rv))
+                _items[typeof(T)] = rv = new T();
+            return (T)rv;
+        }
+
+        public void SetItem<T>(T item) => _items[typeof(T)] = item;
+    }
+    
+    public class XamlXAstTransformationContext : XamlXContextBase
+    {
         private List<IXamlXAstNode> _parentNodes = new List<IXamlXAstNode>();
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public XamlXTransformerConfiguration Configuration { get; }
@@ -40,9 +54,6 @@ namespace XamlX.Transform
             for (var c = _parentNodes.Count - 1; c >= 0; c--)
                 yield return _parentNodes[c];
         }
-
-        public T GetItem<T>() => (T) _items[typeof(T)];
-        public void SetItem<T>(T item) => _items[typeof(T)] = item;
 
         class Visitor : IXamlXAstVisitor
         {
