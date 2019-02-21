@@ -218,5 +218,15 @@ namespace XamlParserTests
 
                 });
         }
+
+        [Fact]
+        public void Empty_Extension_With_Space_Should_Be_Parsed()
+        {
+            var ni = new NullLineInfo();
+            var parsed = XamlMarkupExtensionParser.Parse(ni, "{Binding }",
+                n => new XamlAstXmlTypeReference(ni, "", n));
+            Helpers.StructDiff(parsed, new XamlAstObjectNode(new NullLineInfo(),
+                new XamlAstXmlTypeReference(ni, "", "Binding")));
+        }
     }
 }
