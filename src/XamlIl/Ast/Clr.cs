@@ -218,6 +218,7 @@ namespace XamlIl.Ast
     {
         public IXamlIlAstManipulationNode Manipulation { get; set; }
         public IXamlIlType Type { get; set; }
+        public bool SkipBeginInit { get; set; }
         public XamlIlObjectInitializationNode(IXamlIlLineInfo lineInfo, 
             IXamlIlAstManipulationNode manipulation, IXamlIlType type) 
             : base(lineInfo)

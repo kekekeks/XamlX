@@ -146,12 +146,12 @@ namespace XamlParserTests
             {
                 "1:BeginInit",
                 "1:PropertySet",
-                "1:ChildAdded:2",
                 "2:BeginInit",
+                "1:ChildAdded:2",
                 "2:PropertySet",
                 "2:EndInit",
-                "1:ChildAdded:3",
                 "3:BeginInit",
+                "1:ChildAdded:3",
                 "3:PropertySet",
                 "3:EndInit",
                 "1:EndInit"
