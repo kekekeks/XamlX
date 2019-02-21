@@ -37,8 +37,9 @@ namespace XamlX.Transform.Transformers
                       && manipulation.Manipulation is XamlObjectInitializationNode initializer
                       && UsableDuringInitialization(manipulation.Value.Type.GetClrType())))
                     return false;
+                initializer.SkipBeginInit = true;
                 var local = new XamlAstCompilerLocalNode(manipulation.Value, manipulation.Value.Type.GetClrType());
-                value = new XamlAstLocalInitializationNodeEmitter(local, manipulation.Value, local);
+                value = new XamlValueNodeWithBeginInit(new XamlAstLocalInitializationNodeEmitter(local, manipulation.Value, local));
                 deferred = new XamlAstManipulationImperativeNode(initializer,
                     new XamlAstImperativeValueManipulation(initializer, local, initializer));
                 return true;

@@ -218,6 +218,7 @@ namespace XamlX.Ast
     {
         public IXamlAstManipulationNode Manipulation { get; set; }
         public IXamlType Type { get; set; }
+        public bool SkipBeginInit { get; set; }
         public XamlObjectInitializationNode(IXamlLineInfo lineInfo, 
             IXamlAstManipulationNode manipulation, IXamlType type) 
             : base(lineInfo)
