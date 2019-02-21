@@ -20,10 +20,12 @@ namespace XamlX.Transform.Emitters
             {
 
                 codeGen
-                    // We need two copies of the object for Begin/EndInit
-                    .Emit(OpCodes.Dup)
-                    .Emit(OpCodes.Dup)
-                    .EmitCall(supportInitType.FindMethod(m => m.Name == "BeginInit"));
+                    // We need a copy for/EndInit
+                    .Emit(OpCodes.Dup);
+                if (!init.SkipBeginInit)
+                    codeGen
+                        .Emit(OpCodes.Dup)
+                        .EmitCall(supportInitType.FindMethod(m => m.Name == "BeginInit"));
             }
             
             IXamlXType objectListType = null;

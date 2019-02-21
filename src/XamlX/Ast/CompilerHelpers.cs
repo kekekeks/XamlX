@@ -48,6 +48,30 @@ namespace XamlX.Ast
         }
     }
 
+    public class XamlXValueNodeWithBeginInit : XamlXValueWithSideEffectNodeBase, IXamlXAstEmitableNode
+    {
+        public XamlXValueNodeWithBeginInit(IXamlXAstValueNode value) : base(value, value)
+        {
+        }
+
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
+        {
+            var res = context.Emit(Value, codeGen, Value.Type.GetClrType());
+            var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
+            var supportsInitialize = supportInitType != null
+                                     && context.Configuration.TypeMappings.SupportInitialize
+                                         .IsAssignableFrom(Value.Type.GetClrType());
+            if (supportsInitialize)
+            {
+                codeGen
+                    .Dup()
+                    .EmitCall(supportInitType.FindMethod(m => m.Name == "BeginInit"));
+            }
+
+            return res;
+        }
+    }
+
     public class XamlXAstManipulationImperativeNode : XamlXAstNode, IXamlXAstManipulationNode, IXamlXAstEmitableNode
     {
         public IXamlXAstImperativeNode Imperative { get; set; }
