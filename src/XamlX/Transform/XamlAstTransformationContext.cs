@@ -8,6 +8,7 @@ namespace XamlX.Transform
     public class XamlAstTransformationContext
     {
         private Dictionary<Type, object> _items = new Dictionary<Type, object>();
+        private List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public XamlTransformerConfiguration Configuration { get; }
         public IXamlAstValueNode RootObject { get; set; }
@@ -35,6 +36,30 @@ namespace XamlX.Transform
         }
 
         public T GetItem<T>() => (T) _items[typeof(T)];
-        public void SetItem<T>(T item) => _items[typeof(T)] = item;       
+        public void SetItem<T>(T item) => _items[typeof(T)] = item;
+
+        class Visitor : IXamlAstVisitor
+        {
+            private readonly XamlAstTransformationContext _context;
+            private readonly IXamlAstTransformer _transformer;
+
+            public Visitor(XamlAstTransformationContext context, IXamlAstTransformer transformer)
+            {
+                _context = context;
+                _transformer = transformer;
+            }
+            
+            public IXamlAstNode Visit(IXamlAstNode node) => _transformer.Transform(_context, node);
+
+            public void Push(IXamlAstNode node) => _context._parentNodes.Add(node);
+
+            public void Pop() => _context._parentNodes.RemoveAt(_context._parentNodes.Count - 1);
+        }
+        
+        public IXamlAstNode Visit(IXamlAstNode root, IXamlAstTransformer transformer)
+        {
+            root = root.Visit(new Visitor(this, transformer));
+            return root;
+        }
     }
 }

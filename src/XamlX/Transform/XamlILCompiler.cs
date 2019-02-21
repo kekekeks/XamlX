@@ -60,12 +60,10 @@ namespace XamlX.Transform
 
             var root = doc.Root;
             ctx.RootObject = new XamlRootObjectNode((XamlAstObjectNode)root);
-            foreach (var transformer in Transformers)
-            {
-                root = root.Visit(n => transformer.Transform(ctx, n));
-                foreach (var simplifier in SimplificationTransformers)
-                    root = root.Visit(n => simplifier.Transform(ctx, n));
-            }
+            foreach (var transformer in Transformers) 
+                root = ctx.Visit(root, transformer);
+            foreach (var simplifier in SimplificationTransformers)
+                root = ctx.Visit(root, simplifier);
 
             doc.Root = root;
         }
