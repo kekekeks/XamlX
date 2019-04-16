@@ -62,12 +62,12 @@ namespace XamlParserTests
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
-        XamlDocument Compile(IXamlTypeBuilder builder, string xaml)
+        XamlDocument Compile(IXamlTypeBuilder builder, IXamlType context, string xaml)
         {
             var parsed = XDocumentXamlParser.Parse(xaml);
             var compiler = new XamlILCompiler(Configuration, true);
             compiler.Transform(parsed);
-            compiler.Compile(parsed, builder, "Populate", "Build",
+            compiler.Compile(parsed, builder, context, "Populate", "Build",
                 "XamlXRuntimeContext", "XamlXNamespaceInfo",
                 "http://example.com/");
             return parsed;
@@ -92,10 +92,15 @@ namespace XamlParserTests
 
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
+            var ct = dm.DefineType(t.Name + "Context");
+            var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
+            var contextTypeDef =
+                XamlContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
+            
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
 
-            var parsed = Compile(parserTypeBuilder, xaml);
+            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml);
 
             var created = t.CreateTypeInfo();
             #if !NETCOREAPP && !NETSTANDARD

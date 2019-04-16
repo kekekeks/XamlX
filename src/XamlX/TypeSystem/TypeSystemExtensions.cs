@@ -118,6 +118,15 @@ namespace XamlX.TypeSystem
 
         public static IXamlILEmitter Newobj(this IXamlILEmitter emitter, IXamlConstructor ctor)
             => emitter.Emit(OpCodes.Newobj, ctor);
+        
+        public static IXamlILEmitter Newarr(this IXamlILEmitter emitter, IXamlType type)
+            => emitter.Emit(OpCodes.Newarr, type);
+
+        public static IXamlILEmitter Ldelem_ref(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldelem_Ref);
+        public static IXamlILEmitter Stelem_ref(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Stelem_Ref);
+        public static IXamlILEmitter Ldlen(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldlen);
+
+        public static IXamlILEmitter Add(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Add);
 
 
     }

@@ -95,7 +95,7 @@ namespace XamlX.TypeSystem
                 {
                     if (!_unresolvedTypeCache.TryGetValue(reference.FullName, out rv))
                         _unresolvedTypeCache[reference.FullName] =
-                            rv = new XamlPseudoType("Unresolved:" + reference.FullName);
+                            rv = new UnresolvedCecilType(reference);
                 }
                 _typeReferenceCache[reference] = rv;
             }
