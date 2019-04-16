@@ -14,6 +14,25 @@ namespace XamlIl.TypeSystem
     {
         public class CecilEmitter : IXamlIlEmitter
         {
+            TypeReference Import(TypeReference r)
+            {
+                var rv = M.ImportReference(r);
+                if (r is GenericInstanceType gi)
+                {
+                    for (var c = 0; c < gi.GenericArguments.Count; c++)
+                        gi.GenericArguments[c] = Import(gi.GenericArguments[c]);
+                }
+
+                return rv;
+            }
+
+            FieldReference Import(FieldReference f)
+            {
+                var rv = M.ImportReference(f);
+                rv.FieldType = Import(rv.FieldType);
+                return rv;
+            }
+            
             private static Dictionary<SreOpCode, OpCode> Dic = new Dictionary<SreOpCode, OpCode>();
             private List<CecilLabel> _markedLabels = new List<CecilLabel>();
             static CecilEmitter()
@@ -87,7 +106,7 @@ namespace XamlIl.TypeSystem
 
             public IXamlIlEmitter Emit(SreOpCode code, IXamlIlField field)
             {
-                return Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilField) field).Field)));
+                return Emit(Instruction.Create(Dic[code], Import(((CecilField) field).Field)));
             }
 
             public IXamlIlEmitter Emit(SreOpCode code, IXamlIlMethod method)
@@ -106,7 +125,7 @@ namespace XamlIl.TypeSystem
                 => Emit(Instruction.Create(Dic[code], arg));
             
             public IXamlIlEmitter Emit(SreOpCode code, IXamlIlType type)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilType) type).Reference)));
+                => Emit(Instruction.Create(Dic[code], Import(((ITypeReference) type).Reference)));
 
             public IXamlIlEmitter Emit(SreOpCode code, float arg)
                 => Emit(Instruction.Create(Dic[code], arg));
@@ -127,7 +146,7 @@ namespace XamlIl.TypeSystem
 
             public IXamlIlLocal DefineLocal(IXamlIlType type)
             {
-                var r = M.ImportReference(((CecilType) type).Reference);
+                var r = Import(((ITypeReference) type).Reference);
                 var def = new VariableDefinition(r);
                 _body.Variables.Add(def);
                 return new CecilLocal {Variable = def};

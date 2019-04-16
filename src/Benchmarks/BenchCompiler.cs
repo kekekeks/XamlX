@@ -57,10 +57,12 @@ namespace Benchmarks
             
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
-            
+
+            var ctb = dm.DefineType(t.Name + "Context", TypeAttributes.Public);
+            var  contextTypeDef = compiler.CreateContextType(((SreTypeSystem)typeSystem).CreateTypeBuilder(ctb));
             
             var parserTypeBuilder = ((SreTypeSystem) typeSystem).CreateTypeBuilder(t);
-            compiler.Compile(parsed, parserTypeBuilder, "Populate", "Build",
+            compiler.Compile(parsed, parserTypeBuilder,  contextTypeDef, "Populate", "Build",
                 "XamlIlRuntimeContext", "XamlIlNamespaceInfo", "https://github.com/kekekeks/XamlIl");
             
             var created = t.CreateType();

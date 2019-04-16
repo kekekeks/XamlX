@@ -350,9 +350,9 @@ namespace XamlIl.Ast
             var il = context.Emitter;
             // Initialize the context
             il
-                .Ldarg_0()
-                .Newobj(context.RuntimeContext.Constructor)
-                .Stloc(context.ContextLocal);
+                .Ldarg_0();
+            context.RuntimeContext.Factory(il);    
+            il.Stloc(context.ContextLocal);
 
             // It might be better to save this in a closure
             if (context.Configuration.TypeMappings.RootObjectProvider != null)

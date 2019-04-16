@@ -221,11 +221,6 @@ namespace XamlParserTests
     xmlns:clr2='clr-namespace:Dummy;assembly=XamlParserTests'
     Property='{Callback}'/>", sp =>
             {
-                var npl = sp.GetType().DeclaringType.GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public);
-                var np = npl
-                    .First(t => typeof(IXamlIlXmlNamespaceInfoProviderV1).IsAssignableFrom(t));
-                var f = np.GetFields(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
-                var wtf = f[0].GetValue(null);
                 var nsList = sp.GetService<IXamlIlXmlNamespaceInfoProviderV1>().XmlNamespaces;
                 // Direct calls without struct diff because of EntryPointNotFoundException issue before
                 Assert.True(nsList.TryGetValue("clr1", out var xlst));

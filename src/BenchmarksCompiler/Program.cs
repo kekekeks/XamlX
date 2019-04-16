@@ -23,6 +23,14 @@ namespace BenchmarksCompiler
             var config = Benchmarks.BenchmarksXamlIlConfiguration.Configure(typeSystem);
             var loadBench = asm.MainModule.Types.First(t => t.Name == "LoadBenchmark");
             var baseMethod = loadBench.Methods.First(m => m.Name == "LoadXamlIlPrecompiled");
+
+            var ct = new TypeDefinition("_XamlIlRuntime", "XamlIlContext", TypeAttributes.Class,
+                asm.MainModule.TypeSystem.Object);
+            var ctb = typeSystem.CreateTypeBuilder(ct);
+            var compiler = new XamlIlCompiler(config, true);
+            var  contextTypeDef = compiler.CreateContextType(ctb);
+            
+            asm.MainModule.Types.Add(ct);
             foreach (var lb in asm.MainModule.Types)
             {
                 if (lb == loadBench)
@@ -44,10 +52,10 @@ namespace BenchmarksCompiler
                 var xml = Encoding.UTF8.GetString(resource.GetResourceData());
                 while (xml[0] > 128)
                     xml = xml.Substring(1);
-                var compiler = new XamlIlCompiler(config, true);
+                
                 var parsed = XamlIl.Parsers.XDocumentXamlIlParser.Parse(xml);
                 compiler.Transform(parsed);
-                compiler.Compile(parsed, typeSystem.CreateTypeBuilder(lb),
+                compiler.Compile(parsed, typeSystem.CreateTypeBuilder(lb), contextTypeDef,
                     "PopulateXamlIlPrecompiled", "LoadXamlIlPrecompiled",
                     "XamlIlRuntimeContext", "XamlIlXmlInfo", resource.Name);
                 

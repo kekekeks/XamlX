@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 
 namespace XamlIl.TypeSystem
 {
@@ -7,13 +10,15 @@ namespace XamlIl.TypeSystem
     {
         class CecilTypeBuilder : CecilType, IXamlIlTypeBuilder
         {
+            protected TypeReference SelfReference;
             public CecilTypeBuilder(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition) 
                 : base(typeSystem, assembly, definition)
             {
+                SelfReference = definition;
             }
 
             TypeReference GetReference(IXamlIlType type) =>
-                Definition.Module.ImportReference(((CecilType) type).Reference);
+                Definition.Module.ImportReference(((ITypeReference) type).Reference);
             
             public IXamlIlField DefineField(IXamlIlType type, string name, bool isPublic, bool isStatic)
             {
@@ -26,7 +31,7 @@ namespace XamlIl.TypeSystem
 
                 var def = new FieldDefinition(name, attrs, r);
                 Definition.Fields.Add(def);
-                var rv = new CecilField(TypeSystem, def, Definition);
+                var rv = new CecilField(TypeSystem, def, SelfReference);
                 ((List<CecilField>)Fields).Add(rv);
                 return rv;
             }
@@ -55,9 +60,9 @@ namespace XamlIl.TypeSystem
                         def.Parameters.Add(new ParameterDefinition(GetReference(a)));
                 if (overrideMethod != null)
                     def.Overrides.Add(Definition.Module.ImportReference(((CecilMethod) overrideMethod).Reference));
-                
+                def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
-                var rv = new CecilMethod(TypeSystem, def, Definition);
+                var rv = new CecilMethod(TypeSystem, def, SelfReference);
                 ((List<CecilMethod>)Methods).Add(rv);
                 return rv;
             }
@@ -71,7 +76,7 @@ namespace XamlIl.TypeSystem
                 def.SetMethod = s?.Definition;
                 def.GetMethod = g?.Definition;
                 Definition.Properties.Add(def);
-                var rv = new CecilProperty(TypeSystem, def, Definition);
+                var rv = new CecilProperty(TypeSystem, def, SelfReference);
                 ((List<CecilProperty>)Properties).Add(rv);
                 return rv;
             }
@@ -90,9 +95,9 @@ namespace XamlIl.TypeSystem
                 if(args!=null)
                     foreach (var a in args)
                         def.Parameters.Add(new ParameterDefinition(GetReference(a)));
-                
+                def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
-                var rv = new CecilConstructor(TypeSystem, def, Definition);
+                var rv = new CecilConstructor(TypeSystem, def, SelfReference);
                 ((List<CecilConstructor>)Constructors).Add(rv);
                 return rv;
             }
@@ -103,8 +108,26 @@ namespace XamlIl.TypeSystem
             {
                 var td = new TypeDefinition("", name,
                     isPublic ? TypeAttributes.NestedPublic : TypeAttributes.NestedPrivate, GetReference(baseType));
+
                 Definition.NestedTypes.Add(td);
                 return new CecilTypeBuilder(TypeSystem, (CecilAssembly) Assembly, td);
+            }
+
+            public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlIlGenericParameterConstraint>> args)
+            {
+                foreach (var arg in args)
+                {
+                    var gp = new GenericParameter(arg.Key, Definition);
+                    // TODO: for some reason types can't be instantiated properly
+                    /*if (arg.Value.IsClass)
+                        gp.Attributes = GenericParameterAttributes.NotNullableValueTypeConstraint;*/
+                    Definition.GenericParameters.Add(gp);
+                }
+
+                Definition.Name = Name + "`" + args.Count;
+                Reference.Name = Definition.Name;
+                SelfReference = Definition.MakeGenericInstanceType(Definition.GenericParameters.Cast<TypeReference>()
+                    .ToArray());
             }
         }
 

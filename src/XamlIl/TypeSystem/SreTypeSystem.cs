@@ -143,6 +143,7 @@ namespace XamlIl.TypeSystem
             private IReadOnlyList<IXamlIlMethod> _methods;
             private IReadOnlyList<IXamlIlConstructor> _constructors;
             private IReadOnlyList<IXamlIlType> _genericArguments;
+            private IReadOnlyList<IXamlIlType> _genericParameters;
             private IReadOnlyList<IXamlIlType> _interfaces;
             private IReadOnlyList<IXamlIlEventInfo> _events;
             public Type Type { get; }
@@ -207,6 +208,10 @@ namespace XamlIl.TypeSystem
                 }
             }
 
+            public IReadOnlyList<IXamlIlType> GenericParameters =>
+                _genericParameters ?? (_genericParameters =
+                    Type.GetTypeInfo().GenericTypeParameters.Select(System.ResolveType).ToList());
+
             public bool IsAssignableFrom(IXamlIlType type)
             {
                 if (type == XamlIlPseudoType.Null)
@@ -229,6 +234,12 @@ namespace XamlIl.TypeSystem
             public IXamlIlType GenericTypeDefinition => Type.IsConstructedGenericType
                 ? System.ResolveType(Type.GetGenericTypeDefinition())
                 : null;
+
+            public bool IsArray => Type.IsArray;
+            public IXamlIlType ArrayElementType => IsArray ? System.ResolveType(Type.GetElementType()) : null;
+
+            public IXamlIlType MakeArrayType(int dimensions) => System.ResolveType(
+                dimensions == 1 ? Type.MakeArrayType() : Type.MakeArrayType(dimensions));
 
             public IXamlIlType BaseType => Type.BaseType == null ? null : System.ResolveType(Type.BaseType);
             public bool IsValueType => Type.IsValueType;
@@ -605,7 +616,18 @@ namespace XamlIl.TypeSystem
                 
                 var builder  = _tb.DefineNestedType(name, attrs,
                     ((SreType) baseType).Type);
+                
                 return new SreTypeBuilder(_system, builder);
+            }
+
+            public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlIlGenericParameterConstraint>> args)
+            {
+                var builders = _tb.DefineGenericParameters(args.Select(x=>x.Key).ToArray());
+                for (var c = 0; c < args.Count; c++)
+                {
+                    if (args[c].Value.IsClass)
+                        builders[c].SetGenericParameterAttributes(GenericParameterAttributes.ReferenceTypeConstraint);
+                }
             }
         }
 

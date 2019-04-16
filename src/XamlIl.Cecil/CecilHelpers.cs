@@ -18,7 +18,12 @@ namespace XamlIl.TypeSystem
                 if (declaringType is GenericInstanceType inst)
                 {
                     if (reference is GenericParameter g)
-                        return inst.GenericArguments[g.Position].TransformGeneric(declaringType);
+                    {
+                        var ga = inst.GenericArguments[g.Position];
+                        if (ga == g)
+                            return ga;
+                        return ga.TransformGeneric(declaringType);
+                    }
                     else if (reference is GenericInstanceType gref)
                     {
                         GenericInstanceType clone = null;

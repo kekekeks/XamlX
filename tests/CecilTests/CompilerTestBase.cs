@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
+using XamlIl.Transform;
 using XamlIl.TypeSystem;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
@@ -39,11 +40,17 @@ namespace XamlParserTests
             var def = new TypeDefinition("TestXaml", "Xaml",
                 TypeAttributes.Class | TypeAttributes.Public, asm.MainModule.TypeSystem.Object);
 
+            var ct = new TypeDefinition("TestXaml", "XamlContext", TypeAttributes.Class,
+                asm.MainModule.TypeSystem.Object);
+            asm.MainModule.Types.Add(ct);
+            var ctb = ((CecilTypeSystem)_typeSystem).CreateTypeBuilder(ct);
+            var contextTypeDef = XamlIlContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
+            
             asm.MainModule.Types.Add(def);
 
 
             var tb = ts.CreateTypeBuilder(def);
-            Compile(tb, xaml);
+            Compile(tb, contextTypeDef, xaml);
             
             var ms = new MemoryStream();
             asm.Write(ms);

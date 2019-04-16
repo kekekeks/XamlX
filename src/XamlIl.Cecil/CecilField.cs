@@ -14,14 +14,14 @@ namespace XamlIl.TypeSystem
             {
                 TypeSystem = typeSystem;
                 _def = def;
-                Field = new FieldReference(def.Name, def.FieldType.TransformGeneric(declaringType), declaringType);
+                Field = new FieldReference(def.Name, def.FieldType, declaringType);
             }
 
             public bool Equals(IXamlIlField other) => other is CecilField cf && cf.Field == Field;
 
             public string Name => Field.Name;
             private IXamlIlType _type;
-            public IXamlIlType FieldType => _type ?? (_type = TypeSystem.Resolve(Field.FieldType));
+            public IXamlIlType FieldType => _type ?? (_type = TypeSystem.Resolve(Field.FieldType.TransformGeneric(Field.DeclaringType)));
             public bool IsPublic => _def.IsPublic;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
