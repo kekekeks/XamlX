@@ -93,8 +93,11 @@ namespace XamlX.TypeSystem
                 }
                 else
                 {
-                    if (!_unresolvedTypeCache.TryGetValue(reference.FullName, out rv))
-                        _unresolvedTypeCache[reference.FullName] =
+                    var key = reference.FullName;
+                    if (reference is GenericParameter gp)
+                        key = ((TypeReference)gp.Owner).FullName + "|GenericParameter|" + key;
+                    if (!_unresolvedTypeCache.TryGetValue(key, out rv))
+                        _unresolvedTypeCache[key] =
                             rv = new UnresolvedCecilType(reference);
                 }
                 _typeReferenceCache[reference] = rv;
