@@ -9,6 +9,9 @@ namespace XamlX.TypeSystem
 {
     public partial class CecilTypeSystem
     {
+        // TODO: Make generic type definitions have Reference set to GenericTypeInstance with parameters for
+        // consistency with CecilTypeBuilder
+        
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         class CecilType : IXamlXType, ITypeReference
         {
@@ -30,6 +33,8 @@ namespace XamlX.TypeSystem
                 TypeSystem = typeSystem;
                 Reference = reference;
                 Definition = definition;
+                if (reference.IsArray)
+                    Definition = ((CecilType)typeSystem.GetType("System.Array")).Definition;
             }
 
             public bool Equals(IXamlXType other)
@@ -82,7 +87,15 @@ namespace XamlX.TypeSystem
                 _genericArguments ?? (_genericArguments = Reference is GenericInstanceType gi
                     ? gi.GenericArguments.Select(ga => TypeSystem.Resolve(ga)).ToList()
                     : null);
+
+            private IReadOnlyList<IXamlXType> _genericParameters;
+
+            public IReadOnlyList<IXamlXType> GenericParameters =>
+                _genericParameters ?? (_genericParameters = Reference is TypeDefinition td && td.HasGenericParameters
+                    ? td.GenericParameters.Select(gp => TypeSystem.Resolve(gp)).ToList()
+                    : null);
             
+
             protected IReadOnlyList<IXamlXCustomAttribute> _attributes;
             public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes =>
                 _attributes ?? (_attributes =
@@ -126,6 +139,16 @@ namespace XamlX.TypeSystem
             public IXamlXType GenericTypeDefinition =>
                 _genericTypeDefinition ?? (_genericTypeDefinition =
                     (Reference is GenericInstanceType) ? TypeSystem.Resolve(Definition) : null);
+
+            public bool IsArray => Reference.IsArray;
+
+            private IXamlXType _arrayType;
+
+            public IXamlXType ArrayElementType =>
+                _arrayType ?? (_arrayType =
+                    IsArray ? TypeSystem.Resolve(Definition) : null);
+
+            public IXamlXType MakeArrayType(int dimensions) => TypeSystem.Resolve(Reference.MakeArrayType(dimensions));
 
             private IXamlXType _baseType;
 

@@ -24,12 +24,16 @@ namespace XamlX.TypeSystem
         bool IsAssignableFrom(IXamlXType type);
         IXamlXType MakeGenericType(IReadOnlyList<IXamlXType> typeArguments);
         IXamlXType GenericTypeDefinition { get; }
+        bool IsArray { get; }
+        IXamlXType ArrayElementType { get; }
+        IXamlXType MakeArrayType(int dimensions);
         IXamlXType BaseType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlXType> Interfaces { get; }
         bool IsInterface { get; }
         IXamlXType GetEnumUnderlyingType();
+        IReadOnlyList<IXamlXType> GenericParameters { get; }
     }
 
     public interface IXamlXMethod : IEquatable<IXamlXMethod>, IXamlXMember
@@ -150,8 +154,14 @@ namespace XamlX.TypeSystem
         IXamlXConstructorBuilder DefineConstructor(bool isStatic, params IXamlXType[] args);
         IXamlXType CreateType();
         IXamlXTypeBuilder DefineSubType(IXamlXType baseType, string name, bool isPublic);
+        void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlXGenericParameterConstraint>> names);
     }
-    
+
+
+    public struct XamlXGenericParameterConstraint
+    {
+        public bool IsClass { get; set; }
+    }
     
     public class XamlXPseudoType : IXamlXType
     {
@@ -173,12 +183,15 @@ namespace XamlX.TypeSystem
         public IReadOnlyList<IXamlXConstructor> Constructors { get; } = new IXamlXConstructor[0];
         public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes { get; } = new IXamlXCustomAttribute[0];
         public IReadOnlyList<IXamlXType> GenericArguments { get; } = new IXamlXType[0];
+        public IXamlXType MakeArrayType(int dimensions) => throw new NullReferenceException();
+
         public IXamlXType BaseType { get; }
         public bool IsValueType { get; } = false;
         public bool IsEnum { get; } = false;
         public IReadOnlyList<IXamlXType> Interfaces { get; } = new IXamlXType[0];
         public bool IsInterface => false;
         public IXamlXType GetEnumUnderlyingType() => throw new InvalidOperationException();
+        public IReadOnlyList<IXamlXType> GenericParameters { get; } = null;
 
         public bool IsAssignableFrom(IXamlXType type) => type == this;
 
@@ -188,6 +201,8 @@ namespace XamlX.TypeSystem
         }
 
         public IXamlXType GenericTypeDefinition => null;
+        public bool IsArray { get; }
+        public IXamlXType ArrayElementType { get; }
         public static XamlXPseudoType Null { get; } = new XamlXPseudoType("{x:Null}");
         public static XamlXPseudoType Unknown { get; } = new XamlXPseudoType("{Unknown type}");
     }

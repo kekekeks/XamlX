@@ -68,12 +68,6 @@ namespace XamlX.Transform
             doc.Root = root;
         }
 
-
-        /// <summary>
-        ///         /// T Build(IServiceProvider sp); 
-        /// </summary>
-
-
         XamlXEmitContext InitCodeGen(Func<string, IXamlXType, IXamlXTypeBuilder> createSubType,
             IXamlXEmitter codeGen, XamlXContext context, bool needContextLocal)
         {
@@ -82,10 +76,11 @@ namespace XamlX.Transform
             if (needContextLocal)
             {
                 contextLocal = codeGen.DefineLocal(context.ContextType);
+                // Pass IService provider as the first argument to context factory
                 codeGen
-                    .Emit(OpCodes.Ldarg_0)
-                    .Emit(OpCodes.Newobj, context.Constructor)
-                    .Emit(OpCodes.Stloc, contextLocal);
+                    .Emit(OpCodes.Ldarg_0);
+                context.Factory(codeGen);
+                codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
             var emitContext = new XamlXEmitContext(codeGen, _configuration, context, contextLocal, createSubType, Emitters);
@@ -127,7 +122,14 @@ namespace XamlX.Transform
             codeGen.Emit(OpCodes.Ret);
         }
 
-        public void Compile(XamlXDocument doc, IXamlXTypeBuilder typeBuilder,
+        public IXamlXType CreateContextType(IXamlXTypeBuilder builder)
+        {
+            return XamlXContextDefinition.GenerateContextClass(builder,
+                _configuration.TypeSystem,
+                _configuration.TypeMappings);
+        }
+        
+        public void Compile(XamlXDocument doc, IXamlXTypeBuilder typeBuilder, IXamlXType contextType,
             string populateMethodName, string createMethodName, string contextClassName, string namespaceInfoClassName,
             string baseUri)
         {
@@ -143,12 +145,6 @@ namespace XamlX.Transform
                     XamlXNamespaceInfoHelper.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
             }
             
-            var contextBuilder = typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
-                contextClassName, false);
-
-            var contextType = XamlXContext.GenerateContextClass(contextBuilder, _configuration.TypeSystem,
-                _configuration.TypeMappings, rootGrp.Type.GetClrType(), staticProviders, baseUri);
-
             var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
                 populateMethodName, true, true, false);
@@ -156,14 +152,20 @@ namespace XamlX.Transform
             IXamlXTypeBuilder CreateSubType(string name, IXamlXType baseType) 
                 => typeBuilder.DefineSubType(baseType, name, false);
 
-            CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, contextType);
+
+            var context = new XamlXContext(contextType, rootGrp.Type.GetClrType(),
+                baseUri, staticProviders);
+            
+            CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
 
             var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                 new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-            CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, contextType, populateMethod);
+            CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
             namespaceInfoBuilder?.CreateType();
-            contextType.CreateAllTypes();
         }
+        
+        
+        
     }
 
 

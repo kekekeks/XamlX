@@ -11,34 +11,112 @@ namespace XamlX.Transform
         public IXamlXField RootObjectField { get; set; }
         public IXamlXField ParentListField { get; set; }
         public IXamlXType ContextType { get; set; }
-        private IXamlXField _parentStackEnumerableField;
-        private IXamlXField _parentServiceProviderField;
-        private IXamlXField _innerServiceProviderField;
         public IXamlXField PropertyTargetObject { get; set; }
         public IXamlXField PropertyTargetProperty { get; set; }
-
-        /// <summary>
-        /// Ctor expects IServiceProvider
-        /// </summary>
         public IXamlXConstructor Constructor { get; set; }
+        public Action<IXamlXEmitter> Factory { get; set; }
+        
+        public XamlXContext(IXamlXType definition, IXamlXType constructedType,
+            Action<XamlXContext, IXamlXEmitter> factory)
+        {
+            ContextType = definition.MakeGenericType(constructedType);
 
-        public static XamlXContext GenerateContextClass(IXamlXTypeBuilder builder,
-            IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings,
-            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders, string baseUri) 
-            => new XamlXContext(builder, typeSystem, mappings, rootType, staticProviders, baseUri);
+            IXamlXField Get(string s) =>
+                ContextType.Fields.FirstOrDefault(f => f.Name == s);
+
+            RootObjectField = Get(XamlXContextDefinition.RootObjectFieldName);
+            ParentListField = Get(XamlXContextDefinition.ParentListFieldName);
+            PropertyTargetObject = Get(XamlXContextDefinition.ProvideTargetObjectName);
+            PropertyTargetProperty = Get(XamlXContextDefinition.ProvideTargetPropertyName);
+            Constructor = ContextType.Constructors.First();
+            Factory = il => factory(this, il);
+        }
+
+        public XamlXContext(IXamlXType definition, IXamlXType constructedType,
+            string baseUri, List<IXamlXField> staticProviders) : this(definition, constructedType,
+            (context, codegen) =>
+            {
+                if (staticProviders?.Count > 0)
+                {
+                    var so = codegen.TypeSystem.GetType("System.Object");
+                    codegen.Ldc_I4(staticProviders.Count)
+                        .Newarr(so);
+                    for (var c = 0; c < staticProviders.Count; c++)
+                    {
+                        codegen
+                            .Dup()
+                            .Ldc_I4(c)
+                            .Ldsfld(staticProviders[c])
+                            .Castclass(so)
+                            .Stelem_ref();
+                    }
+                }
+                else
+                    codegen.Ldnull();
+
+                codegen.Ldstr(baseUri)
+                    .Newobj(context.Constructor);
+            })
+        {
+
+        }
+    }
+    
+    
+    public class XamlXContextDefinition
+    {
+        public const string RootObjectFieldName = "RootObject";
+        public const string ParentListFieldName = "ParentsStack";
+        public const string ProvideTargetObjectName = "ProvideTargetObject";
+        public const string ProvideTargetPropertyName = "ProvideTargetProperty";
+
+        private IXamlXField ParentListField;
+        private readonly IXamlXField _parentServiceProviderField;
+        private readonly IXamlXField _innerServiceProviderField;
+        private IXamlXField PropertyTargetObject;
+        private IXamlXField PropertyTargetProperty;
+
+        private IXamlXConstructor Constructor { get; set; }
+
+        public static IXamlXType GenerateContextClass(IXamlXTypeBuilder builder,
+            IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings)
+        {
+            return new XamlXContextDefinition(builder, typeSystem, mappings).ContextType;
+
+        }
 
         public List<Action> CreateCallbacks = new List<Action>();
+
+        public const int BaseUriArg = 0;
+        public const int StaticProvidersArg = 1;
+        public IXamlXType ContextType;
         
-        private XamlXContext(IXamlXTypeBuilder builder,
-            IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings,
-            IXamlXType rootType, IEnumerable<IXamlXField> staticProviders, string baseUri)
+        private XamlXContextDefinition(IXamlXTypeBuilder parentBuilder,
+            IXamlXTypeSystem typeSystem, XamlXLanguageTypeMappings mappings)
         {
-            RootObjectField = builder.DefineField(rootType, "RootObject", true, false);
+            var so = typeSystem.GetType("System.Object");
+            var builder = parentBuilder.DefineSubType(so, "Context", true);
+            
+            builder.DefineGenericParameters(new[]
+            {
+                new KeyValuePair<string, XamlXGenericParameterConstraint>("TTarget",
+                    new XamlXGenericParameterConstraint
+                    {
+                        IsClass = true
+                    })
+            });
+            var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
-            var so = typeSystem.GetType("System.Object");
+
+            var staticProvidersField = builder.DefineField(typeSystem.GetType("System.Object").MakeArrayType(1),
+                "_staticProviders", false, false);
+            
+            
             var systemType = typeSystem.GetType("System.Type");
+            var systemUri = typeSystem.GetType("System.Uri");
+            var systemString = typeSystem.GetType("System.String");
             var getServiceInterfaceMethod = mappings.ServiceProvider.FindMethod("GetService", so, false, systemType);
 
             var ownServices = new List<IXamlXType>();
@@ -47,16 +125,18 @@ namespace XamlX.Transform
             if (mappings.RootObjectProvider != null)
             {
                 builder.AddInterfaceImplementation(mappings.RootObjectProvider);
-                var rootGen = ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, "RootObject")
+                var rootGen = ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, RootObjectFieldName)
                     .Generator;
                 var tryParent = rootGen.DefineLabel();
                 var fail = rootGen.DefineLabel();
                 var parentRootProvider = rootGen.DefineLocal(mappings.RootObjectProvider);
                 rootGen
                     // if(RootObject!=null) return RootObject;    
-                    .LdThisFld(RootObjectField)
+                    .LdThisFld(rootObjectField)
+                    .Box(rootObjectField.FieldType)
                     .Brfalse(tryParent)
-                    .LdThisFld(RootObjectField)
+                    .LdThisFld(rootObjectField)
+                    .Box(rootObjectField.FieldType)
                     .Ret()
                     // if(_sp == null) goto fail;
                     .MarkLabel(tryParent)
@@ -88,25 +168,26 @@ namespace XamlX.Transform
                 builder.AddInterfaceImplementation(mappings.ParentStackProvider);
                 var objectListType = typeSystem.GetType("System.Collections.Generic.List`1")
                     .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
-                ParentListField = builder.DefineField(objectListType, "ParentsStack", true, false);
+                ParentListField = builder.DefineField(objectListType, ParentListFieldName, true, false);
 
-                var enumerator = EmitParentEnumerable(typeSystem, builder, mappings);
+                var enumerator = EmitParentEnumerable(typeSystem, parentBuilder, mappings);
                 CreateCallbacks.Add(enumerator.createCallback);
-                _parentStackEnumerableField = builder.DefineField(
+                var parentStackEnumerableField = builder.DefineField(
                     typeSystem.GetType("System.Collections.Generic.IEnumerable`1").MakeGenericType(new[]{so}),
                     "_parentStackEnumerable", false, false);
 
                 ImplementInterfacePropertyGetter(builder, mappings.ParentStackProvider, "Parents")
-                    .Generator.LdThisFld(_parentStackEnumerableField).Ret();
+                    .Generator.LdThisFld(parentStackEnumerableField).Ret();
                 
                 ctorCallbacks.Add(g => g
                     .Emit(OpCodes.Ldarg_0)
                     .Emit(OpCodes.Newobj, objectListType.FindConstructor(new List<IXamlXType>()))
                     .Emit(OpCodes.Stfld, ParentListField)
                     .Emit(OpCodes.Ldarg_0)
-                    .Emit(OpCodes.Ldarg_0)
+                    .LdThisFld(ParentListField)
+                    .LdThisFld(_parentServiceProviderField)
                     .Emit(OpCodes.Newobj, enumerator.ctor)
-                    .Emit(OpCodes.Stfld, _parentStackEnumerableField));
+                    .Emit(OpCodes.Stfld, parentStackEnumerableField));
                 ownServices.Add(mappings.ParentStackProvider);
             }
 
@@ -115,8 +196,8 @@ namespace XamlX.Transform
             if (mappings.ProvideValueTarget != null)
             {
                 builder.AddInterfaceImplementation(mappings.ProvideValueTarget);
-                PropertyTargetObject = builder.DefineField(so, "ProvideTargetObject", true, false);
-                PropertyTargetProperty = builder.DefineField(so, "ProvideTargetProperty", true, false);
+                PropertyTargetObject = builder.DefineField(so, ProvideTargetObjectName, true, false);
+                PropertyTargetProperty = builder.DefineField(so, ProvideTargetPropertyName, true, false);
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetObject")
                     .Generator.LdThisFld(PropertyTargetObject).Ret();
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetProperty")
@@ -124,37 +205,23 @@ namespace XamlX.Transform
                 ownServices.Add(mappings.ProvideValueTarget);
             }
 
+            IXamlXField baseUriField = null;
             if (mappings.UriContextProvider != null)
             {
-                var systemUri = typeSystem.GetType("System.Uri");
-                var cached = builder.DefineField(systemUri, "_baseUri", false, false);
+                baseUriField = builder.DefineField(systemUri, "_baseUri", false, false);
                 builder.AddInterfaceImplementation(mappings.UriContextProvider);
                 var getter = builder.DefineMethod(systemUri, new IXamlXType[0], "get_BaseUri", true, false, true);
                 var setter = builder.DefineMethod(typeSystem.GetType("System.Void"), new[] {systemUri},
                     "set_BaseUri", true, false, true);
 
-
-                var noCache = getter.Generator.DefineLabel();
                 getter.Generator
-                    .LdThisFld(cached)
-                    .Brfalse(noCache)
-                    .LdThisFld(cached)
-                    .Ret()
-                    .MarkLabel(noCache)
-                    .Ldarg_0()
-                    .Ldstr(baseUri)
-                    .Newobj(systemUri.FindConstructor(new List<IXamlXType>
-                    {
-                        typeSystem.GetType("System.String")
-                    }))
-                    .Stfld(cached)
-                    .LdThisFld(cached)
+                    .LdThisFld(baseUriField)
                     .Ret();
 
                 setter.Generator
                     .Ldarg_0()
                     .Ldarg(1)
-                    .Stfld(cached)
+                    .Stfld(baseUriField)
                     .Ret();
                 builder.DefineProperty(systemUri, "BaseUri", setter, getter);
                 
@@ -194,7 +261,10 @@ namespace XamlX.Transform
             }
             var compare = systemType.FindMethod("Equals", typeSystem.GetType("System.Boolean"),
                 false, systemType);
+            var isAssignableFrom = systemType.FindMethod("IsAssignableFrom", typeSystem.GetType("System.Boolean"),
+                false, systemType);
             var fromHandle = systemType.Methods.First(m => m.Name == "GetTypeFromHandle");
+            var getTypeFromObject = so.Methods.First(m => m.Name == "GetType" && m.Parameters.Count == 0);
             if (ownServices.Count != 0)
             {
 
@@ -212,21 +282,51 @@ namespace XamlX.Transform
                         .MarkLabel(next);
                 }
             }
-            
-            if(staticProviders!=null)
-                foreach (var sprov in staticProviders)
-                {
-                    var next = getServiceMethod.Generator.DefineLabel();
-                    getServiceMethod.Generator
-                        .Ldtoken(sprov.FieldType)
-                        .EmitCall(fromHandle)
-                        .Ldarg(1)
-                        .EmitCall(compare)
-                        .Brfalse(next)
-                        .Ldsfld(sprov)
-                        .Ret()
-                        .MarkLabel(next);
-                }
+
+            var staticProviderIndex = getServiceMethod.Generator.DefineLocal(typeSystem.GetType("System.Int32"));
+            var staticProviderNext = getServiceMethod.Generator.DefineLabel();
+            var staticProviderFailed = getServiceMethod.Generator.DefineLabel();
+            var staticProviderEnd = getServiceMethod.Generator.DefineLabel();
+            var staticProviderElement = getServiceMethod.Generator.DefineLocal(so);
+            getServiceMethod.Generator
+                //start: if(_staticProviders == null) goto: end
+                .LdThisFld(staticProvidersField)
+                .Brfalse(staticProviderEnd)
+                // var c = 0
+                .Ldc_I4(0)
+                .Stloc(staticProviderIndex)
+                // next:
+                .MarkLabel(staticProviderNext)
+                // if(c >= _staticProviders.Length) goto: end
+                .Ldloc(staticProviderIndex)
+                .LdThisFld(staticProvidersField)
+                .Ldlen()
+                .Bge(staticProviderEnd)
+                // var obj = _staticProviders[c]
+                .LdThisFld(staticProvidersField)
+                .Ldloc(staticProviderIndex)
+                .Ldelem_ref()
+                // dup
+                .Stloc(staticProviderElement)
+                .Ldarg(1)
+                .Ldloc(staticProviderElement)
+                // if(obj.GetType().Equals(arg1)) return obj; else goto failed;
+                .EmitCall(getTypeFromObject)
+                .EmitCall(isAssignableFrom)
+                .Brfalse(staticProviderFailed)
+                .Ldloc(staticProviderElement)
+                .Ret()
+                // failed: 
+                .MarkLabel(staticProviderFailed)
+                // c++
+                .Ldloc(staticProviderIndex)
+                .Ldc_I4(1)
+                .Add()
+                .Stloc(staticProviderIndex)
+                // goto: start
+                .Br(staticProviderNext)
+                // end:
+                .MarkLabel(staticProviderEnd);                
 
             var noParentProvider = getServiceMethod.Generator.DefineLabel();
             getServiceMethod.Generator
@@ -240,13 +340,31 @@ namespace XamlX.Transform
                 .Ldnull()
                 .Ret();
 
-            var ctor = builder.DefineConstructor(false, mappings.ServiceProvider);
+            var ctor = builder.DefineConstructor(false, 
+                mappings.ServiceProvider,
+                staticProvidersField.FieldType,
+                systemString);
             ctor.Generator
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Call, so.Constructors.First())
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, _parentServiceProviderField);
+                .Emit(OpCodes.Stfld, _parentServiceProviderField)
+                .Emit(OpCodes.Ldarg_0)
+                .Emit(OpCodes.Ldarg_2)
+                .Emit(OpCodes.Stfld, staticProvidersField);
+            if (baseUriField != null)
+            {
+                ctor.Generator
+                    .Emit(OpCodes.Ldarg_0)
+                    .Emit(OpCodes.Ldarg_3)
+                    .Newobj(systemUri.FindConstructor(new List<IXamlXType>
+                    {
+                        typeSystem.GetType("System.String")
+                    }))
+                    .Emit(OpCodes.Stfld, baseUriField);
+            }
+
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
             
@@ -262,8 +380,9 @@ namespace XamlX.Transform
             ctor.Generator.Emit(OpCodes.Ret);
 
             Constructor = ctor;
-            CreateCallbacks.Add(() => { ContextType = builder.CreateType(); });
-            ContextType = builder;
+            CreateCallbacks.Add(() => { parentBuilder.CreateType(); });
+            CreateAllTypes();
+            ContextType = builder.CreateType();
         }
 
         public void CreateAllTypes()
@@ -326,14 +445,21 @@ namespace XamlX.Transform
                 .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
             enumerableBuilder.AddInterfaceImplementation(enumerableType);
 
-            var enumerableParent = enumerableBuilder.DefineField(parentBuilder, "_parent", false, false);
-            var enumerableCtor = enumerableBuilder.DefineConstructor(false, parentBuilder);
+            var enumerableParentList =
+                enumerableBuilder.DefineField(ParentListField.FieldType, "_parentList", false, false);
+            var enumerableParentProvider =
+                enumerableBuilder.DefineField(mappings.ServiceProvider, "_parentSP", false, false);
+            
+            var enumerableCtor = enumerableBuilder.DefineConstructor(false, enumerableParentList.FieldType, enumerableParentProvider.FieldType);
             enumerableCtor.Generator
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Call, so.Constructors.First())
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, enumerableParent)
+                .Emit(OpCodes.Stfld, enumerableParentList)
+                .Emit(OpCodes.Ldarg_0)
+                .Emit(OpCodes.Ldarg_2)
+                .Emit(OpCodes.Stfld, enumerableParentProvider)
                 .Emit(OpCodes.Ret);
 
 
@@ -347,20 +473,28 @@ namespace XamlX.Transform
 
             
             var state = enumeratorBuilder.DefineField(typeSystem.GetType("System.Int32"), "_state", false, false);
-            var parent = enumeratorBuilder.DefineField(parentBuilder, "_parent", false, false);
+            
+            
+            var parentList =
+                enumeratorBuilder.DefineField(ParentListField.FieldType, "_parentList", false, false);
+            var parentProvider =
+                enumeratorBuilder.DefineField(mappings.ServiceProvider, "_parentSP", false, false);
             var listType = typeSystem.GetType("System.Collections.Generic.List`1")
                 .MakeGenericType(new[] {so});
             var list = enumeratorBuilder.DefineField(listType, "_list", false, false);
             var listIndex = enumeratorBuilder.DefineField(typeSystem.GetType("System.Int32"), "_listIndex", false, false);
             var current = enumeratorBuilder.DefineField(so, "_current", false, false);
             var parentEnumerator = enumeratorBuilder.DefineField(enumeratorObjectType, "_parentEnumerator", false, false);
-            var enumeratorCtor = enumeratorBuilder.DefineConstructor(false, parentBuilder);
+            var enumeratorCtor = enumeratorBuilder.DefineConstructor(false, parentList.FieldType, parentProvider.FieldType);
                 enumeratorCtor.Generator
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Call, so.Constructors.First())
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, parent)
+                .Emit(OpCodes.Stfld, parentList)
+                .Emit(OpCodes.Ldarg_0)
+                .Emit(OpCodes.Ldarg_2)
+                .Emit(OpCodes.Stfld, parentProvider)
                 .Emit(OpCodes.Ret);
             
             var currentGetter = enumeratorBuilder.DefineMethod(so, new IXamlXType[0],
@@ -412,7 +546,7 @@ namespace XamlX.Transform
                 .LdThisFld(state).Ldc_I4(stateParent).Beq(checkStateParent)
                 .Ldc_I4(0).Ret();
             moveNext.MarkLabel(checkStateInit)
-                .Ldarg_0().Dup().Dup().Ldfld(parent).Ldfld(ParentListField).Stfld(list).LdThisFld(list)
+                .Ldarg_0().Dup().Dup().Ldfld(parentList).Stfld(list).LdThisFld(list)
                 .EmitCall(listType.FindMethod(m => m.Name == "get_Count" && m.Parameters.Count == 0))
                 .Ldc_I4(1).Emit(OpCodes.Sub).Stfld(listIndex)
                 .Ldarg_0().Ldc_I4(stateSelf).Stfld(state)
@@ -433,9 +567,9 @@ namespace XamlX.Transform
                 // tryParent:
                 .MarkLabel(tryParentState)
                 // if(parent._parentServiceProvider == null) goto eof;
-                .LdThisFld(parent).Ldfld(_parentServiceProviderField).Brfalse(eof)
+                .LdThisFld(parentProvider).Brfalse(eof)
                 // parentProv = (IParentStackProvider)parent.GetService(typeof(IParentStackProvider));
-                .LdThisFld(parent).Ldfld(_parentServiceProviderField).Ldtype(mappings.ParentStackProvider)
+                .LdThisFld(parentProvider).Ldtype(mappings.ParentStackProvider)
                 .EmitCall(mappings.ServiceProvider.FindMethod("GetService", so, false,
                     typeSystem.GetType("System.Type")))
                 .Emit(OpCodes.Castclass, mappings.ParentStackProvider)
@@ -468,8 +602,8 @@ namespace XamlX.Transform
             var createEnumerator = enumerableBuilder.DefineMethod(enumeratorObjectType, new IXamlXType[0], "GetEnumerator", true, false,
                     true);
             createEnumerator.Generator
-                .Ldarg_0()
-                .Ldfld(enumerableParent)
+                .LdThisFld(enumerableParentList)
+                .LdThisFld(enumerableParentProvider)
                 .Emit(OpCodes.Newobj, enumeratorCtor)
                 .Emit(OpCodes.Ret);
 
