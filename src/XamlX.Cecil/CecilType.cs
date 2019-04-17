@@ -7,7 +7,7 @@ using Mono.Cecil.Rocks;
 
 namespace XamlX.TypeSystem
 {
-    public partial class CecilTypeSystem
+    partial class CecilTypeSystem
     {
         // TODO: Make generic type definitions have Reference set to GenericTypeInstance with parameters for
         // consistency with CecilTypeBuilder
