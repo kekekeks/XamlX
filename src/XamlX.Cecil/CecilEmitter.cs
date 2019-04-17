@@ -10,7 +10,7 @@ using SreOpCodes = System.Reflection.Emit.OpCodes;
 
 namespace XamlX.TypeSystem
 {
-    public partial class CecilTypeSystem
+    partial class CecilTypeSystem
     {
         public class CecilEmitter : IXamlILEmitter
         {

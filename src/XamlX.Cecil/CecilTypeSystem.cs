@@ -6,7 +6,10 @@ using Mono.Cecil.Rocks;
 
 namespace XamlX.TypeSystem
 {
-    public partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
+    #if !XAMLIL_CECIL_INTERNAL
+    public
+    #endif
+    partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
     {
         private List<CecilAssembly> _asms = new List<CecilAssembly>();
         private Dictionary<string, CecilAssembly> _assemblyCache = new Dictionary<string, CecilAssembly>();
