@@ -6,7 +6,7 @@ using Mono.Cecil.Rocks;
 
 namespace XamlIl.TypeSystem
 {
-    public partial class CecilTypeSystem
+    partial class CecilTypeSystem
     {
         class CecilTypeBuilder : CecilType, IXamlIlTypeBuilder
         {

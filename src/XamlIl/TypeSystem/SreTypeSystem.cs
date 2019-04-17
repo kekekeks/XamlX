@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-
+#if !XAMLIL_NO_SRE
 namespace XamlIl.TypeSystem
 {
     public class SreTypeSystem : IXamlIlTypeSystem
@@ -634,3 +634,4 @@ namespace XamlIl.TypeSystem
         public IXamlIlAssembly GetAssembly(Assembly asm) => ResolveAssembly(asm);
     }
 }
+#endif

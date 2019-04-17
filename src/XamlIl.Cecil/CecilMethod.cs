@@ -5,7 +5,7 @@ using Mono.Cecil;
 
 namespace XamlIl.TypeSystem
 {
-    public partial class CecilTypeSystem
+    partial class CecilTypeSystem
     {
         class CecilMethodBase
         {

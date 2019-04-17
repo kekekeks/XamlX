@@ -4,7 +4,7 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.TypeSystem
 {
-    public partial class CecilTypeSystem
+    partial class CecilTypeSystem
     {
         class CecilEvent : IXamlIlEventInfo
         {
