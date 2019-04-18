@@ -11,9 +11,8 @@ namespace XamlIl.Transform.Emitters
         {
             if (!(node is XamlIlPropertyAssignmentNode an))
                 return null;
-            var callOp = an.Property.Setter.IsStatic ? OpCodes.Call : OpCodes.Callvirt;
             context.Emit(an.Value, codeGen, an.Property.Setter.Parameters.Last()); 
-            codeGen.Emit(callOp, an.Property.Setter);
+            codeGen.EmitCall(an.Property.Setter);
 
             return XamlIlNodeEmitResult.Void(1);
         }

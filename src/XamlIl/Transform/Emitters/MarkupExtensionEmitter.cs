@@ -63,8 +63,9 @@ namespace XamlIl.Transform.Emitters
                     }
 
                     if (me.ProvideValue != null)
-                        ilgen
-                            .Emit(OpCodes.Call, me.ProvideValue);
+                        ilgen.EmitCall(me.ProvideValue);
+                    
+                    
                     ilgen
                         .Emit(OpCodes.Stloc, resultLocal);
 
@@ -108,7 +109,7 @@ namespace XamlIl.Transform.Emitters
                         if (rtype.IsValueType)
                             codeGen.Emit(OpCodes.Box, rtype);
                         codeGen
-                            .Emit(OpCodes.Call, context.Configuration.TypeMappings.MarkupExtensionCustomResultHandler)
+                            .EmitCall(context.Configuration.TypeMappings.MarkupExtensionCustomResultHandler)
                             .Emit(OpCodes.Br, exit);
                     }
                     

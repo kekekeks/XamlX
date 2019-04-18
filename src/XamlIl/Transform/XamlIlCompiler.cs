@@ -100,7 +100,7 @@ namespace XamlIl.Transform
                 .Emit(OpCodes.Stloc, rv)
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldloc, rv)
-                .Emit(OpCodes.Call, compiledPopulate)
+                .EmitCall(compiledPopulate)
                 .Emit(OpCodes.Ldloc, rv)
                 .Emit(OpCodes.Ret);
         }

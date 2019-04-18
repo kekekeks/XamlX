@@ -273,7 +273,7 @@ namespace XamlIl.Transform
                     var next = getServiceMethod.Generator.DefineLabel();
                     getServiceMethod.Generator
                         .Emit(OpCodes.Ldtoken, ownServices[c])
-                        .Emit(OpCodes.Call, fromHandle)
+                        .EmitCall(fromHandle)
                         .Emit(OpCodes.Ldarg_1)
                         .Emit(OpCodes.Callvirt, compare)
                         .Emit(OpCodes.Brfalse, next)
@@ -612,7 +612,7 @@ namespace XamlIl.Transform
                     typeSystem.GetType("System.Collections.IEnumerable").FindMethod(m => m.Name == "GetEnumerator"))
                 .Generator
                 .Ldarg_0()
-                .Emit(OpCodes.Call, createEnumerator)
+                .EmitCall(createEnumerator)
                 .Emit(OpCodes.Ret);
 
 

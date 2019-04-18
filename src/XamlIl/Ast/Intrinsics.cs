@@ -54,7 +54,7 @@ namespace XamlIl.Ast
                     $"Unable to find GetTypeFromHandle(RuntimeTypeHandle) on {_systemType.GetFqn()}");
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
-                .Emit(OpCodes.Call, method);
+                .EmitCall(method);
             return XamlIlNodeEmitResult.Type(0, _systemType);
         }
     }
