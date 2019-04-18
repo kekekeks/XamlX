@@ -10,8 +10,7 @@ namespace XamlX.Transform.Emitters
         {
             if (!(node is XamlXPropertyValueManipulationNode pvm))
                 return null;
-            codeGen.Emit(pvm.Property.Getter.IsStatic ? OpCodes.Call : OpCodes.Callvirt,
-                pvm.Property.Getter);
+            codeGen.EmitCall(pvm.Property.Getter);
             context.Emit(pvm.Manipulation, codeGen, null);
             
             return XamlXNodeEmitResult.Void(1);

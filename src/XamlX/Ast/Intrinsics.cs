@@ -54,7 +54,7 @@ namespace XamlX.Ast
                     $"Unable to find GetTypeFromHandle(RuntimeTypeHandle) on {_systemType.GetFqn()}");
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
-                .Emit(OpCodes.Call, method);
+                .EmitCall(method);
             return XamlXNodeEmitResult.Type(0, _systemType);
         }
     }
