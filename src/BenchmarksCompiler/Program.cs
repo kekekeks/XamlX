@@ -57,7 +57,7 @@ namespace BenchmarksCompiler
                 compiler.Transform(parsed);
                 compiler.Compile(parsed, typeSystem.CreateTypeBuilder(lb), contextTypeDef,
                     "PopulateXamlIlPrecompiled", "LoadXamlIlPrecompiled",
-                    "XamlIlRuntimeContext", "XamlIlXmlInfo", resource.Name);
+                    "XamlIlXmlInfo", resource.Name);
                 
                 loadMethod = lb.Methods.First(m => m.Name == "LoadXamlIlPrecompiled");
                 loadMethod.ReturnType = asm.MainModule.TypeSystem.Object;

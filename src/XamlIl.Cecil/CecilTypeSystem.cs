@@ -57,10 +57,17 @@ namespace XamlIl.TypeSystem
                     AssemblyResolver = this,
                     MetadataResolver = _resolver,                    
                 });
-                RegisterAssembly(asm);
+                var wrapped = RegisterAssembly(asm);
+                if (path == targetPath)
+                {
+                    TargetAssembly = wrapped;
+                    TargetAssemblyDefinition = asm;
+                }
             }    
         }
 
+        public IXamlIlAssembly TargetAssembly { get; private set; }
+        public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
         public IReadOnlyList<IXamlIlAssembly> Assemblies => _asms.AsReadOnly();
         public IXamlIlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
@@ -77,6 +84,9 @@ namespace XamlIl.TypeSystem
 
         public IXamlIlType FindType(string name, string assembly) 
             => FindAssembly(assembly)?.FindType(name);
+
+
+        public TypeReference GetTypeReference(IXamlIlType t) => ((ITypeReference)t).Reference;
 
         CecilAssembly FindAsm(AssemblyDefinition d)
         {
@@ -108,11 +118,12 @@ namespace XamlIl.TypeSystem
             return rv;
         }
 
-        public void RegisterAssembly(AssemblyDefinition asm)
+        public IXamlIlAssembly RegisterAssembly(AssemblyDefinition asm)
         {
             var wrapped = new CecilAssembly(this, asm);
             _asms.Add(wrapped);
             _assemblyDic[asm] = wrapped;
+            return wrapped;
         }
         
         public AssemblyDefinition CreateAndRegisterAssembly(string name, Version version, ModuleKind kind)
