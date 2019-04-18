@@ -130,7 +130,7 @@ namespace XamlX.Transform
         }
         
         public void Compile(XamlXDocument doc, IXamlXTypeBuilder typeBuilder, IXamlXType contextType,
-            string populateMethodName, string createMethodName, string contextClassName, string namespaceInfoClassName,
+            string populateMethodName, string createMethodName, string namespaceInfoClassName,
             string baseUri)
         {
             var rootGrp = (XamlXValueWithManipulationNode) doc.Root;

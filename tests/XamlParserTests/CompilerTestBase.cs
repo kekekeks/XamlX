@@ -68,7 +68,7 @@ namespace XamlParserTests
             var compiler = new XamlXCompiler(Configuration, true);
             compiler.Transform(parsed);
             compiler.Compile(parsed, builder, context, "Populate", "Build",
-                "XamlXRuntimeContext", "XamlXNamespaceInfo",
+                "XamlXNamespaceInfo",
                 "http://example.com/");
             return parsed;
         }

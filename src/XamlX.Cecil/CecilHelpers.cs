@@ -4,7 +4,10 @@ using Mono.Cecil;
 
 namespace XamlX.TypeSystem
 {
-    public static class CecilHelpers
+#if !XAMLIL_CECIL_INTERNAL
+    public
+#endif
+    static class CecilHelpers
     {
         [ThreadStatic] private static int _recursionDepth;
         public static TypeReference TransformGeneric(this TypeReference reference, TypeReference declaringType)
