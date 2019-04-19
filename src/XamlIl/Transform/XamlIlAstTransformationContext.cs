@@ -78,5 +78,10 @@ namespace XamlIl.Transform
             root = root.Visit(new Visitor(this, transformer));
             return root;
         }
+
+        public void VisitChildren(IXamlIlAstNode root, IXamlIlAstTransformer transformer)
+        {
+            root.VisitChildren(new Visitor(this, transformer));
+        }
     }
 }
