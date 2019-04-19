@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Pdb;
 using Mono.Cecil.Rocks;
 
 namespace XamlIl.TypeSystem
@@ -50,12 +51,15 @@ namespace XamlIl.TypeSystem
             _typeCache = new CecilTypeCache(this);
             foreach (var path in paths.Distinct())
             {
+                var isTarget = path == targetPath;
                 var asm = AssemblyDefinition.ReadAssembly(path, new ReaderParameters(ReadingMode.Deferred)
                 {
-                    ReadWrite = path == targetPath,
+                    ReadWrite = isTarget,
                     InMemory = true,
                     AssemblyResolver = this,
-                    MetadataResolver = _resolver,                    
+                    MetadataResolver = _resolver,
+                    SymbolReaderProvider = isTarget ? new PdbReaderProvider() : null,
+                    ReadSymbols = isTarget
                 });
                 var wrapped = RegisterAssembly(asm);
                 if (path == targetPath)
