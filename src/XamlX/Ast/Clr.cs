@@ -305,10 +305,10 @@ namespace XamlX.Ast
                 var locals = new Stack<XamlXEmitContext.PooledLocal>();
                 for (var c = ParametersWithThis.Count - 1; c >= firstCast; c--)
                 {
-                    codeGen.Castclass(ParametersWithThis[c]);
+                    codeGen.Castclass(_method.ParametersWithThis[c]);
                     if (c > firstCast)
                     {
-                        var l = context.GetLocal(ParametersWithThis[c]);
+                        var l = context.GetLocal(_method.ParametersWithThis[c]);
                         codeGen.Stloc(l.Local);
                         locals.Push(l);
                     }
