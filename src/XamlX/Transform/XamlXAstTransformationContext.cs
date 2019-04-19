@@ -78,5 +78,10 @@ namespace XamlX.Transform
             root = root.Visit(new Visitor(this, transformer));
             return root;
         }
+
+        public void VisitChildren(IXamlXAstNode root, IXamlXAstTransformer transformer)
+        {
+            root.VisitChildren(new Visitor(this, transformer));
+        }
     }
 }
