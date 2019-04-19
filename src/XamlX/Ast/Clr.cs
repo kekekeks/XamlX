@@ -382,6 +382,7 @@ namespace XamlX.Ast
                         // contextLocal.RootObject = loc;
                         .Ldloc(context.ContextLocal)
                         .Ldloc(loc.Local)
+                        .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
                         .Stfld(context.RuntimeContext.RootObjectField)
                         .MarkLabel(noRoot);
             }
