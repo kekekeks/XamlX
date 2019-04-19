@@ -5,9 +5,13 @@ namespace XamlX
 {
     public class XamlXParseException : Exception
     {
+        public int Line { get; }
+        public int Position { get; }
+        
         public XamlXParseException(string message, int line, int position) : base($"{message} (line {line} position {position})")
         {
-            
+            Line = line;
+            Position = position;
         }
 
         public XamlXParseException(string message, IXamlXLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
