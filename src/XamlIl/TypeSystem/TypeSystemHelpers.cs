@@ -103,20 +103,20 @@ namespace XamlIl.TypeSystem
             else if (what == XamlIlPseudoType.Null)
             {
                 
-                if (what.IsValueType)
+                if (to.IsValueType)
                 {
-                    if (what.GenericTypeDefinition.Equals(context.Configuration.WellKnownTypes.NullableT))
+                    if (to.GenericTypeDefinition.Equals(context.Configuration.WellKnownTypes.NullableT))
                     {
-                        using (var loc = context.GetLocal(what))
+                        using (var loc = context.GetLocal(to))
                             ld(false)
                                 .Pop()
                                 .Ldloca(loc.Local)
-                                .Emit(OpCodes.Initobj, what)
+                                .Emit(OpCodes.Initobj, to)
                                 .Ldloc(loc.Local);
 
                     }
                     else
-                        throw new XamlIlLoadException("Unable to convert {x:Null} to " + what.GetFqn(), node);
+                        throw new XamlIlLoadException("Unable to convert {x:Null} to " + to.GetFqn(), node);
                 }
                 else
                     ld(false);
