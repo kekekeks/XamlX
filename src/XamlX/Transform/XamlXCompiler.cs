@@ -162,9 +162,13 @@ namespace XamlX.Transform
             
             CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
 
-            var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
-                new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-            CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
+            if (createMethodName != null)
+            {
+                var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
+                    new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
+                CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
+            }
+
             namespaceInfoBuilder?.CreateType();
         }
         
