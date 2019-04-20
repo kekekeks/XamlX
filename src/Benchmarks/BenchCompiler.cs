@@ -63,7 +63,7 @@ namespace Benchmarks
             
             var parserTypeBuilder = ((SreTypeSystem) typeSystem).CreateTypeBuilder(t);
             compiler.Compile(parsed, parserTypeBuilder,  contextTypeDef, "Populate", "Build",
-                "XamlIlNamespaceInfo", "https://github.com/kekekeks/XamlIl");
+                "XamlIlNamespaceInfo", "https://github.com/kekekeks/XamlIl", null);
             
             var created = t.CreateType();
 

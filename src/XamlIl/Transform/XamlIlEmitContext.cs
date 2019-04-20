@@ -9,6 +9,7 @@ namespace XamlIl.Transform
 {
     public class XamlIlEmitContext : XamlIlContextBase
     {
+        public IFileSource File { get; }
         public List<object> Emitters { get; }
 
         private readonly Dictionary<XamlIlAstCompilerLocalNode, IXamlIlLocal>
@@ -47,8 +48,10 @@ namespace XamlIl.Transform
 
         public XamlIlEmitContext(IXamlIlEmitter emitter, XamlIlTransformerConfiguration configuration,
             XamlIlContext runtimeContext, IXamlIlLocal contextLocal, 
-            Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType, IEnumerable<object> emitters)
+            Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
+            IFileSource file, IEnumerable<object> emitters)
         {
+            File = file;
             Emitter = emitter;
             Emitters = emitters.ToList();
             Configuration = configuration;
@@ -138,27 +141,31 @@ namespace XamlIl.Transform
 
             }
 
+            
             return res;
         }
 
         private XamlIlNodeEmitResult EmitCore(IXamlIlAstNode value, IXamlIlEmitter codeGen)
         {
-            XamlIlNodeEmitResult res = null;
-            foreach (var e in Emitters)
+            using (var block = File == null ? null : codeGen.BeginDebugBlock(File, value.Line, value.Position))
             {
-                if (e is IXamlIlAstNodeEmitter ve)
+                XamlIlNodeEmitResult res = null;
+                foreach (var e in Emitters)
                 {
-                    res = ve.Emit(value, this, codeGen);
-                    if (res != null)
-                        return res;
+                    if (e is IXamlIlAstNodeEmitter ve)
+                    {
+                        res = ve.Emit(value, this, codeGen);
+                        if (res != null)
+                            return res;
+                    }
                 }
-            }
 
-            if (value is IXamlIlAstEmitableNode en)
-                return en.Emit(this, codeGen);
-            else
-                throw new XamlIlLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
-                    value);
+                if (value is IXamlIlAstEmitableNode en)
+                    return en.Emit(this, codeGen);
+                else
+                    throw new XamlIlLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
+                        value);
+            }
         }
     }
 }

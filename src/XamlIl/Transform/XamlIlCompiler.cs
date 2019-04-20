@@ -72,7 +72,9 @@ namespace XamlIl.Transform
             doc.Root = root;
         }
 
-        XamlIlEmitContext InitCodeGen(Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
+        XamlIlEmitContext InitCodeGen(
+            IFileSource file,
+            Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
             IXamlIlEmitter codeGen, XamlIlContext context, bool needContextLocal)
         {
             IXamlIlLocal contextLocal = null;
@@ -87,15 +89,17 @@ namespace XamlIl.Transform
                 codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlIlEmitContext(codeGen, _configuration, context, contextLocal, createSubType, Emitters);
+            var emitContext = new XamlIlEmitContext(codeGen, _configuration, context, contextLocal, createSubType, file, Emitters);
             return emitContext;
         }
         
-        void CompileBuild(IXamlIlAstValueNode rootInstance, Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
+        void CompileBuild(
+            IFileSource fileSource,
+            IXamlIlAstValueNode rootInstance, Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
             IXamlIlEmitter codeGen, XamlIlContext context, IXamlIlMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlIlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
-            var emitContext = InitCodeGen(createSubType, codeGen, context, needContextLocal);
+            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, needContextLocal);
 
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
@@ -113,9 +117,9 @@ namespace XamlIl.Transform
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
 
-        void CompilePopulate(IXamlIlAstManipulationNode manipulation, Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType, IXamlIlEmitter codeGen, XamlIlContext context)
+        void CompilePopulate(IFileSource fileSource, IXamlIlAstManipulationNode manipulation, Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType, IXamlIlEmitter codeGen, XamlIlContext context)
         {
-            var emitContext = InitCodeGen(createSubType, codeGen, context, true);
+            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, true);
 
             codeGen
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
@@ -133,9 +137,9 @@ namespace XamlIl.Transform
                 _configuration.TypeMappings);
         }
         
-        public void Compile(XamlIlDocument doc, IXamlIlTypeBuilder typeBuilder, IXamlIlType contextType,
+        public void Compile( XamlIlDocument doc, IXamlIlTypeBuilder typeBuilder, IXamlIlType contextType,
             string populateMethodName, string createMethodName, string namespaceInfoClassName,
-            string baseUri)
+            string baseUri, IFileSource fileSource)
         {
             var rootGrp = (XamlIlValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlIlField>();
@@ -160,13 +164,13 @@ namespace XamlIl.Transform
             var context = new XamlIlContext(contextType, rootGrp.Type.GetClrType(),
                 baseUri, staticProviders);
             
-            CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
+            CompilePopulate(fileSource, rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
 
             if (createMethodName != null)
             {
                 var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                     new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-                CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
+                CompileBuild(fileSource, rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
             }
 
             namespaceInfoBuilder?.CreateType();

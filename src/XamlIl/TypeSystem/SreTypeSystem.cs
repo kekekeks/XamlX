@@ -480,6 +480,18 @@ namespace XamlIl.TypeSystem
                 return this;
             }
 
+            class EmptyDisposable : IDisposable
+            {
+                public void Dispose()
+                {
+                    
+                }
+            }
+            public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
+            {
+                return new EmptyDisposable();
+            }
+
             public IXamlIlEmitter Emit(OpCode code, IXamlIlType type)
             {
                 _ilg.Emit(code, ((SreType) type).Type);
