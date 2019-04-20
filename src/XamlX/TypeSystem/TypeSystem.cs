@@ -119,6 +119,13 @@ namespace XamlX.TypeSystem
         IXamlXEmitter MarkLabel(IXamlXLabel label);
         IXamlXEmitter Emit(OpCode code, IXamlXLabel label);
         IXamlXEmitter Emit(OpCode code, IXamlXLocal local);
+        IDisposable BeginDebugBlock(IFileSource file, int line, int position);
+    }
+
+    public interface IFileSource
+    {
+        string FilePath { get; }
+        byte[] FileContents { get; }
     }
 
     public interface IXamlXLocal

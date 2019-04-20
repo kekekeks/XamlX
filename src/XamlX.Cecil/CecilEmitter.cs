@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -54,10 +57,12 @@ namespace XamlX.TypeSystem
             
             
             private readonly MethodBody _body;
-
-            public CecilEmitter(IXamlXTypeSystem typeSystem, MethodBody body)
+            private readonly MethodDefinition _method;
+            private CecilDebugPoint _lastDebugPoint;
+            public CecilEmitter(IXamlXTypeSystem typeSystem, MethodDefinition method)
             {
-                _body = body;
+                _method = method;
+                _body = method.Body;
                 TypeSystem = typeSystem;
             }
 
@@ -165,6 +170,88 @@ namespace XamlX.TypeSystem
 
             public IXamlXEmitter Emit(SreOpCode code, IXamlXLocal local)
                 => Emit(Instruction.Create(Dic[code], ((CecilLocal) local).Variable));
+
+            private static readonly Guid LanguageGuid = new Guid("9a37fc74-96b5-4dbc-8b8a-c4e603735a63");
+            private static readonly Guid LanguageVendorGuid = new Guid("3c631bf9-0cbe-4aab-a24a-5e417734441c");
+            class CecilDebugPoint : IDisposable
+            {
+                private readonly CecilEmitter _parent;
+                private readonly Document _doc;
+                private readonly int _line;
+                private readonly int _position;
+                public int StartOffset { get; }
+
+                public CecilDebugPoint(CecilEmitter parent, Document doc, int line, int position, int startOffset)
+                {
+                    _parent = parent;
+                    _doc = doc;
+                    _line = line;
+                    _position = position;
+                    StartOffset = startOffset;
+                }
+
+                public void Dispose()
+                {
+                    if (_parent._body.Instructions.Count <= StartOffset)
+                        return;
+                    var instruction = _parent._body.Instructions[StartOffset];
+                    var dbg = _parent._method.DebugInformation;
+                    if (dbg.Scope == null)
+                    {
+                        dbg.Scope = new ScopeDebugInformation(instruction, instruction)
+                        {
+                            End = new InstructionOffset(),
+                            Import = new ImportDebugInformation()
+                        };
+                    }
+
+                    dbg.SequencePoints.Add(new SequencePoint(instruction, _doc)
+                    {
+                        StartLine = _line,
+                        StartColumn = _position,
+                        EndLine = _line,
+                        EndColumn = _position + 1
+                    });
+                }
+            }
+
+            class EmptyDisposable : IDisposable
+            {
+                public void Dispose()
+                {
+                    
+                }
+            }
+            
+            static ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>
+                _documents = new ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>();
+            
+            public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
+            {
+                if (!_documents.TryGetValue(_method.Module.Assembly, out var documents))
+                    _documents.Add(_method.Module.Assembly, documents = new Dictionary<string, Document>());
+                
+                
+                if (!documents.TryGetValue(file.FilePath, out var doc))
+                {
+                    byte[] hash;
+                    using (var sha1 = SHA1.Create())
+                        hash = sha1.ComputeHash(file.FileContents);
+                    
+                    documents[file.FilePath] = doc = new Document(file.FilePath)
+                    {
+                        LanguageGuid = LanguageGuid,
+                        LanguageVendorGuid = LanguageVendorGuid,
+                        Type = DocumentType.Text,
+                        HashAlgorithm = DocumentHashAlgorithm.SHA1,
+                        Hash = hash,
+                    };
+                }
+
+                if (_lastDebugPoint != null && _lastDebugPoint.StartOffset == _body.Instructions.Count)
+                    return new EmptyDisposable();
+                return _lastDebugPoint = new CecilDebugPoint(this, doc, line, position, _body.Instructions.Count);
+            }
         }
     }
 }
