@@ -216,9 +216,9 @@ namespace XamlIl.Transform
             return this;
         }
 
-        public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
+        public void InsertSequencePoint(IFileSource file, int line, int position)
         {
-            return _inner.BeginDebugBlock(file, line, position);
+            _inner.InsertSequencePoint(file, line, position);
         }
 
         public void Check(int expectedBalance)
