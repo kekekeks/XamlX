@@ -147,25 +147,25 @@ namespace XamlX.Transform
 
         private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXEmitter codeGen)
         {
-            using (var block = File == null ? null : codeGen.BeginDebugBlock(File, value.Line, value.Position))
+            if(File!=null)
+                codeGen.InsertSequencePoint(File, value.Line, value.Position);
+            
+            XamlXNodeEmitResult res = null;
+            foreach (var e in Emitters)
             {
-                XamlXNodeEmitResult res = null;
-                foreach (var e in Emitters)
+                if (e is IXamlXAstNodeEmitter ve)
                 {
-                    if (e is IXamlXAstNodeEmitter ve)
-                    {
-                        res = ve.Emit(value, this, codeGen);
-                        if (res != null)
-                            return res;
-                    }
+                    res = ve.Emit(value, this, codeGen);
+                    if (res != null)
+                        return res;
                 }
-
-                if (value is IXamlXAstEmitableNode en)
-                    return en.Emit(this, codeGen);
-                else
-                    throw new XamlXLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
-                        value);
             }
+
+            if (value is IXamlXAstEmitableNode en)
+                return en.Emit(this, codeGen);
+            else
+                throw new XamlXLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
+                    value);
         }
     }
 }

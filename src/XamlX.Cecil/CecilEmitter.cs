@@ -72,6 +72,11 @@ namespace XamlX.TypeSystem
             IXamlXEmitter Emit(Instruction i)
             {
                 _body.Instructions.Add(i);
+                if (_lastDebugPoint != null)
+                {
+                    _lastDebugPoint.Create(i);
+                    _lastDebugPoint = null;
+                }
                 foreach (var ml in _markedLabels)
                 {
                     foreach(var instruction in _body.Instructions)
@@ -173,28 +178,24 @@ namespace XamlX.TypeSystem
 
             private static readonly Guid LanguageGuid = new Guid("9a37fc74-96b5-4dbc-8b8a-c4e603735a63");
             private static readonly Guid LanguageVendorGuid = new Guid("3c631bf9-0cbe-4aab-a24a-5e417734441c");
-            class CecilDebugPoint : IDisposable
+            
+            class CecilDebugPoint
             {
                 private readonly CecilEmitter _parent;
                 private readonly Document _doc;
                 private readonly int _line;
                 private readonly int _position;
-                public int StartOffset { get; }
 
-                public CecilDebugPoint(CecilEmitter parent, Document doc, int line, int position, int startOffset)
+                public CecilDebugPoint(CecilEmitter parent, Document doc, int line, int position)
                 {
                     _parent = parent;
                     _doc = doc;
                     _line = line;
                     _position = position;
-                    StartOffset = startOffset;
                 }
 
-                public void Dispose()
+                public void Create(Instruction instruction)
                 {
-                    if (_parent._body.Instructions.Count <= StartOffset)
-                        return;
-                    var instruction = _parent._body.Instructions[StartOffset];
                     var dbg = _parent._method.DebugInformation;
                     if (dbg.Scope == null)
                     {
@@ -205,20 +206,14 @@ namespace XamlX.TypeSystem
                         };
                     }
 
-                    dbg.SequencePoints.Add(new SequencePoint(instruction, _doc)
+                    var sp = new SequencePoint(instruction, _doc)
                     {
                         StartLine = _line,
                         StartColumn = _position,
                         EndLine = _line,
                         EndColumn = _position + 1
-                    });
-                }
-            }
-
-            class EmptyDisposable : IDisposable
-            {
-                public void Dispose()
-                {
+                    };
+                    dbg.SequencePoints.Add(sp);
                     
                 }
             }
@@ -226,7 +221,7 @@ namespace XamlX.TypeSystem
             static ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>
                 _documents = new ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>();
             
-            public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
+            public void InsertSequencePoint(IFileSource file, int line, int position)
             {
                 if (!_documents.TryGetValue(_method.Module.Assembly, out var documents))
                     _documents.Add(_method.Module.Assembly, documents = new Dictionary<string, Document>());
@@ -248,9 +243,8 @@ namespace XamlX.TypeSystem
                     };
                 }
 
-                if (_lastDebugPoint != null && _lastDebugPoint.StartOffset == _body.Instructions.Count)
-                    return new EmptyDisposable();
-                return _lastDebugPoint = new CecilDebugPoint(this, doc, line, position, _body.Instructions.Count);
+                if (_lastDebugPoint == null)
+                    _lastDebugPoint = new CecilDebugPoint(this, doc, line, position);
             }
         }
     }

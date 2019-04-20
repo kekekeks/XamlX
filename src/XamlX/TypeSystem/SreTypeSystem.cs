@@ -480,16 +480,9 @@ namespace XamlX.TypeSystem
                 return this;
             }
 
-            class EmptyDisposable : IDisposable
+
+            public void InsertSequencePoint(IFileSource file, int line, int position)
             {
-                public void Dispose()
-                {
-                    
-                }
-            }
-            public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
-            {
-                return new EmptyDisposable();
             }
 
             public IXamlXEmitter Emit(OpCode code, IXamlXType type)
