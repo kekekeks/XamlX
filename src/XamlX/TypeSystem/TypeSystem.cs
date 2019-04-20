@@ -119,7 +119,7 @@ namespace XamlX.TypeSystem
         IXamlILEmitter MarkLabel(IXamlLabel label);
         IXamlILEmitter Emit(OpCode code, IXamlLabel label);
         IXamlILEmitter Emit(OpCode code, IXamlLocal local);
-        IDisposable BeginDebugBlock(IFileSource file, int line, int position);
+        void InsertSequencePoint(IFileSource file, int line, int position);
     }
 
     public interface IFileSource
