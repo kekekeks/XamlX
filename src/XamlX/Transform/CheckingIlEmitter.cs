@@ -216,6 +216,11 @@ namespace XamlX.Transform
             return this;
         }
 
+        public IDisposable BeginDebugBlock(IFileSource file, int line, int position)
+        {
+            return _inner.BeginDebugBlock(file, line, position);
+        }
+
         public void Check(int expectedBalance)
         {
             if (expectedBalance != StackBalance && !_hasBranches)

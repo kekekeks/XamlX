@@ -69,7 +69,7 @@ namespace XamlParserTests
             compiler.Transform(parsed);
             compiler.Compile(parsed, builder, context, "Populate", "Build",
                 "XamlXNamespaceInfo",
-                "http://example.com/");
+                "http://example.com/", null);
             return parsed;
         }
         static object s_asmLock = new object();

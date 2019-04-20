@@ -72,7 +72,9 @@ namespace XamlX.Transform
             doc.Root = root;
         }
 
-        XamlEmitContext InitCodeGen(Func<string, IXamlType, IXamlTypeBuilder> createSubType,
+        XamlEmitContext InitCodeGen(
+            IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder> createSubType,
             IXamlILEmitter codeGen, XamlContext context, bool needContextLocal)
         {
             IXamlLocal contextLocal = null;
@@ -87,15 +89,17 @@ namespace XamlX.Transform
                 codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlEmitContext(codeGen, _configuration, context, contextLocal, createSubType, Emitters);
+            var emitContext = new XamlEmitContext(codeGen, _configuration, context, contextLocal, createSubType, file, Emitters);
             return emitContext;
         }
         
-        void CompileBuild(IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder> createSubType,
+        void CompileBuild(
+            IFileSource fileSource,
+            IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder> createSubType,
             IXamlILEmitter codeGen, XamlContext context, IXamlMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
-            var emitContext = InitCodeGen(createSubType, codeGen, context, needContextLocal);
+            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, needContextLocal);
 
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
@@ -113,9 +117,9 @@ namespace XamlX.Transform
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
 
-        void CompilePopulate(IXamlAstManipulationNode manipulation, Func<string, IXamlType, IXamlTypeBuilder> createSubType, IXamlILEmitter codeGen, XamlContext context)
+        void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation, Func<string, IXamlType, IXamlTypeBuilder> createSubType, IXamlILEmitter codeGen, XamlContext context)
         {
-            var emitContext = InitCodeGen(createSubType, codeGen, context, true);
+            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, true);
 
             codeGen
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
@@ -133,9 +137,9 @@ namespace XamlX.Transform
                 _configuration.TypeMappings);
         }
         
-        public void Compile(XamlDocument doc, IXamlTypeBuilder typeBuilder, IXamlType contextType,
+        public void Compile( XamlDocument doc, IXamlTypeBuilder typeBuilder, IXamlType contextType,
             string populateMethodName, string createMethodName, string namespaceInfoClassName,
-            string baseUri)
+            string baseUri, IFileSource fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlField>();
@@ -160,13 +164,13 @@ namespace XamlX.Transform
             var context = new XamlContext(contextType, rootGrp.Type.GetClrType(),
                 baseUri, staticProviders);
             
-            CompilePopulate(rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
+            CompilePopulate(fileSource, rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
 
             if (createMethodName != null)
             {
                 var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
                     new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-                CompileBuild(rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
+                CompileBuild(fileSource, rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
             }
 
             namespaceInfoBuilder?.CreateType();

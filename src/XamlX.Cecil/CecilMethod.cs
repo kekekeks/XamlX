@@ -69,7 +69,7 @@ namespace XamlX.TypeSystem
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ?? (_generator = new CecilEmitter(TypeSystem, Definition.Body));
+                _generator ?? (_generator = new CecilEmitter(TypeSystem, Definition));
         }
 
         [DebuggerDisplay("{" + nameof(Reference) + "}")]

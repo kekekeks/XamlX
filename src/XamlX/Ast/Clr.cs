@@ -402,7 +402,7 @@ namespace XamlX.Ast
             }, "Build", true, true, false);
             CompileBuilder(new XamlEmitContext(buildMethod.Generator, context.Configuration,
                 context.RuntimeContext, buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                (s, type) => subType.DefineSubType(type, s, false), context.Emitters));
+                (s, type) => subType.DefineSubType(type, s, false), context.File, context.Emitters));
 
             var funcType = Type.GetClrType();
             codeGen
