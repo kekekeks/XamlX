@@ -198,6 +198,11 @@ namespace XamlIl.TypeSystem
 
                 public void Create(Instruction instruction)
                 {
+                    // Step into doesn't work for methods without sequence points in the first instruction
+                    if (!_parent._method.DebugInformation.HasSequencePoints
+                        && _parent._body.Instructions.Count != 0)
+                        instruction = _parent._body.Instructions.First();
+                    
                     var dbg = _parent._method.DebugInformation;
                     if (dbg.Scope == null)
                     {
