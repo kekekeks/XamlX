@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -58,6 +59,7 @@ namespace XamlX.TypeSystem
             
             private readonly MethodBody _body;
             private readonly MethodDefinition _method;
+            private CecilDebugPoint _pendingDebugPoint;
             private CecilDebugPoint _lastDebugPoint;
             public CecilEmitter(IXamlTypeSystem typeSystem, MethodDefinition method)
             {
@@ -72,10 +74,10 @@ namespace XamlX.TypeSystem
             IXamlILEmitter Emit(Instruction i)
             {
                 _body.Instructions.Add(i);
-                if (_lastDebugPoint != null)
+                if (_pendingDebugPoint != null)
                 {
-                    _lastDebugPoint.Create(i);
-                    _lastDebugPoint = null;
+                    _pendingDebugPoint.Create(i);
+                    _pendingDebugPoint = null;
                 }
                 foreach (var ml in _markedLabels)
                 {
@@ -182,16 +184,16 @@ namespace XamlX.TypeSystem
             class CecilDebugPoint
             {
                 private readonly CecilEmitter _parent;
-                private readonly Document _doc;
-                private readonly int _line;
-                private readonly int _position;
+                public DocumentHelper Document { get; }
+                public int Line { get; }
+                public int Position { get; }
 
-                public CecilDebugPoint(CecilEmitter parent, Document doc, int line, int position)
+                public CecilDebugPoint(CecilEmitter parent, DocumentHelper document, int line, int position)
                 {
                     _parent = parent;
-                    _doc = doc;
-                    _line = line;
-                    _position = position;
+                    Document = document;
+                    Line = line;
+                    Position = position;
                 }
 
                 public void Create(Instruction instruction)
@@ -206,34 +208,49 @@ namespace XamlX.TypeSystem
                         };
                     }
 
-                    var sp = new SequencePoint(instruction, _doc)
+                    var realLine = Line - 1;
+                    var endColumn = Position;
+                    if (realLine<Document.Lines.Count)
                     {
-                        StartLine = _line,
-                        StartColumn = _position,
-                        EndLine = _line,
-                        EndColumn = _position + 1
+                        var lineString = Document.Lines[realLine];
+                        for (; endColumn < lineString.Length; endColumn++)
+                        {
+                            var ch = lineString[endColumn];
+                            if (ch == ':' || char.IsDigit(ch) || char.IsLetter(ch))
+                                continue;
+                            break;
+                        }
+                    }
+
+                    endColumn++;
+                    
+                    var sp = new SequencePoint(instruction, Document.Document)
+                    {
+                        StartLine = Line,
+                        StartColumn = Position,
+                        EndLine = Line,
+                        EndColumn = endColumn
                     };
                     dbg.SequencePoints.Add(sp);
                     
                 }
             }
             
-            static ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>
-                _documents = new ConditionalWeakTable<AssemblyDefinition, Dictionary<string, Document>>();
-            
-            public void InsertSequencePoint(IFileSource file, int line, int position)
+            static ConditionalWeakTable<AssemblyDefinition, Dictionary<string, DocumentHelper>>
+                _documents = new ConditionalWeakTable<AssemblyDefinition, Dictionary<string, DocumentHelper>>();
+
+            class DocumentHelper
             {
-                if (!_documents.TryGetValue(_method.Module.Assembly, out var documents))
-                    _documents.Add(_method.Module.Assembly, documents = new Dictionary<string, Document>());
-                
-                
-                if (!documents.TryGetValue(file.FilePath, out var doc))
+                public Document Document { get; }
+                public List<string> Lines { get; } = new List<string>();
+                public DocumentHelper(IFileSource file)
                 {
+                    var data = file.FileContents;
                     byte[] hash;
                     using (var sha1 = SHA1.Create())
-                        hash = sha1.ComputeHash(file.FileContents);
+                        hash = sha1.ComputeHash(data);
                     
-                    documents[file.FilePath] = doc = new Document(file.FilePath)
+                    Document = new Document(file.FilePath)
                     {
                         LanguageGuid = LanguageGuid,
                         LanguageVendorGuid = LanguageVendorGuid,
@@ -241,10 +258,30 @@ namespace XamlX.TypeSystem
                         HashAlgorithm = DocumentHashAlgorithm.SHA1,
                         Hash = hash,
                     };
+                    var r = new StreamReader(new MemoryStream(data));
+                    string l;
+                    while ((l = r.ReadLine()) != null)
+                        Lines.Add(l);
+                }
+            }
+            
+            public void InsertSequencePoint(IFileSource file, int line, int position)
+            {
+                if (!_documents.TryGetValue(_method.Module.Assembly, out var documents))
+                    _documents.Add(_method.Module.Assembly, documents = new Dictionary<string, DocumentHelper>());
+                
+                if (!documents.TryGetValue(file.FilePath, out var doc))
+                {
+                    documents[file.FilePath] = doc = new DocumentHelper(file);
                 }
 
-                if (_lastDebugPoint == null)
-                    _lastDebugPoint = new CecilDebugPoint(this, doc, line, position);
+                if (_pendingDebugPoint == null)
+                {
+                    if (_lastDebugPoint == null ||
+                        !(_lastDebugPoint.Document == doc && _lastDebugPoint.Line == line &&
+                          _lastDebugPoint.Position == position))
+                        _pendingDebugPoint = _lastDebugPoint = new CecilDebugPoint(this, doc, line, position);
+                }
             }
         }
     }
