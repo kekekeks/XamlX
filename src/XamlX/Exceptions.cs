@@ -1,17 +1,15 @@
 using System;
+using System.Xml;
 using XamlX.Ast;
 
 namespace XamlX
 {
-    public class XamlXParseException : Exception
+    public class XamlXParseException : XmlException
     {
-        public int Line { get; }
-        public int Position { get; }
-        
-        public XamlXParseException(string message, int line, int position) : base($"{message} (line {line} position {position})")
+        public XamlXParseException(string message, int line, int position) : base(
+            $"{message} (line {line} position {position})",
+            null, line, position)
         {
-            Line = line;
-            Position = position;
         }
 
         public XamlXParseException(string message, IXamlXLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
