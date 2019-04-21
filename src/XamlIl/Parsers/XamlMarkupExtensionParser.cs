@@ -165,6 +165,11 @@ namespace XamlIl.Parsers
                         throw new ParseException($"{ch} is not valid at the current state", c);
                     else if (ch == '=')
                         state = ParserState.ParsingNamedArgumentValue;
+                    else if(string.IsNullOrEmpty(argumentName)
+                        && (ch== ',' || char.IsWhiteSpace(ch)))
+                    {
+                        // Do nothing, it's whitespace
+                    }
                     else
                         argumentName += ch;
                 }   
