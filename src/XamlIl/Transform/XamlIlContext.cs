@@ -355,14 +355,18 @@ namespace XamlIl.Transform
                 .Emit(OpCodes.Stfld, staticProvidersField);
             if (baseUriField != null)
             {
+                var noUri = ctor.Generator.DefineLabel();
                 ctor.Generator
+                    .Emit(OpCodes.Ldarg_3)
+                    .Brfalse(noUri)
                     .Emit(OpCodes.Ldarg_0)
                     .Emit(OpCodes.Ldarg_3)
                     .Newobj(systemUri.FindConstructor(new List<IXamlIlType>
                     {
                         typeSystem.GetType("System.String")
                     }))
-                    .Emit(OpCodes.Stfld, baseUriField);
+                    .Emit(OpCodes.Stfld, baseUriField)
+                    .MarkLabel(noUri);
             }
 
             foreach (var feature in ctorCallbacks)
