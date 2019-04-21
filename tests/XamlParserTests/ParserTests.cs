@@ -24,7 +24,7 @@ namespace XamlParserTests
             var root = XDocumentXamlXParser.Parse(
                 @"
 <Root xmlns='rootns' xmlns:t='testns' xmlns:d='directive' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
-    <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2}'
+    <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2, Prop3={Extension}, Prop4=test3}'
         Other.Prop='{}Not extension'
         Prop1='123' 
         Root.AttachedProp='AttachedValue'
@@ -86,6 +86,12 @@ namespace XamlParserTests
                                             new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
                                                     extensionType, "Prop2", extensionType),
                                                 new XamlXAstTextNode(ni, "test2")),
+                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                    extensionType, "Prop3", extensionType),
+                                                new XamlXAstObjectNode(ni, extensionType)),
+                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                    extensionType, "Prop4", extensionType),
+                                                new XamlXAstTextNode(ni, "test3")),
                                         }
                                     }),                             
                                 //Other.Prop='{}Not extension'
