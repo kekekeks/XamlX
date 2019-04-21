@@ -1,17 +1,15 @@
 using System;
+using System.Xml;
 using XamlIl.Ast;
 
 namespace XamlIl
 {
-    public class XamlIlParseException : Exception
+    public class XamlIlParseException : XmlException
     {
-        public int Line { get; }
-        public int Position { get; }
-        
-        public XamlIlParseException(string message, int line, int position) : base($"{message} (line {line} position {position})")
+        public XamlIlParseException(string message, int line, int position) : base(
+            $"{message} (line {line} position {position})",
+            null, line, position)
         {
-            Line = line;
-            Position = position;
         }
 
         public XamlIlParseException(string message, IXamlIlLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
