@@ -11,12 +11,14 @@ namespace XamlX.Ast
     {
         public IXamlXType Type { get; }
 
-        public XamlXAstClrTypeReference(IXamlXLineInfo lineInfo, IXamlXType type) : base(lineInfo)
+        public XamlXAstClrTypeReference(IXamlXLineInfo lineInfo, IXamlXType type, bool isMarkupExtension) : base(lineInfo)
         {
             Type = type;
+            IsMarkupExtension = isMarkupExtension;
         }
 
         public override string ToString() => Type.GetFqn();
+        public bool IsMarkupExtension { get; }
     }
 
     public class XamlXAstClrPropertyReference : XamlXAstNode, IXamlXAstPropertyReference
@@ -105,7 +107,7 @@ namespace XamlX.Ast
             IEnumerable<IXamlXAstValueNode> args)
             : base(lineInfo, method, args)
         {
-            Type = new XamlXAstClrTypeReference(lineInfo, method.ReturnType);
+            Type = new XamlXAstClrTypeReference(lineInfo, method.ReturnType, false);
         }
 
         public XamlXStaticOrTargetedReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method,
@@ -171,10 +173,10 @@ namespace XamlX.Ast
     public class XamlXAstNewClrObjectNode : XamlXAstNode, IXamlXAstValueNode
     {
         public XamlXAstNewClrObjectNode(IXamlXLineInfo lineInfo,
-            IXamlXType type, IXamlXConstructor ctor,
+            XamlXAstClrTypeReference type, IXamlXConstructor ctor,
             List<IXamlXAstValueNode> arguments) : base(lineInfo)
         {
-            Type = new XamlXAstClrTypeReference(lineInfo, type);
+            Type = type;
             Constructor = ctor;
             Arguments = arguments;
         }
@@ -337,7 +339,7 @@ namespace XamlX.Ast
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
-            Type = new XamlXAstClrTypeReference(value, funcType);
+            Type = new XamlXAstClrTypeReference(value, funcType, false);
         }
 
         public override void VisitChildren(Visitor visitor)

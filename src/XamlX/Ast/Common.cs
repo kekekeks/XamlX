@@ -87,7 +87,7 @@ namespace XamlX.Ast
     
     public interface IXamlXAstTypeReference : IXamlXAstNode
     {
-        
+        bool IsMarkupExtension { get; }
     }
     
     
@@ -102,6 +102,13 @@ namespace XamlX.Ast
         {
             if (r is XamlXAstClrTypeReference clr)
                 return clr.Type;
+            throw new XamlXParseException($"Unable to convert {r} to CLR type", r);
+        }
+        
+        public static XamlXAstClrTypeReference GetClrTypeReference(this IXamlXAstTypeReference r)
+        {
+            if (r is XamlXAstClrTypeReference clr)
+                return clr;
             throw new XamlXParseException($"Unable to convert {r} to CLR type", r);
         }
         

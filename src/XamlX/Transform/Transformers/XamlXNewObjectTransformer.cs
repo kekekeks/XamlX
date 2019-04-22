@@ -85,7 +85,7 @@ namespace XamlX.Transform.Transformers
                 var ctor = TransformArgumentsAndGetConstructor(context, ni);
                 
                 return new XamlXValueWithManipulationNode(ni,
-                    new XamlXAstNewClrObjectNode(ni, ni.Type.GetClrType(), ctor, ni.Arguments),
+                    new XamlXAstNewClrObjectNode(ni, ni.Type.GetClrTypeReference(), ctor, ni.Arguments),
                     new XamlXObjectInitializationNode(ni,
                         new XamlXManipulationGroupNode(ni)
                         {

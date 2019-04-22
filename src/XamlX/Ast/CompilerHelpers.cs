@@ -7,13 +7,15 @@ namespace XamlX.Ast
 {
     public class XamlXAstCompilerLocalNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
+        private XamlXAstClrTypeReference _typeReference;
         public IXamlXType Type { get; }
-        public XamlXAstCompilerLocalNode(IXamlXLineInfo lineInfo, IXamlXType type) : base(lineInfo)
+        public XamlXAstCompilerLocalNode(IXamlXLineInfo lineInfo, XamlXAstClrTypeReference type) : base(lineInfo)
         {
-            Type = type;
+            Type = type.Type;
+            _typeReference = type;
         }
 
-        IXamlXAstTypeReference IXamlXAstValueNode.Type => new XamlXAstClrTypeReference(this, Type);
+        IXamlXAstTypeReference IXamlXAstValueNode.Type => _typeReference;
         public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
         {
             context.LdLocal(this, codeGen);
@@ -126,7 +128,7 @@ namespace XamlX.Ast
     {
         public XamlXAstContextLocalNode(IXamlXLineInfo lineInfo, IXamlXType type) : base(lineInfo)
         {
-            Type = new XamlXAstClrTypeReference(this, type);
+            Type = new XamlXAstClrTypeReference(this, type, false);
         }
 
         public IXamlXAstTypeReference Type { get; }
