@@ -45,6 +45,11 @@ namespace XamlX.TypeSystem
         IXamlType DeclaringType { get; }
     }
 
+    public interface IXamlCustomEmitMethod : IXamlMethod
+    {
+        void EmitCall(IXamlILEmitter emitter);
+    }
+
     public interface IXamlMember
     {
         string Name { get; }
@@ -331,7 +336,11 @@ namespace XamlX.TypeSystem
 
         public static IXamlILEmitter EmitCall(this IXamlILEmitter emitter, IXamlMethod method, bool swallowResult = false)
         {
-            emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+            if(method is IXamlCustomEmitMethod custom)
+                custom.EmitCall(emitter);
+            else
+                emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+            
             if (swallowResult && !(method.ReturnType.Namespace == "System" && method.ReturnType.Name == "Void"))
                 emitter.Emit(OpCodes.Pop);
             return emitter;
@@ -357,7 +366,16 @@ namespace XamlX.TypeSystem
                 foreach (var p in t.BaseType.GetAllProperties())
                     yield return p;
         }
-        
+
+        public static IEnumerable<IXamlField> GetAllFields(this IXamlType t)
+        {
+            foreach (var p in t.Fields)
+                yield return p;
+            if (t.BaseType != null)
+                foreach (var p in t.BaseType.GetAllFields())
+                    yield return p;
+        }
+
         public static IEnumerable<IXamlEventInfo> GetAllEvents(this IXamlType t)
         {
             foreach (var p in t.Events)
