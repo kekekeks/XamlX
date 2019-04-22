@@ -107,11 +107,28 @@ namespace XamlIl.Parsers
                 argument = null;
                 argumentName = null;
             }
+
+            bool insideEscapeSequence = false;
             
             // We've already consumed the first '{' token by creating the root node
             for (var c = 1; c < ext.Length; c++)
             {
                 var ch = ext[c];
+                var escaped = false;
+
+                if (insideEscapeSequence)
+                {
+                    escaped = true;
+                    insideEscapeSequence = false;
+                }
+                
+                if (!escaped && ch == '\\')
+                {
+                    insideEscapeSequence = true;
+                    continue;
+                }
+                
+                
                 if (state == ParserState.RootEnd)
                 {
                     if (!char.IsWhiteSpace(ch))
@@ -119,9 +136,9 @@ namespace XamlIl.Parsers
                 }
                 else if (state == ParserState.ParsingNodeName)
                 {
-                    if (ch == '{')
+                    if (!escaped && ch == '{')
                         throw new ParseException("{ is not valid at the current state", c);
-                    else if (ch == '}')
+                    else if (!escaped && ch == '}')
                     {
                         EndNode();
                     }
@@ -136,18 +153,18 @@ namespace XamlIl.Parsers
                 else if(state == ParserState.ParsingPositionalArgument 
                         || state == ParserState.ParsingNamedArgumentValue)
                 {
-                    if (ch == '{' && string.IsNullOrWhiteSpace(argument)) 
+                    if (!escaped && ch == '{' && string.IsNullOrWhiteSpace(argument)) 
                         NewNode();
-                    else if (ch == '}')
+                    else if (!escaped && ch == '}')
                     {
                         FinishStringArgument();
                         EndNode();
                     }
-                    else if (ch == ',')
+                    else if (!escaped && ch == ',')
                     {
                         FinishStringArgument();
                     }
-                    else if (ch == '=' && state == ParserState.ParsingPositionalArgument)
+                    else if (!escaped && ch == '=' && state == ParserState.ParsingPositionalArgument)
                     {
                         argumentName = argument;
                         argument = null;
@@ -159,13 +176,13 @@ namespace XamlIl.Parsers
                 else if(state == ParserState.ParsingNamedArgumentName)
                 {
                     // Either after , or } from the previous argument value
-                    if (argumentName == null && ch == '}')
+                    if (argumentName == null && !escaped && ch == '}')
                     {
                         EndNode();
                     }
-                    else if (ch == '{' || ch == '}')
+                    else if (!escaped && (ch == '{' || ch == '}'))
                         throw new ParseException($"{ch} is not valid at the current state", c);
-                    else if (ch == '=')
+                    else if (!escaped && ch == '=')
                         state = ParserState.ParsingNamedArgumentValue;
                     else if(string.IsNullOrEmpty(argumentName)
                         && (ch== ',' || char.IsWhiteSpace(ch)))
