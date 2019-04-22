@@ -105,7 +105,7 @@ namespace XamlX.TypeSystem
                 
                 if (to.IsValueType)
                 {
-                    if (to.GenericTypeDefinition.Equals(context.Configuration.WellKnownTypes.NullableT))
+                    if (to.GenericTypeDefinition?.Equals(context.Configuration.WellKnownTypes.NullableT) == true)
                     {
                         using (var loc = context.GetLocal(to))
                             ld(false)
