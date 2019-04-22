@@ -78,11 +78,7 @@ namespace XamlParserTests
         public void Object_Should_Be_Casted_To_String()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
-<MarkupExtensionTestsClass xmlns='test'>
-    <MarkupExtensionTestsClass.StringProperty>
-        <ObjectTestExtension Returned='test'/>
-    </MarkupExtensionTestsClass.StringProperty>
-</MarkupExtensionTestsClass>");
+<MarkupExtensionTestsClass xmlns='test' StringProperty='{ObjectTestExtension Returned=test}'/>");
             Assert.Equal("test", res.StringProperty);
         }
         
@@ -110,7 +106,7 @@ namespace XamlParserTests
             Assert.Equal(123, res.NullableIntProperty);
         }
 
-        [Fact]
+        [Fact(Skip = "Markup extensions shouldn't work with <> syntax")]
         public void Extensions_Should_Be_Able_To_Populate_Content_Lists()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
@@ -121,17 +117,13 @@ namespace XamlParserTests
             Assert.Equal(new[] {123, 123}, res.IntList);
         }
         
-        [Fact]
+        [Fact(Skip = "Markup extensions shouldn't work with <> syntax")]
         public void Extensions_Should_Be_Able_To_Populate_Lists()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
-<MarkupExtensionTestsClass xmlns='test'>
-    <MarkupExtensionTestsClass.IntList2>
-        <ServiceProviderValue/>
-        <ServiceProviderValue/>
-    </MarkupExtensionTestsClass.IntList2> 
+<MarkupExtensionTestsClass xmlns='test' IntList2='{ServiceProviderValue}'>
 </MarkupExtensionTestsClass>", CreateValueProvider(123));
-            Assert.Equal(new[] {123, 123}, res.IntList2);
+            Assert.Equal(new[] {123}, res.IntList2);
         }
 
         [Fact]

@@ -80,7 +80,7 @@ namespace XamlIl.Ast
         {
             Text = text;
             if (type != null)
-                Type = new XamlIlAstClrTypeReference(lineInfo, type);
+                Type = new XamlIlAstClrTypeReference(lineInfo, type, false);
             else
                 Type = new XamlIlAstXmlTypeReference(lineInfo, XamlNamespaces.Xaml2006, "String");
         }

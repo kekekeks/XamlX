@@ -18,6 +18,7 @@ namespace XamlIl.Transform
             // Markup extension ?
             if (contentProperty.Setter?.IsPublic == true
                      && count == 1
+                     && getNode(0).Type.IsMarkupExtension
                      && TryConvertMarkupExtension(context, getNode(0),
                          contentProperty, out var me))
                 setNode(0, me);
@@ -211,6 +212,8 @@ namespace XamlIl.Transform
             IXamlIlAstValueNode node, IXamlIlProperty prop, out XamlIlMarkupExtensionNode o)
         {
             o = null;
+            if (!node.Type.IsMarkupExtension)
+                return false;
             var nodeType = node.Type.GetClrType();
             var candidates = nodeType.Methods.Where(m =>
                     (m.Name == "ProvideValue" || m.Name == "ProvideTypedValue") && m.IsPublic && !m.IsStatic)
@@ -279,8 +282,8 @@ namespace XamlIl.Transform
 
                 if (type.FullName == "System.Type")
                 {
-                    var resolvedType = XamlIlTypeReferenceResolver.ResolveType(context, tn.Text, tn, true);
-                    rv = new XamlIlTypeExtensionNode(tn, new XamlIlAstClrTypeReference(tn, resolvedType), type);
+                    var resolvedType = XamlIlTypeReferenceResolver.ResolveType(context, tn.Text, false, tn, true);
+                    rv = new XamlIlTypeExtensionNode(tn, resolvedType, type);
                     return true;
                 }
 
@@ -347,12 +350,12 @@ namespace XamlIl.Transform
                                     new[]
                                     {
                                         new XamlIlAstNewClrObjectNode(node,
-                                            converterType, null,
+                                            new XamlIlAstClrTypeReference(node, converterType, false), null,
                                             new List<IXamlIlAstValueNode>()),
                                         new XamlIlAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
                                         CreateInvariantCulture(),
                                         node
-                                    }), new XamlIlAstClrTypeReference(node, type)));
+                                    }), new XamlIlAstClrTypeReference(node, type, false)));
                         return true;
                     }
                 }

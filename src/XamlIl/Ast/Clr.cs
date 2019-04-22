@@ -11,12 +11,14 @@ namespace XamlIl.Ast
     {
         public IXamlIlType Type { get; }
 
-        public XamlIlAstClrTypeReference(IXamlIlLineInfo lineInfo, IXamlIlType type) : base(lineInfo)
+        public XamlIlAstClrTypeReference(IXamlIlLineInfo lineInfo, IXamlIlType type, bool isMarkupExtension) : base(lineInfo)
         {
             Type = type;
+            IsMarkupExtension = isMarkupExtension;
         }
 
         public override string ToString() => Type.GetFqn();
+        public bool IsMarkupExtension { get; }
     }
 
     public class XamlIlAstClrPropertyReference : XamlIlAstNode, IXamlIlAstPropertyReference
@@ -105,7 +107,7 @@ namespace XamlIl.Ast
             IEnumerable<IXamlIlAstValueNode> args)
             : base(lineInfo, method, args)
         {
-            Type = new XamlIlAstClrTypeReference(lineInfo, method.ReturnType);
+            Type = new XamlIlAstClrTypeReference(lineInfo, method.ReturnType, false);
         }
 
         public XamlIlStaticOrTargetedReturnMethodCallNode(IXamlIlLineInfo lineInfo, IXamlIlMethod method,
@@ -171,10 +173,10 @@ namespace XamlIl.Ast
     public class XamlIlAstNewClrObjectNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public XamlIlAstNewClrObjectNode(IXamlIlLineInfo lineInfo,
-            IXamlIlType type, IXamlIlConstructor ctor,
+            XamlIlAstClrTypeReference type, IXamlIlConstructor ctor,
             List<IXamlIlAstValueNode> arguments) : base(lineInfo)
         {
-            Type = new XamlIlAstClrTypeReference(lineInfo, type);
+            Type = type;
             Constructor = ctor;
             Arguments = arguments;
         }
@@ -337,7 +339,7 @@ namespace XamlIl.Ast
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
-            Type = new XamlIlAstClrTypeReference(value, funcType);
+            Type = new XamlIlAstClrTypeReference(value, funcType, false);
         }
 
         public override void VisitChildren(Visitor visitor)

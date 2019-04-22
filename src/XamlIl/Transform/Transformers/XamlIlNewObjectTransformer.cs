@@ -85,7 +85,7 @@ namespace XamlIl.Transform.Transformers
                 var ctor = TransformArgumentsAndGetConstructor(context, ni);
                 
                 return new XamlIlValueWithManipulationNode(ni,
-                    new XamlIlAstNewClrObjectNode(ni, ni.Type.GetClrType(), ctor, ni.Arguments),
+                    new XamlIlAstNewClrObjectNode(ni, ni.Type.GetClrTypeReference(), ctor, ni.Arguments),
                     new XamlIlObjectInitializationNode(ni,
                         new XamlIlManipulationGroupNode(ni)
                         {
