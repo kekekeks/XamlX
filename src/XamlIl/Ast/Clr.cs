@@ -253,6 +253,7 @@ namespace XamlIl.Ast
     {
         string Name { get; }
         IXamlIlType ReturnType { get; }
+        IXamlIlType DeclaringType { get; }
         IReadOnlyList<IXamlIlType> ParametersWithThis { get; }
         void Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen, bool swallowResult);
     }
@@ -271,6 +272,7 @@ namespace XamlIl.Ast
 
         public string Name => _method.Name;
         public IXamlIlType ReturnType { get; }
+        public IXamlIlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlIlType> ParametersWithThis { get; }
         public void Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen, bool swallowResult)
         {
@@ -292,6 +294,7 @@ namespace XamlIl.Ast
 
         public string Name => _method.Name;
         public IXamlIlType ReturnType => _method.ReturnType;
+        public IXamlIlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlIlType> ParametersWithThis { get; }
         public void Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen, bool swallowResult)
         {
