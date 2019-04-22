@@ -208,7 +208,7 @@ namespace XamlIl.Parsers
                 if (node is XElement el)
                     return ParseNewInstance(el, false);
                 if (node is XText text)
-                    return new XamlIlAstTextNode(node.AsLi(), text.Value);
+                    return new XamlIlAstTextNode(node.AsLi(), text.Value.Trim());
                 return null;
             }
 
