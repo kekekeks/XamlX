@@ -42,7 +42,9 @@ namespace XamlX.Parsers
                     return new XamlAstTextNode(info, s);
                 var n = (Node) node;
 
-                var rv = new XamlAstObjectNode(info, typeResolver(n.Name));
+                var type = typeResolver(n.Name);
+                type.IsMarkupExtension = true;
+                var rv = new XamlAstObjectNode(info, type);
                 foreach (var pa in n.PositionalArguments)
                     rv.Arguments.Add(Convert(pa));
                 foreach (var arg in n.NamedArguments)

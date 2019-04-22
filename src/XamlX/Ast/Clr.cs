@@ -11,12 +11,14 @@ namespace XamlX.Ast
     {
         public IXamlType Type { get; }
 
-        public XamlAstClrTypeReference(IXamlLineInfo lineInfo, IXamlType type) : base(lineInfo)
+        public XamlAstClrTypeReference(IXamlLineInfo lineInfo, IXamlType type, bool isMarkupExtension) : base(lineInfo)
         {
             Type = type;
+            IsMarkupExtension = isMarkupExtension;
         }
 
         public override string ToString() => Type.GetFqn();
+        public bool IsMarkupExtension { get; }
     }
 
     public class XamlAstClrPropertyReference : XamlAstNode, IXamlAstPropertyReference
@@ -105,7 +107,7 @@ namespace XamlX.Ast
             IEnumerable<IXamlAstValueNode> args)
             : base(lineInfo, method, args)
         {
-            Type = new XamlAstClrTypeReference(lineInfo, method.ReturnType);
+            Type = new XamlAstClrTypeReference(lineInfo, method.ReturnType, false);
         }
 
         public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method,
@@ -171,10 +173,10 @@ namespace XamlX.Ast
     public class XamlAstNewClrObjectNode : XamlAstNode, IXamlAstValueNode
     {
         public XamlAstNewClrObjectNode(IXamlLineInfo lineInfo,
-            IXamlType type, IXamlConstructor ctor,
+            XamlAstClrTypeReference type, IXamlConstructor ctor,
             List<IXamlAstValueNode> arguments) : base(lineInfo)
         {
-            Type = new XamlAstClrTypeReference(lineInfo, type);
+            Type = type;
             Constructor = ctor;
             Arguments = arguments;
         }
@@ -337,7 +339,7 @@ namespace XamlX.Ast
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
-            Type = new XamlAstClrTypeReference(value, funcType);
+            Type = new XamlAstClrTypeReference(value, funcType, false);
         }
 
         public override void VisitChildren(Visitor visitor)

@@ -11,7 +11,7 @@ namespace XamlX.Ast
     {
         public XamlNullExtensionNode(IXamlLineInfo lineInfo) : base(lineInfo)
         {
-            Type = new XamlAstClrTypeReference(lineInfo, XamlPseudoType.Null);
+            Type = new XamlAstClrTypeReference(lineInfo, XamlPseudoType.Null, false);
         }
 
         public IXamlAstTypeReference Type { get; }
@@ -30,7 +30,7 @@ namespace XamlX.Ast
             IXamlType systemType) : base(lineInfo)
         {
             _systemType = systemType;
-            Type = new XamlAstClrTypeReference(this, systemType);
+            Type = new XamlAstClrTypeReference(this, systemType, false);
             Value = value;
         }
 
@@ -118,7 +118,7 @@ namespace XamlX.Ast
             return XamlPseudoType.Unknown;
         }
         
-        public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveReturnType());
+        public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveReturnType(), false);
     }
 
     public class XamlConstantNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
@@ -130,7 +130,7 @@ namespace XamlX.Ast
             if (!constant.GetType().IsPrimitive)
                 throw new ArgumentException($"Don't know how to emit {constant.GetType()} constant");
             Constant = constant;
-            Type = new XamlAstClrTypeReference(lineInfo, type);
+            Type = new XamlAstClrTypeReference(lineInfo, type, false);
 
         }
 
@@ -185,7 +185,7 @@ namespace XamlX.Ast
         {
             DelegateType = delegateType;
             Method = method;
-            Type = new XamlAstClrTypeReference(value, DelegateType);
+            Type = new XamlAstClrTypeReference(value, DelegateType, false);
         }
 
         public override IXamlAstTypeReference Type { get; }

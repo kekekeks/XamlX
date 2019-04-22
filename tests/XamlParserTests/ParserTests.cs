@@ -48,7 +48,10 @@ namespace XamlParserTests
             var subChildType = new XamlAstXmlTypeReference(ni, "rootns", "SubChild");
             var nsSubChildType = new XamlAstXmlTypeReference(ni, "testns", "SubChild");
             var namespacedType = new XamlAstXmlTypeReference(ni, "testns", "Namespaced");
-            var extensionType = new XamlAstXmlTypeReference(ni, "rootns", "Extension");
+            var extensionType = new XamlAstXmlTypeReference(ni, "rootns", "Extension")
+            {
+                IsMarkupExtension = true
+            };
 
             var other = new XamlDocument
             {
@@ -232,7 +235,10 @@ namespace XamlParserTests
             var parsed = XamlMarkupExtensionParser.Parse(ni, "{Binding }",
                 n => new XamlAstXmlTypeReference(ni, "", n));
             Helpers.StructDiff(parsed, new XamlAstObjectNode(new NullLineInfo(),
-                new XamlAstXmlTypeReference(ni, "", "Binding")));
+                new XamlAstXmlTypeReference(ni, "", "Binding")
+                {
+                    IsMarkupExtension = true
+                }));
         }
     }
 }

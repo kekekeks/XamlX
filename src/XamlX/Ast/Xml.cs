@@ -7,6 +7,7 @@ namespace XamlX.Ast
     {
         public string XmlNamespace { get; set; }
         public string Name { get; set; }
+        public bool IsMarkupExtension { get; set; }
         public List<XamlAstXmlTypeReference> GenericArguments { get; set; } = new List<XamlAstXmlTypeReference>();
 
         public XamlAstXmlTypeReference(IXamlLineInfo lineInfo, string xmlNamespace, string name,

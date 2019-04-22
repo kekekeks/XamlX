@@ -8,18 +8,23 @@ namespace XamlX.Transform.Transformers
 {
     public class XamlTypeReferenceResolver : IXamlAstTransformer
     {
-        public static IXamlType ResolveType(XamlAstTransformationContext context,
-            string xmlns, string name, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
+        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
+            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
             bool strict)
         {
             var targs = typeArguments
-                .Select(ta => ResolveType(context, ta.XmlNamespace, ta.Name, ta.GenericArguments, lineInfo, strict))
+                .Select(ta =>
+                    ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo, strict)
+                        ?.Type)
                 .ToList();
             
             IXamlType Attempt(Func<string, IXamlType> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
-                return cb(xname + "Extension" + suffix) ?? cb(xname + suffix);
+                IXamlType ares = null;
+                if (isMarkupExtension)
+                    ares = cb(xname + "Extension" + suffix);
+                return ares ?? cb(xname + suffix);
             }
             
             IXamlType found = null;
@@ -54,15 +59,15 @@ namespace XamlX.Transform.Transformers
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);
             if (found != null)
-                return found;
+                return new XamlAstClrTypeReference(lineInfo, found, isMarkupExtension); 
             if (strict)
                 throw new XamlParseException(
                     $"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
             return null;
         }
 
-        public static IXamlType ResolveType(XamlAstTransformationContext context,
-            string xmlName, IXamlLineInfo lineInfo,
+        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
+            string xmlName, bool isMarkupExtension, IXamlLineInfo lineInfo,
             bool strict)
         {
             var pair = xmlName.Split(new[] {':'}, 2);
@@ -75,26 +80,27 @@ namespace XamlX.Transform.Transformers
                 return null;
             }
 
-            return ResolveType(context, xmlns, name, new List<XamlAstXmlTypeReference>(), lineInfo, strict);
+            return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo, strict);
         }
 
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstXmlTypeReference xmlref)
             {
-                var type = ResolveType(context, xmlref, context.StrictMode);
-                if (type == null)
+                var resolved = ResolveType(context, xmlref, context.StrictMode);
+                if (resolved == null)
                     return node;
-                return new XamlAstClrTypeReference(node, type);
+                return resolved;
             }
 
             return node;
         }
 
-        public static IXamlType ResolveType(XamlAstTransformationContext context,
+        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
             XamlAstXmlTypeReference xmlref, bool strict)
         {
-            return ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.GenericArguments, xmlref, strict);
+            return ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.IsMarkupExtension,
+                xmlref.GenericArguments, xmlref, strict);
 
         }
     }
