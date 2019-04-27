@@ -221,6 +221,8 @@ namespace XamlX.Transform
             _inner.InsertSequencePoint(file, line, position);
         }
 
+        public XamlXLocalsPool LocalsPool => _inner.LocalsPool;
+
         public void Check(int expectedBalance)
         {
             if (expectedBalance != StackBalance && !_hasBranches)

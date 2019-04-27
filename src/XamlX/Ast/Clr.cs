@@ -307,7 +307,7 @@ namespace XamlX.Ast
 
             if (firstCast != -1)
             {
-                var locals = new Stack<XamlXEmitContext.PooledLocal>();
+                var locals = new Stack<XamlXLocalsPool.PooledLocal>();
                 for (var c = ParametersWithThis.Count - 1; c >= firstCast; c--)
                 {
                     codeGen.Castclass(_method.ParametersWithThis[c]);
