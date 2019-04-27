@@ -402,6 +402,7 @@ namespace XamlX.TypeSystem
             {
                 TypeSystem = system;
                 _ilg = ilg;
+                LocalsPool = new XamlLocalsPool(this);
             }
 
             public IXamlILEmitter Emit(OpCode code)
@@ -484,6 +485,8 @@ namespace XamlX.TypeSystem
             public void InsertSequencePoint(IFileSource file, int line, int position)
             {
             }
+
+            public XamlLocalsPool LocalsPool { get; }
 
             public IXamlILEmitter Emit(OpCode code, IXamlType type)
             {

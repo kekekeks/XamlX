@@ -125,6 +125,7 @@ namespace XamlX.TypeSystem
         IXamlILEmitter Emit(OpCode code, IXamlLabel label);
         IXamlILEmitter Emit(OpCode code, IXamlLocal local);
         void InsertSequencePoint(IFileSource file, int line, int position);
+        XamlLocalsPool LocalsPool { get; }
     }
 
     public interface IFileSource
