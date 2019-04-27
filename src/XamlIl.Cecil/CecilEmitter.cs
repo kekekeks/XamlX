@@ -66,6 +66,7 @@ namespace XamlIl.TypeSystem
                 _method = method;
                 _body = method.Body;
                 TypeSystem = typeSystem;
+                LocalsPool = new XamlIlLocalsPool(this);
             }
 
 
@@ -288,6 +289,8 @@ namespace XamlIl.TypeSystem
                         _pendingDebugPoint = _lastDebugPoint = new CecilDebugPoint(this, doc, line, position);
                 }
             }
+
+            public XamlIlLocalsPool LocalsPool { get; }
         }
     }
 }

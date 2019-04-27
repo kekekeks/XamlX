@@ -21,31 +21,6 @@ namespace XamlIl.Transform
         public Func<string, IXamlIlType, IXamlIlTypeBuilder> CreateSubType { get; }
         public IXamlIlEmitter Emitter { get; }
 
-        private readonly List<(IXamlIlType type, IXamlIlLocal local)> _localsPool =
-            new List<(IXamlIlType, IXamlIlLocal)>();
-
-        public sealed class PooledLocal : IDisposable
-        {
-            public IXamlIlLocal Local { get; private set; }
-            private readonly XamlIlEmitContext _parent;
-            private readonly IXamlIlType _type;
-
-            public PooledLocal(XamlIlEmitContext parent, IXamlIlType type, IXamlIlLocal local)
-            {
-                Local = local;
-                _parent = parent;
-                _type = type;
-            }
-
-            public void Dispose()
-            {
-                if (Local == null)
-                    return;
-                _parent._localsPool.Add((_type, Local));
-                Local = null;
-            }
-        }
-
         public XamlIlEmitContext(IXamlIlEmitter emitter, XamlIlTransformerConfiguration configuration,
             XamlIlContext runtimeContext, IXamlIlLocal contextLocal, 
             Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
@@ -76,20 +51,9 @@ namespace XamlIl.Transform
                 throw new XamlIlLoadException("Attempt to read uninitialized local variable", node);
         }
 
-        public PooledLocal GetLocal(IXamlIlType type)
+        public XamlIlLocalsPool.PooledLocal GetLocal(IXamlIlType type)
         {
-            for (var c = 0; c < _localsPool.Count; c++)
-            {
-                if (_localsPool[c].type.Equals(type))
-                {
-                    var rv = new PooledLocal(this, type, _localsPool[c].local);
-                    _localsPool.RemoveAt(c);
-                    return rv;
-                }
-            }
-
-            return new PooledLocal(this, type, Emitter.DefineLocal(type));
-
+            return Emitter.LocalsPool.GetLocal(type);
         }
         
         public XamlIlNodeEmitResult Emit(IXamlIlAstNode value, IXamlIlEmitter codeGen, IXamlIlType expectedType)
@@ -118,7 +82,7 @@ namespace XamlIl.Transform
 
                 if (!returnedType.Equals(expectedType))
                 {
-                    PooledLocal local = null;
+                    XamlIlLocalsPool.PooledLocal local = null;
                     // ReSharper disable once ExpressionIsAlwaysNull
                     // Value is assigned inside the closure in certain conditions
                     using (local)
