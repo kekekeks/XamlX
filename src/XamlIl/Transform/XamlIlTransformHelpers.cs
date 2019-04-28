@@ -208,6 +208,18 @@ namespace XamlIl.Transform
             return false;
         }
 
+        public static IEnumerable<IXamlIlMethod> GetMarkupExtensionProvideValueAlternatives(
+            XamlIlAstTransformationContext context,
+            IXamlIlType type)
+        {
+            var sp = context.Configuration.TypeMappings.ServiceProvider;
+            return type.FindMethods(m =>
+                (m.Name == "ProvideValue" || m.Name == "ProvideTypedValue") && m.IsPublic && !m.IsStatic
+                && (m.Parameters.Count == 0 || (m.Parameters.Count == 1 && m.Parameters[0].Equals(sp)))
+            );
+
+        }
+        
         public static bool TryConvertMarkupExtension(XamlIlAstTransformationContext context,
             IXamlIlAstValueNode node, IXamlIlProperty prop, out XamlIlMarkupExtensionNode o)
         {
@@ -215,9 +227,7 @@ namespace XamlIl.Transform
             if (!node.Type.IsMarkupExtension)
                 return false;
             var nodeType = node.Type.GetClrType();
-            var candidates = nodeType.Methods.Where(m =>
-                    (m.Name == "ProvideValue" || m.Name == "ProvideTypedValue") && m.IsPublic && !m.IsStatic)
-                .ToList();
+            var candidates = GetMarkupExtensionProvideValueAlternatives(context, nodeType).ToList();
             var so = context.Configuration.WellKnownTypes.Object;
             var sp = context.Configuration.TypeMappings.ServiceProvider;
 
