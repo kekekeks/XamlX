@@ -106,7 +106,7 @@ namespace XamlParserTests
             Assert.Equal(123, res.NullableIntProperty);
         }
 
-        [Fact(Skip = "Markup extensions shouldn't work with <> syntax")]
+        [Fact]
         public void Extensions_Should_Be_Able_To_Populate_Content_Lists()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
@@ -117,7 +117,7 @@ namespace XamlParserTests
             Assert.Equal(new[] {123, 123}, res.IntList);
         }
         
-        [Fact(Skip = "Markup extensions shouldn't work with <> syntax")]
+        [Fact]
         public void Extensions_Should_Be_Able_To_Populate_Lists()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
