@@ -280,6 +280,16 @@ namespace XamlIl.Transform
                 if (type.IsEnum)
                 {
                     var enumValue = type.Fields.FirstOrDefault(f => f.Name == tn.Text);
+                    if (enumValue == null && !string.IsNullOrWhiteSpace(tn.Text) &&
+                        long.TryParse(tn.Text, out var parsed))
+                    {
+                        var enumTypeName = type.GetEnumUnderlyingType().Name;
+                        var obj = enumTypeName == "Int32" || enumTypeName == "UInt32" ?
+                            unchecked((int)parsed) :
+                            (object)parsed;
+                        rv = new XamlIlConstantNode(node, type, obj);
+                        return true;
+                    }
                     if (enumValue != null)
                     {
                         rv = TypeSystemHelpers.GetLiteralFieldConstantNode(enumValue, node);
