@@ -18,7 +18,6 @@ namespace XamlIl.Transform
             // Markup extension ?
             if (contentProperty.Setter?.IsPublic == true
                      && count == 1
-                     && getNode(0).Type.IsMarkupExtension
                      && TryConvertMarkupExtension(context, getNode(0),
                          contentProperty, out var me))
                 setNode(0, me);
@@ -224,13 +223,11 @@ namespace XamlIl.Transform
             IXamlIlAstValueNode node, IXamlIlProperty prop, out XamlIlMarkupExtensionNode o)
         {
             o = null;
-            if (!node.Type.IsMarkupExtension)
-                return false;
             var nodeType = node.Type.GetClrType();
             var candidates = GetMarkupExtensionProvideValueAlternatives(context, nodeType).ToList();
             var so = context.Configuration.WellKnownTypes.Object;
             var sp = context.Configuration.TypeMappings.ServiceProvider;
-
+            
             // Try non-object variant first and variants without IServiceProvider argument first
             
             var provideValue = candidates.FirstOrDefault(m => m.Parameters.Count == 0 && !m.ReturnType.Equals(so))
@@ -240,7 +237,14 @@ namespace XamlIl.Transform
                                ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1 && m.Parameters[0].Equals(sp));
 
             if (provideValue == null)
+            {
+                if (node.Type.IsMarkupExtension)
+                    throw new XamlIlParseException(
+                        $"{node.Type.GetClrType().GetFqn()} was resolved as markup extension, but doesn't have a matching ProvideValue/ProvideTypedValue method",
+                        node.Type);
+                
                 return false;
+            }
             o = new XamlIlMarkupExtensionNode(node, prop, provideValue, node, null);
             return true;
         }
