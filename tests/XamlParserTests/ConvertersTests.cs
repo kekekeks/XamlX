@@ -74,6 +74,7 @@ namespace XamlParserTests
          InlineData("TimeSpanProperty", "01:10:00"),
          InlineData("ConverterProperty", "CustomConverter"),
          InlineData("UriKindProperty", "Relative"),
+         InlineData("UriKindProperty", "150"),
         ]
         public void Converters_Are_Operational(string property, string value)
             => CheckConversion(property, value, value);
