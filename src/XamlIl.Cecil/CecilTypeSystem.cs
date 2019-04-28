@@ -115,8 +115,17 @@ namespace XamlIl.TypeSystem
         {
             if (!_typeReferenceCache.TryGetValue(reference, out var rv))
             {
-                var resolved = reference.Resolve();
-                
+
+                TypeDefinition resolved = null;
+                try
+                {
+                    resolved = reference.Resolve();
+                }
+                catch (AssemblyResolutionException)
+                {
+                    
+                }
+
                 if (resolved != null)
                 {
                     rv = _typeCache.Get(reference);
