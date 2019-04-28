@@ -21,10 +21,10 @@ namespace XamlX.Transform.Transformers
             IXamlType Attempt(Func<string, IXamlType> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
-                IXamlType ares = null;
                 if (isMarkupExtension)
-                    ares = cb(xname + "Extension" + suffix);
-                return ares ?? cb(xname + suffix);
+                    return cb(xname + "Extension" + suffix) ?? cb(xname + suffix);
+                else
+                    return cb(xname + suffix) ?? cb(xname + "Extension" + suffix);
             }
             
             IXamlType found = null;
@@ -59,7 +59,8 @@ namespace XamlX.Transform.Transformers
             if (typeArguments.Count != 0)
                 found = found?.MakeGenericType(targs);
             if (found != null)
-                return new XamlAstClrTypeReference(lineInfo, found, isMarkupExtension); 
+                return new XamlAstClrTypeReference(lineInfo, found,
+                    isMarkupExtension || found.Name.EndsWith("Extension")); 
             if (strict)
                 throw new XamlParseException(
                     $"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
