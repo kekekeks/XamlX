@@ -16,6 +16,13 @@ namespace XamlX.Transform
                 _items[typeof(T)] = rv = new T();
             return (T)rv;
         }
+        
+        public bool TryGetItem<T>(out T rv)
+        {
+            var success = _items.TryGetValue(typeof(T), out var orv);
+            rv = (T)orv;
+            return success;
+        }
 
         public void SetItem<T>(T item) => _items[typeof(T)] = item;
     }
