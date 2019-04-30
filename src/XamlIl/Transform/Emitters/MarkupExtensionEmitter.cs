@@ -29,9 +29,6 @@ namespace XamlIl.Transform.Emitters
                 else if (context.Configuration.TypeMappings.ProvideValueTargetPropertyEmitter
                              ?.Invoke(context, codeGen, me.Property) == true)
                     return;
-                else if (me.Property is XamlIlAstAttachedProperty)
-                    ilgen.Ldtoken(me.Property.Getter ?? me.Property.Setter)
-                        .Emit(OpCodes.Box, context.Configuration.TypeSystem.GetType("System.RuntimeMethodHandle"));
                 else
                     ilgen.Ldstr(me.Property?.Name);
             }

@@ -385,6 +385,9 @@ namespace XamlIl.TypeSystem
                 foreach (var p in t.BaseType.GetAllEvents())
                     yield return p;
         }
+
+        public static IXamlIlType ThisArgument(this IXamlIlMethod method) =>
+            method.IsStatic ? method.Parameters[0] : method.DeclaringType;
         
         public static IXamlIlEmitter DebugHatch(this IXamlIlEmitter emitter, string message)
         {

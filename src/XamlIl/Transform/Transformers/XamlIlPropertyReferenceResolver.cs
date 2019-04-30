@@ -39,12 +39,12 @@ namespace XamlIl.Transform.Transformers
                         && ((p.Getter != null && !p.Getter.IsStatic && p.Getter.Parameters.Count == 0)
                             || p.Setter != null && !p.Setter.IsStatic && p.Setter.Parameters.Count == 1));
                     if (found != null)
-                        return new XamlIlAstClrPropertyReference(prop, found);
+                        return new XamlIlAstClrProperty(prop, found);
                     var clrEvent = declaringType.GetAllEvents().FirstOrDefault(p => p.Name == prop.Name
                                                                                     && p.Add != null);
                     if (clrEvent != null)
-                        return new XamlIlAstClrPropertyReference(prop,
-                            new XamlIlAstCustomProperty(prop.Name, clrEvent.Add, null));
+                        return new XamlIlAstClrProperty(prop,
+                            prop.Name, declaringType, null, clrEvent.Add);
                 }
 
                 // Look for attached properties on declaring type
@@ -72,10 +72,10 @@ namespace XamlIl.Transform.Transformers
                 }
 
                 if (setter != null || getter != null)
-                    return new XamlIlAstClrPropertyReference(prop, new XamlIlAstAttachedProperty(prop.Name, setter, getter));
+                    return new XamlIlAstClrProperty(prop, prop.Name, declaringType, getter, setter);
 
                 if (adder != null)
-                    return new XamlIlAstClrPropertyReference(prop, new XamlIlAstCustomProperty(prop.Name, adder, null));
+                    return new XamlIlAstClrProperty(prop, prop.Name, declaringType, null, adder);
 
                 if (context.StrictMode)
                     throw new XamlIlParseException(
@@ -85,39 +85,6 @@ namespace XamlIl.Transform.Transformers
             }
 
             return node;
-        }
-    }
-
-    class XamlIlAstAttachedProperty : XamlIlAstCustomProperty
-    {
-        public XamlIlAstAttachedProperty(string name, IXamlIlMethod setter, IXamlIlMethod getter) : base(name, setter, getter)
-        {
-        }
-    }
-    
-    class XamlIlAstCustomProperty : IXamlIlProperty
-    {
-        public bool Equals(IXamlIlProperty other)
-        {
-            if (other == null)
-                return false;
-            return other.Name == Name
-                   && other.Getter.Equals(Getter)
-                   && other.Setter.Equals(Setter);
-        }
-
-        public string Name { get; }
-        public IXamlIlType PropertyType { get; }
-        public IXamlIlMethod Setter { get; }
-        public IXamlIlMethod Getter { get; }
-        public IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; set; } = new IXamlIlCustomAttribute[0];
-
-        public XamlIlAstCustomProperty(string name, IXamlIlMethod setter, IXamlIlMethod getter)
-        {
-            Name = name;
-            Setter = setter;
-            Getter = getter;
-            PropertyType = getter != null ? getter.ReturnType : setter.Parameters.Last();
         }
     }
 

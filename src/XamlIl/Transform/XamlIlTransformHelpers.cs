@@ -11,7 +11,7 @@ namespace XamlIl.Transform
     public static class XamlIlTransformHelpers
     {
         public static void GeneratePropertyAssignments(XamlIlAstTransformationContext context,
-            IXamlIlProperty contentProperty,
+            XamlIlAstClrProperty contentProperty,
             int count, Func<int, IXamlIlAstValueNode> getNode, Action<int, IXamlIlAstNode> setNode)
         {
             var type = contentProperty.PropertyType;
@@ -55,7 +55,7 @@ namespace XamlIl.Transform
 
 
         public static List<IXamlIlAstManipulationNode> GeneratePropertyAssignments(XamlIlAstTransformationContext context,
-            IXamlIlProperty property, List<IXamlIlAstValueNode> nodes)
+            XamlIlAstClrProperty property, List<IXamlIlAstValueNode> nodes)
         {
             var tmp = nodes.Cast<IXamlIlAstNode>().ToList();
             GeneratePropertyAssignments(context, property, tmp.Count,
@@ -65,7 +65,7 @@ namespace XamlIl.Transform
         }
 
         public static bool TryCallAdd(XamlIlAstTransformationContext context,
-            IXamlIlProperty targetProperty, IXamlIlType targetPropertyType, IXamlIlAstValueNode value, out IXamlIlAstManipulationNode rv)
+            XamlIlAstClrProperty targetProperty, IXamlIlType targetPropertyType, IXamlIlAstValueNode value, out IXamlIlAstManipulationNode rv)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             rv = null;
@@ -220,7 +220,7 @@ namespace XamlIl.Transform
         }
         
         public static bool TryConvertMarkupExtension(XamlIlAstTransformationContext context,
-            IXamlIlAstValueNode node, IXamlIlProperty prop, out XamlIlMarkupExtensionNode o)
+            IXamlIlAstValueNode node, XamlIlAstClrProperty prop, out XamlIlMarkupExtensionNode o)
         {
             o = null;
             var nodeType = node.Type.GetClrType();

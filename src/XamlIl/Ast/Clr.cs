@@ -21,25 +21,59 @@ namespace XamlIl.Ast
         public bool IsMarkupExtension { get; }
     }
 
-    public class XamlIlAstClrPropertyReference : XamlIlAstNode, IXamlIlAstPropertyReference
+    public class XamlIlAstClrProperty : XamlIlAstNode, IXamlIlAstPropertyReference
     {
-        public IXamlIlProperty Property { get; set; }
+        public string Name { get; set; }
+        public IXamlIlMethod Getter { get; set; }
+        public List<IXamlIlMethod> Setters { get; set; } = new List<IXamlIlMethod>();
+        public List<IXamlIlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlIlCustomAttribute>();
+        public IXamlIlType DeclaringType { get; set; }
+        
+        
+        // TODO: Remove
+        public IXamlIlType PropertyType { get; set; }
+        public IXamlIlMethod Setter => Setters.FirstOrDefault();
 
-        public XamlIlAstClrPropertyReference(IXamlIlLineInfo lineInfo, IXamlIlProperty property) : base(lineInfo)
+        
+        public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, IXamlIlProperty property) : base(lineInfo)
         {
-            Property = property;
+            Name = property.Name;
+            PropertyType = property.PropertyType;
+            Getter = property.Getter;
+            if (property.Setter != null)
+                Setters.Add(property.Setter);
+            CustomAttributes = property.CustomAttributes.ToList();
+            DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
         }
 
-        public override string ToString() => Property.PropertyType.GetFqn() + "." + Property.Name;
+        public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, string name, IXamlIlType declaringType, 
+            IXamlIlMethod getter, IEnumerable<IXamlIlMethod> setters) : base(lineInfo)
+        {
+            Name = name;
+            DeclaringType = declaringType;
+            Getter = getter;
+            if (setters != null)
+                Setters.AddRange(setters);
+            PropertyType = Getter?.ReturnType ?? Setters.FirstOrDefault()?.ThisArgument();
+        }
+
+        public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, string name, IXamlIlType declaringType,
+            IXamlIlMethod getter, params IXamlIlMethod[] setters) : this(lineInfo, name, declaringType,
+            getter, (IEnumerable<IXamlIlMethod>)setters)
+        {
+            
+        }
+
+        public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
     public class XamlIlPropertyAssignmentNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
-        public IXamlIlProperty Property { get; set; }
+        public XamlIlAstClrProperty Property { get; set; }
         public IXamlIlAstValueNode Value { get; set; }
 
         public XamlIlPropertyAssignmentNode(IXamlIlLineInfo lineInfo,
-            IXamlIlProperty property, IXamlIlAstValueNode value)
+            XamlIlAstClrProperty property, IXamlIlAstValueNode value)
             : base(lineInfo)
         {
             Property = property;
@@ -54,10 +88,10 @@ namespace XamlIl.Ast
     
     public class XamlIlPropertyValueManipulationNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
-        public IXamlIlProperty Property { get; set; }
+        public XamlIlAstClrProperty Property { get; set; }
         public IXamlIlAstManipulationNode Manipulation { get; set; }
         public XamlIlPropertyValueManipulationNode(IXamlIlLineInfo lineInfo, 
-            IXamlIlProperty property, IXamlIlAstManipulationNode manipulation) 
+            XamlIlAstClrProperty property, IXamlIlAstManipulationNode manipulation) 
             : base(lineInfo)
         {
             Property = property;
@@ -195,11 +229,11 @@ namespace XamlIl.Ast
     public class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstManipulationNode, IXamlIlAstNodeNeedsParentStack
     {
         public IXamlIlAstValueNode Value { get; set; }
-        public IXamlIlProperty Property { get; set; }
+        public XamlIlAstClrProperty Property { get; set; }
         public IXamlIlMethod ProvideValue { get; }
         public IXamlIlWrappedMethod Manipulation { get; set; }
 
-        public XamlIlMarkupExtensionNode(IXamlIlLineInfo lineInfo, IXamlIlProperty property, IXamlIlMethod provideValue,
+        public XamlIlMarkupExtensionNode(IXamlIlLineInfo lineInfo, XamlIlAstClrProperty property, IXamlIlMethod provideValue,
             IXamlIlAstValueNode value, IXamlIlWrappedMethod manipulation) : base(lineInfo)
         {
             Property = property;

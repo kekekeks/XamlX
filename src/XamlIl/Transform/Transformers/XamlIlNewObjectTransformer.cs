@@ -32,7 +32,8 @@ namespace XamlIl.Transform.Transformers
                             VNode(ind));
             }
             else
-                XamlIlTransformHelpers.GeneratePropertyAssignments(context, contentProperty, valueIndexes.Count,
+                XamlIlTransformHelpers.GeneratePropertyAssignments(context,
+                    new XamlIlAstClrProperty(ni, contentProperty), valueIndexes.Count,
                     num => VNode(valueIndexes[num]),
                     (i, v) => ni.Children[valueIndexes[i]] = v);
         }

@@ -112,10 +112,10 @@ namespace XamlIl.Ast
             throw new XamlIlParseException($"Unable to convert {r} to CLR type", r);
         }
         
-        public static IXamlIlProperty GetClrProperty(this IXamlIlAstPropertyReference r)
+        public static XamlIlAstClrProperty GetClrProperty(this IXamlIlAstPropertyReference r)
         {
-            if (r is XamlIlAstClrPropertyReference clr)
-                return clr.Property;
+            if (r is XamlIlAstClrProperty clr)
+                return clr;
             throw new XamlIlParseException($"Unable to convert {r} to CLR property", r);
         }
     }
