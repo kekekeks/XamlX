@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using XamlX.Ast;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -36,7 +37,7 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod MarkupExtensionCustomResultHandler { get; set; }
         public List<IXamlType> MarkupExtensionCustomResultTypes { get; set; } = new List<IXamlType>();
-        public Func<IXamlProperty, IXamlType, bool> ShouldIgnoreMarkupExtensionCustomResultForProperty { get; set; }
+        public Func<XamlAstClrProperty, IXamlType, bool> ShouldIgnoreMarkupExtensionCustomResultForProperty { get; set; }
         
         /// <summary>
         /// Expected signature:
@@ -48,7 +49,7 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
-        public Func<XamlEmitContext, IXamlILEmitter, IXamlProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
+        public Func<XamlEmitContext, IXamlILEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
     }
 
     public interface IXamlCustomAttributeResolver
