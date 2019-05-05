@@ -71,7 +71,7 @@ namespace XamlX.Transform.Transformers
                             bool CanAssign(IXamlXAstValueNode value, IXamlXType type)
                             {
                                 // Don't allow x:Null
-                                if (!setter.BinderParameters.AllowNull
+                                if (!setter.BinderParameters.AllowXNull
                                     && XamlXPseudoType.Null.Equals(value.Type.GetClrType()))
                                     return false;
 

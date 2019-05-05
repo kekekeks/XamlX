@@ -81,7 +81,8 @@ namespace XamlX.Ast
     public class PropertySetterBinderParameters
     {
         public bool AllowMultiple { get; set; }
-        public bool AllowNull { get; set; } = true;
+        public bool AllowXNull { get; set; } = true;
+        public bool AllowRuntimeNull { get; set; } = true;
     }
     
     public interface IXamlXPropertySetter
