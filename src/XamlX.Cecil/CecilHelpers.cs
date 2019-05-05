@@ -61,7 +61,19 @@ namespace XamlX.TypeSystem
             }
         }
 
+        [ThreadStatic]
+        private static int _depth;
         public static bool Equals(TypeReference left, TypeReference right)
+        {
+            _depth++;
+            if(_depth>200)
+                throw new StackOverflowException();
+            var res = EqualsCore(left, right);
+            _depth--;
+            return res;
+
+        }
+        static bool EqualsCore(TypeReference left, TypeReference right)
         {
             if (left == null && right == null)
                 return true;
@@ -79,6 +91,20 @@ namespace XamlX.TypeSystem
             // Direct
             if (left is TypeDefinition)
                 return left == right;
+            if (left is GenericParameter leftGp && right is GenericParameter rightGp)
+            {
+                return
+                    leftGp.Name == rightGp.Name
+                    && leftGp.DeclaringType?.Resolve() == rightGp.DeclaringType?.Resolve()
+                    && leftGp.DeclaringMethod == rightGp.DeclaringMethod;
+            }
+            if (left is GenericInstanceType leftGi && right is GenericInstanceType rightGi)
+            {
+                for(var c=0; c<leftGi.GenericArguments.Count;c++)
+                    if (!Equals(leftGi.GenericArguments[c], rightGi.GenericArguments[c]))
+                        return false;
+                return true;
+            }
             if (!Equals(left.GetElementType(), right.GetElementType()))
                 return false;
             if (left is ArrayType leftA && right is ArrayType rightA)
@@ -87,13 +113,8 @@ namespace XamlX.TypeSystem
                 return leftFp.Namespace == rightFp.Namespace && leftFp.Name == rightFp.Name;
             if (left.IsPointer || left.IsByReference)
                 return true;
-            if (left is GenericInstanceType leftGi && right is GenericInstanceType rightGi)
-            {
-                for(var c=0; c<leftGi.GenericArguments.Count;c++)
-                    if (!Equals(leftGi.GenericArguments[c], rightGi.GenericArguments[c]))
-                        return false;
-                return true;
-            }
+
+
 
             // No idea what to do with the rest
             return false;

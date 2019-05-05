@@ -25,64 +25,92 @@ namespace XamlX.Ast
     {
         public string Name { get; set; }
         public IXamlXMethod Getter { get; set; }
-        public List<IXamlXMethod> Setters { get; set; } = new List<IXamlXMethod>();
+        public List<IXamlXPropertySetter> Setters { get; set; } = new List<IXamlXPropertySetter>();
         public List<IXamlXCustomAttribute> CustomAttributes { get; set; } = new List<IXamlXCustomAttribute>();
         public IXamlXType DeclaringType { get; set; }
-        
-        
-        // TODO: Remove
-        public IXamlXType PropertyType { get; set; }
-        public IXamlXMethod Setter => Setters.FirstOrDefault();
-
         
         public XamlXAstClrProperty(IXamlXLineInfo lineInfo, IXamlXProperty property) : base(lineInfo)
         {
             Name = property.Name;
-            PropertyType = property.PropertyType;
             Getter = property.Getter;
             if (property.Setter != null)
-                Setters.Add(property.Setter);
+                Setters.Add(new XamlXDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
         }
 
         public XamlXAstClrProperty(IXamlXLineInfo lineInfo, string name, IXamlXType declaringType, 
-            IXamlXMethod getter, IEnumerable<IXamlXMethod> setters) : base(lineInfo)
+            IXamlXMethod getter, IEnumerable<IXamlXPropertySetter> setters) : base(lineInfo)
         {
             Name = name;
             DeclaringType = declaringType;
             Getter = getter;
             if (setters != null)
                 Setters.AddRange(setters);
-            PropertyType = Getter?.ReturnType ?? Setters.FirstOrDefault()?.ThisArgument();
         }
 
         public XamlXAstClrProperty(IXamlXLineInfo lineInfo, string name, IXamlXType declaringType,
             IXamlXMethod getter, params IXamlXMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, (IEnumerable<IXamlXMethod>)setters)
+            getter, setters.Select(x => new XamlXDirectCallPropertySetter(x)))
         {
-            
+
         }
 
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
+    class XamlXDirectCallPropertySetter : IXamlXPropertySetter
+    {
+        private readonly IXamlXMethod _method;
+        public IXamlXType TargetType { get; }
+        public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
+        public IReadOnlyList<IXamlXType> Parameters { get; }
+        public void Emit(IXamlXEmitter codegen)
+        {
+            codegen.EmitCall(_method, true);
+        }
+
+        public XamlXDirectCallPropertySetter(IXamlXMethod method)
+        {
+            _method = method;
+            Parameters = method.ParametersWithThis().Skip(1).ToList();
+            TargetType = method.ThisOrFirstParameter();
+        }
+    }
+
+    public class PropertySetterBinderParameters
+    {
+        public bool AllowMultiple { get; set; }
+        public bool AllowNull { get; set; } = true;
+    }
+    
+    public interface IXamlXPropertySetter
+    {
+        IXamlXType TargetType { get; }
+        PropertySetterBinderParameters BinderParameters { get; }
+        IReadOnlyList<IXamlXType> Parameters { get; }
+        void Emit(IXamlXEmitter codegen);
+    }
+
     public class XamlXPropertyAssignmentNode : XamlXAstNode, IXamlXAstManipulationNode
     {
-        public XamlXAstClrProperty Property { get; set; }
-        public IXamlXAstValueNode Value { get; set; }
+        public XamlXAstClrProperty Property { get; }
+        public List<IXamlXPropertySetter> PossibleSetters { get; set; }
+        public List<IXamlXAstValueNode> Values { get; set; }
 
         public XamlXPropertyAssignmentNode(IXamlXLineInfo lineInfo,
-            XamlXAstClrProperty property, IXamlXAstValueNode value)
+            XamlXAstClrProperty property,
+            IEnumerable<IXamlXPropertySetter> setters, IEnumerable<IXamlXAstValueNode> values)
             : base(lineInfo)
         {
             Property = property;
-            Value = value;
+            PossibleSetters = setters.ToList();
+            Values = values.ToList();
         }
 
         public override void VisitChildren(Visitor visitor)
         {
-            Value = (IXamlXAstValueNode) Value.Visit(visitor);
+            VisitList(Values, visitor);
         }
     }
     
@@ -226,20 +254,17 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXMarkupExtensionNode : XamlXAstNode, IXamlXAstManipulationNode, IXamlXAstNodeNeedsParentStack
+    public class XamlXMarkupExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstNodeNeedsParentStack
     {
         public IXamlXAstValueNode Value { get; set; }
-        public XamlXAstClrProperty Property { get; set; }
         public IXamlXMethod ProvideValue { get; }
-        public IXamlXWrappedMethod Manipulation { get; set; }
 
-        public XamlXMarkupExtensionNode(IXamlXLineInfo lineInfo, XamlXAstClrProperty property, IXamlXMethod provideValue,
-            IXamlXAstValueNode value, IXamlXWrappedMethod manipulation) : base(lineInfo)
+        public XamlXMarkupExtensionNode(IXamlXLineInfo lineInfo, IXamlXMethod provideValue,
+            IXamlXAstValueNode value) : base(lineInfo)
         {
-            Property = property;
             ProvideValue = provideValue;
             Value = value;
-            Manipulation = manipulation;
+            Type = new XamlXAstClrTypeReference(this, ProvideValue.ReturnType, false);
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -248,6 +273,7 @@ namespace XamlX.Ast
         }
 
         public bool NeedsParentStack => ProvideValue?.Parameters.Count > 0;
+        public IXamlXAstTypeReference Type { get; }
     }
     
     public class XamlXObjectInitializationNode : XamlXAstNode, IXamlXAstManipulationNode
@@ -364,6 +390,66 @@ namespace XamlX.Ast
         }
     }
     
+    public class XamlXMethodWithCasts : IXamlXCustomEmitMethod
+    {
+        private readonly IXamlXMethod _method;
+        private readonly IReadOnlyList<IXamlXType> _baseParametersWithThis;
+
+        public XamlXMethodWithCasts(IXamlXMethod method, IEnumerable<IXamlXType> newArgumentTypes)
+        {
+            _method = method;
+            Parameters = newArgumentTypes.ToList();
+            _baseParametersWithThis = _method.ParametersWithThis();
+            if (_baseParametersWithThis.Count != Parameters.Count)
+                throw new ArgumentException("Method argument count mismatch");
+        }
+
+        public string Name => _method.Name;
+        public IXamlXType ReturnType => _method.ReturnType;
+        public IXamlXType DeclaringType => _method.DeclaringType;
+        public bool IsPublic => true;
+        public bool IsStatic => true;
+        public IReadOnlyList<IXamlXType> Parameters { get; }
+        public void EmitCall(IXamlXEmitter codeGen)
+        {
+            int firstCast = -1; 
+            for (var c = Parameters.Count - 1; c >= 0; c--)
+            {
+                if (!_baseParametersWithThis[c].Equals(Parameters[c]))
+                    firstCast = c;
+            }
+
+            if (firstCast != -1)
+            {
+                var locals = new Stack<XamlXLocalsPool.PooledLocal>();
+                for (var c = Parameters.Count - 1; c >= firstCast; c--)
+                {
+                    codeGen.Castclass(_baseParametersWithThis[c]);
+                    if (c > firstCast)
+                    {
+                        var l = codeGen.LocalsPool.GetLocal(_baseParametersWithThis[c]);
+                        codeGen.Stloc(l.Local);
+                        locals.Push(l);
+                    }
+                }
+
+                while (locals.Count!=0)
+                {
+                    using (var l = locals.Pop())
+                    {
+                        codeGen.Ldloc(l.Local);
+                        l.Dispose();
+                    }
+                }
+            }
+
+            codeGen.EmitCall(_method);
+        }
+
+        public bool Equals(IXamlXMethod other) =>
+            other is XamlXMethodWithCasts mwc && mwc._method.Equals(_method) &&
+            mwc.Parameters.SequenceEqual(Parameters);
+    }
 
     public class XamlXDeferredContentNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {

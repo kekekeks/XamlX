@@ -34,6 +34,7 @@ namespace XamlX.TypeSystem
         bool IsInterface { get; }
         IXamlXType GetEnumUnderlyingType();
         IReadOnlyList<IXamlXType> GenericParameters { get; }
+        int GetHashCode();
     }
 
     public interface IXamlXMethod : IEquatable<IXamlXMethod>, IXamlXMember
@@ -386,8 +387,24 @@ namespace XamlX.TypeSystem
                     yield return p;
         }
 
-        public static IXamlXType ThisArgument(this IXamlXMethod method) =>
+        public static bool IsDirectlyAssignableFrom(this IXamlXType type, IXamlXType other)
+        {
+            if (type.IsValueType || other.IsValueType)
+                return type.Equals(other);
+            return type.IsAssignableFrom(other);
+        }
+
+        public static IXamlXType ThisOrFirstParameter(this IXamlXMethod method) =>
             method.IsStatic ? method.Parameters[0] : method.DeclaringType;
+
+        public static IReadOnlyList<IXamlXType> ParametersWithThis(this IXamlXMethod method)
+        {
+            if (method.IsStatic)
+                return method.Parameters;
+            var lst = method.Parameters.ToList();
+            lst.Insert(0, method.DeclaringType);
+            return lst;
+        }
         
         public static IXamlXEmitter DebugHatch(this IXamlXEmitter emitter, string message)
         {

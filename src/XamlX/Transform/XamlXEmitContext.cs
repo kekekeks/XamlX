@@ -14,6 +14,8 @@ namespace XamlX.Transform
 
         private readonly Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>
             _locals = new Dictionary<XamlXAstCompilerLocalNode, IXamlXLocal>();
+
+        private IXamlXAstNode _currentNode;
         
         public XamlXTransformerConfiguration Configuration { get; }
         public XamlXContext RuntimeContext { get; }
@@ -55,13 +57,33 @@ namespace XamlX.Transform
         {
             return Emitter.LocalsPool.GetLocal(type);
         }
-        
+
         public XamlXNodeEmitResult Emit(IXamlXAstNode value, IXamlXEmitter codeGen, IXamlXType expectedType)
+        {
+            XamlXNodeEmitResult res = null;
+            if (_currentNode != null)
+            {
+                PushParent(_currentNode);
+                _currentNode = value;
+                res = EmitCore(value, codeGen, expectedType);
+                _currentNode = PopParent();
+            }
+            else
+            {
+                _currentNode = value;
+                res = EmitCore(value, codeGen, expectedType);
+                _currentNode = null;
+            }
+
+            return res;
+        }
+        
+        private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXEmitter codeGen, IXamlXType expectedType)
         {
             var parent = codeGen as CheckingIlEmitter;
             parent?.Pause();
             var checkedEmitter = new CheckingIlEmitter(codeGen); 
-            var res = EmitCore(value, checkedEmitter);
+            var res = EmitNode(value, checkedEmitter);
             var expectedBalance = res.ProducedItems - res.ConsumedItems;
             checkedEmitter.Check(res.ProducedItems - res.ConsumedItems);
             parent?.Resume();
@@ -109,7 +131,7 @@ namespace XamlX.Transform
             return res;
         }
 
-        private XamlXNodeEmitResult EmitCore(IXamlXAstNode value, IXamlXEmitter codeGen)
+        private XamlXNodeEmitResult EmitNode(IXamlXAstNode value, IXamlXEmitter codeGen)
         {
             if(File!=null)
                 codeGen.InsertSequencePoint(File, value.Line, value.Position);

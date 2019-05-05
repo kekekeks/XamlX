@@ -10,6 +10,7 @@ namespace XamlX.Transform
 {
     public static class XamlXTransformHelpers
     {
+        /*
         public static void GeneratePropertyAssignments(XamlXAstTransformationContext context,
             XamlXAstClrProperty contentProperty,
             int count, Func<int, IXamlXAstValueNode> getNode, Action<int, IXamlXAstNode> setNode)
@@ -62,150 +63,70 @@ namespace XamlX.Transform
                 i => (IXamlXAstValueNode) tmp[i],
                 (i, v) => tmp[i] = v);
             return tmp.Cast<IXamlXAstManipulationNode>().ToList();
-        }
+        }*/
 
-        public static bool TryCallAdd(XamlXAstTransformationContext context,
-            XamlXAstClrProperty targetProperty, IXamlXType targetPropertyType, IXamlXAstValueNode value, out IXamlXAstManipulationNode rv)
+        class AdderCache : Dictionary<IXamlXType, IReadOnlyList<IXamlXMethod>>
         {
-            var so = context.Configuration.WellKnownTypes.Object;
-            rv = null;
-            IXamlXWrappedMethod FindAdderImpl(IXamlXType targetType, IXamlXType valueType, IXamlXType keyType = null)
-            {
-                var candidates = targetType.FindMethods(m =>
-                        !m.IsStatic && m.IsPublic
-                                    && (m.Name == "Add" || m.Name.EndsWith(".Add"))).ToList();
-
-                bool CheckArg(IXamlXType argType, bool allowObj)
-                {
-                    if (allowObj && argType.Equals(so))
-                        return true;
-                    if (!allowObj && !argType.Equals(so) && argType.IsAssignableFrom(valueType))
-                        return true;
-                    return false;
-                }
-
-                foreach (var allowObj in new[] {false, true})
-                {
-                    foreach (var m in candidates)
-                    {
-                        if (keyType == null && m.Parameters.Count == 1
-                                            && CheckArg(m.Parameters[0], allowObj))
-                            return new XamlXWrappedMethod(m);
-                        if (keyType != null && m.Parameters.Count == 2
-                                                 && m.Parameters[0].IsAssignableFrom(keyType)
-                                                 && CheckArg(m.Parameters[1], allowObj))
-                            return new XamlXWrappedMethod(m);
-
-                    }
-                }
-
-                return null;
-            }
-
-            IXamlXWrappedMethod FindAdderWithCast(IXamlXType originalType, IXamlXType newTargetType, IXamlXType valueType)
-            {
-                var m = FindAdderImpl(newTargetType, valueType);
-                if (m == null)
-                    return null;
-                return new XamlXWrappedMethodWithCasts(m, new[] {originalType, m.ParametersWithThis[1]});
-
-            }
             
-            IXamlXWrappedMethod FindAdder(IXamlXType valueType, IXamlXType keyType = null)
-            {
-                if(keyType == null)
-                {
-                    if (targetPropertyType.Equals(context.Configuration.WellKnownTypes.IEnumerable))
-                        return FindAdderWithCast(targetPropertyType, context.Configuration.WellKnownTypes.IList,
-                            valueType);
-                    if (targetPropertyType.GenericTypeDefinition?.Equals(context.Configuration.WellKnownTypes
-                            .IEnumerableT) == true)
-                        return FindAdderWithCast(
-                            targetPropertyType,
-                            context.Configuration.WellKnownTypes.IListOfT
-                                .MakeGenericType(targetPropertyType.GenericArguments[0]), valueType);
-                }
-                return FindAdderImpl(targetPropertyType, valueType, keyType);
-            }
-            
-            if (TryConvertMarkupExtension(context, value, targetProperty, out var ext))
-            {
-                var adder = FindAdder(ext.ProvideValue.ReturnType);
-                if (adder != null)
-                {
-                    ext.Manipulation = adder;
-                    rv = ext;
-                    return true;
-                }
-            }
-            else
-            {
-                var vtype = value.Type.GetClrType();
-                IXamlXAstValueNode keyNode = null;
-
-                bool IsKeyDirective(object node) => node is XamlXAstXmlDirective d
-                                                                        && d.Namespace == XamlNamespaces.Xaml2006 &&
-                                                                        d.Name == "Key";
-
-                void ProcessDirective(object d)
-                {
-                    var directive = (XamlXAstXmlDirective) d;
-                    if (directive.Values.Count != 1)
-                        throw new XamlXParseException("Invalid number of arguments for x:Key directive",
-                            directive);
-                    keyNode = directive.Values[0];
-                }
-
-               
-                void ProcessDirectiveCandidateList(IList nodes)
-                {
-                    var d = nodes.OfType<object>().FirstOrDefault(IsKeyDirective);
-                    if (d != null)
-                    {
-                        ProcessDirective(d);
-                        nodes.Remove(d);
-                    }
-                }
-                
-                IXamlXAstManipulationNode VisitManipulationNode(IXamlXAstManipulationNode man)
-                {
-                    if (IsKeyDirective(man))
-                    {
-                        ProcessDirective(man);
-                        return new XamlXManipulationGroupNode(man);
-                    }
-                    if(man is XamlXManipulationGroupNode grp)
-                        ProcessDirectiveCandidateList(grp.Children);
-                    if (man is XamlXObjectInitializationNode init)
-                        init.Manipulation = VisitManipulationNode(init.Manipulation);
-                    return man;
-                }
-                
-                if (value is XamlXAstObjectNode astObject)
-                    ProcessDirectiveCandidateList(astObject.Children);
-                else if (value is XamlXValueWithManipulationNode vman)
-                {
-                    vman.Manipulation = VisitManipulationNode(vman.Manipulation);
-                }
-                    
-                
-                var adder = FindAdder(vtype, keyNode?.Type.GetClrType());
-                if (adder != null)
-                {
-                    var args = new List<IXamlXAstValueNode>();
-                    if (keyNode != null)
-                        args.Add(keyNode);
-                    args.Add(value);
-                    
-                    rv = new XamlXNoReturnMethodCallNode(value, adder, args);
-                    if (targetProperty != null)
-                        rv = new XamlXPropertyValueManipulationNode(value, targetProperty, rv);
-                    return true;
-                }
-            }
-            
-            return false;
         }
+
+        public static IReadOnlyList<IXamlXMethod> FindPossibleAdders(XamlXAstTransformationContext context,
+            IXamlXType type)
+        {
+            IReadOnlyList<IXamlXMethod> FindPossibleAddersImpl()
+            {
+                var known = context.Configuration.WellKnownTypes;
+
+                // Attempt to cast IEnumerable and IEnumerable<T> to IList<T>
+                var actualType = type;
+                if (actualType.Equals(known.IEnumerable))
+                    actualType = known.IList;
+                if (actualType.GenericTypeDefinition?.Equals(known.IEnumerableT) == true)
+                    actualType = known.IListOfT.MakeGenericType(actualType.GenericArguments[0]);
+
+                var inspectTypes = new List<IXamlXType>();
+                inspectTypes.Add(actualType);
+                inspectTypes.AddRange(actualType.GetAllInterfaces());
+
+                // If type supports IList<T> don't fall back to IList
+                if (inspectTypes.Any(t => t.GenericTypeDefinition?.Equals(known.IListOfT) == true))
+                    inspectTypes = inspectTypes.Where(t => !t.Equals(known.IList)).ToList();
+
+                var rv = new List<IXamlXMethod>();
+                foreach (var t in inspectTypes)
+                {
+                    foreach (var m in t.FindMethods(m => m.Name == "Add" && m.IsPublic && !m.IsStatic
+                                                         && (m.Parameters.Count == 1 || m.Parameters.Count == 2)))
+                    {
+                        if (rv.Any(em => em.Equals(m)))
+                            continue;
+                        rv.Add(m);
+                    }
+                }
+                
+                // First use methods from the type itself, then from base types, then from interfaces
+                rv = rv
+                    .OrderByDescending(x => x.ThisOrFirstParameter().Equals(actualType))
+                    .ThenBy(x => x.ThisOrFirstParameter().IsInterface)
+                    .ToList();
+                
+                // Add casts
+                for (var c = 0; c < rv.Count; c++)
+                    if (!rv[c].ThisOrFirstParameter().Equals(type))
+                        rv[c] = new XamlXMethodWithCasts(rv[c], new[] {type}.Concat(rv[c].Parameters));
+
+                return rv;
+            }
+            
+            var cache = context.GetOrCreateItem<AdderCache>();
+            if (cache.TryGetValue(type, out var rvr))
+                return rvr;
+            else
+                return cache[type] = FindPossibleAddersImpl();
+
+
+        }
+
 
         public static IEnumerable<IXamlXMethod> GetMarkupExtensionProvideValueAlternatives(
             XamlXAstTransformationContext context,
@@ -216,11 +137,10 @@ namespace XamlX.Transform
                 (m.Name == "ProvideValue" || m.Name == "ProvideTypedValue") && m.IsPublic && !m.IsStatic
                 && (m.Parameters.Count == 0 || (m.Parameters.Count == 1 && m.Parameters[0].Equals(sp)))
             );
-
         }
         
         public static bool TryConvertMarkupExtension(XamlXAstTransformationContext context,
-            IXamlXAstValueNode node, XamlXAstClrProperty prop, out XamlXMarkupExtensionNode o)
+            IXamlXAstValueNode node, out XamlXMarkupExtensionNode o)
         {
             o = null;
             var nodeType = node.Type.GetClrType();
@@ -245,7 +165,7 @@ namespace XamlX.Transform
                 
                 return false;
             }
-            o = new XamlXMarkupExtensionNode(node, prop, provideValue, node, null);
+            o = new XamlXMarkupExtensionNode(node, provideValue, node);
             return true;
         }
 
