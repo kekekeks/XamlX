@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,55 +25,86 @@ namespace XamlX.Transform.Transformers
                     arguments.Add(v);
 
 
+                    // Pre-filter setters by non-last argument
+                    var filteredSetters = property.Setters.Where(s => s.Parameters.Count == arguments.Count)
+                        .ToList();
+                    
+                    if (arguments.Count > 1)
+                    {
+                        for (var c = 0; c < arguments.Count - 1; c++)
+                        {
+                            IXamlType convertedTo = null;
+                            for (var s = 0; s < filteredSetters.Count;)
+                            {
+                                var setter = filteredSetters[s];
+                                if (convertedTo == null)
+                                {
+                                    if (!XamlTransformHelpers.TryGetCorrectlyTypedValue(context, arguments[c],
+                                        setter.Parameters[c], out var converted))
+                                    {
+                                        filteredSetters.RemoveAt(c);
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        convertedTo = converted.Type.GetClrType();
+                                        arguments[c] = converted;
+                                    }
+                                }
+                                else
+                                {
+                                    if (!setter.Parameters[c].IsAssignableFrom(convertedTo))
+                                        throw new XamlLoadException(
+                                            $"Runtime setter selection is not supported for non-last setter arguments (e. g. x:Key) and can not downcast argument {c} of the setter from {convertedTo} to {setter.Parameters[c]}",
+                                            arguments[c]);
+                                }
+                                s++;
+                            }
+                        }
+                    }
 
                     XamlPropertyAssignmentNode CreateAssignment()
                     {
-                        foreach (var setter in property.Setters)
+                        var matchedSetters = new List<IXamlPropertySetter>();
+                        foreach (var setter in filteredSetters)
                         {
-                            IXamlAstValueNode TryConvertParameter(IXamlAstValueNode value, IXamlType type)
+                            bool CanAssign(IXamlAstValueNode value, IXamlType type)
                             {
                                 // Don't allow x:Null
                                 if (!setter.BinderParameters.AllowNull
                                     && XamlPseudoType.Null.Equals(value.Type.GetClrType()))
-                                    return null;
+                                    return false;
 
                                 // Direct cast
                                 if (type.IsAssignableFrom(value.Type.GetClrType()))
-                                    return value;
-
-                                // Converted
-                                if (XamlTransformHelpers.TryGetCorrectlyTypedValue(context, value, type,
-                                    out var converted))
-                                    return converted;
+                                    return true;
 
                                 // Upcast from System.Object
                                 if (value.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.Object))
-                                    return value;
+                                    return true;
 
-                                return null;
+                                return false;
                             }
 
-                            if (arguments.Count == setter.Parameters.Count)
+                            var valueArgIndex = arguments.Count - 1;
+                            var valueArg = arguments[valueArgIndex];
+                            var setterType = setter.Parameters[valueArgIndex];
+                            
+                            if(CanAssign(valueArg, setterType))
+                                matchedSetters.Add(setter);
+                            // Converted value have more priority than custom setters, so we just create a setter without an alternative
+                            else if (XamlTransformHelpers.TryConvertValue(context, valueArg, setterType,
+                                out var converted))
                             {
-                                var matches = true;
-                                var values = arguments.ToList();
-                                for (var c = 0; c < arguments.Count; c++)
-                                {
-                                    if ((values[c] = TryConvertParameter(values[c], setter.Parameters[c])) == null)
-                                    {
-                                        matches = false;
-                                        break;
-                                    }
-                                }
-
-                                if (matches)
-                                {
-                                    return new XamlPropertyAssignmentNode(v, property, new[] {setter}, values);
-                                }
+                                
+                                arguments[valueArgIndex] = converted;
+                                return new XamlPropertyAssignmentNode(valueNode,
+                                    property, new[] {setter}, arguments);
                             }
-
-
                         }
+
+                        if (matchedSetters.Count > 0)
+                            return new XamlPropertyAssignmentNode(v, property, matchedSetters, arguments);
 
                         throw new XamlLoadException(
                             $"Unable to find suitable setter or adder for property {property.Name} of type {property.DeclaringType.GetFqn()} for argument {v.Type.GetClrType().GetFqn()}"

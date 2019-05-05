@@ -85,7 +85,7 @@ namespace XamlX.Transform
             var checkedEmitter = new CheckingIlEmitter(codeGen); 
             var res = EmitNode(value, checkedEmitter);
             var expectedBalance = res.ProducedItems - res.ConsumedItems;
-            checkedEmitter.Check(res.ProducedItems - res.ConsumedItems);
+            checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
             parent?.Resume();
             parent?.ExplicitStack(expectedBalance);
 

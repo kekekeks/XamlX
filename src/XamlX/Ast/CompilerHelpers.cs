@@ -15,6 +15,11 @@ namespace XamlX.Ast
             _typeReference = type;
         }
 
+        public XamlAstCompilerLocalNode(IXamlAstValueNode value) : this(value, value.Type.GetClrTypeReference())
+        {
+            
+        }
+        
         IXamlAstTypeReference IXamlAstValueNode.Type => _typeReference;
         public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {

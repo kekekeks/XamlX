@@ -172,15 +172,20 @@ namespace XamlX.Transform
         public static bool TryGetCorrectlyTypedValue(XamlAstTransformationContext context,
             IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode rv)
         {
-            var cfg = context.Configuration;
-            rv = null;
             if (type.IsAssignableFrom(node.Type.GetClrType()))
             {
                 rv = node;
                 return true;
             }
 
-            
+            return TryConvertValue(context, node, type, out rv);
+        }
+
+        public static bool TryConvertValue(XamlAstTransformationContext context,
+                IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode rv)
+        {    
+            rv = null;
+            var cfg = context.Configuration;
             // Since we are doing a conversion anyway, it makes sense to check for the underlying nullable type
             if (type.GenericTypeDefinition?.Equals(cfg.WellKnownTypes.NullableT) == true) 
                 type = type.GenericArguments[0];
@@ -190,10 +195,10 @@ namespace XamlX.Transform
                 return true;
 
             var nodeType = node.Type.GetClrType();
+            
             // Implicit type converters
             if (!nodeType.Equals(cfg.WellKnownTypes.String))
                 return false;
-
 
             if (node is XamlAstTextNode tn)
             {

@@ -55,12 +55,13 @@ namespace XamlX.Transform.Emitters
                 var checkedTypes = new List<IXamlType>();
                 IXamlLabel exit = codeGen.DefineLabel();
                 IXamlLabel next = null;
-
+                var hadJumps = false;
                 context.Emit(value, codeGen, value.Type.GetClrType());
                 
                 foreach (var setter in setters)
                 {
                     var type = setter.Parameters.Last();
+                    
                     // We have already checked this type or its base type
                     if (checkedTypes.Any(ch => ch.IsAssignableFrom(type)))
                         continue;
@@ -69,44 +70,62 @@ namespace XamlX.Transform.Emitters
                         codeGen.MarkLabel(next);
                     next = codeGen.DefineLabel();
 
-
+                    var checkNext = false;
                     if (setter.BinderParameters.AllowNull)
                         checkedTypes.Add(type);
                     else
+                    {
                         // Check for null; Also don't add this type to the list of checked ones because of the null check
                         codeGen
                             .Dup()
                             .Brfalse(next);
-                    
-                    codeGen
-                        .Dup()
-                        .Isinst(type)
-                        .Brfalse(next)
-                        .Dup();
+                        checkNext = true;
+                    }
+
+                    // Only do dynamic checks if we know that type is not assignable by downcast 
+                    if (!type.IsAssignableFrom(value.Type.GetClrType()))
+                    {
+                        codeGen
+                            .Dup()
+                            .Isinst(type)
+                            .Brfalse(next);
+                        checkNext = true;
+                    }
+
+                    if (checkNext)
+                        hadJumps = true;
+
                     TypeSystemHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
                     setter.Emit(codeGen);
-                    codeGen.Br(exit);
+                    if (hadJumps)
+                        codeGen.Br(exit);
+                    if(!checkNext)
+                        break;
                 }
 
                 if (next != null)
                     codeGen.MarkLabel(next);
-                if (setters.Any(x => !x.BinderParameters.AllowNull))
+                if (hadJumps)
                 {
-                    next = codeGen.DefineLabel();
+                    if (setters.Any(x => !x.BinderParameters.AllowNull))
+                    {
+                        next = codeGen.DefineLabel();
+                        codeGen
+                            .Dup()
+                            .Brtrue(next)
+                            .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
+                                .FindConstructor())
+                            .Throw();
+                        codeGen.MarkLabel(next);
+                    }
+
                     codeGen
-                        .Dup()
-                        .Brtrue(next)
-                        .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
+                        .Pop()
+                        .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
                             .FindConstructor())
                         .Throw();
-                    codeGen.MarkLabel(next);
                 }
 
-                codeGen
-                    .Pop()
-                    .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException").FindConstructor())
-                    .Throw();
-                
                 codeGen.MarkLabel(exit);
             }
 
