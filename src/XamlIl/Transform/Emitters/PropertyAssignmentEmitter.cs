@@ -71,7 +71,7 @@ namespace XamlIl.Transform.Emitters
                     next = codeGen.DefineLabel();
 
                     var checkNext = false;
-                    if (setter.BinderParameters.AllowNull)
+                    if (setter.BinderParameters.AllowRuntimeNull)
                         checkedTypes.Add(type);
                     else
                     {
@@ -110,7 +110,7 @@ namespace XamlIl.Transform.Emitters
                     codeGen.MarkLabel(next);
                 if (hadJumps)
                 {
-                    if (setters.Any(x => !x.BinderParameters.AllowNull))
+                    if (setters.Any(x => !x.BinderParameters.AllowRuntimeNull))
                     {
                         next = codeGen.DefineLabel();
                         codeGen
