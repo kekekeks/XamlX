@@ -8,36 +8,6 @@ namespace XamlIl.Transform.Transformers
 {
     public class XamlIlNewObjectTransformer : IXamlIlAstTransformer
     {
-        void TransformContent(XamlIlAstTransformationContext context, XamlIlAstObjectNode ni)
-        {
-            var valueIndexes = new List<int>();
-            for (var c = 0; c < ni.Children.Count; c++)
-                if (ni.Children[c] is IXamlIlAstValueNode)
-                    valueIndexes.Add(c);
-
-            if (valueIndexes.Count == 0)
-                return;
-            var type = ni.Type.GetClrType();
-            IXamlIlAstValueNode VNode(int ind) => (IXamlIlAstValueNode) ni.Children[ind];
-
-            var contentProperty = context.Configuration.FindContentProperty(type);
-            if (contentProperty == null)
-            {
-                foreach (var ind in valueIndexes)
-                    if (XamlIlTransformHelpers.TryCallAdd(context,null, type, VNode(ind), out var addCall))
-                        ni.Children[ind] = addCall;
-                    else
-                        throw new XamlIlLoadException(
-                            $"Type `{type.GetFqn()} does not have content property and suitable Add({VNode(ind).Type.GetClrType().GetFqn()}) not found",
-                            VNode(ind));
-            }
-            else
-                XamlIlTransformHelpers.GeneratePropertyAssignments(context,
-                    new XamlIlAstClrProperty(ni, contentProperty), valueIndexes.Count,
-                    num => VNode(valueIndexes[num]),
-                    (i, v) => ni.Children[valueIndexes[i]] = v);
-        }
-
         IXamlIlConstructor TransformArgumentsAndGetConstructor(XamlIlAstTransformationContext context,
             XamlIlAstObjectNode n)
         {
@@ -82,9 +52,7 @@ namespace XamlIl.Transform.Transformers
                         "Value types can only be loaded via converters. We don't want to mess with ldloca.s, ldflda and other weird stuff",
                         node);
 
-                TransformContent(context, ni);
-                var ctor = TransformArgumentsAndGetConstructor(context, ni);
-                
+                var ctor = TransformArgumentsAndGetConstructor(context, ni);                
                 return new XamlIlValueWithManipulationNode(ni,
                     new XamlIlAstNewClrObjectNode(ni, ni.Type.GetClrTypeReference(), ctor, ni.Arguments),
                     new XamlIlObjectInitializationNode(ni,

@@ -31,13 +31,6 @@ namespace XamlIl.Transform
         public IXamlIlType UriContextProvider { get; set; }
         
         public IXamlIlCustomAttributeResolver CustomAttributeResolver { get; set; }
-        /// <summary>
-        /// Expected signature:
-        /// static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov, object value)
-        /// </summary>
-        public IXamlIlMethod MarkupExtensionCustomResultHandler { get; set; }
-        public List<IXamlIlType> MarkupExtensionCustomResultTypes { get; set; } = new List<IXamlIlType>();
-        public Func<XamlIlAstClrProperty, IXamlIlType, bool> ShouldIgnoreMarkupExtensionCustomResultForProperty { get; set; }
         
         /// <summary>
         /// Expected signature:

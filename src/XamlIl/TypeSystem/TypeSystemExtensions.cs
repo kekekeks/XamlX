@@ -40,6 +40,9 @@ namespace XamlIl.TypeSystem
 
         public static IXamlIlEmitter Ldstr(this IXamlIlEmitter emitter, string arg)
             => arg == null ? emitter.Ldnull() : emitter.Emit(OpCodes.Ldstr, arg);
+
+        public static IXamlIlEmitter Throw(this IXamlIlEmitter emitter)
+            => emitter.Emit(OpCodes.Throw);
         
         public static IXamlIlEmitter Ldc_I4(this IXamlIlEmitter emitter, int arg)
             => arg == 0

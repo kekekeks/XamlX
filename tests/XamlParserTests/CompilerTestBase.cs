@@ -44,20 +44,11 @@ namespace XamlParserTests
                     UriContextProvider = typeSystem.GetType("XamlParserTests.ITestUriContext"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlParentStackProviderV1"),
-                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlXmlNamespaceInfoProviderV1"),
-                    MarkupExtensionCustomResultHandler = typeSystem.GetType("XamlParserTests.CompilerTestBase")
-                        .Methods.First(m => m.Name == "ApplyNonMatchingMarkupExtension")
+                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlIl.Runtime.IXamlIlXmlNamespaceInfoProviderV1")
                 }
             );
         }
 
-        public static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov,
-            object value)
-        {
-            throw new InvalidCastException();
-        }
-
-        
         protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)

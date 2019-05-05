@@ -15,6 +15,8 @@ namespace XamlIl.Transform
         public IXamlIlField PropertyTargetProperty { get; set; }
         public IXamlIlConstructor Constructor { get; set; }
         public Action<IXamlIlEmitter> Factory { get; set; }
+        public IXamlIlMethod PushParentMethod { get; set; }
+        public IXamlIlMethod PopParentMethod { get; set; }
         
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
             Action<XamlIlContext, IXamlIlEmitter> factory)
@@ -23,14 +25,19 @@ namespace XamlIl.Transform
 
             IXamlIlField Get(string s) =>
                 ContextType.Fields.FirstOrDefault(f => f.Name == s);
+            
+            IXamlIlMethod GetMethod(string s) =>
+                ContextType.Methods.FirstOrDefault(f => f.Name == s);
 
             RootObjectField = Get(XamlIlContextDefinition.RootObjectFieldName);
             ParentListField = Get(XamlIlContextDefinition.ParentListFieldName);
             PropertyTargetObject = Get(XamlIlContextDefinition.ProvideTargetObjectName);
             PropertyTargetProperty = Get(XamlIlContextDefinition.ProvideTargetPropertyName);
+            PushParentMethod = GetMethod(XamlIlContextDefinition.PushParentMethodName);
+            PopParentMethod = GetMethod(XamlIlContextDefinition.PopParentMethodName);
             Constructor = ContextType.Constructors.First();
             Factory = il => factory(this, il);
-        }
+        }        
 
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
             string baseUri, List<IXamlIlField> staticProviders) : this(definition, constructedType,
@@ -69,6 +76,8 @@ namespace XamlIl.Transform
         public const string ParentListFieldName = "ParentsStack";
         public const string ProvideTargetObjectName = "ProvideTargetObject";
         public const string ProvideTargetPropertyName = "ProvideTargetProperty";
+        public const string PushParentMethodName = "PushParent";
+        public const string PopParentMethodName = "PopParent";
 
         private IXamlIlField ParentListField;
         private readonly IXamlIlField _parentServiceProviderField;
@@ -385,6 +394,9 @@ namespace XamlIl.Transform
 
             Constructor = ctor;
             CreateCallbacks.Add(() => { parentBuilder.CreateType(); });
+            
+            EmitPushPopParent(builder, typeSystem);
+            
             CreateAllTypes();
             ContextType = builder.CreateType();
         }
@@ -393,6 +405,46 @@ namespace XamlIl.Transform
         {
             foreach (var cb in CreateCallbacks)
                 cb();
+        }
+
+        private void EmitPushPopParent(IXamlIlTypeBuilder builder, IXamlIlTypeSystem ts)
+        {
+            var @void = ts.GetType("System.Void");
+            var so = ts.GetType("System.Object");
+            var  objectListType = ts.GetType("System.Collections.Generic.List`1")
+                .MakeGenericType(new[] {so});
+            
+            builder.DefineMethod(@void, new[] {so}, PushParentMethodName, true, false, false)
+                .Generator
+                .LdThisFld(ParentListField)
+                .Ldarg(1)
+                .EmitCall(objectListType.FindMethod("Add", @void,
+                    false, so))
+                .Ldarg_0()
+                .Ldarg(1)
+                .Stfld(PropertyTargetObject)
+                .Ret();
+
+            var pop = builder.DefineMethod(@void, new IXamlIlType[0], PopParentMethodName, true, false, false)
+                .Generator;
+
+            var idx = pop.DefineLocal(ts.GetType("System.Int32"));
+            pop
+                // var idx = _parents.Count - 1;
+                .LdThisFld(ParentListField)
+                .EmitCall(objectListType.FindMethod(m => m.Name == "get_Count"))
+                .Ldc_I4(1).Emit(OpCodes.Sub).Stloc(idx)
+                // this.PropertyTargetObject = _parents[idx];
+                .Ldarg_0()
+                .LdThisFld(ParentListField)
+                .Ldloc(idx)
+                .EmitCall(objectListType.FindMethod(m => m.Name == "get_Item"))
+                .Stfld(PropertyTargetObject)
+                // _parents.RemoveAt(idx);
+                .LdThisFld(ParentListField)
+                .Ldloc(idx).EmitCall(objectListType.FindMethod(m => m.Name == "RemoveAt"))
+                .Ret();
+
         }
         
         private IXamlIlMethodBuilder ImplementInterfacePropertyGetter(IXamlIlTypeBuilder builder ,

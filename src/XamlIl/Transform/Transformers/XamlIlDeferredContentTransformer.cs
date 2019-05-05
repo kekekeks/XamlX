@@ -14,8 +14,9 @@ namespace XamlIl.Transform.Transformers
                 return node;
             if (!pa.Property.CustomAttributes.Any(ca => deferredAttrs.Any(da => da.Equals(ca.Type))))
                 return node;
-            
-            pa.Value = new XamlIlDeferredContentNode(pa.Value, context.Configuration);
+
+            pa.Values[pa.Values.Count - 1] =
+                new XamlIlDeferredContentNode(pa.Values[pa.Values.Count - 1], context.Configuration);
             return node;
         }
     }

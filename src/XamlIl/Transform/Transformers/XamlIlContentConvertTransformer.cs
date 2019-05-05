@@ -9,17 +9,17 @@ namespace XamlIl.Transform.Transformers
         {
             if (!(node is XamlIlAstObjectNode on))
                 return node;
-            var nonDirectiveChildnren = on.Children.Where(a => !(a is XamlIlAstXmlDirective)).ToList();
+            var nonDirectiveChildren = on.Children.Where(a => !(a is XamlIlAstXmlDirective)).ToList();
 
             if (on.Arguments.Count != 0
-                || nonDirectiveChildnren.Count != 1
-                || !(nonDirectiveChildnren[0] is IXamlIlAstValueNode vn)
+                || nonDirectiveChildren.Count != 1
+                || !(nonDirectiveChildren[0] is IXamlIlAstValueNode vn)
                 || !vn.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String))
                 return node;
             
             if (XamlIlTransformHelpers.TryGetCorrectlyTypedValue(context, vn, on.Type.GetClrType(), out var rv))
             {
-                if (nonDirectiveChildnren.Count != on.Children.Count)
+                if (nonDirectiveChildren.Count != on.Children.Count)
                     rv = new XamlIlValueWithManipulationNode(rv, rv,
                         new XamlIlManipulationGroupNode(rv, on.Children.OfType<XamlIlAstXmlDirective>()));
                 return rv;

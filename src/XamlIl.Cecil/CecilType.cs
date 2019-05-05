@@ -43,7 +43,7 @@ namespace XamlIl.TypeSystem
                     return true;
                 if (!(other is CecilType o))
                     return false;
-                return Equals(Reference, o.Reference);
+                return CecilHelpers.Equals(Reference, o.Reference);
             }
 
             public object Id => Reference.FullName;
@@ -106,7 +106,10 @@ namespace XamlIl.TypeSystem
                 if (!type.IsValueType
                     && type == XamlIlPseudoType.Null)
                     return true;
-                if (type.IsValueType && type.GenericTypeDefinition?.FullName == "System.Nullable`1")
+                
+                if (type.IsValueType 
+                    && GenericTypeDefinition?.FullName == "System.Nullable`1"
+                    && GenericArguments[0].Equals(type))
                     return true;
                 if (FullName == "System.Object" && type.IsInterface)
                     return true;
