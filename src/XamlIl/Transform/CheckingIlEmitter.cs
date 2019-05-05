@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection.Emit;
 using XamlIl.TypeSystem;
 
@@ -8,17 +10,52 @@ namespace XamlIl.Transform
     public class CheckingIlEmitter : IXamlIlEmitter
     {
         private readonly IXamlIlEmitter _inner;
-        private Dictionary<IXamlIlLabel, string> _unmarkedLabels;
-        public int StackBalance { get; set; }
-        private bool _hasBranches;
+
+        private Dictionary<IXamlIlLabel, string> _unmarkedLabels =
+            new Dictionary<IXamlIlLabel, string>();
+
+        private Dictionary<IXamlIlLabel, Instruction> _labels =
+            new Dictionary<IXamlIlLabel, Instruction>();
+        
+        private List<IXamlIlLabel> _labelsToMarkOnNextInstruction = new List<IXamlIlLabel>();
         private bool _paused;
 
         public CheckingIlEmitter(IXamlIlEmitter inner)
         {
             _inner = inner;
-            _unmarkedLabels = new Dictionary<IXamlIlLabel, string>();
 
+        }        
+        
+        class Instruction
+        {
+            public int Offset { get; }
+            public OpCode Opcode { get; set; }
+            public object Operand { get; }
+            public int BalanceChange { get; set; }
+            public IXamlIlLabel JumpTo { get; set; }
+            public int? ExpectedBalance { get; set; }
+
+            public Instruction(int offset, OpCode opcode, object operand)
+            {
+                Offset = offset;
+                Opcode = opcode;
+                Operand = operand;
+                BalanceChange = GetInstructionBalance(opcode, operand);
+                JumpTo = operand as IXamlIlLabel;
+            }
+
+            public Instruction(int offset, int balanceChange)
+            {
+                Offset = offset;
+                BalanceChange = balanceChange;
+                Opcode = OpCodes.Nop;
+            }
+
+            public override string ToString() =>
+                $"{Offset:0000}: {Opcode}; Expected {ExpectedBalance} Change {BalanceChange}";
         }
+        private List<Instruction> _instructions = new List<Instruction>();
+
 
         public IXamlIlTypeSystem TypeSystem => _inner.TypeSystem;
 
@@ -54,6 +91,48 @@ namespace XamlIl.Transform
             {StackBehaviour.Popref_popi_pop1, -3}
         };
 
+        static int GetInstructionBalance(OpCode code, object operand)
+        {
+            var method = operand as IXamlIlMethod;
+            var ctor = operand as IXamlIlConstructor;
+            /*if (code.FlowControl == FlowControl.Branch || code.FlowControl == FlowControl.Cond_Branch)
+                _hasBranches = true;*/
+            var stackBalance = 0;
+            if (method != null && (code == OpCodes.Call || code == OpCodes.Callvirt))
+            {
+                stackBalance -= method.Parameters.Count + (method.IsStatic ? 0 : 1);
+                if (method.ReturnType.FullName != "System.Void")
+                    stackBalance += 1;
+            }
+            else if (ctor!= null && (code == OpCodes.Call  || code == OpCodes.Newobj))
+            {
+                stackBalance -= ctor.Parameters.Count;
+                if (code == OpCodes.Newobj)
+                    // New pushes a value to the stack
+                    stackBalance += 1;
+                else
+                {
+                    if (!ctor.IsStatic)
+                        // base ctor pops this from the stack
+                        stackBalance -= 1;
+                }
+            }
+            else
+            {
+                void Balance(StackBehaviour op)
+                {
+                    if (s_balance.TryGetValue(op, out var balance))
+                        stackBalance += balance;
+                    else
+                        throw new Exception("Don't know how to track stack for " + code);
+                }
+                Balance(code.StackBehaviourPop);
+                Balance(code.StackBehaviourPush);
+            }
+
+            return stackBalance;
+        }
+        
         public void Pause()
         {
             _paused = true;
@@ -68,60 +147,31 @@ namespace XamlIl.Transform
         {
             if (_paused)
                 return;
-            StackBalance += change;
+            _instructions.Add(new Instruction(_instructions.Count, change));
             (_inner as CheckingIlEmitter)?.ExplicitStack(change);
         }
         
-        void Track(OpCode code, IXamlIlMethod method = null, IXamlIlConstructor ctor = null)
+        void Track(OpCode code, object operand)
         {
             if (_paused)
                 return;
-            if (code.FlowControl == FlowControl.Branch || code.FlowControl == FlowControl.Cond_Branch)
-                _hasBranches = true;
-            
-            if (method != null && (code == OpCodes.Call || code == OpCodes.Callvirt))
-            {
-                StackBalance -= method.Parameters.Count + (method.IsStatic ? 0 : 1);
-                if (method.ReturnType.FullName != "System.Void")
-                    StackBalance += 1;
-            }
-            else if (ctor!= null && (code == OpCodes.Call  || code == OpCodes.Newobj))
-            {
-                StackBalance -= ctor.Parameters.Count;
-                if (code == OpCodes.Newobj)
-                    // New pushes a value to the stack
-                    StackBalance += 1;
-                else
-                {
-                    if (!ctor.IsStatic)
-                        // base ctor pops this from the stack
-                        StackBalance -= 1;
-                }
-            }
-            else
-            {
-                void Balance(StackBehaviour op)
-                {
-                    if (s_balance.TryGetValue(op, out var balance))
-                        StackBalance += balance;
-                    else
-                        throw new Exception("Don't know how to track stack for " + code);
-                }
-                Balance(code.StackBehaviourPop);
-                Balance(code.StackBehaviourPush);
-            }
+            var op = new Instruction(_instructions.Count, code, operand);
+            _instructions.Add(op);
+            foreach (var l in _labelsToMarkOnNextInstruction)
+                _labels[l] = op;
+            _labelsToMarkOnNextInstruction.Clear();
         }
         
         public IXamlIlEmitter Emit(OpCode code)
         {
-            Track(code);
+            Track(code, null);
             _inner.Emit(code);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, IXamlIlField field)
         {
-            Track(code);
+            Track(code, field);
             _inner.Emit(code, field);
             return this;
         }
@@ -135,49 +185,49 @@ namespace XamlIl.Transform
 
         public IXamlIlEmitter Emit(OpCode code, IXamlIlConstructor ctor)
         {
-            Track(code, null, ctor);
+            Track(code, ctor);
             _inner.Emit(code, ctor);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, string arg)
         {
-            Track(code);
+            Track(code, arg);
             _inner.Emit(code, arg);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, int arg)
         {
-            Track(code);
+            Track(code, arg);
             _inner.Emit(code, arg);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, long arg)
         {
-            Track(code);
+            Track(code, arg);
             _inner.Emit(code, arg);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, IXamlIlType type)
         {
-            Track(code);
+            Track(code, type);
             _inner.Emit(code, type);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, float arg)
         {
-            Track(code);
+            Track(code, arg);
             _inner.Emit(code, arg);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, double arg)
         {
-            Track(code);
+            Track(code, arg);
             _inner.Emit(code, arg);
             return this;
         }
@@ -199,19 +249,20 @@ namespace XamlIl.Transform
             if (!_unmarkedLabels.Remove(label))
                 throw new InvalidOperationException("Attempt to mark undeclared label");
             _inner.MarkLabel(label);
+            _labelsToMarkOnNextInstruction.Add(label);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, IXamlIlLabel label)
         {
-            Track(code);
+            Track(code, label);
             _inner.Emit(code, label);
             return this;
         }
 
         public IXamlIlEmitter Emit(OpCode code, IXamlIlLocal local)
         {
-            Track(code);
+            Track(code, local);
             _inner.Emit(code, local);
             return this;
         }
@@ -223,13 +274,78 @@ namespace XamlIl.Transform
 
         public XamlIlLocalsPool LocalsPool => _inner.LocalsPool;
 
-        public void Check(int expectedBalance)
+        int? VerifyAndGetBalanceAtExit(bool expectReturn)
         {
-            if (expectedBalance != StackBalance && !_hasBranches)
-                throw new InvalidProgramException($"Unbalanced stack, expected {expectedBalance} got {StackBalance}");
+            if (_instructions.Count == 0)
+                return 0;
+            var toInspect = new Stack<int>();
+            toInspect.Push(0);
+            _instructions[0].ExpectedBalance = 0;
+
+            if (_labelsToMarkOnNextInstruction.Count != 0
+                || _instructions.Last().Opcode != OpCodes.Nop
+                || _instructions.Last().BalanceChange != 0)
+                Track(OpCodes.Nop, null);
+            int? returnBalance = null;
+            while (toInspect.Count > 0)
+            {
+                var ip = toInspect.Pop();
+                var currentBalance = _instructions[ip].ExpectedBalance.Value;
+                while (ip < _instructions.Count)
+                {
+                    var op = _instructions[ip];
+                    if (op.ExpectedBalance.HasValue && op.ExpectedBalance != currentBalance)
+                        throw new InvalidProgramException(
+                            $"Already have been at instruction offset {ip} ({op.Opcode}) with stack balance {op.ExpectedBalance}, current balance is {currentBalance}");
+                    op.ExpectedBalance = currentBalance;
+                    currentBalance += op.BalanceChange;
+                    var control = op.Opcode.FlowControl;
+                    if (control == FlowControl.Return)
+                    {
+                        if (!expectReturn)
+                            throw new InvalidProgramException("Return flow control is not allowed for this emitter");
+                        if (returnBalance.HasValue && currentBalance != returnBalance)
+                            throw new InvalidProgramException(
+                                $"Already have a return with different stack balance {returnBalance}, current stack balance is {currentBalance}");
+                        returnBalance = currentBalance;
+                        break;
+                    }
+
+                    if (op.JumpTo != null)
+                    {
+                        var jump = _labels[op.JumpTo];
+                        if (jump.ExpectedBalance.HasValue && jump.ExpectedBalance != currentBalance)
+                            throw new InvalidProgramException(
+                                $"Already have been at instruction offset {jump.Offset} ({jump.Opcode}) with stack balance {jump.ExpectedBalance}, stack balance at jump from {op.Offset} is {currentBalance}");
+
+                        if (jump.ExpectedBalance == null)
+                        {
+                            jump.ExpectedBalance = currentBalance;
+                            toInspect.Push(jump.Offset);
+                        }
+                    }
+                    
+                    if (control == FlowControl.Break || control == FlowControl.Throw || control == FlowControl.Branch)
+                        break;
+
+                    ip++;
+                }
+            }
+
+            return _instructions.Last().ExpectedBalance;
+        }
+        
+        
+        public void Check(int? expectedBalance, bool expectReturn)
+        {
             if (_unmarkedLabels.Count != 0)
                 throw new InvalidProgramException("Code block has unmarked labels defined at:\n" +
                                                     string.Join("\n", _unmarkedLabels.Values));
+
+
+            var balance = VerifyAndGetBalanceAtExit(expectReturn);
+            if (expectedBalance != balance)
+                throw new InvalidProgramException($"Unbalanced stack, expected {expectedBalance} got {balance}");
         }
     }
 }
