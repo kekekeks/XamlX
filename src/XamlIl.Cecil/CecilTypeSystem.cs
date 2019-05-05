@@ -47,7 +47,7 @@ namespace XamlIl.TypeSystem
         static string ChangeExtension(string path, string ext)
         {
             var dir = Path.GetDirectoryName(path);
-            var name = Path.GetFileNameWithoutExtension(path) + ".ext";
+            var name = Path.GetFileNameWithoutExtension(path) + "." + ext;
             if (dir == null)
                 return name;
             
