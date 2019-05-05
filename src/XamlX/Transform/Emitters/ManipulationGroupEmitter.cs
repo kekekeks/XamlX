@@ -11,7 +11,7 @@ namespace XamlX.Transform.Emitters
             if (!(node is XamlXManipulationGroupNode group))
                 return null;
             if (group.Children.Count == 0)
-                codeGen.Emit(OpCodes.Pop);
+                codeGen.Pop();
             else
             {
                 for (var c = 0; c < group.Children.Count; c++)
