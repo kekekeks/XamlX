@@ -34,7 +34,10 @@ namespace XamlX.Transform.Transformers
                                         child);
                                 propertyNode = new XamlXAstXamlPropertyValueNode(ni, new XamlXAstClrProperty(ni,
                                         "Content", ni.Type.GetClrType(), null,
-                                        adders.Select(a => new XamlXDirectCallPropertySetter(a))),
+                                        adders.Select(a => new XamlXDirectCallPropertySetter(a)
+                                        {
+                                            BinderParameters = {AllowMultiple = true}
+                                        })),
                                     Array.Empty<IXamlXAstValueNode>());
                             }
                         }
