@@ -92,7 +92,7 @@ namespace XamlIl.Ast
         public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
         {
             // Discard the stack value we are "supposed" to manipulate
-            codeGen.Emit(OpCodes.Pop);
+            codeGen.Pop();
             context.Emit(Imperative, codeGen, null);
             return XamlIlNodeEmitResult.Void(1);
         }
