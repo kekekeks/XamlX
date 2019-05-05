@@ -8,6 +8,7 @@ namespace XamlX.Transform
     public class XamlContextBase
     {
         private Dictionary<Type, object> _items = new Dictionary<Type, object>();  
+        private List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
         public T GetItem<T>() => (T) _items[typeof(T)];
 
         public T GetOrCreateItem<T>() where T : new()
@@ -25,11 +26,26 @@ namespace XamlX.Transform
         }
 
         public void SetItem<T>(T item) => _items[typeof(T)] = item;
+        
+        
+        public IEnumerable<IXamlAstNode> ParentNodes()
+        {
+            for (var c = _parentNodes.Count - 1; c >= 0; c--)
+                yield return _parentNodes[c];
+        }
+
+        protected void PushParent(IXamlAstNode node) => _parentNodes.Add(node);
+
+        protected IXamlAstNode PopParent()
+        {
+            var rv = _parentNodes[_parentNodes.Count - 1];
+            _parentNodes.RemoveAt(_parentNodes.Count - 1);
+            return rv;
+        }
     }
     
     public class XamlAstTransformationContext : XamlContextBase
     {
-        private List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public XamlTransformerConfiguration Configuration { get; }
         public IXamlAstValueNode RootObject { get; set; }
@@ -56,12 +72,6 @@ namespace XamlX.Transform
             StrictMode = strictMode;
         }
 
-        public IEnumerable<IXamlAstNode> ParentNodes()
-        {
-            for (var c = _parentNodes.Count - 1; c >= 0; c--)
-                yield return _parentNodes[c];
-        }
-
         class Visitor : IXamlAstVisitor
         {
             private readonly XamlAstTransformationContext _context;
@@ -75,9 +85,9 @@ namespace XamlX.Transform
             
             public IXamlAstNode Visit(IXamlAstNode node) => _transformer.Transform(_context, node);
 
-            public void Push(IXamlAstNode node) => _context._parentNodes.Add(node);
+            public void Push(IXamlAstNode node) => _context.PushParent(node);
 
-            public void Pop() => _context._parentNodes.RemoveAt(_context._parentNodes.Count - 1);
+            public void Pop() => _context.PopParent();
         }
         
         public IXamlAstNode Visit(IXamlAstNode root, IXamlAstTransformer transformer)

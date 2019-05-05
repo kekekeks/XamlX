@@ -94,6 +94,31 @@ namespace XamlX.TypeSystem
 
             return false;
         }
+
+        public static void EmitConvert(XamlEmitContext context, IXamlILEmitter ilgen, IXamlLineInfo node, IXamlType what,
+            IXamlType to, IXamlLocal local)
+        {
+            EmitConvert(context, node, what, to, lda => ilgen.Emit(lda ? OpCodes.Ldloca : OpCodes.Ldloc, local));
+        }
+
+        public static void EmitConvert(XamlEmitContext context, IXamlILEmitter ilgen, IXamlLineInfo node,
+            IXamlType what,
+            IXamlType to)
+        {
+            XamlLocalsPool.PooledLocal local = null;
+
+            EmitConvert(context, node, what, to, lda =>
+            {
+                if (!lda)
+                    return ilgen;
+                local = ilgen.LocalsPool.GetLocal(what);
+                ilgen
+                    .Stloc(local.Local)
+                    .Ldloca(local.Local);
+                return ilgen;
+            });
+            local?.Dispose();
+        }
         
         public static void EmitConvert(XamlEmitContext context, IXamlLineInfo node, IXamlType what,
             IXamlType to, Func<bool, IXamlILEmitter> ld)

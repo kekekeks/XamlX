@@ -47,13 +47,15 @@ namespace XamlX.Transform.Transformers
             
             if (node is XamlPropertyAssignmentNode assignment)
             {
-                if (!TryConvert(assignment.Value, out var nvalue, out var deferred))
+                if (!TryConvert(assignment.Values.Last(), out var nvalue, out var deferred))
                     return node;
+                
+                assignment.Values[assignment.Values.Count - 1] = nvalue;
                 return new XamlManipulationGroupNode(assignment)
                 {
                     Children =
                     {
-                        new XamlPropertyAssignmentNode(assignment, assignment.Property, nvalue),
+                        assignment,
                         deferred
                     }
                 };

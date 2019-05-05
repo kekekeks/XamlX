@@ -61,19 +61,9 @@ namespace XamlParserTests
     }
     
     
-
-    delegate void ApplyNonMatchingMarkupExtensionDelegate(object target, object property, IServiceProvider prov,
-        object value);
-    
+  
     public class MarkupExtensionTests : CompilerTestBase
-    {
-        public MarkupExtensionTests()
-        {
-            Configuration.TypeMappings.MarkupExtensionCustomResultHandler =
-                Configuration.TypeSystem.FindType("XamlParserTests.MarkupExtensionTests")
-                    .FindMethod(m => m.Name == "ApplyNonMatchingMarkupExtension");
-        }
-        
+    {       
         [Fact]
         public void Object_Should_Be_Casted_To_String()
         {
@@ -82,10 +72,9 @@ namespace XamlParserTests
             Assert.Equal("test", res.StringProperty);
         }
         
-        IServiceProvider CreateValueProvider(object value, ApplyNonMatchingMarkupExtensionDelegate convert = null)=>new DictionaryServiceProvider
+        IServiceProvider CreateValueProvider(object value)=>new DictionaryServiceProvider
         {
-            [typeof(ExtensionValueHolder)] = new ExtensionValueHolder() {Value = value},
-            [typeof(ApplyNonMatchingMarkupExtensionDelegate)] = convert
+            [typeof(ExtensionValueHolder)] = new ExtensionValueHolder() {Value = value}
         };
         
         [Fact]
@@ -144,15 +133,6 @@ namespace XamlParserTests
             Assert.Equal(123, res.ObjectProperty);
         }
 
-
-        public static void ApplyNonMatchingMarkupExtension(object target, object property, IServiceProvider prov,
-            object value)
-        {
-            ((ApplyNonMatchingMarkupExtensionDelegate)
-                    prov.GetService(typeof(ApplyNonMatchingMarkupExtensionDelegate)))
-                    (target, property, prov, value);
-        }
-
         [Fact]
         public void Unknown_Reference_Type_To_Value_Type_Should_Trigger_InvalidCastException()
         {
@@ -186,24 +166,6 @@ namespace XamlParserTests
                 (MarkupExtensionTestsClass) CompileAndRun(@"
 <MarkupExtensionTestsClass xmlns='test' 
     StringProperty='{ServiceProviderValue}'/>", CreateValueProvider(val)));
-        }
-
-        [Fact]
-        public void Custom_Converted_Types_Should_Be_Passed_To_Apply_Callback()
-        {
-            Configuration.TypeMappings.MarkupExtensionCustomResultTypes.Add(
-                Configuration.TypeSystem.GetType(typeof(CustomConvertedType).FullName));
-            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
-<MarkupExtensionTestsClass xmlns='test' 
-    ObjectProperty='{ServiceProviderValue}'/>", CreateValueProvider(new CustomConvertedType()
-            {
-                Value = "test"
-            }, (t, p, s, v) =>
-            {
-                if (v is CustomConvertedType ct)
-                    t.GetType().GetProperty((string) p).SetValue(t, ct.Value);
-            }));
-            Assert.Equal("test", res.ObjectProperty);
         }
     }
 }

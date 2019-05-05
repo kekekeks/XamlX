@@ -155,7 +155,7 @@ namespace XamlX.TypeSystem
             }
 
             public bool Equals(IXamlType other) => Type == (other as SreType)?.Type;
-
+            public override int GetHashCode() => Type.GetHashCode();
             public object Id => Type;
 
             public string FullName => Type.FullName;
