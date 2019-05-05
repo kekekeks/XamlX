@@ -32,8 +32,10 @@ namespace XamlX.Transform
             public OpCode Opcode { get; set; }
             public object Operand { get; }
             public int BalanceChange { get; set; }
-            public IXamlLabel JumpTo { get; set; }
+            public IXamlLabel JumpToLabel { get; set; }
+            public Instruction JumpToInstruction { get; set; }
             public int? ExpectedBalance { get; set; }
+            public bool IsExplicit { get; set; }
 
             public Instruction(int offset, OpCode opcode, object operand)
             {
@@ -41,7 +43,7 @@ namespace XamlX.Transform
                 Opcode = opcode;
                 Operand = operand;
                 BalanceChange = GetInstructionBalance(opcode, operand);
-                JumpTo = operand as IXamlLabel;
+                JumpToLabel = operand as IXamlLabel;
             }
 
             public Instruction(int offset, int balanceChange)
@@ -49,10 +51,11 @@ namespace XamlX.Transform
                 Offset = offset;
                 BalanceChange = balanceChange;
                 Opcode = OpCodes.Nop;
+                IsExplicit = true;
             }
 
             public override string ToString() =>
-                $"{Offset:0000}: {Opcode}; Expected {ExpectedBalance} Change {BalanceChange}";
+                $"{Offset:0000}: {(IsExplicit ? "CALL" : Opcode.ToString())}{(JumpToInstruction != null ? " " + JumpToInstruction.Offset : "")}; Expected {ExpectedBalance} Change {BalanceChange}";
         }
         private List<Instruction> _instructions = new List<Instruction>();
 
@@ -93,24 +96,30 @@ namespace XamlX.Transform
 
         static int GetInstructionBalance(OpCode code, object operand)
         {
+            return GetInstructionPopBalance(code, operand) + GetInstructionPushBalance(code, operand);
+        }
+        
+        static int Balance(StackBehaviour op)
+        {
+            if (s_balance.TryGetValue(op, out var balance))
+                return balance;
+            else
+                throw new Exception("Don't know how to track stack for " + op);
+        }
+        
+        static int GetInstructionPopBalance(OpCode code, object operand)
+        {
             var method = operand as IXamlMethod;
             var ctor = operand as IXamlConstructor;
-            /*if (code.FlowControl == FlowControl.Branch || code.FlowControl == FlowControl.Cond_Branch)
-                _hasBranches = true;*/
             var stackBalance = 0;
             if (method != null && (code == OpCodes.Call || code == OpCodes.Callvirt))
             {
                 stackBalance -= method.Parameters.Count + (method.IsStatic ? 0 : 1);
-                if (method.ReturnType.FullName != "System.Void")
-                    stackBalance += 1;
             }
             else if (ctor!= null && (code == OpCodes.Call  || code == OpCodes.Newobj))
             {
                 stackBalance -= ctor.Parameters.Count;
-                if (code == OpCodes.Newobj)
-                    // New pushes a value to the stack
-                    stackBalance += 1;
-                else
+                if(code != OpCodes.Newobj)
                 {
                     if (!ctor.IsStatic)
                         // base ctor pops this from the stack
@@ -119,15 +128,31 @@ namespace XamlX.Transform
             }
             else
             {
-                void Balance(StackBehaviour op)
-                {
-                    if (s_balance.TryGetValue(op, out var balance))
-                        stackBalance += balance;
-                    else
-                        throw new Exception("Don't know how to track stack for " + code);
-                }
-                Balance(code.StackBehaviourPop);
-                Balance(code.StackBehaviourPush);
+                stackBalance += Balance(code.StackBehaviourPop);
+            }
+
+            return stackBalance;
+        }
+        
+        static int GetInstructionPushBalance(OpCode code, object operand)
+        {
+            var method = operand as IXamlMethod;
+            var ctor = operand as IXamlConstructor;
+            var stackBalance = 0;
+            if (method != null && (code == OpCodes.Call || code == OpCodes.Callvirt))
+            {
+                if (method.ReturnType.FullName != "System.Void")
+                    stackBalance += 1;
+            }
+            else if (ctor!= null && (code == OpCodes.Call  || code == OpCodes.Newobj))
+            {
+                if (code == OpCodes.Newobj)
+                    // New pushes a value to the stack
+                    stackBalance += 1;
+            }
+            else
+            {
+                stackBalance += Balance(code.StackBehaviourPush);
             }
 
             return stackBalance;
@@ -274,10 +299,19 @@ namespace XamlX.Transform
 
         public XamlLocalsPool LocalsPool => _inner.LocalsPool;
 
-        int? VerifyAndGetBalanceAtExit(bool expectReturn)
+        string VerifyAndGetBalanceAtExit(int expectedBalance, bool expectReturn)
         {
             if (_instructions.Count == 0)
-                return 0;
+            {
+                if (expectReturn)
+                    return "Expected return, but got no instructions";
+                if (expectedBalance == 0)
+                    return null;
+                return $"Expected stack balance {expectedBalance}, but got no instructions";
+            }
+
+            var reserve = expectedBalance < 0 ? expectedBalance : 0;
+            
             var toInspect = new Stack<int>();
             toInspect.Push(0);
             _instructions[0].ExpectedBalance = 0;
@@ -286,6 +320,11 @@ namespace XamlX.Transform
                 || _instructions.Last().Opcode != OpCodes.Nop
                 || _instructions.Last().BalanceChange != 0)
                 Track(OpCodes.Nop, null);
+            
+            foreach(var i in _instructions)
+                if (i.JumpToLabel != null)
+                    i.JumpToInstruction = _labels[i.JumpToLabel];
+            
             int? returnBalance = null;
             while (toInspect.Count > 0)
             {
@@ -295,28 +334,34 @@ namespace XamlX.Transform
                 {
                     var op = _instructions[ip];
                     if (op.ExpectedBalance.HasValue && op.ExpectedBalance != currentBalance)
-                        throw new InvalidProgramException(
-                            $"Already have been at instruction offset {ip} ({op.Opcode}) with stack balance {op.ExpectedBalance}, current balance is {currentBalance}");
+                        return $"Already have been at instruction offset {ip} ({op.Opcode}) with stack balance {op.ExpectedBalance}, current balance is {currentBalance}";
                     op.ExpectedBalance = currentBalance;
+
+                    if (currentBalance + GetInstructionPopBalance(op.Opcode, op.Operand) < reserve)
+                        return $"Stack underflow at {op}";
+                    
                     currentBalance += op.BalanceChange;
+                    
                     var control = op.Opcode.FlowControl;
                     if (control == FlowControl.Return)
                     {
                         if (!expectReturn)
-                            throw new InvalidProgramException("Return flow control is not allowed for this emitter");
+                            return "Return flow control is not allowed for this emitter";
                         if (returnBalance.HasValue && currentBalance != returnBalance)
-                            throw new InvalidProgramException(
-                                $"Already have a return with different stack balance {returnBalance}, current stack balance is {currentBalance}");
+                            return 
+                                $"Already have a return with different stack balance {returnBalance}, current stack balance is {currentBalance}";
                         returnBalance = currentBalance;
+                        if (currentBalance != expectedBalance)
+                            return $"Expected balance {expectedBalance}, returned with {currentBalance} at offset {ip}";
                         break;
                     }
 
-                    if (op.JumpTo != null)
+                    if (op.JumpToLabel != null)
                     {
-                        var jump = _labels[op.JumpTo];
+                        var jump = _labels[op.JumpToLabel];
                         if (jump.ExpectedBalance.HasValue && jump.ExpectedBalance != currentBalance)
-                            throw new InvalidProgramException(
-                                $"Already have been at instruction offset {jump.Offset} ({jump.Opcode}) with stack balance {jump.ExpectedBalance}, stack balance at jump from {op.Offset} is {currentBalance}");
+                            return 
+                                $"Already have been at instruction offset {jump.Offset} ({jump.Opcode}) with stack balance {jump.ExpectedBalance}, stack balance at jump from {op.Offset} is {currentBalance}";
 
                         if (jump.ExpectedBalance == null)
                         {
@@ -331,21 +376,30 @@ namespace XamlX.Transform
                     ip++;
                 }
             }
-
-            return _instructions.Last().ExpectedBalance;
+            
+            var finalBalance = _instructions.Last().ExpectedBalance;
+            if (finalBalance.HasValue && expectReturn)
+                return "Expected return, but control reaches the end of IL block";
+            if (finalBalance == null && expectReturn)
+                return null;
+            if (finalBalance != expectedBalance)
+                return $"Expected balance {expectedBalance} but got {finalBalance}";
+            return null;
         }
-        
-        
-        public void Check(int? expectedBalance, bool expectReturn)
+
+        public override string ToString()
+        {
+            return string.Join("\n", _instructions);
+        }
+
+
+        public string Check(int expectedBalance, bool expectReturn)
         {
             if (_unmarkedLabels.Count != 0)
-                throw new InvalidProgramException("Code block has unmarked labels defined at:\n" +
-                                                    string.Join("\n", _unmarkedLabels.Values));
+                return "Code block has unmarked labels defined at:\n" +
+                       string.Join("\n", _unmarkedLabels.Values);
 
-
-            var balance = VerifyAndGetBalanceAtExit(expectReturn);
-            if (expectedBalance != balance)
-                throw new InvalidProgramException($"Unbalanced stack, expected {expectedBalance} got {balance}");
+            return VerifyAndGetBalanceAtExit(expectedBalance, expectReturn);
         }
     }
 }

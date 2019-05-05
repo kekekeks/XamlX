@@ -85,7 +85,10 @@ namespace XamlX.Transform
             var checkedEmitter = new CheckingIlEmitter(codeGen); 
             var res = EmitNode(value, checkedEmitter);
             var expectedBalance = res.ProducedItems - res.ConsumedItems;
-            checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
+            var checkResult =
+                checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
+            if (checkResult != null)
+                throw new XamlLoadException($"Error during IL verification: {checkResult}\n{checkedEmitter}\n", value);
             parent?.Resume();
             parent?.ExplicitStack(expectedBalance);
 

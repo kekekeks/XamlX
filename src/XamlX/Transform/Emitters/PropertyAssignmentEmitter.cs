@@ -94,11 +94,14 @@ namespace XamlX.Transform.Emitters
 
                     if (checkNext)
                         hadJumps = true;
-
+                    
                     TypeSystemHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
                     setter.Emit(codeGen);
                     if (hadJumps)
+                    {
                         codeGen.Br(exit);
+                    }
+
                     if(!checkNext)
                         break;
                 }
@@ -120,7 +123,6 @@ namespace XamlX.Transform.Emitters
                     }
 
                     codeGen
-                        .Pop()
                         .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
                             .FindConstructor())
                         .Throw();

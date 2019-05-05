@@ -342,9 +342,9 @@ namespace XamlX.TypeSystem
                 custom.EmitCall(emitter);
             else
                 emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
-            
+
             if (swallowResult && !(method.ReturnType.Namespace == "System" && method.ReturnType.Name == "Void"))
-                emitter.Emit(OpCodes.Pop);
+                emitter.Pop();
             return emitter;
         }
 
