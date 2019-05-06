@@ -139,41 +139,69 @@ namespace XamlX.Transform
                 _configuration.TypeSystem,
                 _configuration.TypeMappings);
         }
+
+        public IXamlMethodBuilder DefinePopulateMethod(IXamlTypeBuilder typeBuilder,
+            XamlDocument doc,
+            string name, bool isPublic)
+        {
+            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
+            return typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
+                new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
+                name, isPublic, true, false);
+        }
+
+        public IXamlMethodBuilder DefineBuildMethod(IXamlTypeBuilder typeBuilder,
+            XamlDocument doc,
+            string name, bool isPublic)
+        {
+            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
+            return typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
+                new[] {_configuration.TypeMappings.ServiceProvider}, name, isPublic, true, false);
+        }
         
-        public void Compile( XamlDocument doc, IXamlTypeBuilder typeBuilder, IXamlType contextType,
+        public void Compile(XamlDocument doc, IXamlTypeBuilder typeBuilder, IXamlType contextType,
             string populateMethodName, string createMethodName, string namespaceInfoClassName,
+            string baseUri, IFileSource fileSource)
+        {
+            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
+            Compile(doc, contextType,
+                DefinePopulateMethod(typeBuilder, doc, populateMethodName, true),
+                createMethodName == null ?
+                    null :
+                    DefineBuildMethod(typeBuilder, doc, createMethodName, true),
+                _configuration.TypeMappings.XmlNamespaceInfoProvider == null ?
+                    null :
+                    typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
+                        namespaceInfoClassName, false),
+                (name, bt) => typeBuilder.DefineSubType(bt, name, false),
+                baseUri, fileSource);
+
+        }
+        
+        public void Compile( XamlDocument doc, IXamlType contextType,
+            IXamlMethodBuilder populateMethod, IXamlMethodBuilder buildMethod,
+            IXamlTypeBuilder namespaceInfoBuilder,
+            Func<string, IXamlType, IXamlTypeBuilder> createClosure,
             string baseUri, IFileSource fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlField>();
 
-            IXamlTypeBuilder namespaceInfoBuilder = null;
-            if (_configuration.TypeMappings.XmlNamespaceInfoProvider != null)
+            if (namespaceInfoBuilder != null) ;
             {
-                namespaceInfoBuilder = typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
-                    namespaceInfoClassName, false);
+
                 staticProviders.Add(
                     XamlNamespaceInfoHelper.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
             }
             
-            var populateMethod = typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
-                new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
-                populateMethodName, true, true, false);
-
-            IXamlTypeBuilder CreateSubType(string name, IXamlType baseType) 
-                => typeBuilder.DefineSubType(baseType, name, false);
-
-
             var context = new XamlContext(contextType, rootGrp.Type.GetClrType(),
                 baseUri, staticProviders);
             
-            CompilePopulate(fileSource, rootGrp.Manipulation, CreateSubType, populateMethod.Generator, context);
+            CompilePopulate(fileSource, rootGrp.Manipulation, createClosure, populateMethod.Generator, context);
 
-            if (createMethodName != null)
+            if (buildMethod != null)
             {
-                var createMethod = typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
-                    new[] {_configuration.TypeMappings.ServiceProvider}, createMethodName, true, true, false);
-                CompileBuild(fileSource, rootGrp.Value, CreateSubType, createMethod.Generator, context, populateMethod);
+                CompileBuild(fileSource, rootGrp.Value, null, buildMethod.Generator, context, populateMethod);
             }
 
             namespaceInfoBuilder?.CreateType();
