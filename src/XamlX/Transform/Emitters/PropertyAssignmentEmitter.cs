@@ -67,8 +67,12 @@ namespace XamlX.Transform.Emitters
                         continue;
 
                     if (next != null)
+                    {
                         codeGen.MarkLabel(next);
-                    next = codeGen.DefineLabel();
+                        next = null;
+                    }
+
+                    IXamlXLabel Next() => next ?? (next = codeGen.DefineLabel());
 
                     var checkNext = false;
                     if (setter.BinderParameters.AllowRuntimeNull)
@@ -78,7 +82,7 @@ namespace XamlX.Transform.Emitters
                         // Check for null; Also don't add this type to the list of checked ones because of the null check
                         codeGen
                             .Dup()
-                            .Brfalse(next);
+                            .Brfalse(Next());
                         checkNext = true;
                     }
 
@@ -88,7 +92,7 @@ namespace XamlX.Transform.Emitters
                         codeGen
                             .Dup()
                             .Isinst(type)
-                            .Brfalse(next);
+                            .Brfalse(Next());
                         checkNext = true;
                     }
 
@@ -107,9 +111,9 @@ namespace XamlX.Transform.Emitters
                 }
 
                 if (next != null)
-                    codeGen.MarkLabel(next);
-                if (hadJumps)
                 {
+                    codeGen.MarkLabel(next);
+
                     if (setters.Any(x => !x.BinderParameters.AllowRuntimeNull))
                     {
                         next = codeGen.DefineLabel();
