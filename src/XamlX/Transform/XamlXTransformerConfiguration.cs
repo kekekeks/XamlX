@@ -8,7 +8,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
-    public class XamlXTransformerConfiguration
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXTransformerConfiguration
     {
         private Dictionary<Type, object> _extras = new Dictionary<Type, object>();
         /// <summary>
@@ -112,7 +115,10 @@ namespace XamlX.Transform
         }
     }
 
-    public class XamlXTypeWellKnownTypes
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXTypeWellKnownTypes
     {
         public IXamlXType IList { get; }
         public IXamlXType IEnumerable { get; }

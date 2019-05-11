@@ -6,7 +6,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlXNewObjectTransformer : IXamlXAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXNewObjectTransformer : IXamlXAstTransformer
     {
         IXamlXConstructor TransformArgumentsAndGetConstructor(XamlXAstTransformationContext context,
             XamlXAstObjectNode n)

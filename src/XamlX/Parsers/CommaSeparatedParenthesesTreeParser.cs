@@ -3,7 +3,10 @@ using System.Collections.Generic;
 
 namespace XamlX.Parsers
 {
-    public sealed class CommaSeparatedParenthesesTreeParser
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    sealed class CommaSeparatedParenthesesTreeParser
     {
         public class Node
         {

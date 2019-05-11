@@ -7,7 +7,10 @@ using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlXAstVisitor;
 namespace XamlX.Ast
 {
-    public class XamlXNullExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXNullExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         public XamlXNullExtensionNode(IXamlXLineInfo lineInfo) : base(lineInfo)
         {
@@ -22,7 +25,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXTypeExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXTypeExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         private readonly IXamlXType _systemType;
 
@@ -59,7 +65,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXStaticExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXStaticExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         public XamlXStaticExtensionNode(XamlXAstObjectNode lineInfo, IXamlXAstTypeReference targetType, string member) : base(lineInfo)
         {
@@ -121,7 +130,10 @@ namespace XamlX.Ast
         public IXamlXAstTypeReference Type => new XamlXAstClrTypeReference(this, ResolveReturnType(), false);
     }
 
-    public class XamlXConstantNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXConstantNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         public object Constant { get; }
 
@@ -151,7 +163,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXRootObjectNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXRootObjectNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         public XamlXRootObjectNode(XamlXAstObjectNode root) : base(root)
         {
@@ -174,7 +189,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXLoadMethodDelegateNode : XamlXValueWithSideEffectNodeBase,
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXLoadMethodDelegateNode : XamlXValueWithSideEffectNodeBase,
         IXamlXAstEmitableNode
     {
         public IXamlXType DelegateType { get; }

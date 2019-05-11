@@ -3,7 +3,10 @@ using System.Linq;
 using Visitor = XamlX.Ast.IXamlXAstVisitor;
 namespace XamlX.Ast
 {
-    public class XamlXAstXmlTypeReference : XamlXAstNode, IXamlXAstTypeReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXAstXmlTypeReference : XamlXAstNode, IXamlXAstTypeReference
     {
         public string XmlNamespace { get; set; }
         public string Name { get; set; }

@@ -5,7 +5,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Emitters
 {
-    public class NewObjectEmitter : IXamlXAstNodeEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class NewObjectEmitter : IXamlXAstNodeEmitter
     {
         public XamlXNodeEmitResult Emit(IXamlXAstNode node, XamlXEmitContext context, IXamlXEmitter codeGen)
         {

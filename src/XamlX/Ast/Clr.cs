@@ -7,7 +7,10 @@ using Visitor = XamlX.Ast.IXamlXAstVisitor;
 
 namespace XamlX.Ast
 {
-    public class XamlXAstClrTypeReference : XamlXAstNode, IXamlXAstTypeReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXAstClrTypeReference : XamlXAstNode, IXamlXAstTypeReference
     {
         public IXamlXType Type { get; }
 
@@ -21,7 +24,10 @@ namespace XamlX.Ast
         public bool IsMarkupExtension { get; }
     }
 
-    public class XamlXAstClrProperty : XamlXAstNode, IXamlXAstPropertyReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXAstClrProperty : XamlXAstNode, IXamlXAstPropertyReference
     {
         public string Name { get; set; }
         public IXamlXMethod Getter { get; set; }
@@ -78,14 +84,20 @@ namespace XamlX.Ast
         }
     }
 
-    public class PropertySetterBinderParameters
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class PropertySetterBinderParameters
     {
         public bool AllowMultiple { get; set; }
         public bool AllowXNull { get; set; } = true;
         public bool AllowRuntimeNull { get; set; } = true;
     }
     
-    public interface IXamlXPropertySetter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlXPropertySetter
     {
         IXamlXType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
@@ -93,7 +105,10 @@ namespace XamlX.Ast
         void Emit(IXamlXEmitter codegen);
     }
 
-    public class XamlXPropertyAssignmentNode : XamlXAstNode, IXamlXAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXPropertyAssignmentNode : XamlXAstNode, IXamlXAstManipulationNode
     {
         public XamlXAstClrProperty Property { get; }
         public List<IXamlXPropertySetter> PossibleSetters { get; set; }
@@ -115,7 +130,10 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXPropertyValueManipulationNode : XamlXAstNode, IXamlXAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXPropertyValueManipulationNode : XamlXAstNode, IXamlXAstManipulationNode
     {
         public XamlXAstClrProperty Property { get; set; }
         public IXamlXAstManipulationNode Manipulation { get; set; }
@@ -133,7 +151,10 @@ namespace XamlX.Ast
         }
     }
 
-    public abstract class XamlXMethodCallBaseNode : XamlXAstNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    abstract class XamlXMethodCallBaseNode : XamlXAstNode
     {
         public IXamlXWrappedMethod Method { get; set; }
         public List<IXamlXAstValueNode> Arguments { get; set; }
@@ -151,7 +172,10 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXNoReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXNoReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstManipulationNode
     {
         public XamlXNoReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXMethod method, IEnumerable<IXamlXAstValueNode> args)
             : base(lineInfo, new XamlXWrappedMethod(method), args)
@@ -164,7 +188,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXStaticOrTargetedReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXStaticOrTargetedReturnMethodCallNode : XamlXMethodCallBaseNode, IXamlXAstValueNode
     {
         public XamlXStaticOrTargetedReturnMethodCallNode(IXamlXLineInfo lineInfo, IXamlXWrappedMethod method,
             IEnumerable<IXamlXAstValueNode> args)
@@ -183,7 +210,10 @@ namespace XamlX.Ast
         public IXamlXAstTypeReference Type { get; }
     }
 
-    public class XamlXManipulationGroupNode : XamlXAstNode, IXamlXAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXManipulationGroupNode : XamlXAstNode, IXamlXAstManipulationNode
     {
         public List<IXamlXAstManipulationNode> Children { get; set; } = new List<IXamlXAstManipulationNode>();
 
@@ -198,7 +228,10 @@ namespace XamlX.Ast
         public override void VisitChildren(Visitor visitor) => VisitList(Children, visitor);
     }
 
-    public abstract class XamlXValueWithSideEffectNodeBase : XamlXAstNode, IXamlXAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    abstract class XamlXValueWithSideEffectNodeBase : XamlXAstNode, IXamlXAstValueNode
     {
         protected XamlXValueWithSideEffectNodeBase(IXamlXLineInfo lineInfo, IXamlXAstValueNode value) : base(lineInfo)
         {
@@ -214,7 +247,10 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXValueWithManipulationNode : XamlXValueWithSideEffectNodeBase
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXValueWithManipulationNode : XamlXValueWithSideEffectNodeBase
     {
         public IXamlXAstManipulationNode Manipulation { get; set; }
 
@@ -233,7 +269,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXAstNewClrObjectNode : XamlXAstNode, IXamlXAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXAstNewClrObjectNode : XamlXAstNode, IXamlXAstValueNode
     {
         public XamlXAstNewClrObjectNode(IXamlXLineInfo lineInfo,
             XamlXAstClrTypeReference type, IXamlXConstructor ctor,
@@ -255,7 +294,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXMarkupExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstNodeNeedsParentStack
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXMarkupExtensionNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstNodeNeedsParentStack
     {
         public IXamlXAstValueNode Value { get; set; }
         public IXamlXMethod ProvideValue { get; }
@@ -277,7 +319,10 @@ namespace XamlX.Ast
         public IXamlXAstTypeReference Type { get; }
     }
     
-    public class XamlXObjectInitializationNode : XamlXAstNode, IXamlXAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXObjectInitializationNode : XamlXAstNode, IXamlXAstManipulationNode
     {
         public IXamlXAstManipulationNode Manipulation { get; set; }
         public IXamlXType Type { get; set; }
@@ -296,7 +341,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXToArrayNode : XamlXAstNode, IXamlXAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXToArrayNode : XamlXAstNode, IXamlXAstValueNode
     {
         public IXamlXAstValueNode Value { get; set; }
         public XamlXToArrayNode(IXamlXLineInfo lineInfo, IXamlXAstTypeReference arrayType,
@@ -310,7 +358,10 @@ namespace XamlX.Ast
     }
     
     
-    public interface IXamlXWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlXWrappedMethod
     {
         string Name { get; }
         IXamlXType ReturnType { get; }
@@ -319,7 +370,10 @@ namespace XamlX.Ast
         void Emit(XamlXEmitContext context, IXamlXEmitter codeGen, bool swallowResult);
     }
 
-    public class XamlXWrappedMethod : IXamlXWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXWrappedMethod : IXamlXWrappedMethod
     {
         private readonly IXamlXMethod _method;
 
@@ -341,7 +395,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlXWrappedMethodWithCasts : IXamlXWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXWrappedMethodWithCasts : IXamlXWrappedMethod
     {
         private readonly IXamlXWrappedMethod _method;
 
@@ -391,7 +448,10 @@ namespace XamlX.Ast
         }
     }
     
-    public class XamlXMethodWithCasts : IXamlXCustomEmitMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXMethodWithCasts : IXamlXCustomEmitMethod
     {
         private readonly IXamlXMethod _method;
         private readonly IReadOnlyList<IXamlXType> _baseParametersWithThis;
@@ -452,7 +512,10 @@ namespace XamlX.Ast
             mwc.Parameters.SequenceEqual(Parameters);
     }
 
-    public class XamlXDeferredContentNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXDeferredContentNode : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
     {
         public IXamlXAstValueNode Value { get; set; }
         public IXamlXAstTypeReference Type { get; }

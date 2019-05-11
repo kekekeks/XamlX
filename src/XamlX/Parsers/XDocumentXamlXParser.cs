@@ -9,12 +9,18 @@ using XamlX.Ast;
 
 namespace XamlX.Parsers
 {
-    public class XDocumentXamlXParserSettings
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XDocumentXamlXParserSettings
     {
         public Dictionary<string, string> CompatibleNamespaces { get; set; }
     }
 
-    public class XDocumentXamlXParser
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XDocumentXamlXParser
     {
 
         public static XamlXDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)

@@ -8,7 +8,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
-    public static class XamlXTransformHelpers
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    static class XamlXTransformHelpers
     {
         /*
         public static void GeneratePropertyAssignments(XamlXAstTransformationContext context,

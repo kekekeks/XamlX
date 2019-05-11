@@ -4,7 +4,10 @@ using System.Reflection.Emit;
 
 namespace XamlX.TypeSystem
 {
-    public static class TypeSystemExtensions
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    static class TypeSystemExtensions
     {
         public static IXamlXEmitter Ldarg(this IXamlXEmitter emitter, int arg)
             => emitter.Emit(OpCodes.Ldarg, arg);
