@@ -187,7 +187,7 @@ namespace XamlX.Transform
             var rootGrp = (XamlXValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlXField>();
 
-            if (namespaceInfoBuilder != null) ;
+            if (namespaceInfoBuilder != null)
             {
 
                 staticProviders.Add(
