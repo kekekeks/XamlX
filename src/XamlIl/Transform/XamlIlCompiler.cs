@@ -8,7 +8,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlCompiler
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlCompiler
     {
         private readonly XamlIlTransformerConfiguration _configuration;
         public List<IXamlIlAstTransformer> Transformers { get; } = new List<IXamlIlAstTransformer>();
@@ -212,12 +215,18 @@ namespace XamlIl.Transform
     }
 
 
-    public interface IXamlIlAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlAstTransformer
     {
         IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node);
     }
 
-    public class XamlIlNodeEmitResult
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlNodeEmitResult
     {
         public int ConsumedItems { get; }
         public IXamlIlType ReturnType { get; set; }
@@ -236,12 +245,18 @@ namespace XamlIl.Transform
             new XamlIlNodeEmitResult(consumedItems, type);
     }
     
-    public interface IXamlIlAstNodeEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlAstNodeEmitter
     {
         XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlEmitter codeGen);
     }
 
-    public interface IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlAstEmitableNode
     {
         XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen);
     }

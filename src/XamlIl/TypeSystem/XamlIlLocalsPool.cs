@@ -3,7 +3,10 @@ using System.Collections.Generic;
 
 namespace XamlIl.TypeSystem
 {
-    public class XamlIlLocalsPool
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlLocalsPool
     {
         private readonly IXamlIlEmitter _emitter;
 

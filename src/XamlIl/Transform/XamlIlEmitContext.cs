@@ -7,7 +7,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlEmitContext : XamlIlContextBase
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlEmitContext : XamlIlContextBase
     {
         public IFileSource File { get; }
         public List<object> Emitters { get; }

@@ -7,7 +7,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlNamespaceInfoHelper
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlNamespaceInfoHelper
     {
         
         public class NamespaceResolveResult

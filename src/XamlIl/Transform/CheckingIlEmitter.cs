@@ -7,7 +7,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class CheckingIlEmitter : IXamlIlEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class CheckingIlEmitter : IXamlIlEmitter
     {
         private readonly IXamlIlEmitter _inner;
 

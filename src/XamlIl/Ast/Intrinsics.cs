@@ -7,7 +7,10 @@ using XamlIl.TypeSystem;
 using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
-    public class XamlIlNullExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlNullExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         public XamlIlNullExtensionNode(IXamlIlLineInfo lineInfo) : base(lineInfo)
         {
@@ -22,7 +25,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlTypeExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlTypeExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         private readonly IXamlIlType _systemType;
 
@@ -59,7 +65,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlStaticExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlStaticExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         public XamlIlStaticExtensionNode(XamlIlAstObjectNode lineInfo, IXamlIlAstTypeReference targetType, string member) : base(lineInfo)
         {
@@ -121,7 +130,10 @@ namespace XamlIl.Ast
         public IXamlIlAstTypeReference Type => new XamlIlAstClrTypeReference(this, ResolveReturnType(), false);
     }
 
-    public class XamlIlConstantNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlConstantNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         public object Constant { get; }
 
@@ -151,7 +163,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlRootObjectNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlRootObjectNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         public XamlIlRootObjectNode(XamlIlAstObjectNode root) : base(root)
         {
@@ -174,7 +189,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlLoadMethodDelegateNode : XamlIlValueWithSideEffectNodeBase,
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlLoadMethodDelegateNode : XamlIlValueWithSideEffectNodeBase,
         IXamlIlAstEmitableNode
     {
         public IXamlIlType DelegateType { get; }

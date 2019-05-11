@@ -6,7 +6,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform.Emitters
 {
-    public class PropertyAssignmentEmitter : IXamlIlAstNodeEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class PropertyAssignmentEmitter : IXamlIlAstNodeEmitter
     {
         List<IXamlIlPropertySetter> ValidateAndGetSetters(XamlIlPropertyAssignmentNode an)
         {

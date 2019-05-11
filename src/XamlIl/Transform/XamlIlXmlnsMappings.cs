@@ -3,7 +3,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlXmlnsMappings
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlXmlnsMappings
     {
         public Dictionary<string, List<(IXamlIlAssembly asm, string ns)>> Namespaces { get; set; } =
             new Dictionary<string, List<(IXamlIlAssembly asm, string ns)>>();

@@ -6,7 +6,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlContext
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlContext
     {
         public IXamlIlField RootObjectField { get; set; }
         public IXamlIlField ParentListField { get; set; }
@@ -70,7 +73,10 @@ namespace XamlIl.Transform
     }
     
     
-    public class XamlIlContextDefinition
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlContextDefinition
     {
         public const string RootObjectFieldName = "RootObject";
         public const string ParentListFieldName = "ParentsStack";

@@ -5,7 +5,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform.Transformers
 {
-    public class XamlIlPropertyReferenceResolver : IXamlIlAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlPropertyReferenceResolver : IXamlIlAstTransformer
     {
         public IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node)
         {

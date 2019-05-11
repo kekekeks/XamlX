@@ -3,7 +3,10 @@ using XamlIl.Ast;
 
 namespace XamlIl.Transform.Transformers
 {
-    public class XamlIlMarkupExtensionTransformer : IXamlIlAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlMarkupExtensionTransformer : IXamlIlAstTransformer
     {
         public IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node)
         {

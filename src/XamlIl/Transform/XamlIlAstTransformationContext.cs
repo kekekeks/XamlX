@@ -5,7 +5,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform
 {
-    public class XamlIlContextBase
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlContextBase
     {
         private Dictionary<Type, object> _items = new Dictionary<Type, object>();  
         private List<IXamlIlAstNode> _parentNodes = new List<IXamlIlAstNode>();
@@ -44,7 +47,10 @@ namespace XamlIl.Transform
         }
     }
     
-    public class XamlIlAstTransformationContext : XamlIlContextBase
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstTransformationContext : XamlIlContextBase
     {
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public XamlIlTransformerConfiguration Configuration { get; }

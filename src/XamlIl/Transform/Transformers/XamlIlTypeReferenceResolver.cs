@@ -6,7 +6,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform.Transformers
 {
-    public class XamlIlTypeReferenceResolver : IXamlIlAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlTypeReferenceResolver : IXamlIlAstTransformer
     {
         public static XamlIlAstClrTypeReference ResolveType(XamlIlAstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlIlAstXmlTypeReference> typeArguments, IXamlIlLineInfo lineInfo,

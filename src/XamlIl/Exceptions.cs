@@ -4,7 +4,10 @@ using XamlIl.Ast;
 
 namespace XamlIl
 {
-    public class XamlIlParseException : XmlException
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlParseException : XmlException
     {
         public XamlIlParseException(string message, int line, int position) : base(
             $"{message} (line {line} position {position})",
@@ -18,7 +21,10 @@ namespace XamlIl
         }
     }
 
-    public class XamlIlTransformException : XamlIlParseException
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlTransformException : XamlIlParseException
     {
         public XamlIlTransformException(string message, IXamlIlLineInfo lineInfo) : base(message, lineInfo)
         {
@@ -26,7 +32,10 @@ namespace XamlIl
         }
     }
 
-    public class XamlIlLoadException : XamlIlParseException
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlLoadException : XamlIlParseException
     {
         public XamlIlLoadException(string message, IXamlIlLineInfo lineInfo) : base(message, lineInfo)
         {
@@ -34,7 +43,10 @@ namespace XamlIl
     }
 
 
-    public class XamlIlTypeSystemException : Exception
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlTypeSystemException : Exception
     {
         public XamlIlTypeSystemException(string message) : base(message)
         {

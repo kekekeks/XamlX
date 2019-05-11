@@ -6,7 +6,10 @@ using XamlIl.TypeSystem;
 
 namespace XamlIl.Transform.Emitters
 {
-    public class MarkupExtensionEmitter : IXamlIlAstNodeEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class MarkupExtensionEmitter : IXamlIlAstNodeEmitter
     {
         public XamlIlNodeEmitResult Emit(IXamlIlAstNode node, XamlIlEmitContext context, IXamlIlEmitter ilgen)
         {

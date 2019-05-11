@@ -7,7 +7,10 @@ using XamlIl.Ast;
 
 namespace XamlIl.TypeSystem
 {
-    public interface IXamlIlType : IEquatable<IXamlIlType>
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlType : IEquatable<IXamlIlType>
     {
         object Id { get; }
         string Name { get; }
@@ -37,7 +40,10 @@ namespace XamlIl.TypeSystem
         int GetHashCode();
     }
 
-    public interface IXamlIlMethod : IEquatable<IXamlIlMethod>, IXamlIlMember
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlMethod : IEquatable<IXamlIlMethod>, IXamlIlMember
     {
         bool IsPublic { get; }
         bool IsStatic { get; }
@@ -46,24 +52,36 @@ namespace XamlIl.TypeSystem
         IXamlIlType DeclaringType { get; }
     }
 
-    public interface IXamlIlCustomEmitMethod : IXamlIlMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlCustomEmitMethod : IXamlIlMethod
     {
         void EmitCall(IXamlIlEmitter emitter);
     }
 
-    public interface IXamlIlMember
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlMember
     {
         string Name { get; }
     }
     
-    public interface IXamlIlConstructor : IEquatable<IXamlIlConstructor>
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlConstructor : IEquatable<IXamlIlConstructor>
     {
         bool IsPublic { get; }
         bool IsStatic { get; }
         IReadOnlyList<IXamlIlType> Parameters { get; }
     }
     
-    public interface IXamlIlProperty : IEquatable<IXamlIlProperty>, IXamlIlMember
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlProperty : IEquatable<IXamlIlProperty>, IXamlIlMember
     {
         IXamlIlType PropertyType { get; }
         IXamlIlMethod Setter { get; }
@@ -71,12 +89,18 @@ namespace XamlIl.TypeSystem
         IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; }
     }
 
-    public interface IXamlIlEventInfo : IEquatable<IXamlIlEventInfo>, IXamlIlMember
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlEventInfo : IEquatable<IXamlIlEventInfo>, IXamlIlMember
     {
         IXamlIlMethod Add { get; }
     }
 
-    public interface IXamlIlField : IEquatable<IXamlIlField>, IXamlIlMember
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlField : IEquatable<IXamlIlField>, IXamlIlMember
     {
         IXamlIlType FieldType { get; }
         bool IsPublic { get; }
@@ -85,21 +109,30 @@ namespace XamlIl.TypeSystem
         object GetLiteralValue();
     }
 
-    public interface IXamlIlAssembly : IEquatable<IXamlIlAssembly>
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlAssembly : IEquatable<IXamlIlAssembly>
     {
         string Name { get; }
         IReadOnlyList<IXamlIlCustomAttribute> CustomAttributes { get; }
         IXamlIlType FindType(string fullName);
     }
 
-    public interface IXamlIlCustomAttribute : IEquatable<IXamlIlCustomAttribute>
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlCustomAttribute : IEquatable<IXamlIlCustomAttribute>
     {
         IXamlIlType Type { get; }
         List<object> Parameters { get; }
         Dictionary<string, object> Properties { get; }
     }
     
-    public interface IXamlIlTypeSystem
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlTypeSystem
     {
         IReadOnlyList<IXamlIlAssembly> Assemblies { get; }
         IXamlIlAssembly FindAssembly(string substring);
@@ -107,7 +140,10 @@ namespace XamlIl.TypeSystem
         IXamlIlType FindType(string name, string assembly);
     }
     
-    public interface IXamlIlEmitter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlEmitter
     {
         IXamlIlTypeSystem TypeSystem { get; }
         IXamlIlEmitter Emit(OpCode code);
@@ -129,34 +165,52 @@ namespace XamlIl.TypeSystem
         XamlIlLocalsPool LocalsPool { get; }
     }
 
-    public interface IFileSource
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IFileSource
     {
         string FilePath { get; }
         byte[] FileContents { get; }
     }
 
-    public interface IXamlIlLocal
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlLocal
     {
         
     }
     
-    public interface IXamlIlLabel
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlLabel
     {
         
     }
 
     
-    public interface IXamlIlMethodBuilder : IXamlIlMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlMethodBuilder : IXamlIlMethod
     {
         IXamlIlEmitter Generator { get; }
     }
     
-    public interface IXamlIlConstructorBuilder : IXamlIlConstructor
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlConstructorBuilder : IXamlIlConstructor
     {
         IXamlIlEmitter Generator { get; }
     }
 
-    public interface IXamlIlTypeBuilder : IXamlIlType
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlTypeBuilder : IXamlIlType
     {
         IXamlIlField DefineField(IXamlIlType type, string name, bool isPublic, bool isStatic);
         void AddInterfaceImplementation(IXamlIlType type);
@@ -172,12 +226,18 @@ namespace XamlIl.TypeSystem
     }
 
 
-    public struct XamlIlGenericParameterConstraint
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    struct XamlIlGenericParameterConstraint
     {
         public bool IsClass { get; set; }
     }
     
-    public class XamlIlPseudoType : IXamlIlType
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlPseudoType : IXamlIlType
     {
         public XamlIlPseudoType(string name)
         {
@@ -221,7 +281,10 @@ namespace XamlIl.TypeSystem
         public static XamlIlPseudoType Unknown { get; } = new XamlIlPseudoType("{Unknown type}");
     }
     
-    public static class XamlIlTypeSystemExtensions
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    static class XamlIlTypeSystemExtensions
     {
         public static string GetFqn(this IXamlIlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
 

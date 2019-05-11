@@ -2,7 +2,10 @@ using XamlIl.Ast;
 
 namespace XamlIl.Transform.Transformers
 {
-    public class XamlIlIntrinsicsTransformer : IXamlIlAstTransformer
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlIntrinsicsTransformer : IXamlIlAstTransformer
     {
         public IXamlIlAstNode Transform(XamlIlAstTransformationContext context, IXamlIlAstNode node)
         {

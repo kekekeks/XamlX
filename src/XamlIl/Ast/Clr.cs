@@ -7,7 +7,10 @@ using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 
 namespace XamlIl.Ast
 {
-    public class XamlIlAstClrTypeReference : XamlIlAstNode, IXamlIlAstTypeReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstClrTypeReference : XamlIlAstNode, IXamlIlAstTypeReference
     {
         public IXamlIlType Type { get; }
 
@@ -21,7 +24,10 @@ namespace XamlIl.Ast
         public bool IsMarkupExtension { get; }
     }
 
-    public class XamlIlAstClrProperty : XamlIlAstNode, IXamlIlAstPropertyReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstClrProperty : XamlIlAstNode, IXamlIlAstPropertyReference
     {
         public string Name { get; set; }
         public IXamlIlMethod Getter { get; set; }
@@ -78,14 +84,20 @@ namespace XamlIl.Ast
         }
     }
 
-    public class PropertySetterBinderParameters
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class PropertySetterBinderParameters
     {
         public bool AllowMultiple { get; set; }
         public bool AllowXNull { get; set; } = true;
         public bool AllowRuntimeNull { get; set; } = true;
     }
     
-    public interface IXamlIlPropertySetter
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlPropertySetter
     {
         IXamlIlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
@@ -93,7 +105,10 @@ namespace XamlIl.Ast
         void Emit(IXamlIlEmitter codegen);
     }
 
-    public class XamlIlPropertyAssignmentNode : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlPropertyAssignmentNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public XamlIlAstClrProperty Property { get; }
         public List<IXamlIlPropertySetter> PossibleSetters { get; set; }
@@ -115,7 +130,10 @@ namespace XamlIl.Ast
         }
     }
     
-    public class XamlIlPropertyValueManipulationNode : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlPropertyValueManipulationNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public XamlIlAstClrProperty Property { get; set; }
         public IXamlIlAstManipulationNode Manipulation { get; set; }
@@ -133,7 +151,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public abstract class XamlIlMethodCallBaseNode : XamlIlAstNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    abstract class XamlIlMethodCallBaseNode : XamlIlAstNode
     {
         public IXamlIlWrappedMethod Method { get; set; }
         public List<IXamlIlAstValueNode> Arguments { get; set; }
@@ -151,7 +172,10 @@ namespace XamlIl.Ast
         }
     }
     
-    public class XamlIlNoReturnMethodCallNode : XamlIlMethodCallBaseNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlNoReturnMethodCallNode : XamlIlMethodCallBaseNode, IXamlIlAstManipulationNode
     {
         public XamlIlNoReturnMethodCallNode(IXamlIlLineInfo lineInfo, IXamlIlMethod method, IEnumerable<IXamlIlAstValueNode> args)
             : base(lineInfo, new XamlIlWrappedMethod(method), args)
@@ -164,7 +188,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlStaticOrTargetedReturnMethodCallNode : XamlIlMethodCallBaseNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlStaticOrTargetedReturnMethodCallNode : XamlIlMethodCallBaseNode, IXamlIlAstValueNode
     {
         public XamlIlStaticOrTargetedReturnMethodCallNode(IXamlIlLineInfo lineInfo, IXamlIlWrappedMethod method,
             IEnumerable<IXamlIlAstValueNode> args)
@@ -183,7 +210,10 @@ namespace XamlIl.Ast
         public IXamlIlAstTypeReference Type { get; }
     }
 
-    public class XamlIlManipulationGroupNode : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlManipulationGroupNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public List<IXamlIlAstManipulationNode> Children { get; set; } = new List<IXamlIlAstManipulationNode>();
 
@@ -198,7 +228,10 @@ namespace XamlIl.Ast
         public override void VisitChildren(Visitor visitor) => VisitList(Children, visitor);
     }
 
-    public abstract class XamlIlValueWithSideEffectNodeBase : XamlIlAstNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    abstract class XamlIlValueWithSideEffectNodeBase : XamlIlAstNode, IXamlIlAstValueNode
     {
         protected XamlIlValueWithSideEffectNodeBase(IXamlIlLineInfo lineInfo, IXamlIlAstValueNode value) : base(lineInfo)
         {
@@ -214,7 +247,10 @@ namespace XamlIl.Ast
         }
     }
     
-    public class XamlIlValueWithManipulationNode : XamlIlValueWithSideEffectNodeBase
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlValueWithManipulationNode : XamlIlValueWithSideEffectNodeBase
     {
         public IXamlIlAstManipulationNode Manipulation { get; set; }
 
@@ -233,7 +269,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlAstNewClrObjectNode : XamlIlAstNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstNewClrObjectNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public XamlIlAstNewClrObjectNode(IXamlIlLineInfo lineInfo,
             XamlIlAstClrTypeReference type, IXamlIlConstructor ctor,
@@ -255,7 +294,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstNodeNeedsParentStack
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlMarkupExtensionNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstNodeNeedsParentStack
     {
         public IXamlIlAstValueNode Value { get; set; }
         public IXamlIlMethod ProvideValue { get; }
@@ -277,7 +319,10 @@ namespace XamlIl.Ast
         public IXamlIlAstTypeReference Type { get; }
     }
     
-    public class XamlIlObjectInitializationNode : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlObjectInitializationNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public IXamlIlAstManipulationNode Manipulation { get; set; }
         public IXamlIlType Type { get; set; }
@@ -296,7 +341,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlToArrayNode : XamlIlAstNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlToArrayNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public IXamlIlAstValueNode Value { get; set; }
         public XamlIlToArrayNode(IXamlIlLineInfo lineInfo, IXamlIlAstTypeReference arrayType,
@@ -310,7 +358,10 @@ namespace XamlIl.Ast
     }
     
     
-    public interface IXamlIlWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    interface IXamlIlWrappedMethod
     {
         string Name { get; }
         IXamlIlType ReturnType { get; }
@@ -319,7 +370,10 @@ namespace XamlIl.Ast
         void Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen, bool swallowResult);
     }
 
-    public class XamlIlWrappedMethod : IXamlIlWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlWrappedMethod : IXamlIlWrappedMethod
     {
         private readonly IXamlIlMethod _method;
 
@@ -341,7 +395,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlWrappedMethodWithCasts : IXamlIlWrappedMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlWrappedMethodWithCasts : IXamlIlWrappedMethod
     {
         private readonly IXamlIlWrappedMethod _method;
 
@@ -391,7 +448,10 @@ namespace XamlIl.Ast
         }
     }
     
-    public class XamlIlMethodWithCasts : IXamlIlCustomEmitMethod
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlMethodWithCasts : IXamlIlCustomEmitMethod
     {
         private readonly IXamlIlMethod _method;
         private readonly IReadOnlyList<IXamlIlType> _baseParametersWithThis;
@@ -452,7 +512,10 @@ namespace XamlIl.Ast
             mwc.Parameters.SequenceEqual(Parameters);
     }
 
-    public class XamlIlDeferredContentNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlDeferredContentNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
     {
         public IXamlIlAstValueNode Value { get; set; }
         public IXamlIlAstTypeReference Type { get; }

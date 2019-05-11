@@ -5,7 +5,10 @@ using Visitor = XamlIl.Ast.IXamlIlAstVisitor;
 namespace XamlIl.Ast
 {
 
-    public class XamlIlAstXmlDirective : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstXmlDirective : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public string Namespace { get; set; }
         public string Name { get; set; }
@@ -25,7 +28,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlAstXamlPropertyValueNode : XamlIlAstNode, IXamlIlAstManipulationNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstXamlPropertyValueNode : XamlIlAstNode, IXamlIlAstManipulationNode
     {
         public IXamlIlAstPropertyReference Property { get; set; }
         public List<IXamlIlAstValueNode> Values { get; set; }
@@ -51,7 +57,10 @@ namespace XamlIl.Ast
         }
     }
 
-    public class XamlIlAstObjectNode : XamlIlAstNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstObjectNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public XamlIlAstObjectNode(IXamlIlLineInfo lineInfo, IXamlIlAstTypeReference type) : base(lineInfo)
         {
@@ -72,7 +81,10 @@ namespace XamlIl.Ast
     
     
 
-    public class XamlIlAstTextNode : XamlIlAstNode, IXamlIlAstValueNode
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstTextNode : XamlIlAstNode, IXamlIlAstValueNode
     {
         public string Text { get; set; }
 
@@ -93,7 +105,10 @@ namespace XamlIl.Ast
         public IXamlIlAstTypeReference Type { get; set; }
     }
     
-    public class XamlIlAstNamePropertyReference : XamlIlAstNode, IXamlIlAstPropertyReference
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlAstNamePropertyReference : XamlIlAstNode, IXamlIlAstPropertyReference
     {
         public IXamlIlAstTypeReference DeclaringType { get; set; }
         public string Name { get; set; }

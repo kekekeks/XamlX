@@ -4,7 +4,10 @@ using XamlIl.Ast;
 
 namespace XamlIl.Parsers
 {
-    public sealed class XamlMarkupExtensionParser
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    sealed class XamlMarkupExtensionParser
     {
         
         public class ParseException : Exception
