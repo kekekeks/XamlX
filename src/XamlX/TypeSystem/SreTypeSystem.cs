@@ -8,7 +8,10 @@ using System.Reflection.Emit;
 #if !XAMLIL_NO_SRE
 namespace XamlX.TypeSystem
 {
-    public class SreTypeSystem : IXamlTypeSystem
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class SreTypeSystem : IXamlTypeSystem
     {
         private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
         public IReadOnlyList<IXamlAssembly> Assemblies => _assemblies;

@@ -4,7 +4,10 @@ using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlKnownDirectivesTransformer : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlKnownDirectivesTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {

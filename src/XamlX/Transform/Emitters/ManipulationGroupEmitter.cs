@@ -4,7 +4,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Emitters
 {
-    public class ManipulationGroupEmitter : IXamlAstNodeEmitter
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class ManipulationGroupEmitter : IXamlAstNodeEmitter
     {
         public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {

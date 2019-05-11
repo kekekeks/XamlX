@@ -4,26 +4,38 @@ using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
 namespace XamlX.Ast
 {
-    public interface IXamlLineInfo
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlLineInfo
     {
         int Line { get; set; }
         int Position { get; set; }   
     }
 
-    public interface IXamlAstVisitor
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstVisitor
     {
         IXamlAstNode Visit(IXamlAstNode node);
         void Push(IXamlAstNode node);
         void Pop();
     }
     
-    public interface IXamlAstNode : IXamlLineInfo
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstNode : IXamlLineInfo
     {
         void VisitChildren(Visitor visitor);
         IXamlAstNode Visit(Visitor visitor);
     }
     
-    public abstract class XamlAstNode : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    abstract class XamlAstNode : IXamlAstNode
     {
         public int Line { get; set; }
         public int Position { get; set; }
@@ -64,39 +76,60 @@ namespace XamlX.Ast
         }
     }
 
-    public interface IXamlAstManipulationNode : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstManipulationNode : IXamlAstNode
     {
         
     }
 
-    public interface IXamlAstNodeNeedsParentStack
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstNodeNeedsParentStack
     {
         bool NeedsParentStack { get; }
     }
 
-    public interface IXamlAstImperativeNode : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstImperativeNode : IXamlAstNode
     {
         
     }
     
-    public interface IXamlAstValueNode : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstValueNode : IXamlAstNode
     {
         IXamlAstTypeReference Type { get; }
     }
     
     
-    public interface IXamlAstTypeReference : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstTypeReference : IXamlAstNode
     {
         bool IsMarkupExtension { get; }
     }
     
     
-    public interface IXamlAstPropertyReference : IXamlAstNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstPropertyReference : IXamlAstNode
     {
         
     }
     
-    public static class XamlAstExtensions
+#if !XAMLX_INTERNAL
+    public
+#endif
+    static class XamlAstExtensions
     {
         public static IXamlType GetClrType(this IXamlAstTypeReference r)
         {

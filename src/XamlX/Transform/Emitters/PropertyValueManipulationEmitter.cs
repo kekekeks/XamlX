@@ -4,7 +4,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Emitters
 {
-    public class PropertyValueManipulationEmitter : IXamlAstNodeEmitter
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class PropertyValueManipulationEmitter : IXamlAstNodeEmitter
     {
         public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {

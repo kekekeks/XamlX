@@ -3,7 +3,10 @@ using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlDeferredContentTransformer : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlDeferredContentTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {

@@ -7,7 +7,10 @@ using XamlX.Transform;
 
 namespace XamlX.TypeSystem
 {
-    public class TypeSystemHelpers
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class TypeSystemHelpers
     {
         public static int ConvertLiteralToInt(object literal)
         {

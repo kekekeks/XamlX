@@ -7,7 +7,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlConvertPropertyValuesToAssignmentsTransformer : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlConvertPropertyValuesToAssignmentsTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {

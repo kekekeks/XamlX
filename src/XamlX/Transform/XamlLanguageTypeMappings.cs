@@ -5,7 +5,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
-    public class XamlLanguageTypeMappings
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlLanguageTypeMappings
     {
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem)
         {
@@ -45,7 +48,10 @@ namespace XamlX.Transform
         public Func<XamlEmitContext, IXamlILEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
     }
 
-    public interface IXamlCustomAttributeResolver
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlCustomAttributeResolver
     {
         IXamlCustomAttribute GetCustomAttribute(IXamlType type, IXamlType attributeType);
         IXamlCustomAttribute GetCustomAttribute(IXamlProperty property, IXamlType attributeType);

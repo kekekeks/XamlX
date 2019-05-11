@@ -5,7 +5,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlTopDownInitializationTransformer : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlTopDownInitializationTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
         {

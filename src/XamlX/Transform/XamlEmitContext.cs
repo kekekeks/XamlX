@@ -7,7 +7,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
-    public class XamlEmitContext : XamlContextBase
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlEmitContext : XamlContextBase
     {
         public IFileSource File { get; }
         public List<object> Emitters { get; }

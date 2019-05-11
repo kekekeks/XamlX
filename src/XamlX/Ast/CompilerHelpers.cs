@@ -5,7 +5,10 @@ using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
 namespace XamlX.Ast
 {
-    public class XamlAstCompilerLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstCompilerLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
     {
         private XamlAstClrTypeReference _typeReference;
         public IXamlType Type { get; }
@@ -28,7 +31,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstLocalInitializationNodeEmitter : XamlValueWithSideEffectNodeBase, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstLocalInitializationNodeEmitter : XamlValueWithSideEffectNodeBase, IXamlAstEmitableNode
     {
         public XamlAstCompilerLocalNode Local { get; set; }
 
@@ -55,7 +61,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlValueNodeWithBeginInit : XamlValueWithSideEffectNodeBase, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlValueNodeWithBeginInit : XamlValueWithSideEffectNodeBase, IXamlAstEmitableNode
     {
         public XamlValueNodeWithBeginInit(IXamlAstValueNode value) : base(value, value)
         {
@@ -79,7 +88,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstManipulationImperativeNode : XamlAstNode, IXamlAstManipulationNode, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstManipulationImperativeNode : XamlAstNode, IXamlAstManipulationNode, IXamlAstEmitableNode
     {
         public IXamlAstImperativeNode Imperative { get; set; }
 
@@ -103,7 +115,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstImperativeValueManipulation : XamlAstNode, IXamlAstImperativeNode, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstImperativeValueManipulation : XamlAstNode, IXamlAstImperativeNode, IXamlAstEmitableNode
     {
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstManipulationNode Manipulation { get; set; }
@@ -129,7 +144,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstContextLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstContextLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
     {
         public XamlAstContextLocalNode(IXamlLineInfo lineInfo, IXamlType type) : base(lineInfo)
         {
@@ -144,7 +162,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstRuntimeCastNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstRuntimeCastNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
     {
         public XamlAstRuntimeCastNode(IXamlLineInfo lineInfo, IXamlAstValueNode value, IXamlAstTypeReference castTo) : base(lineInfo)
         {
@@ -172,7 +193,10 @@ namespace XamlX.Ast
         }
     }
 
-    public class XamlAstNeedsParentStackValueNode : XamlValueWithSideEffectNodeBase,
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstNeedsParentStackValueNode : XamlValueWithSideEffectNodeBase,
         IXamlAstEmitableNode,
         IXamlAstNodeNeedsParentStack
     {

@@ -6,7 +6,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
-    public class XamlTypeReferenceResolver : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlTypeReferenceResolver : IXamlAstTransformer
     {
         public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
