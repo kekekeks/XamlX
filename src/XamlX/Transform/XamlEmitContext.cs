@@ -113,22 +113,23 @@ namespace XamlX.Transform
                     XamlLocalsPool.PooledLocal local = null;
                     // ReSharper disable once ExpressionIsAlwaysNull
                     // Value is assigned inside the closure in certain conditions
-                    using (local)
-                        TypeSystemHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
+                    
+                    TypeSystemHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
+                    {
+                        if (ldaddr && returnedType.IsValueType)
                         {
-                            if (ldaddr && returnedType.IsValueType)
-                            {
-                                // We need to store the value to a temporary variable, since *address*
-                                // is required (probably for  method call on the value type)
-                                local = GetLocal(returnedType);
-                                codeGen
-                                    .Stloc(local.Local)
-                                    .Ldloca(local.Local);
+                            // We need to store the value to a temporary variable, since *address*
+                            // is required (probably for  method call on the value type)
+                            local = GetLocal(returnedType);
+                            codeGen
+                                .Stloc(local.Local)
+                                .Ldloca(local.Local);
 
-                            }
-                            // Otherwise do nothing, value is already at the top of the stack
-                            return codeGen;
-                        });
+                        }
+                        // Otherwise do nothing, value is already at the top of the stack
+                        return codeGen;
+                    });
+                    local?.Dispose();
                 }
 
             }
