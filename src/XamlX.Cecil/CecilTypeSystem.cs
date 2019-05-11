@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using Mono.Cecil.Rocks;
 
@@ -44,16 +45,6 @@ namespace XamlX.TypeSystem
 
         public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters) => Resolve(name);
 
-        static string ChangeExtension(string path, string ext)
-        {
-            var dir = Path.GetDirectoryName(path);
-            var name = Path.GetFileNameWithoutExtension(path) + "." + ext;
-            if (dir == null)
-                return name;
-            
-            return Path.Combine(dir, name);
-        }
-        
         public CecilTypeSystem(IEnumerable<string> paths, string targetPath = null)
         {
             if (targetPath != null)
@@ -63,15 +54,14 @@ namespace XamlX.TypeSystem
             foreach (var path in paths.Distinct())
             {
                 var isTarget = path == targetPath;
-                var readSymbols = isTarget && File.Exists(ChangeExtension(path, "pdb"));
                 var asm = AssemblyDefinition.ReadAssembly(path, new ReaderParameters(ReadingMode.Deferred)
                 {
                     ReadWrite = isTarget,
                     InMemory = true,
                     AssemblyResolver = this,
                     MetadataResolver = _resolver,
-                    SymbolReaderProvider = readSymbols ? new PdbReaderProvider() : null,
-                    ReadSymbols = readSymbols
+                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(true) : null,
+                    ReadSymbols = isTarget
                 });
                 var wrapped = RegisterAssembly(asm);
                 if (path == targetPath)
