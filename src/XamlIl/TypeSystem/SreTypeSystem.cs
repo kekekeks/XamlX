@@ -365,7 +365,6 @@ namespace XamlIl.TypeSystem
         {
             public FieldInfo Field { get; }
 
-            private IReadOnlyList<IXamlIlType> _parameters;
             public SreField(SreTypeSystem system, FieldInfo field) : base(system, field)
             {
                 Field = field;
