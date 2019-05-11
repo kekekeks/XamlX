@@ -17,14 +17,7 @@ namespace XamlIl.TypeSystem
             {
                 type = type.GetElementType();
                 var resolved = base.Resolve(type);
-                if (resolved == null && type.Scope.MetadataScopeType == MetadataScopeType.AssemblyNameReference)
-                {
-                    return null;
-                    var asm = _typeSystem.ResolveWrapped((AssemblyNameReference) type.Scope);
-                    throw new Exception("TODO: process custom attrs");
-                }
-                else
-                    return resolved;
+                return resolved;
             }
         }
     }
