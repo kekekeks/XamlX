@@ -11,6 +11,12 @@ namespace XamlIl.Ast
         public string XmlNamespace { get; set; }
         public string Name { get; set; }
         public bool IsMarkupExtension { get; set; }
+
+        public bool Equals(IXamlIlAstTypeReference other) =>
+            other is XamlIlAstXmlTypeReference xml
+            && xml.Name == Name && xml.XmlNamespace == XmlNamespace
+            && xml.IsMarkupExtension == IsMarkupExtension;
+
         public List<XamlIlAstXmlTypeReference> GenericArguments { get; set; } = new List<XamlIlAstXmlTypeReference>();
 
         public XamlIlAstXmlTypeReference(IXamlIlLineInfo lineInfo, string xmlNamespace, string name,

@@ -115,6 +115,7 @@ namespace XamlIl.Ast
     interface IXamlIlAstTypeReference : IXamlIlAstNode
     {
         bool IsMarkupExtension { get; }
+        bool Equals(IXamlIlAstTypeReference other);
     }
     
     

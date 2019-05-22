@@ -22,6 +22,10 @@ namespace XamlIl.Ast
 
         public override string ToString() => Type.GetFqn();
         public bool IsMarkupExtension { get; }
+
+        public bool Equals(IXamlIlAstTypeReference other) =>
+            other is XamlIlAstClrTypeReference clr && clr.Type.Equals(Type) &&
+            clr.IsMarkupExtension == IsMarkupExtension;
     }
 
 #if !XAMLIL_INTERNAL
