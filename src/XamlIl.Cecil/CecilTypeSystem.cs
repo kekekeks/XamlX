@@ -60,9 +60,10 @@ namespace XamlIl.TypeSystem
                     InMemory = true,
                     AssemblyResolver = this,
                     MetadataResolver = _resolver,
-                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(true) : null,
-                    ReadSymbols = isTarget
+                    ThrowIfSymbolsAreNotMatching = false,
+                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null
                 });
+
                 var wrapped = RegisterAssembly(asm);
                 if (path == targetPath)
                 {
