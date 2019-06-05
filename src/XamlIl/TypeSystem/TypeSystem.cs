@@ -279,6 +279,9 @@ namespace XamlIl.TypeSystem
         public IXamlIlType ArrayElementType { get; }
         public static XamlIlPseudoType Null { get; } = new XamlIlPseudoType("{x:Null}");
         public static XamlIlPseudoType Unknown { get; } = new XamlIlPseudoType("{Unknown type}");
+
+        public static XamlIlPseudoType Unresolved(string message) =>
+            new XamlIlPseudoType($"{{Unresolved type: '{message}'}}");
     }
     
 #if !XAMLIL_INTERNAL
