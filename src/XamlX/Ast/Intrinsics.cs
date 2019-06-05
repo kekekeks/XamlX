@@ -86,9 +86,13 @@ namespace XamlX.Ast
 
         IXamlXMember ResolveMember(IXamlXType type)
         {
-            return type.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
+            var rv = type.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
                    (IXamlXMember) type.GetAllProperties().FirstOrDefault(p =>
                        p.Name == Member && p.Getter != null && p.Getter.IsPublic && p.Getter.IsStatic);
+            if (rv == null)
+                throw new XamlXParseException(
+                    $"Unable to resolve {Member} as static field, property, constant or enum value", this);
+            return rv;
         }
         
         public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
@@ -124,7 +128,7 @@ namespace XamlX.Ast
                 return field.FieldType;
             if (member is IXamlXProperty prop && prop.Getter != null)
                 return prop.Getter.ReturnType;
-            return XamlXPseudoType.Unknown;
+            throw new XamlXParseException($"Unable to resolve {Member} as static field, property, constant or enum value", this);
         }
         
         public IXamlXAstTypeReference Type => new XamlXAstClrTypeReference(this, ResolveReturnType(), false);
