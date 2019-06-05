@@ -125,6 +125,8 @@ namespace XamlX.Transform
 
         void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation, Func<string, IXamlType, IXamlTypeBuilder> createSubType, IXamlILEmitter codeGen, XamlContext context)
         {
+            // Uncomment to inspect generated IL in debugger
+            //codeGen = new RecordingIlEmitter(codeGen);
             var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, true);
 
             codeGen

@@ -225,7 +225,10 @@ namespace XamlX.TypeSystem
                         return true;
                     return false;
                 }
-                return Type.IsAssignableFrom(((SreType) type).Type);
+
+                if (type is SreType sreType)
+                    return Type.IsAssignableFrom((sreType).Type);
+                return false;
             }
 
             public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
@@ -251,6 +254,7 @@ namespace XamlX.TypeSystem
             {
                 return System.ResolveType(Enum.GetUnderlyingType(Type));
             }
+            public override string ToString() => Type.ToString();
         }
 
         class SreCustomAttribute : IXamlCustomAttribute
@@ -293,6 +297,8 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlType> Parameters =>
                 _parameters ?? (_parameters = _method.GetParameters()
                     .Select(p => System.ResolveType(p.ParameterType)).ToList());
+
+            public override string ToString() => _method.DeclaringType?.FullName + " " + _method;
         }
         
         [DebuggerDisplay("{Method}")]
@@ -347,6 +353,8 @@ namespace XamlX.TypeSystem
             public IXamlType PropertyType => System.ResolveType(Member.PropertyType);
             public IXamlMethod Setter { get; }
             public IXamlMethod Getter { get; }
+
+            public override string ToString() => Member.ToString();
         }
 
         class SreEvent : SreMemberInfo, IXamlEventInfo
@@ -359,6 +367,7 @@ namespace XamlX.TypeSystem
             }
             public IXamlMethod Add { get; }
             public bool Equals(IXamlEventInfo other) => (other as SreEvent)?.Event.Equals(Event) == true;
+            public override string ToString() => Event.ToString();
         }
         
         class SreField : SreMemberInfo, IXamlField
@@ -382,6 +391,7 @@ namespace XamlX.TypeSystem
                 return Field.GetValue(null);
             }
 
+            public override string ToString() => Field.DeclaringType?.FullName + " " + Field.Name;
             public bool Equals(IXamlField other) => ((SreField) other)?.Field.Equals(Field) == true;
         }
 
