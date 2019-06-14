@@ -15,6 +15,8 @@ namespace XamlX.Transform.Transformers
             string xmlns, string name, bool isMarkupExtension, List<XamlXAstXmlTypeReference> typeArguments, IXamlXLineInfo lineInfo,
             bool strict)
         {
+            if (typeArguments == null)
+                typeArguments = new List<XamlXAstXmlTypeReference>();
             var targs = typeArguments
                 .Select(ta =>
                     ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo, strict)
