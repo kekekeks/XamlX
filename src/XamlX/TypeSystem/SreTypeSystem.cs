@@ -287,7 +287,7 @@ namespace XamlX.TypeSystem
         {
             private readonly MethodBase _method;
 
-            private IReadOnlyList<IXamlType> _parameters;
+            protected IReadOnlyList<IXamlType> _parameters;
             public SreMethodBase(SreTypeSystem system, MethodBase method) : base(system, method)
             {
                 _method = method;
@@ -562,10 +562,12 @@ namespace XamlX.TypeSystem
             {
                 public MethodBuilder MethodBuilder { get; }
 
-                public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder) : base(system, methodBuilder)
+                public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder,
+                    IReadOnlyList<IXamlType> parameters) : base(system, methodBuilder)
                 {
                     MethodBuilder = methodBuilder;
                     Generator = new IlGen(system, methodBuilder.GetILGenerator());
+                    _parameters = parameters;
                 }
 
                 public IXamlILEmitter Generator { get; }
@@ -581,7 +583,8 @@ namespace XamlX.TypeSystem
                 bool isInterfaceImpl, IXamlMethod overrideMethod)
             {
                 var ret = ((SreType) returnType).Type;
-                var argTypes = args?.Cast<SreType>().Select(t => t.Type) ?? Type.EmptyTypes;
+                var largs = (IReadOnlyList<IXamlType>)(args?.ToList()) ?? Array.Empty<IXamlType>();
+                var argTypes = largs.Cast<SreType>().Select(t => t.Type);
                 var m = _tb.DefineMethod(name, 
                     (isPublic ? MethodAttributes.Public : MethodAttributes.Private)
                     |(isStatic ? MethodAttributes.Static : default(MethodAttributes))
@@ -589,8 +592,8 @@ namespace XamlX.TypeSystem
                     , ret, argTypes.ToArray());
                 if (overrideMethod != null)
                     _tb.DefineMethodOverride(m, ((SreMethod) overrideMethod).Method);
-               
-                return new SreMethodBuilder(_system, m);
+
+                return new SreMethodBuilder(_system, m, largs);
             }
 
             public IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter)
