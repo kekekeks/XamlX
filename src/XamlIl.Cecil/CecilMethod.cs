@@ -80,10 +80,13 @@ namespace XamlIl.TypeSystem
             {
             }
 
-            public bool Equals(IXamlIlMethod other) => other is CecilMethod cm
-                                                       && cm.Reference.Equals(Reference);
+            public bool Equals(IXamlIlMethod other) =>
+                // I hope this is enough...
+                other is CecilMethod cm
+                && DeclaringType.Equals(cm.DeclaringType)
+                && Reference.FullName == cm.Reference.FullName;
 
-            
+
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
