@@ -121,6 +121,10 @@ namespace XamlX.TypeSystem
         
         public static IXamlXEmitter Unbox_Any(this IXamlXEmitter emitter, IXamlXType type)
             => emitter.Emit(OpCodes.Unbox_Any, type);
+        
+                
+        public static IXamlXEmitter Unbox(this IXamlXEmitter emitter, IXamlXType type)
+            => emitter.Emit(OpCodes.Unbox, type);
 
         public static IXamlXEmitter Newobj(this IXamlXEmitter emitter, IXamlXConstructor ctor)
             => emitter.Emit(OpCodes.Newobj, ctor);
