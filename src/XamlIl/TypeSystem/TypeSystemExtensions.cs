@@ -121,6 +121,10 @@ namespace XamlIl.TypeSystem
         
         public static IXamlIlEmitter Unbox_Any(this IXamlIlEmitter emitter, IXamlIlType type)
             => emitter.Emit(OpCodes.Unbox_Any, type);
+        
+                
+        public static IXamlIlEmitter Unbox(this IXamlIlEmitter emitter, IXamlIlType type)
+            => emitter.Emit(OpCodes.Unbox, type);
 
         public static IXamlIlEmitter Newobj(this IXamlIlEmitter emitter, IXamlIlConstructor ctor)
             => emitter.Emit(OpCodes.Newobj, ctor);
