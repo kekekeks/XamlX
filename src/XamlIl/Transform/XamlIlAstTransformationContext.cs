@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Xml;
 using XamlIl.Ast;
 using XamlIl.TypeSystem;
 
@@ -89,7 +90,22 @@ namespace XamlIl.Transform
                 _transformer = transformer;
             }
             
-            public IXamlIlAstNode Visit(IXamlIlAstNode node) => _transformer.Transform(_context, node);
+            public IXamlIlAstNode Visit(IXamlIlAstNode node)
+            {
+                #if XAMLIL_DEBUG
+                return _transformer.Transform(_context, node);
+                #else
+                try
+                {
+                    return _transformer.Transform(_context, node);
+                }
+                catch (Exception e) when (!(e is XmlException))
+                {
+                    throw new XamlIlParseException(
+                        "Internal compiler error while transforming node " + node + ":\n" + e, node);
+                }
+                #endif
+            }
 
             public void Push(IXamlIlAstNode node) => _context.PushParent(node);
 
