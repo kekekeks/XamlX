@@ -46,6 +46,7 @@ namespace XamlIl.Transform
         public IXamlIlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlIlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlIlType>();
         public Func<XamlIlEmitContext, IXamlIlEmitter, XamlIlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
+        public string RootObjectProviderIntermediateRootPropertyName { get; set; }
     }
 
 #if !XAMLIL_INTERNAL

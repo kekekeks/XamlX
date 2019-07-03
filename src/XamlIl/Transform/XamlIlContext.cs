@@ -124,7 +124,7 @@ namespace XamlIl.Transform
                     })
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
-            builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
+            var intermediateRootObjectField = builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
@@ -178,7 +178,13 @@ namespace XamlIl.Transform
                     .MarkLabel(fail)
                     .Ldnull()
                     .Ret();
-                
+
+                if (mappings.RootObjectProviderIntermediateRootPropertyName != null)
+                    ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, mappings.RootObjectProviderIntermediateRootPropertyName)
+                        .Generator
+                        .LdThisFld(intermediateRootObjectField)
+                        .Ret();
+
                 ownServices.Add(mappings.RootObjectProvider);
             }
 
