@@ -12,6 +12,7 @@ namespace XamlX.Transform
     class XamlContext
     {
         public IXamlField RootObjectField { get; set; }
+        public IXamlField IntermediateRootObjectField { get; set; }
         public IXamlField ParentListField { get; set; }
         public IXamlType ContextType { get; set; }
         public IXamlField PropertyTargetObject { get; set; }
@@ -33,6 +34,7 @@ namespace XamlX.Transform
                 ContextType.Methods.FirstOrDefault(f => f.Name == s);
 
             RootObjectField = Get(XamlContextDefinition.RootObjectFieldName);
+            IntermediateRootObjectField = Get(XamlContextDefinition.IntermediateRootObjectFieldName);
             ParentListField = Get(XamlContextDefinition.ParentListFieldName);
             PropertyTargetObject = Get(XamlContextDefinition.ProvideTargetObjectName);
             PropertyTargetProperty = Get(XamlContextDefinition.ProvideTargetPropertyName);
@@ -79,6 +81,7 @@ namespace XamlX.Transform
     class XamlContextDefinition
     {
         public const string RootObjectFieldName = "RootObject";
+        public const string IntermediateRootObjectFieldName = "IntermediateRoot";
         public const string ParentListFieldName = "ParentsStack";
         public const string ProvideTargetObjectName = "ProvideTargetObject";
         public const string ProvideTargetPropertyName = "ProvideTargetProperty";
@@ -121,6 +124,7 @@ namespace XamlX.Transform
                     })
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
+            builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);

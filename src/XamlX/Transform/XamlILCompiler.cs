@@ -133,6 +133,9 @@ namespace XamlX.Transform
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.RootObjectField)
+                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Emit(OpCodes.Ldarg_1)
+                .Emit(OpCodes.Stfld, context.IntermediateRootObjectField)
                 .Emit(OpCodes.Ldarg_1);
             emitContext.Emit(manipulation, codeGen, null);
             codeGen.Emit(OpCodes.Ret);
