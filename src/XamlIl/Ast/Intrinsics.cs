@@ -192,6 +192,32 @@ namespace XamlIl.Ast
             Type = (IXamlIlAstTypeReference) Type.Visit(visitor);
         }
     }
+    
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlIlIntermediateRootObjectNode : XamlIlAstNode, IXamlIlAstValueNode, IXamlIlAstEmitableNode
+    {
+        public XamlIlIntermediateRootObjectNode(IXamlIlLineInfo lineInfo, XamlIlTypeWellKnownTypes types) : base(lineInfo)
+        {
+            Type = new XamlIlAstClrTypeReference(lineInfo, types.Object, false);
+        }
+
+        public IXamlIlAstTypeReference Type { get; set; }
+
+        public XamlIlNodeEmitResult Emit(XamlIlEmitContext context, IXamlIlEmitter codeGen)
+        {
+            codeGen
+                .Ldloc(context.ContextLocal)
+                .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
+            return XamlIlNodeEmitResult.Type(0, Type.GetClrType());
+        }
+
+        public override void VisitChildren(Visitor visitor)
+        {
+            Type = (IXamlIlAstTypeReference) Type.Visit(visitor);
+        }
+    }
 
 #if !XAMLIL_INTERNAL
     public
