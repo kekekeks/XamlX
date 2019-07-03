@@ -18,8 +18,21 @@ namespace XamlX.Transform.Transformers
             if (!pa.Property.CustomAttributes.Any(ca => deferredAttrs.Any(da => da.Equals(ca.Type))))
                 return node;
 
-            pa.Values[pa.Values.Count - 1] =
-                new XamlXDeferredContentNode(pa.Values[pa.Values.Count - 1], context.Configuration);
+            if (pa.Values.Count != 1)
+                throw new XamlXParseException("Property with deferred content can have only one value", node);
+            var contentNode = pa.Values[0];
+
+            if (!
+                (contentNode is XamlXValueWithManipulationNode manipulation
+                 && manipulation.Manipulation is XamlXObjectInitializationNode))
+                throw new XamlXParseException(
+                    "Unable to find the object initialization node inside deferred content, " +
+                    "this shouldn't happen in default XamlX configuration, probably some AST transformer have broken the structure",
+                    node);
+            manipulation.Value = new XamlXDeferredContentInitializeIntermediateRootNode(manipulation.Value);
+            
+            pa.Values[0] =
+                new XamlXDeferredContentNode(pa.Values[0], context.Configuration);
             return node;
         }
     }
