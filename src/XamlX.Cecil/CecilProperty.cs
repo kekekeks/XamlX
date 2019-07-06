@@ -42,6 +42,11 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlXCustomAttribute> CustomAttributes =>
                 _attributes ?? (_attributes =
                     Property.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+
+            private IReadOnlyList<IXamlXType> _indexerParameters;
+            public IReadOnlyList<IXamlXType> IndexerParameters =>
+                _indexerParameters ?? (_indexerParameters =
+                    Property.Parameters.Select(param => TypeSystem.Resolve(param.ParameterType.TransformGeneric(_declaringType))).ToList());
         }
     }
 }
