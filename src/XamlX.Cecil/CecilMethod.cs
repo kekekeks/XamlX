@@ -44,6 +44,15 @@ namespace XamlX.TypeSystem
                 Definition = method;
                 _declaringTypeReference = declaringType;
             }
+
+            public CecilMethodBase(CecilTypeSystem typeSystem, GenericInstanceMethod method)
+            {
+                TypeSystem = typeSystem;
+                Reference = method;
+                IlReference = method.ElementMethod;
+                Definition = method.ElementMethod.Resolve();
+                _declaringTypeReference = Definition.DeclaringType;
+            }
             
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
@@ -80,13 +89,30 @@ namespace XamlX.TypeSystem
             {
             }
 
+            private CecilMethod(CecilTypeSystem typeSystem, GenericInstanceMethod method)
+                : base(typeSystem, method)
+            {
+            }
+
             public bool Equals(IXamlMethod other) =>
                 // I hope this is enough...
                 other is CecilMethod cm
                 && DeclaringType.Equals(cm.DeclaringType)
                 && Reference.FullName == cm.Reference.FullName;
 
+            public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
+            {
+                GenericInstanceMethod instantiation = new GenericInstanceMethod(Reference);
+                if (Reference == Definition)
+                {
+                    foreach (var type in typeArguments.Cast<ITypeReference>().Select(r => r.Reference))
+                    {
+                        instantiation.GenericArguments.Add(type);
+                    }
+                }
 
+                return new CecilMethod(TypeSystem, instantiation);
+            }
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
@@ -109,6 +135,11 @@ namespace XamlX.TypeSystem
             }
             
             public bool Equals(IXamlMethod other) => other == this;
+
+            public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
+            {
+                return new UnresolvedMethod(Name);
+            }
 
             public string Name { get; }
             public bool IsPublic { get; }

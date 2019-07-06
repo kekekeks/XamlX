@@ -314,6 +314,12 @@ namespace XamlX.TypeSystem
             }
 
             public bool Equals(IXamlMethod other) => ((SreMethod) other)?.Method.Equals(Method) == true;
+
+            public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
+            {
+                return new SreMethod(System, Method.MakeGenericMethod(typeArguments.Select(t => ((SreType)t).Type).ToArray()));
+            }
+
             public IXamlType ReturnType => _system.ResolveType(Method.ReturnType);
             public IXamlType DeclaringType => _system.ResolveType(Method.DeclaringType);
         }
@@ -332,6 +338,7 @@ namespace XamlX.TypeSystem
 
         class SreProperty : SreMemberInfo, IXamlProperty
         {
+            private IReadOnlyList<IXamlType> _parameters;
             public PropertyInfo Member { get; }
 
             public SreProperty(SreTypeSystem system, PropertyInfo member) : base(system, member)
@@ -353,6 +360,10 @@ namespace XamlX.TypeSystem
             public IXamlType PropertyType => System.ResolveType(Member.PropertyType);
             public IXamlMethod Setter { get; }
             public IXamlMethod Getter { get; }
+
+            public IReadOnlyList<IXamlType> IndexerParameters =>
+                _parameters ?? (_parameters = Member.GetIndexParameters()
+                    .Select(p => System.ResolveType(p.ParameterType)).ToList());
 
             public override string ToString() => Member.ToString();
         }
