@@ -514,6 +514,11 @@ namespace XamlIl.Ast
         public bool Equals(IXamlIlMethod other) =>
             other is XamlIlMethodWithCasts mwc && mwc._method.Equals(_method) &&
             mwc.Parameters.SequenceEqual(Parameters);
+
+        public IXamlIlMethod MakeGenericMethod(IReadOnlyList<IXamlIlType> typeArguments)
+        {
+            throw new InvalidOperationException();
+        }
     }
 
 #if !XAMLIL_INTERNAL
