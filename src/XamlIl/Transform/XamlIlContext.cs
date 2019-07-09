@@ -23,6 +23,7 @@ namespace XamlIl.Transform
         public IXamlIlMethod PopParentMethod { get; set; }
         
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
+            XamlIlLanguageTypeMappings mappings,
             Action<XamlIlContext, IXamlIlEmitter> factory)
         {
             ContextType = definition.MakeGenericType(constructedType);
@@ -42,10 +43,17 @@ namespace XamlIl.Transform
             PopParentMethod = GetMethod(XamlIlContextDefinition.PopParentMethodName);
             Constructor = ContextType.Constructors.First();
             Factory = il => factory(this, il);
+            if (mappings.ContextFactoryCallback != null)
+                Factory = il =>
+                {
+                    factory(this, il);
+                    mappings.ContextFactoryCallback(this, il);
+                };
         }        
 
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
-            string baseUri, List<IXamlIlField> staticProviders) : this(definition, constructedType,
+            XamlIlLanguageTypeMappings mappings,
+            string baseUri, List<IXamlIlField> staticProviders) : this(definition, constructedType, mappings,
             (context, codegen) =>
             {
                 if (staticProviders?.Count > 0)
@@ -396,6 +404,8 @@ namespace XamlIl.Transform
 
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
+            
+            mappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
             
             // We are calling this last to ensure that our own services are ready
             if (_innerServiceProviderField != null)

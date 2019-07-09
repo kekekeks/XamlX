@@ -47,7 +47,17 @@ namespace XamlIl.Transform
         public List<IXamlIlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlIlType>();
         public Func<XamlIlEmitContext, IXamlIlEmitter, XamlIlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
+        public XamlIlContextTypeBuilderCallback ContextTypeBuilderCallback { get; set; }
+        public XamlIlContextFactoryCallback ContextFactoryCallback { get; set; }
+        
     }
+
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    delegate void XamlIlContextTypeBuilderCallback(IXamlIlTypeBuilder typeBuilder, IXamlIlEmitter constructor);
+
+    delegate void XamlIlContextFactoryCallback(XamlIlContext context, IXamlIlEmitter emitter);
 
 #if !XAMLIL_INTERNAL
     public

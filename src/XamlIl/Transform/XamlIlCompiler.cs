@@ -203,7 +203,7 @@ namespace XamlIl.Transform
             }
             
             var context = new XamlIlContext(contextType, rootGrp.Type.GetClrType(),
-                baseUri, staticProviders);
+                _configuration.TypeMappings, baseUri, staticProviders);
             
             CompilePopulate(fileSource, rootGrp.Manipulation, createClosure, populateMethod.Generator, context);
 
