@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Xml;
 using XamlX.Ast;
 using XamlX.TypeSystem;
 
@@ -86,7 +87,21 @@ namespace XamlX.Transform
             var parent = codeGen as CheckingIlEmitter;
             parent?.Pause();
             var checkedEmitter = new CheckingIlEmitter(codeGen); 
+
+#if XAMLIL_DEBUG
             var res = EmitNode(value, checkedEmitter);
+#else
+            XamlNodeEmitResult res;
+            try
+            {
+                res = EmitNode(value, checkedEmitter);
+            }
+            catch (Exception e) when (!(e is XmlException))
+            {
+                throw new XamlLoadException(
+                    "Internal compiler error while emitting node " + value + ":\n" + e, value);
+            }
+#endif
             var expectedBalance = res.ProducedItems - res.ConsumedItems;
             var checkResult =
                 checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);

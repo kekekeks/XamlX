@@ -12,6 +12,7 @@ namespace XamlX.Transform
     class XamlContext
     {
         public IXamlField RootObjectField { get; set; }
+        public IXamlField IntermediateRootObjectField { get; set; }
         public IXamlField ParentListField { get; set; }
         public IXamlType ContextType { get; set; }
         public IXamlField PropertyTargetObject { get; set; }
@@ -22,6 +23,7 @@ namespace XamlX.Transform
         public IXamlMethod PopParentMethod { get; set; }
         
         public XamlContext(IXamlType definition, IXamlType constructedType,
+            XamlLanguageTypeMappings mappings,
             Action<XamlContext, IXamlILEmitter> factory)
         {
             ContextType = definition.MakeGenericType(constructedType);
@@ -33,6 +35,7 @@ namespace XamlX.Transform
                 ContextType.Methods.FirstOrDefault(f => f.Name == s);
 
             RootObjectField = Get(XamlContextDefinition.RootObjectFieldName);
+            IntermediateRootObjectField = Get(XamlContextDefinition.IntermediateRootObjectFieldName);
             ParentListField = Get(XamlContextDefinition.ParentListFieldName);
             PropertyTargetObject = Get(XamlContextDefinition.ProvideTargetObjectName);
             PropertyTargetProperty = Get(XamlContextDefinition.ProvideTargetPropertyName);
@@ -40,10 +43,17 @@ namespace XamlX.Transform
             PopParentMethod = GetMethod(XamlContextDefinition.PopParentMethodName);
             Constructor = ContextType.Constructors.First();
             Factory = il => factory(this, il);
+            if (mappings.ContextFactoryCallback != null)
+                Factory = il =>
+                {
+                    factory(this, il);
+                    mappings.ContextFactoryCallback(this, il);
+                };
         }        
 
         public XamlContext(IXamlType definition, IXamlType constructedType,
-            string baseUri, List<IXamlField> staticProviders) : this(definition, constructedType,
+            XamlLanguageTypeMappings mappings,
+            string baseUri, List<IXamlField> staticProviders) : this(definition, constructedType, mappings,
             (context, codegen) =>
             {
                 if (staticProviders?.Count > 0)
@@ -79,6 +89,7 @@ namespace XamlX.Transform
     class XamlContextDefinition
     {
         public const string RootObjectFieldName = "RootObject";
+        public const string IntermediateRootObjectFieldName = "IntermediateRoot";
         public const string ParentListFieldName = "ParentsStack";
         public const string ProvideTargetObjectName = "ProvideTargetObject";
         public const string ProvideTargetPropertyName = "ProvideTargetProperty";
@@ -121,6 +132,7 @@ namespace XamlX.Transform
                     })
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
+            var intermediateRootObjectField = builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
@@ -174,7 +186,13 @@ namespace XamlX.Transform
                     .MarkLabel(fail)
                     .Ldnull()
                     .Ret();
-                
+
+                if (mappings.RootObjectProviderIntermediateRootPropertyName != null)
+                    ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, mappings.RootObjectProviderIntermediateRootPropertyName)
+                        .Generator
+                        .LdThisFld(intermediateRootObjectField)
+                        .Ret();
+
                 ownServices.Add(mappings.RootObjectProvider);
             }
 
@@ -386,6 +404,8 @@ namespace XamlX.Transform
 
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
+            
+            mappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
             
             // We are calling this last to ensure that our own services are ready
             if (_innerServiceProviderField != null)
