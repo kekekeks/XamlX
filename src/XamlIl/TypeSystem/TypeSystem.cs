@@ -289,6 +289,32 @@ namespace XamlIl.TypeSystem
 #if !XAMLIL_INTERNAL
     public
 #endif
+    class FindMethodMethodSignature
+    {
+        public string Name { get; set; }
+        public IXamlIlType ReturnType { get; set; }
+        public bool IsStatic { get; set; }
+        public bool IsExactMatch { get; set; } = true;
+        public bool DeclaringOnly { get; set; } = false;
+        public IReadOnlyList<IXamlIlType> Parameters { get; set; }
+
+        public FindMethodMethodSignature(string name, IXamlIlType returnType, params IXamlIlType[] parameters)
+        {
+            Name = name;
+            ReturnType = returnType;
+            Parameters = parameters;
+        }
+
+        public override string ToString()
+        {
+            return
+                $"{(IsStatic ? "static" : "instance")} {ReturnType.GetFullName()} {Name} ({string.Join(", ", Parameters.Select(p => p.GetFullName()))}) (exact match: {IsExactMatch}, declaring only: {DeclaringOnly})";
+        }
+    }
+    
+#if !XAMLIL_INTERNAL
+    public
+#endif
     static class XamlIlTypeSystemExtensions
     {
         public static string GetFqn(this IXamlIlType type) => $"{type.Assembly?.Name}:{type.Namespace}.{type.Name}";
@@ -366,6 +392,44 @@ namespace XamlIl.TypeSystem
 
             if (type.BaseType != null)
                 return FindMethod(type.BaseType, name, returnType, allowDowncast, args);
+            return null;
+        }
+
+        public static IXamlIlMethod GetMethod(this IXamlIlType type, FindMethodMethodSignature signature)
+        {
+            var found = FindMethod(type, signature);
+            if (found == null)
+                throw new XamlIlTypeSystemException($"Method with signature {signature} is not found on type {type.GetFqn()}");
+            return found;
+        }
+        public static IXamlIlMethod FindMethod(this IXamlIlType type, FindMethodMethodSignature signature)
+        {
+            foreach (var m in type.Methods)
+            {
+                if (m.Name == signature.Name 
+                    && m.ReturnType.Equals(signature.ReturnType) 
+                    && m.Parameters.Count == signature.Parameters.Count
+                    && m.IsStatic == signature.IsStatic
+                    )
+                {
+                    var mismatch = false;
+                    for (var c = 0; c < signature.Parameters.Count; c++)
+                    {
+                        if (!signature.IsExactMatch)
+                            mismatch = !m.Parameters[c].IsAssignableFrom(signature.Parameters[c]);
+                        else
+                            mismatch = !m.Parameters[c].Equals(signature.Parameters[c]);
+                        if(mismatch)
+                            break;
+                    }
+
+                    if (!mismatch)
+                        return m;
+                }
+            }
+
+            if (type.BaseType != null && !signature.DeclaringOnly)
+                return FindMethod(type.BaseType, signature);
             return null;
         }
         

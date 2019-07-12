@@ -12,6 +12,7 @@ namespace XamlIl.Transform
     class XamlIlContext
     {
         public IXamlIlField RootObjectField { get; set; }
+        public IXamlIlField IntermediateRootObjectField { get; set; }
         public IXamlIlField ParentListField { get; set; }
         public IXamlIlType ContextType { get; set; }
         public IXamlIlField PropertyTargetObject { get; set; }
@@ -22,6 +23,7 @@ namespace XamlIl.Transform
         public IXamlIlMethod PopParentMethod { get; set; }
         
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
+            XamlIlLanguageTypeMappings mappings,
             Action<XamlIlContext, IXamlIlEmitter> factory)
         {
             ContextType = definition.MakeGenericType(constructedType);
@@ -33,6 +35,7 @@ namespace XamlIl.Transform
                 ContextType.Methods.FirstOrDefault(f => f.Name == s);
 
             RootObjectField = Get(XamlIlContextDefinition.RootObjectFieldName);
+            IntermediateRootObjectField = Get(XamlIlContextDefinition.IntermediateRootObjectFieldName);
             ParentListField = Get(XamlIlContextDefinition.ParentListFieldName);
             PropertyTargetObject = Get(XamlIlContextDefinition.ProvideTargetObjectName);
             PropertyTargetProperty = Get(XamlIlContextDefinition.ProvideTargetPropertyName);
@@ -40,10 +43,17 @@ namespace XamlIl.Transform
             PopParentMethod = GetMethod(XamlIlContextDefinition.PopParentMethodName);
             Constructor = ContextType.Constructors.First();
             Factory = il => factory(this, il);
+            if (mappings.ContextFactoryCallback != null)
+                Factory = il =>
+                {
+                    factory(this, il);
+                    mappings.ContextFactoryCallback(this, il);
+                };
         }        
 
         public XamlIlContext(IXamlIlType definition, IXamlIlType constructedType,
-            string baseUri, List<IXamlIlField> staticProviders) : this(definition, constructedType,
+            XamlIlLanguageTypeMappings mappings,
+            string baseUri, List<IXamlIlField> staticProviders) : this(definition, constructedType, mappings,
             (context, codegen) =>
             {
                 if (staticProviders?.Count > 0)
@@ -79,6 +89,7 @@ namespace XamlIl.Transform
     class XamlIlContextDefinition
     {
         public const string RootObjectFieldName = "RootObject";
+        public const string IntermediateRootObjectFieldName = "IntermediateRoot";
         public const string ParentListFieldName = "ParentsStack";
         public const string ProvideTargetObjectName = "ProvideTargetObject";
         public const string ProvideTargetPropertyName = "ProvideTargetProperty";
@@ -121,6 +132,7 @@ namespace XamlIl.Transform
                     })
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
+            var intermediateRootObjectField = builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
@@ -174,7 +186,13 @@ namespace XamlIl.Transform
                     .MarkLabel(fail)
                     .Ldnull()
                     .Ret();
-                
+
+                if (mappings.RootObjectProviderIntermediateRootPropertyName != null)
+                    ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, mappings.RootObjectProviderIntermediateRootPropertyName)
+                        .Generator
+                        .LdThisFld(intermediateRootObjectField)
+                        .Ret();
+
                 ownServices.Add(mappings.RootObjectProvider);
             }
 
@@ -386,6 +404,8 @@ namespace XamlIl.Transform
 
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
+            
+            mappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
             
             // We are calling this last to ensure that our own services are ready
             if (_innerServiceProviderField != null)
