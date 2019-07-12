@@ -57,6 +57,9 @@ namespace XamlX.Transform
 #endif
     delegate void XamlContextTypeBuilderCallback(IXamlTypeBuilder typeBuilder, IXamlILEmitter constructor);
 
+#if !XAMLX_INTERNAL
+    public
+#endif
     delegate void XamlContextFactoryCallback(XamlContext context, IXamlILEmitter emitter);
 
 #if !XAMLX_INTERNAL
