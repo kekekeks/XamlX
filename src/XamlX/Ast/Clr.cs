@@ -621,4 +621,37 @@ namespace XamlX.Ast
             return XamlXNodeEmitResult.Type(0, funcType);
         }
     }
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    class XamlXDeferredContentInitializeIntermediateRootNode 
+        : XamlXAstNode, IXamlXAstValueNode, IXamlXAstEmitableNode
+    {
+        public IXamlXAstValueNode Value { get; set; }
+
+        public XamlXDeferredContentInitializeIntermediateRootNode(IXamlXAstValueNode value) : base(value)
+        {
+            Value = value;
+        }
+        
+        public override void VisitChildren(IXamlXAstVisitor visitor)
+        {
+            Value = (IXamlXAstValueNode) Value.Visit(visitor);
+        }
+
+        public IXamlXAstTypeReference Type => Value.Type;
+        public XamlXNodeEmitResult Emit(XamlXEmitContext context, IXamlXEmitter codeGen)
+        {
+            codeGen
+                .Ldloc(context.ContextLocal);
+            context.Emit(Value, codeGen, Value.Type.GetClrType());
+            codeGen
+                .Stfld(context.RuntimeContext.IntermediateRootObjectField)
+                .Ldloc(context.ContextLocal)
+                .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
+            return XamlXNodeEmitResult.Type(0, Value.Type.GetClrType());
+        }
+
+
+    }
 }

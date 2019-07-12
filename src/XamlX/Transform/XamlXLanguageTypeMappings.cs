@@ -46,7 +46,18 @@ namespace XamlX.Transform
         public IXamlXMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlXType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlXType>();
         public Func<XamlXEmitContext, IXamlXEmitter, XamlXAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
+        public string RootObjectProviderIntermediateRootPropertyName { get; set; }
+        public XamlXContextTypeBuilderCallback ContextTypeBuilderCallback { get; set; }
+        public XamlXContextFactoryCallback ContextFactoryCallback { get; set; }
+        
     }
+
+#if !XAMLIL_INTERNAL
+    public
+#endif
+    delegate void XamlXContextTypeBuilderCallback(IXamlXTypeBuilder typeBuilder, IXamlXEmitter constructor);
+
+    delegate void XamlXContextFactoryCallback(XamlXContext context, IXamlXEmitter emitter);
 
 #if !XAMLIL_INTERNAL
     public
