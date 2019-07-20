@@ -50,6 +50,7 @@ namespace XamlX.TypeSystem
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
         IXamlType DeclaringType { get; }
+        IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
     }
 
 #if !XAMLX_INTERNAL
@@ -87,6 +88,7 @@ namespace XamlX.TypeSystem
         IXamlMethod Setter { get; }
         IXamlMethod Getter { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+        IReadOnlyList<IXamlType> IndexerParameters { get; }
     }
 
 #if !XAMLX_INTERNAL

@@ -13,44 +13,54 @@ namespace XamlX.TypeSystem
             public MethodReference Reference { get; }
             public MethodReference IlReference { get; }
             public MethodDefinition Definition { get; }
-            private TypeReference _declaringTypeReference;
-            
+            protected readonly TypeReference _declaringTypeReference;
 
-            public CecilMethodBase(CecilTypeSystem typeSystem, MethodDefinition method, TypeReference declaringType)
+            public CecilMethodBase(CecilTypeSystem typeSystem, MethodReference method, TypeReference declaringType)
             {
                 TypeSystem = typeSystem;
 
                 MethodReference MakeRef(bool transform)
                 {
                     TypeReference Transform(TypeReference r) => transform ? r.TransformGeneric(declaringType) : r;
-                    
+
                     var reference = new MethodReference(method.Name, Transform(method.ReturnType),
                         declaringType)
                     {
                         HasThis = method.HasThis,
                         ExplicitThis = method.ExplicitThis,
                     };
+
                     foreach (ParameterDefinition parameter in method.Parameters)
                         reference.Parameters.Add(
                             new ParameterDefinition(Transform(parameter.ParameterType)));
 
                     foreach (var genericParam in method.GenericParameters)
                         reference.GenericParameters.Add(new GenericParameter(genericParam.Name, reference));
+
+                    if (method is GenericInstanceMethod generic)
+                    {
+                        var genericReference = new GenericInstanceMethod(reference);
+                        foreach (var genericArg in generic.GenericArguments)
+                        {
+                            genericReference.GenericArguments.Add(Transform(genericArg));
+                        }
+                        reference = genericReference;
+                    }
+
                     return reference;
                 }
 
                 Reference = MakeRef(true);
                 IlReference = MakeRef(false);
-                Definition = method;
+                Definition = method.Resolve();
                 _declaringTypeReference = declaringType;
             }
             
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
             public bool IsStatic => Definition.IsStatic;
-            private IXamlType _returnType;
 
-            
+            private IXamlType _returnType;
             
             public IXamlType ReturnType =>
                 _returnType ?? (_returnType = TypeSystem.Resolve(Reference.ReturnType));
@@ -75,8 +85,8 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         class CecilMethod : CecilMethodBase, IXamlMethodBuilder
         {
-            public CecilMethod(CecilTypeSystem typeSystem, MethodDefinition methodDef,
-                TypeReference declaringType) : base(typeSystem, methodDef, declaringType)
+            public CecilMethod(CecilTypeSystem typeSystem, MethodReference methodRef,
+                TypeReference declaringType) : base(typeSystem, methodRef, declaringType)
             {
             }
 
@@ -86,7 +96,17 @@ namespace XamlX.TypeSystem
                 && DeclaringType.Equals(cm.DeclaringType)
                 && Reference.FullName == cm.Reference.FullName;
 
+            public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
+            {
+                GenericInstanceMethod instantiation = new GenericInstanceMethod(Reference);
+                foreach (var type in typeArguments.Cast<ITypeReference>().Select(r => r.Reference))
+                {
+                    instantiation.GenericParameters.Add(new GenericParameter(Reference));
+                    instantiation.GenericArguments.Add(type);
+                }
 
+                return new CecilMethod(TypeSystem, instantiation, _declaringTypeReference);
+            }
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
@@ -99,23 +119,6 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlConstructor other) => other is CecilConstructor cm
                                                             && cm.Reference.Equals(Reference);
-        }
-
-        class UnresolvedMethod : IXamlMethod
-        {
-            public UnresolvedMethod(string name)
-            {
-                Name = name;
-            }
-            
-            public bool Equals(IXamlMethod other) => other == this;
-
-            public string Name { get; }
-            public bool IsPublic { get; }
-            public bool IsStatic { get; }
-            public IXamlType ReturnType { get; } = XamlPseudoType.Unknown;
-            public IReadOnlyList<IXamlType> Parameters { get; } = new IXamlType[0];
-            public IXamlType DeclaringType { get; } = XamlPseudoType.Unknown;
         }
     }
 }
