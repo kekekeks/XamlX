@@ -38,8 +38,10 @@ namespace XamlX.Ast
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
         public IXamlType DeclaringType { get; set; }
+        public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
         
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property) : base(lineInfo)
+        public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
+            XamlTransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
@@ -47,6 +49,20 @@ namespace XamlX.Ast
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
+            var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
+            if (typeConverterAttributes != null)
+            {
+                foreach (var attr in typeConverterAttributes)
+                {
+                    var typeConverter =
+                        XamlTransformHelpers.TryGetTypeConverterFromCustomAttribute(cfg, attr);
+                    if (typeConverter != null)
+                    {
+                        TypeConverters[property.PropertyType] = typeConverter;
+                        break;
+                    }
+                }
+            }
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType, 

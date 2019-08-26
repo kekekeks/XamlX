@@ -26,7 +26,7 @@ namespace XamlX.Transform.Transformers
                             var contentProperty = context.Configuration.FindContentProperty(ni.Type.GetClrType());
                             if (contentProperty != null)
                                 propertyNode = new XamlAstXamlPropertyValueNode(ni,
-                                    new XamlAstClrProperty(ni, contentProperty),
+                                    new XamlAstClrProperty(ni, contentProperty, context.Configuration),
                                     Array.Empty<IXamlAstValueNode>());
                             else
                             {

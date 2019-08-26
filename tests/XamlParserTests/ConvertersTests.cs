@@ -18,7 +18,9 @@ namespace XamlParserTests
         public Type TypeProperty { get; set; }
         public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
-        public ConvertersTestsClassWithConverter ConverterProperty { get; set; }
+        public ConvertersTestsClassWithConverter TypeWithConverterProperty { get; set; }
+        [TypeConverter(typeof(ConvertersTests.PropertyTestConverter))]
+        public ConvertersTestsClassWithoutConverter PropertyWithConverter { get; set; }
         public ConvertersTestsEnum EnumProperty { get; set; }
     }
 
@@ -48,6 +50,12 @@ namespace XamlParserTests
         public string Value { get; set; }
         public override string ToString() => Value;
     }
+    
+    public class ConvertersTestsClassWithoutConverter
+    {
+        public string Value { get; set; }
+        public override string ToString() => Value;
+    }
 
     public class ConvertersTestsClassWithConstructor
     {
@@ -73,6 +81,16 @@ namespace XamlParserTests
                 return new ConvertersTestsClassWithConverter {Value = (string) value};
             }
         }
+        
+        public class PropertyTestConverter : TypeConverter
+        {
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                Assert.Equal(CultureInfo.InvariantCulture, culture);
+                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+                return new ConvertersTestsClassWithoutConverter {Value = (string) value};
+            }
+        }
 
         [Theory,
          InlineData("Int64Property", "1"),
@@ -81,7 +99,8 @@ namespace XamlParserTests
          InlineData("FloatProperty", "2.5"),
          InlineData("CustomProperty", "Custom"),
          InlineData("TimeSpanProperty", "01:10:00"),
-         InlineData("ConverterProperty", "CustomConverter"),
+         InlineData("TypeWithConverterProperty", "CustomConverter"),
+         InlineData("PropertyWithConverter", "CustomConverterProperty"),
          InlineData("UriKindProperty", "Relative"),
          InlineData("UriKindProperty", "150"),
          InlineData("EnumProperty", "Second"),
