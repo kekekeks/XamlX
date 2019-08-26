@@ -291,7 +291,7 @@ namespace XamlX.Transform
             if (cfg.TypeMappings.TypeDescriptorContext != null)
             {
                 IXamlXType converterType = null;
-                if (!propertyContext?.TypeConverters.TryGetValue(type, out converterType) == true)
+                if (propertyContext?.TypeConverters.TryGetValue(type, out converterType) != true)
                 {
                     var typeConverterAttribute =
                         cfg.GetCustomAttribute(type, cfg.TypeMappings.TypeConverterAttributes).FirstOrDefault();
