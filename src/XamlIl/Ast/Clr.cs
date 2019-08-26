@@ -38,8 +38,10 @@ namespace XamlIl.Ast
         public List<IXamlIlPropertySetter> Setters { get; set; } = new List<IXamlIlPropertySetter>();
         public List<IXamlIlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlIlCustomAttribute>();
         public IXamlIlType DeclaringType { get; set; }
+        public Dictionary<IXamlIlType, IXamlIlType> TypeConverters { get; set; } = new Dictionary<IXamlIlType, IXamlIlType>();
         
-        public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, IXamlIlProperty property) : base(lineInfo)
+        public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, IXamlIlProperty property, 
+            XamlIlTransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
@@ -47,6 +49,20 @@ namespace XamlIl.Ast
                 Setters.Add(new XamlIlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
+            var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
+            if (typeConverterAttributes != null)
+            {
+                foreach (var attr in typeConverterAttributes)
+                {
+                    var typeConverter =
+                        XamlIlTransformHelpers.TryGetTypeConverterFromCustomAttribute(cfg, attr);
+                    if (typeConverter != null)
+                    {
+                        TypeConverters[property.PropertyType] = typeConverter;
+                        break;
+                    }
+                }
+            }
         }
 
         public XamlIlAstClrProperty(IXamlIlLineInfo lineInfo, string name, IXamlIlType declaringType, 

@@ -42,7 +42,7 @@ namespace XamlIl.Transform.Transformers
                         && ((p.Getter != null && !p.Getter.IsStatic && p.Getter.Parameters.Count == 0)
                             || p.Setter != null && !p.Setter.IsStatic && p.Setter.Parameters.Count == 1));
                     if (found != null)
-                        return new XamlIlAstClrProperty(prop, found);
+                        return new XamlIlAstClrProperty(prop, found, context.Configuration);
                     var clrEvent = declaringType.GetAllEvents().FirstOrDefault(p => p.Name == prop.Name
                                                                                     && p.Add != null);
                     if (clrEvent != null)

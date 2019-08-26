@@ -96,7 +96,7 @@ namespace XamlIl.Transform.Transformers
                             if(CanAssign(valueArg, setterType))
                                 matchedSetters.Add(setter);
                             // Converted value have more priority than custom setters, so we just create a setter without an alternative
-                            else if (XamlIlTransformHelpers.TryConvertValue(context, valueArg, setterType,
+                            else if (XamlIlTransformHelpers.TryConvertValue(context, valueArg, setterType, property,
                                 out var converted))
                             {
                                 

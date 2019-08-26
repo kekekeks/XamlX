@@ -181,11 +181,28 @@ namespace XamlIl.Transform
                 return true;
             }
 
-            return TryConvertValue(context, node, type, out rv);
+            return TryConvertValue(context, node, type, null, out rv);
         }
 
+        public static IXamlIlType TryGetTypeConverterFromCustomAttribute(XamlIlTransformerConfiguration cfg,
+            IXamlIlCustomAttribute attribute)
+        {
+
+            if (attribute != null)
+            {
+                var arg = attribute.Parameters.FirstOrDefault();
+                return (arg as IXamlIlType) ??
+                                    (arg is String sarg ? cfg.TypeSystem.FindType(sarg) : null);
+                
+            }
+
+            return null;
+        }
+
+
         public static bool TryConvertValue(XamlIlAstTransformationContext context,
-                IXamlIlAstValueNode node, IXamlIlType type, out IXamlIlAstValueNode rv)
+                IXamlIlAstValueNode node, IXamlIlType type, XamlIlAstClrProperty propertyContext,
+                out IXamlIlAstValueNode rv)
         {    
             rv = null;
             var cfg = context.Configuration;
@@ -273,32 +290,32 @@ namespace XamlIl.Transform
 
             if (cfg.TypeMappings.TypeDescriptorContext != null)
             {
-                var typeConverterAttribute =
-                    cfg.GetCustomAttribute(type, cfg.TypeMappings.TypeConverterAttributes).FirstOrDefault();
-                if (typeConverterAttribute != null)
+                IXamlIlType converterType = null;
+                if (!propertyContext?.TypeConverters.TryGetValue(type, out converterType) == true)
                 {
-                    var arg = typeConverterAttribute.Parameters.FirstOrDefault();
-                    var converterType = (arg as IXamlIlType) ??
-                                        (arg is String sarg ? cfg.TypeSystem.FindType(sarg) : null);
-                    if (converterType != null)
-                    {
-                        var converterMethod = converterType.FindMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
-                            cfg.TypeMappings.TypeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
-                            cfg.WellKnownTypes.Object);
-                        rv = new XamlIlAstNeedsParentStackValueNode(node,
-                            new XamlIlAstRuntimeCastNode(node,
-                                new XamlIlStaticOrTargetedReturnMethodCallNode(node, converterMethod,
-                                    new[]
-                                    {
-                                        new XamlIlAstNewClrObjectNode(node,
-                                            new XamlIlAstClrTypeReference(node, converterType, false), null,
-                                            new List<IXamlIlAstValueNode>()),
-                                        new XamlIlAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
-                                        CreateInvariantCulture(),
-                                        node
-                                    }), new XamlIlAstClrTypeReference(node, type, false)));
-                        return true;
-                    }
+                    var typeConverterAttribute =
+                        cfg.GetCustomAttribute(type, cfg.TypeMappings.TypeConverterAttributes).FirstOrDefault();
+                    if (typeConverterAttribute != null)
+                        converterType = TryGetTypeConverterFromCustomAttribute(cfg, typeConverterAttribute);
+                }
+                
+                if (converterType != null)
+                {
+                    var converterMethod = converterType.FindMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
+                        cfg.TypeMappings.TypeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
+                        cfg.WellKnownTypes.Object);
+                    rv = new XamlIlAstNeedsParentStackValueNode(node,
+                        new XamlIlAstRuntimeCastNode(node,
+                            new XamlIlStaticOrTargetedReturnMethodCallNode(node, converterMethod,
+                                new[]
+                                {
+                                    new XamlIlAstNewClrObjectNode(node,
+                                        new XamlIlAstClrTypeReference(node, converterType, false), null,
+                                        new List<IXamlIlAstValueNode>()),
+                                    new XamlIlAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
+                                    CreateInvariantCulture(), node
+                                }), new XamlIlAstClrTypeReference(node, type, false)));
+                    return true;
                 }
             }
 
