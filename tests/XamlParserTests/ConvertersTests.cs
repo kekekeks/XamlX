@@ -19,8 +19,17 @@ namespace XamlParserTests
         public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
         public ConvertersTestsClassWithConverter ConverterProperty { get; set; }
+        public ConvertersTestsEnum EnumProperty { get; set; }
     }
 
+    [Flags]
+    public enum ConvertersTestsEnum
+    {
+        First = 1,
+        Second = 2,
+        Third = 4
+    }
+    
     public struct ConvertersTestValueType
     {
         public string Value { get; set; }
@@ -75,6 +84,9 @@ namespace XamlParserTests
          InlineData("ConverterProperty", "CustomConverter"),
          InlineData("UriKindProperty", "Relative"),
          InlineData("UriKindProperty", "150"),
+         InlineData("EnumProperty", "Second"),
+         InlineData("EnumProperty", "First, Third"),
+         InlineData("EnumProperty", "100500"),
         ]
         public void Converters_Are_Operational(string property, string value)
             => CheckConversion(property, value, value);
