@@ -45,14 +45,84 @@ namespace XamlIl.TypeSystem
         }
 
         public static XamlIlConstantNode GetLiteralFieldConstantNode(IXamlIlField field, IXamlIlLineInfo info)
+            => new XamlIlConstantNode(info, field.FieldType, GetLiteralFieldConstantValue(field));
+        
+        public static object GetLiteralFieldConstantValue(IXamlIlField field)
         {
             var value = field.GetLiteralValue();
             
             //This code is needed for SRE backend that returns an actual enum instead of just int
             if (value.GetType().IsEnum) 
                 value = Convert.ChangeType(value, value.GetType().GetEnumUnderlyingType());
+
+            return value;
+        }
+
+
+
+        public static bool TryGetEnumValueNode(IXamlIlType enumType, string value, IXamlIlLineInfo lineInfo, out XamlIlConstantNode rv)
+        {
+            if (TryGetEnumValue(enumType, value, out var constant))
+            {
+                rv = new XamlIlConstantNode(lineInfo, enumType, constant);
+                return true;
+            }
+
+            rv = null;
+            return false;
+        }
+        
+        public static bool TryGetEnumValue(IXamlIlType enumType, string value, out object rv)
+        {
+            rv = null;
+            if (long.TryParse(value, out var parsedLong))
+            {
+                var enumTypeName = enumType.GetEnumUnderlyingType().Name;
+                rv = enumTypeName == "Int32" || enumTypeName == "UInt32" ?
+                    unchecked((int)parsedLong) :
+                    (object)parsedLong;
+                return true;
+            }
             
-            return new XamlIlConstantNode(info, field.FieldType, value);
+            var values = enumType.CustomAttributes.Any(a => a.Type.Name == "FlagsAttribute") ?
+                value.Split(',').Select(x => x.Trim()).ToArray() :
+                new[] { value };
+            object cv = null;
+            for (var c = 0; c < values.Length; c++)
+            {
+                var enumValueField = enumType.Fields.FirstOrDefault(f => f.Name == values[c]);
+                if (enumValueField == null)
+                    return false;
+                var enumValue = GetLiteralFieldConstantValue(enumValueField);
+                if (c == 0)
+                    cv = enumValue;
+                else
+                    cv = Or(cv, enumValue);
+            }
+
+            rv = cv;
+            return true;
+        }
+
+        static object Or(object l, object r)
+        {
+            if (l is byte lb)
+                return lb | (byte)r;
+            if (l is sbyte lsb)
+                return lsb | (sbyte)r;
+            if (l is ushort lus)
+                return lus | (ushort)r;
+            if (l is short ls)
+                return ls | (short)r;
+            if (l is uint lui)
+                return lui | (uint)r;
+            if (l is int li)
+                return li | (int)r;
+            if (l is ulong lul)
+                return lul | (ulong)r;
+            if (l is long ll)
+                return ll | (long)r;
+            throw new ArgumentException("Unsupported type " + l.GetType());
         }
 
         public static bool ParseConstantIfTypeAllows(string s, IXamlIlType type, IXamlIlLineInfo info, out XamlIlConstantNode rv)
