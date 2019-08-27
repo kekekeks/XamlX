@@ -119,7 +119,7 @@ namespace XamlX.Parsers
 
             static IXamlAstValueNode ParseTextValueOrMarkupExtension(string ext, XElement xel, IXamlLineInfo info)
             {
-                if (ext.StartsWith("{"))
+                if (ext.StartsWith("{") || ext.StartsWith(@"\{"))
                 {
                     if (ext.StartsWith("{}"))
                         ext = ext.Substring(2);
