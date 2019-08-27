@@ -6,6 +6,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using XamlX.Ast;
+using XamlX.Parsers.SystemXamlMarkupExtensionParser;
 
 namespace XamlX.Parsers
 {
@@ -123,7 +124,18 @@ namespace XamlX.Parsers
                     if (ext.StartsWith("{}"))
                         ext = ext.Substring(2);
                     else
-                        return XamlMarkupExtensionParser.Parse(info, ext, t => ParseTypeName(info, t, xel));
+                    {
+                        try
+                        {
+
+                            return SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
+                                t => ParseTypeName(info, t, xel));
+                        }
+                        catch (MeScannerParseException parseEx)
+                        {
+                            throw new XamlParseException(parseEx.Message, info);
+                        }
+                    }
                 }
 
                 return new XamlAstTextNode(info, ext);
