@@ -47,6 +47,7 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - Runtime xmlns information via `IXamlXXmlNamespaceInfoProvider` (provides `Dictionary<string, List<(string clrNamespace, string asm)>`)
 
 - xml:space Handling in XAML (automatically via XmlReader)
+- Event handlers from codebehind
 
 ## Architecture
 
@@ -63,7 +64,6 @@ Features marked with *[opt]* are considered optional and will be implemented aft
 
 - x:Array Markup Extension *[opt]*
 - x:Name Directive *[opt]*
-- Event handlers *[opt]*
 - x:FactoryMethod Directive *[opt]*
 - x:Reference Markup Extension *[opt]*
 - xml:lang Handling in XAML *[dontneed]*
