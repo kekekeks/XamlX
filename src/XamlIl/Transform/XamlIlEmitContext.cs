@@ -27,12 +27,15 @@ namespace XamlIl.Transform
         public Func<string, IXamlIlType, IXamlIlTypeBuilder> CreateSubType { get; }
         public IXamlIlEmitter Emitter { get; }
 
+        public bool EnableIlVerification { get; }
+
         public XamlIlEmitContext(IXamlIlEmitter emitter, XamlIlTransformerConfiguration configuration,
             XamlIlContext runtimeContext, IXamlIlLocal contextLocal, 
             Func<string, IXamlIlType, IXamlIlTypeBuilder> createSubType,
-            IFileSource file, IEnumerable<object> emitters)
+            IFileSource file, bool enableIlVerification, IEnumerable<object> emitters)
         {
             File = file;
+            EnableIlVerification = enableIlVerification;
             Emitter = emitter;
             Emitters = emitters.ToList();
             Configuration = configuration;
@@ -84,17 +87,22 @@ namespace XamlIl.Transform
         
         private XamlIlNodeEmitResult EmitCore(IXamlIlAstNode value, IXamlIlEmitter codeGen, IXamlIlType expectedType)
         {
-            var parent = codeGen as CheckingIlEmitter;
-            parent?.Pause();
-            var checkedEmitter = new CheckingIlEmitter(codeGen); 
+            CheckingIlEmitter parent = null;
+            CheckingIlEmitter checkedEmitter = null;
+            if (EnableIlVerification)
+            {
+                parent = codeGen as CheckingIlEmitter;
 
+                parent?.Pause();
+                checkedEmitter = new CheckingIlEmitter(codeGen);
+            }
 #if XAMLIL_DEBUG
             var res = EmitNode(value, checkedEmitter);
 #else
             XamlIlNodeEmitResult res;
             try
             {
-                res = EmitNode(value, checkedEmitter);
+                res = EmitNode(value, checkedEmitter ?? codeGen);
             }
             catch (Exception e) when (!(e is XmlException))
             {
@@ -102,13 +110,17 @@ namespace XamlIl.Transform
                     "Internal compiler error while emitting node " + value + ":\n" + e, value);
             }
 #endif
-            var expectedBalance = res.ProducedItems - res.ConsumedItems;
-            var checkResult =
-                checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
-            if (checkResult != null)
-                throw new XamlIlLoadException($"Error during IL verification: {checkResult}\n{checkedEmitter}\n", value);
-            parent?.Resume();
-            parent?.ExplicitStack(expectedBalance);
+            if (EnableIlVerification)
+            {
+                var expectedBalance = res.ProducedItems - res.ConsumedItems;
+                var checkResult =
+                    checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
+                if (checkResult != null)
+                    throw new XamlIlLoadException($"Error during IL verification: {checkResult}\n{checkedEmitter}\n",
+                        value);
+                parent?.Resume();
+                parent?.ExplicitStack(expectedBalance);
+            }
 
             var returnedType = res.ReturnType;
 
