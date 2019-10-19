@@ -20,6 +20,7 @@ namespace XamlIl.TypeSystem
             public TypeReference Reference { get; }
             public TypeDefinition Definition { get; }
 
+            private Dictionary<IXamlIlType, bool> _isAssignableFromCache = new Dictionary<IXamlIlType, bool>();
             public CecilType(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition)
                 : this(typeSystem, assembly, definition, definition)
             {
@@ -102,6 +103,12 @@ namespace XamlIl.TypeSystem
                     Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
 
             public bool IsAssignableFrom(IXamlIlType type)
+            {
+                if (_isAssignableFromCache.TryGetValue(type, out var cached))
+                    return cached;
+                return _isAssignableFromCache[type] = IsAssignableFromCore(type);
+            }
+            bool IsAssignableFromCore(IXamlIlType type)
             {
                 if (!type.IsValueType
                     && type == XamlIlPseudoType.Null)
