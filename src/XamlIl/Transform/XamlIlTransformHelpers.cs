@@ -141,23 +141,37 @@ namespace XamlIl.Transform
                 && (m.Parameters.Count == 0 || (m.Parameters.Count == 1 && m.Parameters[0].Equals(sp)))
             );
         }
-        
+
+        class MarkupExtensionProvideValueCache
+        {
+            public Dictionary<IXamlIlType, IXamlIlMethod> TypeToProvideValue =
+                new Dictionary<IXamlIlType, IXamlIlMethod>();
+        }
+
         public static bool TryConvertMarkupExtension(XamlIlAstTransformationContext context,
             IXamlIlAstValueNode node, out XamlIlMarkupExtensionNode o)
         {
+            var cache = context.GetOrCreateItem<MarkupExtensionProvideValueCache>();
             o = null;
             var nodeType = node.Type.GetClrType();
-            var candidates = GetMarkupExtensionProvideValueAlternatives(context, nodeType).ToList();
-            var so = context.Configuration.WellKnownTypes.Object;
-            var sp = context.Configuration.TypeMappings.ServiceProvider;
-            
-            // Try non-object variant first and variants without IServiceProvider argument first
-            
-            var provideValue = candidates.FirstOrDefault(m => m.Parameters.Count == 0 && !m.ReturnType.Equals(so))
+
+            if (!cache.TypeToProvideValue.TryGetValue(nodeType, out var provideValue))
+            {
+                var candidates = GetMarkupExtensionProvideValueAlternatives(context, nodeType).ToList();
+                var so = context.Configuration.WellKnownTypes.Object;
+                var sp = context.Configuration.TypeMappings.ServiceProvider;
+
+                // Try non-object variant first and variants without IServiceProvider argument first
+
+                provideValue = candidates.FirstOrDefault(m => m.Parameters.Count == 0 && !m.ReturnType.Equals(so))
                                ?? candidates.FirstOrDefault(m => m.Parameters.Count == 0)
                                ?? candidates.FirstOrDefault(m =>
-                                   m.Parameters.Count == 1 && m.Parameters[0].Equals(sp) && !m.ReturnType.Equals(so))
-                               ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1 && m.Parameters[0].Equals(sp));
+                                   m.Parameters.Count == 1 && m.Parameters[0].Equals(sp) &&
+                                   !m.ReturnType.Equals(so))
+                               ?? candidates.FirstOrDefault(m =>
+                                   m.Parameters.Count == 1 && m.Parameters[0].Equals(sp));
+                cache.TypeToProvideValue[nodeType] = provideValue;
+            }
 
             if (provideValue == null)
             {
