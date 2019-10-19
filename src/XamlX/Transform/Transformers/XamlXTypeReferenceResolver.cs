@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
-
 namespace XamlX.Transform.Transformers
 {
 #if !XAMLIL_INTERNAL
@@ -11,7 +10,38 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlXTypeReferenceResolver : IXamlXAstTransformer
     {
+        class TypeResolverCache
+        {
+            public Dictionary<(string, string, bool), IXamlXType> CacheDictionary =
+                new Dictionary<(string, string, bool), IXamlXType>();
+        }
+        
         public static XamlXAstClrTypeReference ResolveType(XamlXAstTransformationContext context,
+            string xmlns, string name, bool isMarkupExtension, List<XamlXAstXmlTypeReference> typeArguments,
+            IXamlXLineInfo lineInfo,
+            bool strict)
+        {
+            if (typeArguments == null || typeArguments.Count == 0)
+            {
+                var cache = context.GetOrCreateItem<TypeResolverCache>();
+                var cacheKey = (xmlns, name, isMarkupExtension);
+                if (cache.CacheDictionary.TryGetValue(cacheKey, out var type))
+                {
+                    if (type == null)
+                        return null;
+                    return new XamlXAstClrTypeReference(lineInfo, type, isMarkupExtension);
+                }
+
+                var res = ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo, strict);
+                cache.CacheDictionary[cacheKey] = res?.Type;
+                return res;
+
+            }
+            else
+                return ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo, strict);
+        }
+
+        static XamlXAstClrTypeReference ResolveTypeCore(XamlXAstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlXAstXmlTypeReference> typeArguments, IXamlXLineInfo lineInfo,
             bool strict)
         {
