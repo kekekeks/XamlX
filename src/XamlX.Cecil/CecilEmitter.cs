@@ -81,12 +81,7 @@ namespace XamlX.TypeSystem
                     _pendingDebugPoint = null;
                 }
                 foreach (var ml in _markedLabels)
-                {
-                    foreach(var instruction in _body.Instructions)
-                        if (instruction.Operand == ml.Instruction)
-                            instruction.Operand = i;
-                    ml.Instruction = i;
-                }
+                    ml.Mark(i);
                 _markedLabels.Clear();
                 return this;
             }
@@ -102,7 +97,7 @@ namespace XamlX.TypeSystem
 
                 return _body.Method.Parameters[arg];
             }
-            
+
             private Instruction CreateI(OpCode code, int arg)
             {
                 if (code.OperandType == OperandType.ShortInlineArg || code.OperandType == OperandType.InlineArg)
@@ -133,10 +128,10 @@ namespace XamlX.TypeSystem
 
             public IXamlILEmitter Emit(SreOpCode code, int arg)
                 => Emit(CreateI(Dic[code], arg));
-            
+
             public IXamlILEmitter Emit(SreOpCode code, long arg)
                 => Emit(Instruction.Create(Dic[code], arg));
-            
+
             public IXamlILEmitter Emit(SreOpCode code, IXamlType type)
                 => Emit(Instruction.Create(Dic[code], Import(((ITypeReference) type).Reference)));
 
@@ -154,7 +149,30 @@ namespace XamlX.TypeSystem
 
             class CecilLabel : IXamlLabel
             {
-                public Instruction Instruction { get; set; } = Instruction.Create(OpCodes.Nop);
+                private List<Instruction> _pendingConsumers;
+                private Instruction _target;
+                public Instruction CreateInstruction(OpCode opcode)
+                {
+                    if (_target != null)
+                        return Instruction.Create(opcode, _target);
+
+                    var rv = Instruction.Create(opcode, Instruction.Create(OpCodes.Nop));
+                    if (_pendingConsumers == null)
+                        _pendingConsumers = new List<Instruction>();
+                    _pendingConsumers.Add(rv);
+                    return rv;
+                }
+
+                public void Mark(Instruction i)
+                {
+                    if (_target != null)
+                        throw new InvalidOperationException();
+                    _target = i;
+                    if(_pendingConsumers != null)
+                        foreach (var c in _pendingConsumers)
+                            c.Operand = i;
+                    _pendingConsumers = null;
+                }
             }
 
             public IXamlLocal DefineLocal(IXamlType type)
@@ -174,7 +192,7 @@ namespace XamlX.TypeSystem
             }
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlLabel label)
-                => Emit(Instruction.Create(Dic[code], ((CecilLabel) label).Instruction));
+                => Emit(((CecilLabel)label).CreateInstruction(Dic[code]));
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlLocal local)
                 => Emit(Instruction.Create(Dic[code], ((CecilLocal) local).Variable));
