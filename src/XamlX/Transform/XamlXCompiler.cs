@@ -17,6 +17,8 @@ namespace XamlX.Transform
         public List<IXamlXAstTransformer> Transformers { get; } = new List<IXamlXAstTransformer>();
         public List<IXamlXAstTransformer> SimplificationTransformers { get; } = new List<IXamlXAstTransformer>();
         public List<IXamlXAstNodeEmitter> Emitters { get; } = new List<IXamlXAstNodeEmitter>();
+        
+        public bool EnableIlVerification { get; set; }
         public XamlXCompiler(XamlXTransformerConfiguration configuration, bool fillWithDefaults)
         {
             _configuration = configuration;
@@ -95,7 +97,8 @@ namespace XamlX.Transform
                 codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlXEmitContext(codeGen, _configuration, context, contextLocal, createSubType, file, Emitters);
+            var emitContext = new XamlXEmitContext(codeGen, _configuration, context, contextLocal, createSubType, file,
+                EnableIlVerification, Emitters);
             return emitContext;
         }
         

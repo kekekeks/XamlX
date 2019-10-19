@@ -56,7 +56,7 @@ namespace XamlParserTests
         XamlXDocument Compile(IXamlXTypeBuilder builder, IXamlXType context, string xaml)
         {
             var parsed = XDocumentXamlXParser.Parse(xaml);
-            var compiler = new XamlXCompiler(Configuration, true);
+            var compiler = new XamlXCompiler(Configuration, true) { EnableIlVerification = true };
             compiler.Transform(parsed);
             compiler.Compile(parsed, builder, context, "Populate", "Build",
                 "XamlXNamespaceInfo",
