@@ -1,6 +1,6 @@
 using System.Linq;
 using Mono.Cecil;
-using XamlIl.TypeSystem;
+using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests

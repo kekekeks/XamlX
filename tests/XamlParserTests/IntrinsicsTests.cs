@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using XamlIl;
+using XamlX;
 using Xunit;
 
 namespace XamlParserTests
@@ -40,7 +40,7 @@ namespace XamlParserTests
         [Fact]
         public void Null_Extension_Should_Cause_Compilation_Error_When_Applied_To_Value_Type()
         {
-            Assert.Throws<XamlIlLoadException>(() => Compile(@"
+            Assert.Throws<XamlLoadException>(() => Compile(@"
 <IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <IntrinsicsTestsClass.IntProperty><x:Null/></IntrinsicsTestsClass.IntProperty>
 </IntrinsicsTestsClass>"));

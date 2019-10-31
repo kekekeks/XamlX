@@ -6,11 +6,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using XamlIl.Ast;
-using XamlIl.Parsers;
-using XamlIl.Runtime;
-using XamlIl.Transform;
-using XamlIl.TypeSystem;
+using XamlX.Ast;
+using XamlX.Parsers;
+using XamlX.Runtime;
+using XamlX.Transform;
+using XamlX.TypeSystem;
 
 namespace Benchmarks
 {
@@ -33,18 +33,18 @@ namespace Benchmarks
                 foreach (var p in xt.GetProperties())
                     p.GetCustomAttributes();
             }
-            typeof(IXamlIlParentStackProviderV1).Assembly.GetCustomAttributes();
+            typeof(IXamlParentStackProviderV1).Assembly.GetCustomAttributes();
             
             
             var typeSystem = new SreTypeSystem();
-            var configuration = BenchmarksXamlIlConfiguration.Configure(typeSystem);
-            var parsed = XDocumentXamlIlParser.Parse(xaml);
+            var configuration = BenchmarksXamlConfiguration.Configure(typeSystem);
+            var parsed = XDocumentXamlParser.Parse(xaml);
             
-            var compiler = new XamlIlCompiler(configuration, true);
+            var compiler = new XamlCompiler(configuration, true);
             compiler.Transform(parsed);
             
             
-            var parsedTsType = ((IXamlIlAstValueNode) parsed.Root).Type.GetClrType();
+            var parsedTsType = ((IXamlAstValueNode) parsed.Root).Type.GetClrType();
             
 #if !NETCOREAPP
             var path = Path.GetDirectoryName(typeof(BenchCompiler).Assembly.GetModules()[0].FullyQualifiedName);
@@ -63,7 +63,7 @@ namespace Benchmarks
             
             var parserTypeBuilder = ((SreTypeSystem) typeSystem).CreateTypeBuilder(t);
             compiler.Compile(parsed, parserTypeBuilder,  contextTypeDef, "Populate", "Build",
-                "XamlIlNamespaceInfo", "https://github.com/kekekeks/XamlIl", null);
+                "XamlNamespaceInfo", "https://github.com/kekekeks/Xaml", null);
             
             var created = t.CreateType();
 

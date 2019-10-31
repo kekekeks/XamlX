@@ -1,5 +1,5 @@
 using System;
-using XamlIl.TypeSystem;
+using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests

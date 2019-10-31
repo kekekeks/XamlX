@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
     <PropertyGroup>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
@@ -11,8 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\XamlIl.Runtime\XamlIl.Runtime.csproj" />
-        <ProjectReference Include="..\..\src\XamlIl\XamlIl.csproj" />
+        <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
+        <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
     </ItemGroup>
     <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
         <Content Include="$(MSBuildThisFileDirectory)\xunit.runner.json" Link="xunit.runner.json">

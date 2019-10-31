@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\XamlIl.Cecil\XamlIl.Cecil.csproj" />
-        <Compile Include="..\Benchmarks\BenchmarksXamlIlConfiguration.cs"/>
+      <ProjectReference Include="..\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
+      <Compile Include="..\Benchmarks\BenchmarksXamlConfiguration.cs"/>
     </ItemGroup>
 
 </Project>

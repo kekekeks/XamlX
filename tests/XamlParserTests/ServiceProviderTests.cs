@@ -3,8 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using XamlIl.Runtime;
-using XamlIl.TypeSystem;
+using XamlX.Runtime;
+using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
@@ -41,14 +41,14 @@ namespace XamlParserTests
     
     public class ServiceProviderTests : CompilerTestBase
     {
-        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlIlParentStackProviderV1 parentStack)
+        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
             => Compile(xaml).create(new DictionaryServiceProvider
             {
                 [typeof(CallbackExtensionCallback)] = cb,
-                [typeof(IXamlIlParentStackProviderV1)] = parentStack
+                [typeof(IXamlParentStackProviderV1)] = parentStack
             });
 
-        class ListParentsProvider : List<object>, IXamlIlParentStackProviderV1
+        class ListParentsProvider : List<object>, IXamlParentStackProviderV1
         {
             public IEnumerable<object> Parents => this;
         }
@@ -76,7 +76,7 @@ namespace XamlParserTests
             {
                 //Manual unrolling of enumerable, useful for state tracking
                 var stack = new List<object>();
-                var parentsEnumerable = sp.GetService<IXamlIlParentStackProviderV1>().Parents;
+                var parentsEnumerable = sp.GetService<IXamlParentStackProviderV1>().Parents;
                 using (var parentsEnumerator = parentsEnumerable.GetEnumerator())
                 {
                     while (parentsEnumerator.MoveNext())
@@ -218,32 +218,32 @@ namespace XamlParserTests
     xmlns:clr2='clr-namespace:Dummy;assembly=XamlParserTests'
     Property='{Callback}'/>", sp =>
             {
-                var nsList = sp.GetService<IXamlIlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                var nsList = sp.GetService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
                 // Direct calls without struct diff because of EntryPointNotFoundException issue before
                 Assert.True(nsList.TryGetValue("clr1", out var xlst));
                 Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
                 Helpers.StructDiff(nsList,
-                    new Dictionary<string, IReadOnlyList<XamlIlXmlNamespaceInfoV1>>
+                    new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlIlXmlNamespaceInfoV1>
+                        [""] = new List<XamlXmlNamespaceInfoV1>
                         {
-                            new XamlIlXmlNamespaceInfoV1
+                            new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "XamlParserTests",
                                 ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
                             }
                         },
-                        ["clr1"] = new List<XamlIlXmlNamespaceInfoV1>
+                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
                         {
-                            new XamlIlXmlNamespaceInfoV1
+                            new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "System.Collections.Generic",
                                 ClrAssemblyName = "netstandard"
                             }
                         },
-                        ["clr2"] = new List<XamlIlXmlNamespaceInfoV1>
+                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
                         {
-                            new XamlIlXmlNamespaceInfoV1
+                            new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "Dummy",
                                 ClrAssemblyName = "XamlParserTests"

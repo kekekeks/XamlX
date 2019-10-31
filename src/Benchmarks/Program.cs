@@ -21,10 +21,10 @@ namespace Benchmarks
 			{
 				//var benchmark = new LoadSimpleBenchmark();
 				var benchmark = new LoadComplexBenchmark();
-				benchmark.XamlIlPrecompiled();
+				benchmark.XamlPrecompiled();
 				for (int i = 0; i < 1000; i++)
 				{
-					benchmark.XamlIlPrecompiled();
+					benchmark.XamlPrecompiled();
 				}
 				return;
 			}

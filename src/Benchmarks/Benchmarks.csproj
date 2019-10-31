@@ -11,8 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\XamlIl.Runtime\XamlIl.Runtime.csproj" />
-      <ProjectReference Include="..\XamlIl\XamlIl.csproj" />
+      <ProjectReference Include="..\XamlX.Runtime\XamlX.Runtime.csproj" />
+      <ProjectReference Include="..\XamlX\XamlX.csproj" />
       <EmbeddedResource Include="*.xml" />
     </ItemGroup>
     <Target Name="Precompile" AfterTargets="CoreCompile">

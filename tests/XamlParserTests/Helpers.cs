@@ -2,9 +2,9 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Reflection.Emit;
-using XamlIl;
-using XamlIl.Ast;
-using XamlIl.TypeSystem;
+using XamlX;
+using XamlX.Ast;
+using XamlX.TypeSystem;
 
 namespace XamlParserTests
 {
@@ -56,7 +56,7 @@ namespace XamlParserTests
                 foreach (var prop in parsed.GetType().GetProperties()
                     .Where(p => p.GetMethod != null && p.GetMethod.IsPublic))
                 {
-                    if (prop.DeclaringType == typeof(XamlIlAstNode)
+                    if (prop.DeclaringType == typeof(XamlAstNode)
                         && (prop.Name == "Line" || prop.Name == "Position"))
                     {
                         if(!isRoot && (int)prop.GetValue(parsed) == 0)

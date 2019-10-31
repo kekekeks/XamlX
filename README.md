@@ -1,4 +1,4 @@
-# XamlIl
+# XamlX
 
 General purpose pluggable XAML compiler with no runtime dependencies.
 

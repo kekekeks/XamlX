@@ -49,22 +49,22 @@ namespace Benchmarks
 */
 		private Func<IServiceProvider, object> _compiled;
 		[Benchmark]
-		public void XamlIl()
+		public void Xaml()
 		{
 			_compiled = _compiled ?? BenchCompiler.Compile(new StreamReader(GetStream()).ReadToEnd());
 			_compiled(null);
 		}
 
-		public virtual object LoadXamlIlPrecompiled(IServiceProvider sp)
+		public virtual object LoadXamlPrecompiled(IServiceProvider sp)
 		{
 			// This method will be overridden by Cecil
 			throw new NotImplementedException();
 		}
 		
 		[Benchmark]
-		public void XamlIlPrecompiled()
+		public void XamlPrecompiled()
 		{
-			LoadXamlIlPrecompiled(null);
+			LoadXamlPrecompiled(null);
 		}
 		
 	}
