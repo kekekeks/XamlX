@@ -541,7 +541,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstILEmitableNode
+    class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
@@ -606,12 +606,12 @@ namespace XamlX.Ast
             il.Ret();
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
             var subType = context.CreateSubType("XamlClosure_" + Guid.NewGuid(), so);
-            var buildMethod = (IXamlMethodILBuilder)subType.DefineMethod(so, new[]
+            var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
             }, "Build", true, true, false);
@@ -619,7 +619,7 @@ namespace XamlX.Ast
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
                 createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
-                emitters: context.Emitters, enableIlVerification: context.EnableIlVerification));
+                emitters: context.Emitters));
 
             var funcType = Type.GetClrType();
             codeGen
@@ -644,7 +644,7 @@ namespace XamlX.Ast
     public
 #endif
     class XamlDeferredContentInitializeIntermediateRootNode 
-        : XamlAstNode, IXamlAstValueNode, IXamlAstILEmitableNode
+        : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstValueNode Value { get; set; }
 
@@ -659,7 +659,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type => Value.Type;
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal);

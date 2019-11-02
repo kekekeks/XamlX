@@ -21,7 +21,7 @@ namespace XamlX.Transform
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder> createSubType,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
             IFileSource file,
             IEnumerable<object> emitters)
             : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, createSubType, file, emitters)
@@ -49,6 +49,22 @@ namespace XamlX.Transform
         {
             return Emitter.LocalsPool.GetLocal(type);
         }
+
+        protected override TEmitResult EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
+        {
+            var result = base.EmitNodeCore(value, codeGen, out foundEmitter);
+
+            if (!foundEmitter)
+            {
+                if (value is IXamlAstLocalsEmitableNode<TBackendEmitter, TEmitResult> emittable)
+                {
+                    foundEmitter = true;
+                    return emittable.Emit(this, codeGen);
+                }
+            }
+
+            return result;
+        }
     }
 
 #if !XAMLX_INTERNAL
@@ -58,5 +74,24 @@ namespace XamlX.Transform
     {
         XamlLocalsPool LocalsPool { get; }
         IXamlLocal DefineLocal(IXamlType type);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstLocalsNodeEmitter<TBackendEmitter, TEmitResult>
+        where TEmitResult : IXamlEmitResult
+    {
+        TEmitResult Emit(IXamlAstNode node, XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAstLocalsEmitableNode<TBackendEmitter, TEmitResult>
+        where TBackendEmitter : IHasLocalsPool
+        where TEmitResult : IXamlEmitResult
+    {
+        TEmitResult Emit(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 }

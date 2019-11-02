@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
@@ -9,7 +10,7 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertyAssignmentEmitter : IXamlILAstNodeEmitter
+    class PropertyAssignmentEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
         List<IXamlPropertySetter> ValidateAndGetSetters(XamlPropertyAssignmentNode an)
         {
@@ -32,7 +33,7 @@ namespace XamlX.IL.Emitters
             return lst;
         }
         
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;
@@ -102,7 +103,7 @@ namespace XamlX.IL.Emitters
                     if (checkNext)
                         hadJumps = true;
                     
-                    TypeSystemHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
+                    ILEmitHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
                     setter.Emit(codeGen);
                     if (hadJumps)
                     {

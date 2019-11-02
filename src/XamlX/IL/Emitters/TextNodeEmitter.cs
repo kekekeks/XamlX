@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
@@ -7,9 +8,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class TextNodeEmitter : IXamlILAstNodeEmitter
+    class TextNodeEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlAstTextNode text))
                 return null;

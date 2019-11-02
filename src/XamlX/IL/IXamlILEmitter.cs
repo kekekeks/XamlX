@@ -38,31 +38,4 @@ namespace XamlX.IL
     {
         void EmitCall(IXamlILEmitter emitter);
     }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlTypeILBuilder : IXamlTypeBuilder
-    {
-        new IXamlMethodILBuilder DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
-            bool isInterfaceImpl, IXamlMethod overrideMethod = null);
-        new IXamlConstructorILBuilder DefineConstructor(bool isStatic, params IXamlType[] args);
-        new IXamlTypeILBuilder DefineSubType(IXamlType baseType, string name, bool isPublic);
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlMethodILBuilder : IXamlMethodBuilder
-    {
-        IXamlILEmitter Generator { get; }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlConstructorILBuilder : IXamlConstructorBuilder
-    {
-        IXamlILEmitter Generator { get; }
-    }
 }

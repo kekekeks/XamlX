@@ -20,12 +20,11 @@ namespace XamlX.IL
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder> createSubType, IFileSource file, IEnumerable<object> emitters,
-            bool enableIlVerification)
+            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType, IFileSource file, IEnumerable<object> emitters)
             : base(emitter, configuration, emitMappings, runtimeContext,
                 contextLocal, createSubType, file, emitters)
         {
-            EnableIlVerification = enableIlVerification;
+            EnableIlVerification = configuration.GetExtra<ILEmitContextSettings>().EnableILVerification;
         }
         
         protected override XamlILNodeEmitResult EmitNode(IXamlAstNode value, IXamlILEmitter codeGen)
@@ -59,12 +58,12 @@ namespace XamlX.IL
             return res;
         }
 
-        protected override XamlILNodeEmitResult EmitNodeCore(IXamlAstNode value, IXamlILEmitter codeGen)
+        protected override XamlILNodeEmitResult EmitNodeCore(IXamlAstNode value, IXamlILEmitter codeGen, out bool foundEmitter)
         {
             if(File!=null)
                 codeGen.InsertSequencePoint(File, value.Line, value.Position);
 
-            return base.EmitNode(value, codeGen);
+            return base.EmitNodeCore(value, codeGen, out foundEmitter);
         }
 
         protected override void EmitConvert(IXamlAstNode value, IXamlILEmitter codeGen, IXamlType expectedType, IXamlType returnedType)
@@ -73,7 +72,7 @@ namespace XamlX.IL
             // ReSharper disable once ExpressionIsAlwaysNull
             // Value is assigned inside the closure in certain conditions
 
-            TypeSystemHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
+            ILEmitHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
             {
                 if (ldaddr && returnedType.IsValueType)
                 {
@@ -100,5 +99,13 @@ namespace XamlX.IL
         {
             codeGen.Stloc(TryGetLocalForNode(node, codeGen, true));
         }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class ILEmitContextSettings
+    {
+        public bool EnableILVerification { get; set; }
     }
 }

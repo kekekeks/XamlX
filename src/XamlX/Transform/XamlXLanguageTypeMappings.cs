@@ -71,7 +71,7 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlTypeBuilder typeBuilder, TBackendEmitter constructor);
+    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlTypeBuilder<TBackendEmitter> typeBuilder, TBackendEmitter constructor);
 
 #if !XAMLX_INTERNAL
     public

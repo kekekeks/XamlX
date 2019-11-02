@@ -14,7 +14,7 @@ namespace XamlX.IL
     class XamlNamespaceInfoHelper
     {
         public static IXamlField EmitNamespaceInfoProvider(XamlTransformerConfiguration configuration,
-            IXamlTypeILBuilder typeBuilder, XamlDocument document)
+            IXamlTypeBuilder<IXamlILEmitter> typeBuilder, XamlDocument document)
         {
             var iface = configuration.TypeMappings.XmlNamespaceInfoProvider;
             typeBuilder.AddInterfaceImplementation(iface);

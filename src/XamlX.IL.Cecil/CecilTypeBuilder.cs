@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
+using XamlX.IL;
 
 namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        class CecilTypeBuilder : CecilType, IXamlTypeBuilder
+        class CecilTypeBuilder : CecilType, IXamlTypeBuilder<IXamlILEmitter>
         {
             protected TypeReference SelfReference;
             public CecilTypeBuilder(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition) 
@@ -42,7 +43,7 @@ namespace XamlX.TypeSystem
                 _interfaces = null;
             }
 
-            public IXamlMethodBuilder DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
+            public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
                 bool isInterfaceImpl, IXamlMethod overrideMethod = null)
             {
                 var attrs = default(MethodAttributes);
@@ -81,7 +82,7 @@ namespace XamlX.TypeSystem
                 return rv;
             }
 
-            public IXamlConstructorBuilder DefineConstructor(bool isStatic, params IXamlType[] args)
+            public IXamlConstructorBuilder<IXamlILEmitter> DefineConstructor(bool isStatic, params IXamlType[] args)
             {
                 var attrs = MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
 
@@ -104,7 +105,7 @@ namespace XamlX.TypeSystem
 
             public IXamlType CreateType() => this;
 
-            public IXamlTypeBuilder DefineSubType(IXamlType baseType, string name, bool isPublic)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic)
             {
                 var td = new TypeDefinition("", name,
                     isPublic ? TypeAttributes.NestedPublic : TypeAttributes.NestedPrivate, GetReference(baseType));

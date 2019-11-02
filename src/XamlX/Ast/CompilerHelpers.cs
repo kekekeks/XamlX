@@ -10,7 +10,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstCompilerLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstILEmitableNode
+    class XamlAstCompilerLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstLocalsEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private XamlAstClrTypeReference _typeReference;
         public IXamlType Type { get; }
@@ -26,7 +26,7 @@ namespace XamlX.Ast
         }
         
         IXamlAstTypeReference IXamlAstValueNode.Type => _typeReference;
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.LoadLocalValue(this, codeGen);
             return XamlILNodeEmitResult.Type(0, Type);
@@ -36,7 +36,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstLocalInitializationNodeEmitter : XamlValueWithSideEffectNodeBase, IXamlAstILEmitableNode
+    class XamlAstLocalInitializationNodeEmitter : XamlValueWithSideEffectNodeBase, IXamlAstLocalsEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlAstCompilerLocalNode Local { get; set; }
 
@@ -54,7 +54,7 @@ namespace XamlX.Ast
             Local = (XamlAstCompilerLocalNode) Local.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
@@ -66,13 +66,13 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlValueNodeWithBeginInit : XamlValueWithSideEffectNodeBase, IXamlAstILEmitableNode
+    class XamlValueNodeWithBeginInit : XamlValueWithSideEffectNodeBase, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlValueNodeWithBeginInit(IXamlAstValueNode value) : base(value, value)
         {
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var res = context.Emit(Value, codeGen, Value.Type.GetClrType());
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
@@ -93,7 +93,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstManipulationImperativeNode : XamlAstNode, IXamlAstManipulationNode, IXamlAstILEmitableNode
+    class XamlAstManipulationImperativeNode : XamlAstNode, IXamlAstManipulationNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstImperativeNode Imperative { get; set; }
 
@@ -103,7 +103,7 @@ namespace XamlX.Ast
             Imperative = imperative;
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             // Discard the stack value we are "supposed" to manipulate
             codeGen.Pop();
@@ -120,7 +120,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstImperativeValueManipulation : XamlAstNode, IXamlAstImperativeNode, IXamlAstILEmitableNode
+    class XamlAstImperativeValueManipulation : XamlAstNode, IXamlAstImperativeNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstManipulationNode Manipulation { get; set; }
@@ -138,7 +138,7 @@ namespace XamlX.Ast
             Manipulation = (IXamlAstManipulationNode) Manipulation.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
@@ -149,7 +149,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstContextLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstILEmitableNode
+    class XamlAstContextLocalNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlAstContextLocalNode(IXamlLineInfo lineInfo, IXamlType type) : base(lineInfo)
         {
@@ -157,7 +157,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen.Ldloc(context.ContextLocal);
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
@@ -167,7 +167,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstRuntimeCastNode : XamlAstNode, IXamlAstValueNode, IXamlAstILEmitableNode
+    class XamlAstRuntimeCastNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlAstRuntimeCastNode(IXamlLineInfo lineInfo, IXamlAstValueNode value, IXamlAstTypeReference castTo) : base(lineInfo)
         {
@@ -183,7 +183,7 @@ namespace XamlX.Ast
             Type = (IXamlAstTypeReference) Type.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
             var t = Type.GetClrType();
@@ -199,14 +199,14 @@ namespace XamlX.Ast
     public
 #endif
     class XamlAstNeedsParentStackValueNode : XamlValueWithSideEffectNodeBase,
-        IXamlAstILEmitableNode,
+        IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>,
         IXamlAstNodeNeedsParentStack
     {
         public XamlAstNeedsParentStackValueNode(IXamlLineInfo lineInfo, IXamlAstValueNode value) : base(lineInfo, value)
         {
         }
 
-        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             XamlNeedsParentStackCache.Verify(context, this);
             return context.Emit(Value, codeGen, Value.Type.GetClrType());

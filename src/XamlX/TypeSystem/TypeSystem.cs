@@ -162,33 +162,35 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlTypeBuilder : IXamlType
+    interface IXamlTypeBuilder<TBackendEmitter> : IXamlType
     {
         IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic);
         void AddInterfaceImplementation(IXamlType type);
 
-        IXamlMethodBuilder DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
+        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
             bool isInterfaceImpl, IXamlMethod overrideMethod = null);
 
         IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
-        IXamlConstructorBuilder DefineConstructor(bool isStatic, params IXamlType[] args);
+        IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
-        IXamlTypeBuilder DefineSubType(IXamlType baseType, string name, bool isPublic);
+        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlMethodBuilder : IXamlMethod
+    interface IXamlMethodBuilder<TBackendEmitter> : IXamlMethod
     {
+        TBackendEmitter Generator { get; }
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlConstructorBuilder : IXamlConstructor
+    interface IXamlConstructorBuilder<TBackendEmitter> : IXamlConstructor
     {
+        TBackendEmitter Generator { get; }
     }
 
 #if !XAMLX_INTERNAL

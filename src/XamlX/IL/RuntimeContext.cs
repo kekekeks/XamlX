@@ -10,9 +10,9 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlContext : XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult>
+    class RuntimeContext : XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlContext(IXamlType definition, IXamlType constructedType,
+        public RuntimeContext(IXamlType definition, IXamlType constructedType,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
             string baseUri, List<IXamlField> staticProviders)
             : base(definition, constructedType, mappings,
@@ -58,7 +58,7 @@ namespace XamlX.IL
 
         private IXamlConstructor Constructor { get; set; }
 
-        public static IXamlType GenerateContextClass(IXamlTypeILBuilder builder,
+        public static IXamlType GenerateContextClass(IXamlTypeBuilder<IXamlILEmitter> builder,
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
         {
@@ -72,7 +72,7 @@ namespace XamlX.IL
         public const int StaticProvidersArg = 1;
         public IXamlType ContextType;
         
-        private XamlILContextDefinition(IXamlTypeILBuilder parentBuilder,
+        private XamlILContextDefinition(IXamlTypeBuilder<IXamlILEmitter> parentBuilder,
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
         {
@@ -389,7 +389,7 @@ namespace XamlX.IL
                 cb();
         }
 
-        private void EmitPushPopParent(IXamlTypeILBuilder builder, IXamlTypeSystem ts)
+        private void EmitPushPopParent(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlTypeSystem ts)
         {
             var @void = ts.GetType("System.Void");
             var so = ts.GetType("System.Object");
@@ -440,7 +440,7 @@ namespace XamlX.IL
 
         }
         
-        private IXamlMethodILBuilder ImplementInterfacePropertyGetter(IXamlTypeILBuilder builder ,
+        private IXamlMethodBuilder<IXamlILEmitter> ImplementInterfacePropertyGetter(IXamlTypeBuilder<IXamlILEmitter> builder ,
             IXamlType type, string name)
         {
             var prefix = type.Namespace + "." + type.Name + ".";
@@ -452,7 +452,7 @@ namespace XamlX.IL
             return gen;
         }
         
-        IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeILBuilder builder,
+        IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeBuilder<IXamlILEmitter> builder,
             XamlLanguageTypeMappings mappings)
         {
             if (mappings.TypeDescriptorContext == null)
@@ -484,7 +484,7 @@ namespace XamlX.IL
             return mappings.TypeDescriptorContext;
         }
         
-        (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeILBuilder parentBuilder,
+        (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeBuilder<IXamlILEmitter> parentBuilder,
             XamlLanguageTypeMappings mappings)
         {
             var so = typeSystem.GetType("System.Object");

@@ -24,14 +24,14 @@ namespace XamlX.Transform
         public XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> EmitMappings { get; }
         public XamlRuntimeContext<TBackendEmitter, TEmitResult> RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
-        public Func<string, IXamlType, IXamlTypeBuilder> CreateSubType { get; }
+        public Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> CreateSubType { get; }
         public TBackendEmitter Emitter { get; }
 
         public XamlXEmitContext(TBackendEmitter emitter, XamlTransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder> createSubType, IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType, IFileSource file,
             IEnumerable<object> emitters)
         {
             File = file;
@@ -96,7 +96,12 @@ namespace XamlX.Transform
             TEmitResult res;
             try
             {
-                res = EmitNodeCore(value, codeGen);
+                res = EmitNodeCore(value, codeGen, out var foundEmitter);
+
+                if (!foundEmitter)
+                {
+                    throw new XamlLoadException("Unable to find emitter for node type: " + value.GetType().FullName, value);
+                }
             }
             catch (Exception e) when (!(e is XmlException))
             {
@@ -109,7 +114,7 @@ namespace XamlX.Transform
 
         protected abstract void EmitConvert(IXamlAstNode value, TBackendEmitter codeGen, IXamlType expectedType, IXamlType returnedType);
 
-        protected virtual TEmitResult EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen)
+        protected virtual TEmitResult EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
         {
             TEmitResult res = default;
             foreach (var e in Emitters)
@@ -118,15 +123,21 @@ namespace XamlX.Transform
                 {
                     res = ve.Emit(value, this, codeGen);
                     if (res != default)
+                    {
+                        foundEmitter = true;
                         return res;
+                    }
                 }
             }
 
             if (value is IXamlAstEmitableNode<TBackendEmitter, TEmitResult> en)
+            {
+                foundEmitter = true;
                 return en.Emit(this, codeGen);
-            else
-                throw new XamlLoadException("Unable to find emitter for node type: " + value.GetType().FullName,
-                    value);
+            }
+
+            foundEmitter = false;
+            return res;
         }
     }
 

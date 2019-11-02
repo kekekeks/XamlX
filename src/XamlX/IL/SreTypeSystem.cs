@@ -415,7 +415,7 @@ namespace XamlX.IL
         public Type GetType(IXamlType t) => ((SreType) t).Type;
         public IXamlType GetType(Type t) => ResolveType(t);
 
-        public IXamlTypeBuilder CreateTypeBuilder(TypeBuilder builder) => new SreTypeBuilder(this, builder);
+        public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeBuilder builder) => new SreTypeBuilder(this, builder);
 
         class IlGen : IXamlILEmitter
         {
@@ -546,7 +546,7 @@ namespace XamlX.IL
             }
         }
 
-        class SreTypeBuilder : SreType, IXamlTypeBuilder
+        class SreTypeBuilder : SreType, IXamlTypeBuilder<IXamlILEmitter>
         {
             private readonly SreTypeSystem _system;
             private readonly TypeBuilder _tb;
@@ -570,7 +570,7 @@ namespace XamlX.IL
                 _tb.AddInterfaceImplementation(((SreType)type).Type);
             }
 
-            class SreMethodBuilder : SreMethod, IXamlMethodBuilder
+            class SreMethodBuilder : SreMethod, IXamlMethodBuilder<IXamlILEmitter>
             {
                 public MethodBuilder MethodBuilder { get; }
 
@@ -590,7 +590,7 @@ namespace XamlX.IL
                 }
             }
             
-            public IXamlMethodBuilder DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
+            public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
                 bool isPublic, bool isStatic,
                 bool isInterfaceImpl, IXamlMethod overrideMethod)
             {
@@ -618,7 +618,7 @@ namespace XamlX.IL
                 return new SreProperty(_system, p);
             }
 
-            class SreConstructorBuilder : SreConstructor, IXamlConstructorBuilder
+            class SreConstructorBuilder : SreConstructor, IXamlConstructorBuilder<IXamlILEmitter>
             {
                 public SreConstructorBuilder(SreTypeSystem system, ConstructorBuilder ctor) : base(system, ctor)
                 {
@@ -629,7 +629,7 @@ namespace XamlX.IL
             }
 
             
-            public IXamlConstructorBuilder DefineConstructor(bool isStatic, params IXamlType[] args)
+            public IXamlConstructorBuilder<IXamlILEmitter> DefineConstructor(bool isStatic, params IXamlType[] args)
             {
                 var attrs = MethodAttributes.Public;
                 if (isStatic)
@@ -641,7 +641,7 @@ namespace XamlX.IL
             }
             
             public IXamlType CreateType() => new SreType(_system, null, _tb.CreateTypeInfo());
-            public IXamlTypeBuilder DefineSubType(IXamlType baseType, string name, bool isPublic)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic)
             {
                 var attrs = TypeAttributes.Class;
                 if (isPublic)

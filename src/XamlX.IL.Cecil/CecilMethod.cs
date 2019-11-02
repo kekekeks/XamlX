@@ -84,7 +84,7 @@ namespace XamlX.TypeSystem
         }
 
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilMethod : CecilMethodBase, IXamlMethodBuilder
+        class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
             public CecilMethod(CecilTypeSystem typeSystem, MethodReference methodRef,
                 TypeReference declaringType) : base(typeSystem, methodRef, declaringType)
@@ -111,7 +111,7 @@ namespace XamlX.TypeSystem
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder
+        class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
             public CecilConstructor(CecilTypeSystem typeSystem, MethodDefinition methodDef,
                 TypeReference declaringType) : base(typeSystem, methodDef, declaringType)

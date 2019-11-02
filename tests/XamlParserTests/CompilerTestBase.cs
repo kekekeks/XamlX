@@ -54,7 +54,7 @@ namespace XamlParserTests
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
-        XamlDocument Compile(IXamlTypeBuilder builder, IXamlType context, string xaml)
+        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
         {
             var parsed = XDocumentXamlParser.Parse(xaml);
             var compiler = new XamlILCompiler(Configuration, true) { EnableIlVerification = true };

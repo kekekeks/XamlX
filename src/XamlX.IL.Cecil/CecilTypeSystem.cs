@@ -10,7 +10,7 @@ using XamlX.IL;
 
 namespace XamlX.TypeSystem
 {
-    #if !Xaml_CECIL_INTERNAL
+    #if !XAMLX_CECIL_INTERNAL
     public
     #endif
     partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
@@ -169,7 +169,7 @@ namespace XamlX.TypeSystem
             TypeReference Reference { get; }
         }
 
-        public IXamlTypeILBuilder CreateTypeBuilder(TypeDefinition def)
+        public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeDefinition def)
         {
             return new CecilTypeBuilder(this, FindAsm(def.Module.Assembly), def);
         }

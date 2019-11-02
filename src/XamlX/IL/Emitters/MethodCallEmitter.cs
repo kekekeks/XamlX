@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
@@ -7,9 +8,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class MethodCallEmitter : IXamlILAstNodeEmitter
+    class MethodCallEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlMethodCallBaseNode mc))
                 return null;
@@ -24,9 +25,6 @@ namespace XamlX.IL.Emitters
                 var expectedType = mc.Method.ParametersWithThis[c + off];
                 context.Emit(mc.Arguments[c], codeGen, expectedType);
             }
-
-            
-
 
             mc.Method.Emit(context, codeGen, expectsVoid);
             

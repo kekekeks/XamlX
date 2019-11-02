@@ -70,7 +70,7 @@ namespace XamlX.Transform
 
         protected abstract XamlXEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
             IFileSource file,
-            Func<string, IXamlType, IXamlTypeBuilder> createSubType,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
     }
 

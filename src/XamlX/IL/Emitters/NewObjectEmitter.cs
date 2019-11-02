@@ -2,6 +2,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.IL;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
@@ -9,9 +10,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class NewObjectEmitter : IXamlILAstNodeEmitter
+    class NewObjectEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlAstNewClrObjectNode n))
                 return null;

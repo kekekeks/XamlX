@@ -12,7 +12,7 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class TypeSystemHelpers
+    class ILEmitHelpers
     {
         public static void EmitFieldLiteral(IXamlField field, IXamlILEmitter codeGen)
         {
@@ -20,7 +20,7 @@ namespace XamlX.IL
 
             if (ftype.Name == "UInt64" || ftype.Name == "Int64")
                 codeGen.Emit(OpCodes.Ldc_I8,
-                    TypeSystem.TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
+                    TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
             else if (ftype.Name == "Double")
                 codeGen.Emit(OpCodes.Ldc_R8, (double)field.GetLiteralValue());
             else if (ftype.Name == "Single")
@@ -29,7 +29,7 @@ namespace XamlX.IL
                 codeGen.Emit(OpCodes.Ldstr, (string)field.GetLiteralValue());
             else
                 codeGen.Emit(OpCodes.Ldc_I4,
-                    TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
+                    TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
         }
 
         public static void EmitConvert(XamlEmitContext context, IXamlILEmitter ilgen, IXamlLineInfo node, IXamlType what,
