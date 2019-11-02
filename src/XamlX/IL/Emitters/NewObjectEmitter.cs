@@ -9,9 +9,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class NewObjectEmitter : IXamlAstNodeEmitter
+    class NewObjectEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlAstNewClrObjectNode n))
                 return null;
@@ -31,7 +31,7 @@ namespace XamlX.IL.Emitters
                 .Emit(OpCodes.Newobj, ctor);
 
 
-            return XamlNodeEmitResult.Type(0, type);
+            return XamlILNodeEmitResult.Type(0, type);
         }
     }
 }

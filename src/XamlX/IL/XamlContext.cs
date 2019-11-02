@@ -10,51 +10,12 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlContext
+    class XamlContext : XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public IXamlField RootObjectField { get; set; }
-        public IXamlField IntermediateRootObjectField { get; set; }
-        public IXamlField ParentListField { get; set; }
-        public IXamlType ContextType { get; set; }
-        public IXamlField PropertyTargetObject { get; set; }
-        public IXamlField PropertyTargetProperty { get; set; }
-        public IXamlConstructor Constructor { get; set; }
-        public Action<IXamlILEmitter> Factory { get; set; }
-        public IXamlMethod PushParentMethod { get; set; }
-        public IXamlMethod PopParentMethod { get; set; }
-        
         public XamlContext(IXamlType definition, IXamlType constructedType,
-            XamlILLanguageTypeMappings mappings,
-            Action<XamlContext, IXamlILEmitter> factory)
-        {
-            ContextType = definition.MakeGenericType(constructedType);
-
-            IXamlField Get(string s) =>
-                ContextType.Fields.FirstOrDefault(f => f.Name == s);
-            
-            IXamlMethod GetMethod(string s) =>
-                ContextType.Methods.FirstOrDefault(f => f.Name == s);
-
-            RootObjectField = Get(XamlContextDefinition.RootObjectFieldName);
-            IntermediateRootObjectField = Get(XamlContextDefinition.IntermediateRootObjectFieldName);
-            ParentListField = Get(XamlContextDefinition.ParentListFieldName);
-            PropertyTargetObject = Get(XamlContextDefinition.ProvideTargetObjectName);
-            PropertyTargetProperty = Get(XamlContextDefinition.ProvideTargetPropertyName);
-            PushParentMethod = GetMethod(XamlContextDefinition.PushParentMethodName);
-            PopParentMethod = GetMethod(XamlContextDefinition.PopParentMethodName);
-            Constructor = ContextType.Constructors.First();
-            Factory = il => factory(this, il);
-            if (mappings.ContextFactoryCallback != null)
-                Factory = il =>
-                {
-                    factory(this, il);
-                    mappings.ContextFactoryCallback(this, il);
-                };
-        }        
-
-        public XamlContext(IXamlType definition, IXamlType constructedType,
-            XamlILLanguageTypeMappings mappings,
-            string baseUri, List<IXamlField> staticProviders) : this(definition, constructedType, mappings,
+            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
+            string baseUri, List<IXamlField> staticProviders)
+            : base(definition, constructedType, mappings,
             (context, codegen) =>
             {
                 if (staticProviders?.Count > 0)
@@ -87,16 +48,8 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlContextDefinition
+    class XamlILContextDefinition
     {
-        public const string RootObjectFieldName = "RootObject";
-        public const string IntermediateRootObjectFieldName = "IntermediateRoot";
-        public const string ParentListFieldName = "ParentsStack";
-        public const string ProvideTargetObjectName = "ProvideTargetObject";
-        public const string ProvideTargetPropertyName = "ProvideTargetProperty";
-        public const string PushParentMethodName = "PushParent";
-        public const string PopParentMethodName = "PopParent";
-
         private IXamlField ParentListField;
         private readonly IXamlField _parentServiceProviderField;
         private readonly IXamlField _innerServiceProviderField;
@@ -106,9 +59,9 @@ namespace XamlX.IL
         private IXamlConstructor Constructor { get; set; }
 
         public static IXamlType GenerateContextClass(IXamlTypeILBuilder builder,
-            IXamlTypeSystem typeSystem, XamlILLanguageTypeMappings mappings)
+            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
         {
-            return new XamlContextDefinition(builder, typeSystem, mappings).ContextType;
+            return new XamlILContextDefinition(builder, typeSystem, mappings).ContextType;
 
         }
 
@@ -118,8 +71,8 @@ namespace XamlX.IL
         public const int StaticProvidersArg = 1;
         public IXamlType ContextType;
         
-        private XamlContextDefinition(IXamlTypeILBuilder parentBuilder,
-            IXamlTypeSystem typeSystem, XamlILLanguageTypeMappings mappings)
+        private XamlILContextDefinition(IXamlTypeILBuilder parentBuilder,
+            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
         {
             var so = typeSystem.GetType("System.Object");
             var builder = parentBuilder.DefineSubType(so, "Context", true);
@@ -133,7 +86,7 @@ namespace XamlX.IL
                     })
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", true, false);
-            var intermediateRootObjectField = builder.DefineField(so, IntermediateRootObjectFieldName, true, false);
+            var intermediateRootObjectField = builder.DefineField(so, XamlRuntimeContextDefintion.IntermediateRootObjectFieldName, true, false);
             _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", false, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", false, false);
@@ -153,7 +106,7 @@ namespace XamlX.IL
             if (mappings.RootObjectProvider != null)
             {
                 builder.AddInterfaceImplementation(mappings.RootObjectProvider);
-                var rootGen = ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, RootObjectFieldName)
+                var rootGen = ImplementInterfacePropertyGetter(builder, mappings.RootObjectProvider, XamlRuntimeContextDefintion.RootObjectFieldName)
                     .Generator;
                 var tryParent = rootGen.DefineLabel();
                 var fail = rootGen.DefineLabel();
@@ -202,7 +155,7 @@ namespace XamlX.IL
                 builder.AddInterfaceImplementation(mappings.ParentStackProvider);
                 var objectListType = typeSystem.GetType("System.Collections.Generic.List`1")
                     .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
-                ParentListField = builder.DefineField(objectListType, ParentListFieldName, true, false);
+                ParentListField = builder.DefineField(objectListType, XamlRuntimeContextDefintion.ParentListFieldName, true, false);
 
                 var enumerator = EmitParentEnumerable(typeSystem, parentBuilder, mappings);
                 CreateCallbacks.Add(enumerator.createCallback);
@@ -230,8 +183,8 @@ namespace XamlX.IL
             if (mappings.ProvideValueTarget != null)
             {
                 builder.AddInterfaceImplementation(mappings.ProvideValueTarget);
-                PropertyTargetObject = builder.DefineField(so, ProvideTargetObjectName, true, false);
-                PropertyTargetProperty = builder.DefineField(so, ProvideTargetPropertyName, true, false);
+                PropertyTargetObject = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetObjectName, true, false);
+                PropertyTargetProperty = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetPropertyName, true, false);
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetObject")
                     .Generator.LdThisFld(PropertyTargetObject).Ret();
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetProperty")
@@ -442,7 +395,7 @@ namespace XamlX.IL
                 .MakeGenericType(new[] {so});
             
             var pushParentGenerator =
-                builder.DefineMethod(@void, new[] {so}, PushParentMethodName, true, false, false)
+                builder.DefineMethod(@void, new[] {so}, XamlRuntimeContextDefintion.PushParentMethodName, true, false, false)
                 .Generator;
 
             pushParentGenerator.LdThisFld(ParentListField)
@@ -458,7 +411,7 @@ namespace XamlX.IL
                     .Ret();
             }
             
-            var pop = builder.DefineMethod(@void, new IXamlType[0], PopParentMethodName, true, false, false)
+            var pop = builder.DefineMethod(@void, new IXamlType[0], XamlRuntimeContextDefintion.PopParentMethodName, true, false, false)
                 .Generator;
 
             var idx = pop.DefineLocal(ts.GetType("System.Int32"));
@@ -498,7 +451,7 @@ namespace XamlX.IL
         }
         
         IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeILBuilder builder,
-            XamlLanguageTypeMappings mappings)
+            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
         {
             if (mappings.TypeDescriptorContext == null)
                 return null;
@@ -530,7 +483,7 @@ namespace XamlX.IL
         }
         
         (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeILBuilder parentBuilder,
-            XamlLanguageTypeMappings mappings)
+            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
         {
             var so = typeSystem.GetType("System.Object");
             var enumerableBuilder =

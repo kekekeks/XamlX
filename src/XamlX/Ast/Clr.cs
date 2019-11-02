@@ -606,7 +606,7 @@ namespace XamlX.Ast
             il.Ret();
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
@@ -636,7 +636,7 @@ namespace XamlX.Ast
             }
             
             subType.CreateType();
-            return XamlNodeEmitResult.Type(0, funcType);
+            return XamlILNodeEmitResult.Type(0, funcType);
         }
     }
 #if !XAMLX_INTERNAL
@@ -658,7 +658,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type => Value.Type;
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal);
@@ -667,7 +667,7 @@ namespace XamlX.Ast
                 .Stfld(context.RuntimeContext.IntermediateRootObjectField)
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
-            return XamlNodeEmitResult.Type(0, Value.Type.GetClrType());
+            return XamlILNodeEmitResult.Type(0, Value.Type.GetClrType());
         }
 
 

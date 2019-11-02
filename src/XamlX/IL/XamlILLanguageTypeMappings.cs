@@ -9,14 +9,11 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlILLanguageTypeMappings : XamlX.Transform.XamlLanguageTypeMappings
+    class XamlILLanguageTypeMappings : Transform.XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlILLanguageTypeMappings(IXamlTypeSystem typeSystem) : base(typeSystem)
         {
         }
-        public Func<XamlEmitContext, IXamlILEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
-        public XamlContextTypeBuilderCallback ContextTypeBuilderCallback { get; set; }
-        public XamlContextFactoryCallback ContextFactoryCallback { get; set; }
     }
 
 #if !XAMLX_INTERNAL

@@ -7,9 +7,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class ValueWithManipulationsEmitter : IXamlAstNodeEmitter
+    class ValueWithManipulationsEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlValueWithManipulationNode vwm))
                 return null;
@@ -21,7 +21,7 @@ namespace XamlX.IL.Emitters
                 codeGen.Emit(OpCodes.Dup);
                 context.Emit(vwm.Manipulation, codeGen, null);
             }
-            return XamlNodeEmitResult.Type(0, created.ReturnType);
+            return XamlILNodeEmitResult.Type(0, created.ReturnType);
         }
     }
 }

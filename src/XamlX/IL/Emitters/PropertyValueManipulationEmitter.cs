@@ -7,16 +7,16 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertyValueManipulationEmitter : IXamlAstNodeEmitter
+    class PropertyValueManipulationEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyValueManipulationNode pvm))
                 return null;
             codeGen.EmitCall(pvm.Property.Getter);
             context.Emit(pvm.Manipulation, codeGen, null);
             
-            return XamlNodeEmitResult.Void(1);
+            return XamlILNodeEmitResult.Void(1);
         }
     }
 }

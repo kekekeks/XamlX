@@ -9,7 +9,7 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertyAssignmentEmitter : IXamlAstNodeEmitter
+    class PropertyAssignmentEmitter : IXamlILAstNodeEmitter
     {
         List<IXamlPropertySetter> ValidateAndGetSetters(XamlPropertyAssignmentNode an)
         {
@@ -32,7 +32,7 @@ namespace XamlX.IL.Emitters
             return lst;
         }
         
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;
@@ -138,7 +138,7 @@ namespace XamlX.IL.Emitters
                 codeGen.MarkLabel(exit);
             }
 
-            return XamlNodeEmitResult.Void(1);
+            return XamlILNodeEmitResult.Void(1);
         }
     }
 }

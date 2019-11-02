@@ -87,7 +87,7 @@ namespace XamlParserTests
             var ct = dm.DefineType(t.Name + "Context");
             var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
             var contextTypeDef =
-                XamlContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
+                XamlILContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
             
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);

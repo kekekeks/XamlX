@@ -26,10 +26,10 @@ namespace XamlX.Ast
         }
         
         IXamlAstTypeReference IXamlAstValueNode.Type => _typeReference;
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
-            context.LdLocal(this, codeGen);
-            return XamlNodeEmitResult.Type(0, Type);
+            context.LoadLocalValue(this, codeGen);
+            return XamlILNodeEmitResult.Type(0, Type);
         }
     }
 
@@ -54,12 +54,12 @@ namespace XamlX.Ast
             Local = (XamlAstCompilerLocalNode) Local.Visit(visitor);
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
-            context.StLocal(Local, codeGen);
-            return XamlNodeEmitResult.Type(0, rv.ReturnType);
+            context.StoreLocal(Local, codeGen);
+            return XamlILNodeEmitResult.Type(0, rv.ReturnType);
         }
     }
 
@@ -72,7 +72,7 @@ namespace XamlX.Ast
         {
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             var res = context.Emit(Value, codeGen, Value.Type.GetClrType());
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
@@ -103,12 +103,12 @@ namespace XamlX.Ast
             Imperative = imperative;
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             // Discard the stack value we are "supposed" to manipulate
             codeGen.Pop();
             context.Emit(Imperative, codeGen, null);
-            return XamlNodeEmitResult.Void(1);
+            return XamlILNodeEmitResult.Void(1);
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -138,11 +138,11 @@ namespace XamlX.Ast
             Manipulation = (IXamlAstManipulationNode) Manipulation.Visit(visitor);
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
-            return XamlNodeEmitResult.Void(0);
+            return XamlILNodeEmitResult.Void(0);
         }
     }
 
@@ -157,10 +157,10 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             codeGen.Ldloc(context.ContextLocal);
-            return XamlNodeEmitResult.Type(0, Type.GetClrType());
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
@@ -183,7 +183,7 @@ namespace XamlX.Ast
             Type = (IXamlAstTypeReference) Type.Visit(visitor);
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
             var t = Type.GetClrType();
@@ -191,7 +191,7 @@ namespace XamlX.Ast
                 codeGen.Unbox_Any(t);
             else
                 codeGen.Castclass(t);            
-            return XamlNodeEmitResult.Type(0, t);
+            return XamlILNodeEmitResult.Type(0, t);
         }
     }
 
@@ -206,7 +206,7 @@ namespace XamlX.Ast
         {
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
         {
             XamlNeedsParentStackCache.Verify(context, this);
             return context.Emit(Value, codeGen, Value.Type.GetClrType());

@@ -7,9 +7,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class MethodCallEmitter : IXamlAstNodeEmitter
+    class MethodCallEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlMethodCallBaseNode mc))
                 return null;
@@ -37,8 +37,8 @@ namespace XamlX.IL.Emitters
 
             var consumed = thisArgFromArgs ? 0 : 1;
             return isVoid || expectsVoid
-                ? XamlNodeEmitResult.Void(consumed)
-                : XamlNodeEmitResult.Type(consumed, mc.Method.ReturnType);
+                ? XamlILNodeEmitResult.Void(consumed)
+                : XamlILNodeEmitResult.Type(consumed, mc.Method.ReturnType);
         }
     }
 }

@@ -9,9 +9,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class ObjectInitializationNodeEmitter : IXamlAstNodeEmitter
+    class ObjectInitializationNodeEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlObjectInitializationNode init))
                 return null;
@@ -61,7 +61,7 @@ namespace XamlX.IL.Emitters
                     .EmitCall(supportInitType.FindMethod(m => m.Name == "EndInit"));
             
             
-            return XamlNodeEmitResult.Void(1);
+            return XamlILNodeEmitResult.Void(1);
         }
     }
     

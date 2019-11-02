@@ -7,9 +7,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class ManipulationGroupEmitter : IXamlAstNodeEmitter
+    class ManipulationGroupEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlManipulationGroupNode group))
                 return null;
@@ -25,7 +25,7 @@ namespace XamlX.IL.Emitters
                 }
             }
 
-            return XamlNodeEmitResult.Void(1);
+            return XamlILNodeEmitResult.Void(1);
         }
     }
 }

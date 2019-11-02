@@ -9,9 +9,9 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class MarkupExtensionEmitter : IXamlAstNodeEmitter
+    class MarkupExtensionEmitter : IXamlILAstNodeEmitter
     {
-        public XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter ilgen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter ilgen)
         {
 
             if (!(node is XamlMarkupExtensionNode me))
@@ -59,7 +59,7 @@ namespace XamlX.IL.Emitters
 
 
 
-            return XamlNodeEmitResult.Type(0, me.ProvideValue.ReturnType);
+            return XamlILNodeEmitResult.Type(0, me.ProvideValue.ReturnType);
         }
     }
 }

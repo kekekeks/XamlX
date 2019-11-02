@@ -8,7 +8,8 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlLanguageTypeMappings
+    class XamlLanguageTypeMappings<TBackendEmitter, TEmitResult>
+        where TEmitResult : IXamlEmitResult
     {
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem)
         {
@@ -46,7 +47,9 @@ namespace XamlX.Transform
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
-        
+        public Func<XamlXEmitContext<TBackendEmitter, TEmitResult>, TBackendEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
+        public XamlContextTypeBuilderCallback<TBackendEmitter> ContextTypeBuilderCallback { get; set; }
+        public XamlContextFactoryCallback<TBackendEmitter, TEmitResult> ContextFactoryCallback { get; set; }
     }
 #if !XAMLX_INTERNAL
     public
@@ -56,4 +59,15 @@ namespace XamlX.Transform
         IXamlCustomAttribute GetCustomAttribute(IXamlType type, IXamlType attributeType);
         IXamlCustomAttribute GetCustomAttribute(IXamlProperty property, IXamlType attributeType);
     }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlTypeBuilder typeBuilder, TBackendEmitter constructor);
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    delegate void XamlContextFactoryCallback<TBackendEmitter, TEmitResult>(XamlRuntimeContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter)
+        where TEmitResult : IXamlEmitResult;
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL
@@ -10,7 +11,7 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlILEmitter
+    interface IXamlILEmitter : IHasLocalsPool
     {
         IXamlTypeSystem TypeSystem { get; }
         IXamlILEmitter Emit(OpCode code);
@@ -23,13 +24,11 @@ namespace XamlX.IL
         IXamlILEmitter Emit(OpCode code, IXamlType type);
         IXamlILEmitter Emit(OpCode code, float arg);
         IXamlILEmitter Emit(OpCode code, double arg);
-        IXamlLocal DefineLocal(IXamlType type);
         IXamlLabel DefineLabel();
         IXamlILEmitter MarkLabel(IXamlLabel label);
         IXamlILEmitter Emit(OpCode code, IXamlLabel label);
         IXamlILEmitter Emit(OpCode code, IXamlLocal local);
         void InsertSequencePoint(IFileSource file, int line, int position);
-        XamlLocalsPool LocalsPool { get; }
     }
 
 #if !XAMLX_INTERNAL

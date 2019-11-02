@@ -19,7 +19,7 @@ namespace XamlX.TypeSystem
             private readonly XamlLocalsPool _parent;
             private readonly IXamlType _type;
 
-            public PooledLocal( XamlLocalsPool parent, IXamlType type, IXamlLocal local)
+            public PooledLocal(XamlLocalsPool parent, IXamlType type, IXamlLocal local)
             {
                 Local = local;
                 _parent = parent;

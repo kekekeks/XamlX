@@ -15,7 +15,7 @@ namespace XamlX.IL
 #endif
     class XamlILCompiler : XamlCompiler
     {
-        public List<IXamlAstNodeEmitter> Emitters { get; } = new List<IXamlAstNodeEmitter>();
+        public List<IXamlILAstNodeEmitter> Emitters { get; } = new List<IXamlILAstNodeEmitter>();
         
         public bool EnableIlVerification { get; set; }
         public XamlILCompiler(XamlTransformerConfiguration configuration, bool fillWithDefaults)
@@ -30,7 +30,7 @@ namespace XamlX.IL
                     new XamlTopDownInitializationTransformer(),
                 });
                 
-                Emitters = new List<IXamlAstNodeEmitter>()
+                Emitters = new List<IXamlILAstNodeEmitter>()
                 {
                     new NewObjectEmitter(),
                     new TextNodeEmitter(),
@@ -179,39 +179,37 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlNodeEmitResult
+    class XamlILNodeEmitResult : IXamlEmitResult
     {
         public int ConsumedItems { get; }
         public IXamlType ReturnType { get; set; }
         public int ProducedItems => ReturnType == null ? 0 : 1;
         public bool AllowCast { get; set; }
 
-        public XamlNodeEmitResult(int consumedItems, IXamlType returnType = null)
+        public XamlILNodeEmitResult(int consumedItems, IXamlType returnType = null)
         {
             ConsumedItems = consumedItems;
             ReturnType = returnType;
         }
 
-        public static XamlNodeEmitResult Void(int consumedItems) => new XamlNodeEmitResult(consumedItems);
+        public static XamlILNodeEmitResult Void(int consumedItems) => new XamlILNodeEmitResult(consumedItems);
 
-        public static XamlNodeEmitResult Type(int consumedItems, IXamlType type) =>
-            new XamlNodeEmitResult(consumedItems, type);
+        public static XamlILNodeEmitResult Type(int consumedItems, IXamlType type) =>
+            new XamlILNodeEmitResult(consumedItems, type);
     }
     
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlAstNodeEmitter
+    interface IXamlILAstNodeEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        XamlNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlAstILEmitableNode
+    interface IXamlAstILEmitableNode : IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen);
     }
     
 }
