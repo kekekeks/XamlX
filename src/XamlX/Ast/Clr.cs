@@ -616,9 +616,10 @@ namespace XamlX.Ast
                 isp
             }, "Build", true, true, false);
             CompileBuilder(new XamlEmitContext(buildMethod.Generator, context.Configuration,
-                context.RuntimeContext, buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                (s, type) => subType.DefineSubType(type, s, false), context.File,
-                context.EnableIlVerification, context.Emitters));
+                context.EmitMappings, runtimeContext: context.RuntimeContext,
+                contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
+                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                emitters: context.Emitters, enableIlVerification: context.EnableIlVerification));
 
             var funcType = Type.GetClrType();
             codeGen

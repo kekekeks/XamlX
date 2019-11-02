@@ -13,7 +13,7 @@ namespace XamlX.IL
     class XamlContext : XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlContext(IXamlType definition, IXamlType constructedType,
-            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
+            XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
             string baseUri, List<IXamlField> staticProviders)
             : base(definition, constructedType, mappings,
             (context, codegen) =>
@@ -50,18 +50,19 @@ namespace XamlX.IL
 #endif
     class XamlILContextDefinition
     {
-        private IXamlField ParentListField;
+        private readonly IXamlField ParentListField;
         private readonly IXamlField _parentServiceProviderField;
         private readonly IXamlField _innerServiceProviderField;
-        private IXamlField PropertyTargetObject;
-        private IXamlField PropertyTargetProperty;
+        private readonly IXamlField PropertyTargetObject;
+        private readonly IXamlField PropertyTargetProperty;
 
         private IXamlConstructor Constructor { get; set; }
 
         public static IXamlType GenerateContextClass(IXamlTypeILBuilder builder,
-            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
+            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
+            XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
         {
-            return new XamlILContextDefinition(builder, typeSystem, mappings).ContextType;
+            return new XamlILContextDefinition(builder, typeSystem, mappings, emitMappings).ContextType;
 
         }
 
@@ -72,7 +73,8 @@ namespace XamlX.IL
         public IXamlType ContextType;
         
         private XamlILContextDefinition(IXamlTypeILBuilder parentBuilder,
-            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
+            IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
+            XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
         {
             var so = typeSystem.GetType("System.Object");
             var builder = parentBuilder.DefineSubType(so, "Context", true);
@@ -358,8 +360,8 @@ namespace XamlX.IL
 
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
-            
-            mappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
+
+            emitMappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
             
             // We are calling this last to ensure that our own services are ready
             if (_innerServiceProviderField != null)
@@ -451,7 +453,7 @@ namespace XamlX.IL
         }
         
         IXamlType EmitTypeDescriptorContextStub(IXamlTypeSystem typeSystem, IXamlTypeILBuilder builder,
-            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
+            XamlLanguageTypeMappings mappings)
         {
             if (mappings.TypeDescriptorContext == null)
                 return null;
@@ -483,7 +485,7 @@ namespace XamlX.IL
         }
         
         (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeILBuilder parentBuilder,
-            XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings)
+            XamlLanguageTypeMappings mappings)
         {
             var so = typeSystem.GetType("System.Object");
             var enumerableBuilder =

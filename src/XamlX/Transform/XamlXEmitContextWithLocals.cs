@@ -18,12 +18,13 @@ namespace XamlX.Transform
 
         public XamlXEmitContextWithLocals(TBackendEmitter emitter,
             XamlTransformerConfiguration configuration,
+            XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
             Func<string, IXamlType, IXamlTypeBuilder> createSubType,
             IFileSource file,
             IEnumerable<object> emitters)
-            : base(emitter, configuration, runtimeContext, contextLocal, createSubType, file, emitters)
+            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, createSubType, file, emitters)
         {
         }
 

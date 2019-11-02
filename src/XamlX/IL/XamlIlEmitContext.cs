@@ -17,11 +17,13 @@ namespace XamlX.IL
         public bool EnableIlVerification { get; }
 
         public XamlEmitContext(IXamlILEmitter emitter, XamlTransformerConfiguration configuration,
-            XamlContext runtimeContext, IXamlLocal contextLocal, 
-            Func<string, IXamlType, IXamlTypeBuilder> createSubType,
-            IFileSource file, bool enableIlVerification, IEnumerable<object> emitters)
-            :base(emitter, configuration, runtimeContext, contextLocal,
-                 createSubType, file, emitters)
+            XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
+            XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
+            IXamlLocal contextLocal,
+            Func<string, IXamlType, IXamlTypeBuilder> createSubType, IFileSource file, IEnumerable<object> emitters,
+            bool enableIlVerification)
+            : base(emitter, configuration, emitMappings, runtimeContext,
+                contextLocal, createSubType, file, emitters)
         {
             EnableIlVerification = enableIlVerification;
         }

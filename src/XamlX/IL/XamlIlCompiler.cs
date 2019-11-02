@@ -13,13 +13,13 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlILCompiler : XamlCompiler
+    class XamlILCompiler : XamlCompiler<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public List<IXamlILAstNodeEmitter> Emitters { get; } = new List<IXamlILAstNodeEmitter>();
         
         public bool EnableIlVerification { get; set; }
-        public XamlILCompiler(XamlTransformerConfiguration configuration, bool fillWithDefaults)
-            : base(configuration, fillWithDefaults)
+        public XamlILCompiler(XamlTransformerConfiguration configuration, XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings, bool fillWithDefaults)
+            : base(configuration, emitMappings, fillWithDefaults)
         {
             if (fillWithDefaults)
             {
@@ -45,10 +45,18 @@ namespace XamlX.IL
             }
         }
 
-        XamlEmitContext InitCodeGen(
+        public IXamlType CreateContextType(IXamlTypeILBuilder builder)
+        {
+            return XamlILContextDefinition.GenerateContextClass(builder,
+                _configuration.TypeSystem,
+                _configuration.TypeMappings,
+                _emitMappings);
+        }
+
+        protected override XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder> createSubType,
-            IXamlILEmitter codeGen, XamlContext context, bool needContextLocal)
+            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context, bool needContextLocal)
         {
             IXamlLocal contextLocal = null;
 
@@ -62,8 +70,9 @@ namespace XamlX.IL
                 codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlEmitContext(codeGen, _configuration, context, contextLocal, createSubType, file,
-                EnableIlVerification, Emitters);
+            var emitContext = new XamlEmitContext(codeGen, _configuration,
+                _emitMappings, context, contextLocal, createSubType,
+                file, Emitters, EnableIlVerification);
             return emitContext;
         }
         
@@ -128,7 +137,7 @@ namespace XamlX.IL
                 new[] {_configuration.TypeMappings.ServiceProvider}, name, isPublic, true, false);
         }
         
-        public void Compile(XamlDocument doc, IXamlTypeBuilder typeBuilder, IXamlType contextType,
+        public void Compile(XamlDocument doc, IXamlTypeILBuilder typeBuilder, IXamlType contextType,
             string populateMethodName, string createMethodName, string namespaceInfoClassName,
             string baseUri, IFileSource fileSource)
         {
@@ -149,7 +158,7 @@ namespace XamlX.IL
         
         public void Compile( XamlDocument doc, IXamlType contextType,
             IXamlMethodILBuilder populateMethod, IXamlMethodILBuilder buildMethod,
-            IXamlTypeBuilder namespaceInfoBuilder,
+            IXamlTypeILBuilder namespaceInfoBuilder,
             Func<string, IXamlType, IXamlTypeBuilder> createClosure,
             string baseUri, IFileSource fileSource)
         {
@@ -162,8 +171,8 @@ namespace XamlX.IL
                     IL.XamlNamespaceInfoHelper.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
             }
 
-            var context = new XamlContext(contextType, rootGrp.Type.GetClrType(),
-                (XamlILLanguageTypeMappings)_configuration.TypeMappings, baseUri, staticProviders);
+            var context = new XamlContext(contextType,
+                rootGrp.Type.GetClrType(), _emitMappings, baseUri, staticProviders);
 
             CompilePopulate(fileSource, rootGrp.Manipulation, createClosure, populateMethod.Generator, context);
 

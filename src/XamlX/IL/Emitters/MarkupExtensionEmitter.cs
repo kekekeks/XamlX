@@ -1,8 +1,7 @@
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
-using XamlX.Transform.Transformers;
-using XamlX.TypeSystem;
+using XamlX.Transform;
 
 namespace XamlX.IL.Emitters
 {
@@ -11,7 +10,7 @@ namespace XamlX.IL.Emitters
 #endif
     class MarkupExtensionEmitter : IXamlILAstNodeEmitter
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext context, IXamlILEmitter ilgen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen)
         {
 
             if (!(node is XamlMarkupExtensionNode me))
@@ -26,7 +25,7 @@ namespace XamlX.IL.Emitters
 
             void EmitPropertyDescriptor()
             {
-                if (((XamlILLanguageTypeMappings)context.Configuration.TypeMappings).ProvideValueTargetPropertyEmitter
+                if (context.EmitMappings.ProvideValueTargetPropertyEmitter
                         ?.Invoke(context, ilgen, prop.Property) == true)
                     return;
                 ilgen.Ldstr(prop.Property.Name);
@@ -56,8 +55,6 @@ namespace XamlX.IL.Emitters
                     .Ldnull()
                     .Stfld(context.RuntimeContext.PropertyTargetProperty);
             }
-
-
 
             return XamlILNodeEmitResult.Type(0, me.ProvideValue.ReturnType);
         }

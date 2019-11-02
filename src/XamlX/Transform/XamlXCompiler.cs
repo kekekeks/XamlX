@@ -10,15 +10,21 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlCompiler
+    abstract class XamlCompiler<TBackendEmitter, TEmitResult>
+        where TEmitResult : IXamlEmitResult
     {
         protected readonly XamlTransformerConfiguration _configuration;
+        protected readonly XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> _emitMappings;
+
         public List<IXamlAstTransformer> Transformers { get; } = new List<IXamlAstTransformer>();
         public List<IXamlAstTransformer> SimplificationTransformers { get; } = new List<IXamlAstTransformer>();
         
-        public XamlCompiler(XamlTransformerConfiguration configuration, bool fillWithDefaults)
+        public XamlCompiler(XamlTransformerConfiguration configuration,
+            XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
+            bool fillWithDefaults)
         {
             _configuration = configuration;
+            _emitMappings = emitMappings;
             if (fillWithDefaults)
             {
                 Transformers = new List<IXamlAstTransformer>
@@ -61,6 +67,11 @@ namespace XamlX.Transform
 
             doc.Root = root;
         }
+
+        protected abstract XamlXEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
+            IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder> createSubType,
+            TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
     }
 
 

@@ -9,7 +9,7 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlILLanguageTypeMappings : Transform.XamlLanguageTypeMappings<IXamlILEmitter, XamlILNodeEmitResult>
+    class XamlILLanguageTypeMappings : Transform.XamlLanguageTypeMappings
     {
         public XamlILLanguageTypeMappings(IXamlTypeSystem typeSystem) : base(typeSystem)
         {

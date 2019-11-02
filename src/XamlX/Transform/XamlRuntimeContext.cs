@@ -24,7 +24,7 @@ namespace XamlX.Transform
         public IXamlMethod PopParentMethod { get; set; }
 
         public XamlRuntimeContext(IXamlType definition, IXamlType constructedType,
-            XamlLanguageTypeMappings<TBackendEmitter, TEmitResult> mappings,
+            XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> mappings,
             Action<XamlRuntimeContext<TBackendEmitter, TEmitResult>, TBackendEmitter> factory)
         {
             ContextType = definition.MakeGenericType(constructedType);

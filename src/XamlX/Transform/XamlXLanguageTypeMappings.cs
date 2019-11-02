@@ -8,8 +8,7 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlLanguageTypeMappings<TBackendEmitter, TEmitResult>
-        where TEmitResult : IXamlEmitResult
+    class XamlLanguageTypeMappings
     {
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem)
         {
@@ -47,10 +46,19 @@ namespace XamlX.Transform
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlLanguageEmitMappings<TBackendEmitter, TEmitResult>
+        where TEmitResult : IXamlEmitResult
+    {
         public Func<XamlXEmitContext<TBackendEmitter, TEmitResult>, TBackendEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
         public XamlContextTypeBuilderCallback<TBackendEmitter> ContextTypeBuilderCallback { get; set; }
         public XamlContextFactoryCallback<TBackendEmitter, TEmitResult> ContextFactoryCallback { get; set; }
     }
+
 #if !XAMLX_INTERNAL
     public
 #endif

@@ -6,6 +6,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using Mono.Cecil.Rocks;
+using XamlX.IL;
 
 namespace XamlX.TypeSystem
 {
@@ -168,7 +169,7 @@ namespace XamlX.TypeSystem
             TypeReference Reference { get; }
         }
 
-        public IXamlTypeBuilder CreateTypeBuilder(TypeDefinition def)
+        public IXamlTypeILBuilder CreateTypeBuilder(TypeDefinition def)
         {
             return new CecilTypeBuilder(this, FindAsm(def.Module.Assembly), def);
         }

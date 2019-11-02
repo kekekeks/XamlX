@@ -6,6 +6,7 @@ using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -30,7 +31,10 @@ namespace BenchmarksCompiler
             asm.MainModule.Types.Add(ct);
 
             var ctb = typeSystem.CreateTypeBuilder(ct);
-            var compiler = new XamlCompiler(config, true);
+            var compiler = new XamlILCompiler(
+                config,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true);
             var  contextTypeDef = compiler.CreateContextType(ctb);
             
             asm.MainModule.Types.Add(ct);
