@@ -309,8 +309,37 @@ namespace XamlX.Ast
 
         public override void VisitChildren(Visitor visitor)
         {
-            Type = (IXamlAstTypeReference) Type.Visit(visitor);
+            Type = (IXamlAstTypeReference)Type.Visit(visitor);
             VisitList(Arguments, visitor);
+        }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstConstructableObjectNode : XamlAstNode, IXamlAstValueNode
+    {
+        public XamlAstConstructableObjectNode(IXamlLineInfo lineInfo,
+            XamlAstClrTypeReference type, IXamlConstructor ctor,
+            List<IXamlAstValueNode> arguments,
+            List<IXamlAstNode> children) : base(lineInfo)
+        {
+            Type = type;
+            Constructor = ctor;
+            Arguments = arguments;
+            Children = children;
+        }
+
+        public IXamlAstTypeReference Type { get; set; }
+        public IXamlConstructor Constructor { get; }
+        public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
+        public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
+
+        public override void VisitChildren(Visitor visitor)
+        {
+            Type = (IXamlAstTypeReference)Type.Visit(visitor);
+            VisitList(Arguments, visitor);
+            VisitList(Children, visitor);
         }
     }
 

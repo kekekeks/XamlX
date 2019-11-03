@@ -40,7 +40,8 @@ namespace XamlX.Transform
                     new XamlContentConvertTransformer(),
                     new XamlResolveContentPropertyTransformer(),
                     new XamlResolvePropertyValueAddersTransformer(),
-                    new XamlConvertPropertyValuesToAssignmentsTransformer()
+                    new XamlConvertPropertyValuesToAssignmentsTransformer(),
+                    new XamlConstructableObjectTransformer()
                 };
                 SimplificationTransformers = new List<IXamlAstTransformer>
                 {
