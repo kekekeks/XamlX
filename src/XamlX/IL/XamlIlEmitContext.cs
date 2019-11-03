@@ -41,7 +41,7 @@ namespace XamlX.IL
 #if XAMLX_DEBUG
             var res = base.EmitNode(value, checkedEmitter);
 #else
-            var res = base.EmitNode(value, codeGen);
+            var res = base.EmitNode(value, checkedEmitter ?? codeGen);
 #endif
             if (EnableIlVerification)
             {
@@ -97,7 +97,7 @@ namespace XamlX.IL
 
         public override void LoadLocalValue(XamlAstCompilerLocalNode node, IXamlILEmitter codeGen)
         {
-            codeGen.Stloc(TryGetLocalForNode(node, codeGen, true));
+            codeGen.Ldloc(TryGetLocalForNode(node, codeGen, true));
         }
     }
 
