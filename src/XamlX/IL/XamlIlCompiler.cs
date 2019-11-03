@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using XamlX.Ast;
-using XamlX.IL;
 using XamlX.Transform;
 using XamlX.IL.Emitters;
-using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL
@@ -13,10 +11,8 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlILCompiler : XamlCompiler<IXamlILEmitter, XamlILNodeEmitResult>
+    class XamlILCompiler : XamlImperativeCompiler<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public List<IXamlILAstNodeEmitter> Emitters { get; } = new List<IXamlILAstNodeEmitter>();
-        
         public bool EnableIlVerification
         {
             get => _configuration.GetExtra<ILEmitContextSettings>()?.EnableILVerification ?? false;
@@ -36,19 +32,16 @@ namespace XamlX.IL
                 }
             }
         }
-        public XamlILCompiler(XamlTransformerConfiguration configuration, XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings, bool fillWithDefaults)
+
+        public XamlILCompiler(
+            XamlTransformerConfiguration configuration,
+            XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
+            bool fillWithDefaults)
             : base(configuration, emitMappings, fillWithDefaults)
         {
             if (fillWithDefaults)
-            {
-                Transformers.AddRange(new IXamlAstTransformer[]
-                {
-                    new XamlNewObjectTransformer(),
-                    new XamlDeferredContentTransformer(),
-                    new XamlTopDownInitializationTransformer(),
-                });
-                
-                Emitters = new List<IXamlILAstNodeEmitter>()
+            {                
+                Emitters.AddRange(new object[]
                 {
                     new NewObjectEmitter(),
                     new TextNodeEmitter(),
@@ -59,7 +52,7 @@ namespace XamlX.IL
                     new ValueWithManipulationsEmitter(),
                     new MarkupExtensionEmitter(),
                     new ObjectInitializationNodeEmitter()
-                };
+                });
             }
         }
 
@@ -74,7 +67,8 @@ namespace XamlX.IL
         protected override XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context, bool needContextLocal)
+            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
+            bool needContextLocal)
         {
             IXamlLocal contextLocal = null;
 
@@ -94,14 +88,14 @@ namespace XamlX.IL
             return emitContext;
         }
         
-        void CompileBuild(
+        protected override void CompileBuild(
             IFileSource fileSource,
             IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            IXamlILEmitter codeGen, RuntimeContext context, IXamlMethod compiledPopulate)
+            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
             var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, needContextLocal);
-
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
             emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
@@ -117,8 +111,9 @@ namespace XamlX.IL
         /// <summary>
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
-
-        void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation, Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType, IXamlILEmitter codeGen, RuntimeContext context)
+        protected override void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation,
+            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
+            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             // Uncomment to inspect generated IL in debugger
             //codeGen = new RecordingIlEmitter(codeGen);
@@ -136,51 +131,11 @@ namespace XamlX.IL
             codeGen.Emit(OpCodes.Ret);
         }
 
-        public IXamlMethodBuilder<IXamlILEmitter> DefinePopulateMethod(IXamlTypeBuilder<IXamlILEmitter> typeBuilder,
-            XamlDocument doc,
-            string name, bool isPublic)
-        {
-            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
-            return typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
-                new[] {_configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType()},
-                name, isPublic, true, false);
-        }
-
-        public IXamlMethodBuilder<IXamlILEmitter> DefineBuildMethod(IXamlTypeBuilder<IXamlILEmitter> typeBuilder,
-            XamlDocument doc,
-            string name, bool isPublic)
-        {
-            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
-            return typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
-                new[] {_configuration.TypeMappings.ServiceProvider}, name, isPublic, true, false);
-        }
-        
-        public void Compile(XamlDocument doc, IXamlTypeBuilder<IXamlILEmitter> typeBuilder, IXamlType contextType,
-            string populateMethodName, string createMethodName, string namespaceInfoClassName,
-            string baseUri, IFileSource fileSource)
-        {
-            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
-            Compile(doc, contextType,
-                DefinePopulateMethod(typeBuilder, doc, populateMethodName, true),
-                createMethodName == null ?
-                    null :
-                    DefineBuildMethod(typeBuilder, doc, createMethodName, true),
-                _configuration.TypeMappings.XmlNamespaceInfoProvider == null ?
-                    null :
-                    typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
-                        namespaceInfoClassName, false),
-                (name, bt) => typeBuilder.DefineSubType(bt, name, false),
-                baseUri, fileSource);
-
-        }
-        
-        public void Compile(XamlDocument doc, IXamlType contextType,
-            IXamlMethodBuilder<IXamlILEmitter> populateMethod, IXamlMethodBuilder<IXamlILEmitter> buildMethod,
+        protected override XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> CreateRuntimeContext(
+            XamlDocument doc, IXamlType contextType,
             IXamlTypeBuilder<IXamlILEmitter> namespaceInfoBuilder,
-            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createClosure,
-            string baseUri, IFileSource fileSource)
+            string baseUri, IXamlType rootType)
         {
-            var rootGrp = (XamlValueWithManipulationNode) doc.Root;
             var staticProviders = new List<IXamlField>();
 
             if (namespaceInfoBuilder != null)
@@ -190,16 +145,8 @@ namespace XamlX.IL
             }
 
             var context = new RuntimeContext(contextType,
-                rootGrp.Type.GetClrType(), _emitMappings, baseUri, staticProviders);
-
-            CompilePopulate(fileSource, rootGrp.Manipulation, createClosure, populateMethod.Generator, context);
-
-            if (buildMethod != null)
-            {
-                CompileBuild(fileSource, rootGrp.Value, null, buildMethod.Generator, context, populateMethod);
-            }
-
-            namespaceInfoBuilder?.CreateType();
+                rootType, _emitMappings, baseUri, staticProviders);
+            return context;
         }
     }
 

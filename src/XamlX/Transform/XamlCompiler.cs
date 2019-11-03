@@ -18,7 +18,9 @@ namespace XamlX.Transform
 
         public List<IXamlAstTransformer> Transformers { get; } = new List<IXamlAstTransformer>();
         public List<IXamlAstTransformer> SimplificationTransformers { get; } = new List<IXamlAstTransformer>();
-        
+
+        public List<object> Emitters { get; } = new List<object>();
+
         public XamlCompiler(XamlTransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             bool fillWithDefaults)
