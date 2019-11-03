@@ -57,7 +57,13 @@ namespace XamlParserTests
         XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
         {
             var parsed = XDocumentXamlParser.Parse(xaml);
-            var compiler = new XamlILCompiler(Configuration, true) { EnableIlVerification = true };
+            var compiler = new XamlILCompiler(
+                Configuration,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true)
+            {
+                EnableIlVerification = true
+            };
             compiler.Transform(parsed);
             compiler.Compile(parsed, builder, context, "Populate", "Build",
                 "XamlNamespaceInfo",
@@ -87,7 +93,11 @@ namespace XamlParserTests
             var ct = dm.DefineType(t.Name + "Context");
             var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
             var contextTypeDef =
-                XamlILContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
+                XamlILContextDefinition.GenerateContextClass(
+                    ctb,
+                    _typeSystem,
+                    Configuration.TypeMappings,
+                    new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>());
             
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
