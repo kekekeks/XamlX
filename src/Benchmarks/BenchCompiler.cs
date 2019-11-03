@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.IL;
 using XamlX.Parsers;
 using XamlX.Runtime;
 using XamlX.Transform;
@@ -39,8 +40,11 @@ namespace Benchmarks
             var typeSystem = new SreTypeSystem();
             var configuration = BenchmarksXamlConfiguration.Configure(typeSystem);
             var parsed = XDocumentXamlParser.Parse(xaml);
-            
-            var compiler = new XamlCompiler(configuration, true);
+
+            var compiler = new XamlILCompiler(
+                configuration,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true);
             compiler.Transform(parsed);
             
             

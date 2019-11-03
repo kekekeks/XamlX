@@ -24,7 +24,7 @@ namespace XamlX.IL
             : base(emitter, configuration, emitMappings, runtimeContext,
                 contextLocal, createSubType, file, emitters)
         {
-            EnableIlVerification = configuration.GetExtra<ILEmitContextSettings>().EnableILVerification;
+            EnableIlVerification = configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification;
         }
         
         protected override XamlILNodeEmitResult EmitNode(IXamlAstNode value, IXamlILEmitter codeGen)

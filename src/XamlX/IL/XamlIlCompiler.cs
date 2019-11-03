@@ -15,22 +15,8 @@ namespace XamlX.IL
     {
         public bool EnableIlVerification
         {
-            get => _configuration.GetExtra<ILEmitContextSettings>()?.EnableILVerification ?? false;
-            set
-            {
-                ILEmitContextSettings settings;
-                if ((settings = _configuration.GetExtra<ILEmitContextSettings>()) is null)
-                {
-                    _configuration.AddExtra(new ILEmitContextSettings
-                    {
-                        EnableILVerification = value
-                    });
-                }
-                else
-                {
-                    settings.EnableILVerification = value;
-                }
-            }
+            get => _configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification;
+            set => _configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification = value;
         }
 
         public XamlILCompiler(

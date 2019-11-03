@@ -19,6 +19,16 @@ namespace XamlX.Transform
         /// </summary>
         public T GetExtra<T>() => (T) _extras[typeof(T)];
         /// <summary>
+        /// Gets or create extension configuration section
+        /// </summary>
+        public T GetOrCreateExtra<T>()
+            where T : new()
+        {
+            if (!_extras.TryGetValue(typeof(T), out var rv))
+                _extras[typeof(T)] = rv = new T();
+            return (T)rv;
+        }
+        /// <summary>
         /// Adds extension configuration section
         /// </summary>
         /// <param name="extra"></param>
