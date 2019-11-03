@@ -130,6 +130,7 @@ namespace XamlX.Transform
             {
                 if (wrapped is IXamlEmitableWrappedMethod<TBackendEmitter, TEmitResult> ewm)
                 {
+                    foundEmitter = true;
                     ewm.Emit(this, codeGen, swallowResult);
                 }
             }
