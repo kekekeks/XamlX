@@ -26,7 +26,7 @@ namespace XamlX.IL.Emitters
                 context.Emit(mc.Arguments[c], codeGen, expectedType);
             }
 
-            mc.Method.Emit(context, codeGen, expectsVoid);
+            context.Emit(mc.Method, codeGen, expectsVoid);
             
             var isVoid = mc.Method.ReturnType.Equals(context.Configuration.WellKnownTypes.Void);
             if (!expectsVoid && isVoid)

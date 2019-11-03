@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL
@@ -13,7 +14,7 @@ namespace XamlX.IL
     {
         public static IXamlILEmitter EmitCall(this IXamlILEmitter emitter, IXamlMethod method, bool swallowResult = false)
         {
-            if (method is IXamlCustomEmitMethod custom)
+            if (method is IXamlCustomEmitMethod<IXamlILEmitter> custom)
                 custom.EmitCall(emitter);
             else
                 emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);

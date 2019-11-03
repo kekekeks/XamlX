@@ -22,7 +22,7 @@ namespace XamlX.Transform.Transformers
             return node;
         }
         
-        class AdderSetter : IXamlPropertySetter
+        class AdderSetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
         {
             private readonly IXamlMethod _getter;
             private readonly IXamlMethod _adder;

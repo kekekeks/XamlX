@@ -54,6 +54,24 @@ namespace XamlX.Transform
         {
             var result = base.EmitNodeCore(value, codeGen, out foundEmitter);
 
+            if (result != default)
+            {
+                return result;
+            }
+
+            foreach (var e in Emitters)
+            {
+                if (e is IXamlAstLocalsNodeEmitter<TBackendEmitter, TEmitResult> ve)
+                {
+                    result = ve.Emit(value, this, codeGen);
+                    if (result != default)
+                    {
+                        foundEmitter = true;
+                        return result;
+                    }
+                }
+            }
+
             if (!foundEmitter)
             {
                 if (value is IXamlAstLocalsEmitableNode<TBackendEmitter, TEmitResult> emittable)
@@ -64,6 +82,37 @@ namespace XamlX.Transform
             }
 
             return result;
+        }
+        protected override bool EmitCore(IXamlWrappedMethod wrapped, TBackendEmitter codeGen, bool swallowResult)
+        {
+            bool foundEmitter = base.EmitCore(wrapped, codeGen, swallowResult);
+
+            if (foundEmitter)
+            {
+                return true;
+            }
+
+            foreach (var e in Emitters)
+            {
+                if (e is IXamlWrappedMethodEmitterWithLocals<TBackendEmitter, TEmitResult> wme)
+                {
+                    foundEmitter = wme.EmitCall(this, wrapped, codeGen, swallowResult);
+                    if (foundEmitter)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (!foundEmitter)
+            {
+                if (wrapped is IXamlEmitableWrappedMethodWithLocals<TBackendEmitter, TEmitResult> ewm)
+                {
+                    ewm.Emit(this, codeGen, swallowResult);
+                }
+            }
+
+            return foundEmitter;
         }
     }
 
@@ -80,6 +129,7 @@ namespace XamlX.Transform
     public
 #endif
     interface IXamlAstLocalsNodeEmitter<TBackendEmitter, TEmitResult>
+        where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
         TEmitResult Emit(IXamlAstNode node, XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
@@ -93,5 +143,25 @@ namespace XamlX.Transform
         where TEmitResult : IXamlEmitResult
     {
         TEmitResult Emit(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlWrappedMethodEmitterWithLocals<TBackendEmitter, TEmitResult>
+        where TBackendEmitter : IHasLocalsPool
+        where TEmitResult : IXamlEmitResult
+    {
+        bool EmitCall(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlEmitableWrappedMethodWithLocals<TBackendEmitter, TEmitResult> : IXamlWrappedMethod
+        where TBackendEmitter : IHasLocalsPool
+        where TEmitResult : IXamlEmitResult
+    {
+        void Emit(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
     }
 }

@@ -86,7 +86,7 @@ namespace XamlX.Ast
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
-    class XamlDirectCallPropertySetter : IXamlPropertySetter
+    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
@@ -123,7 +123,6 @@ namespace XamlX.Ast
         IXamlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
-        void Emit(IXamlILEmitter codegen);
     }
 
 #if !XAMLX_INTERNAL
@@ -388,13 +387,12 @@ namespace XamlX.Ast
         IXamlType ReturnType { get; }
         IXamlType DeclaringType { get; }
         IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult);
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlWrappedMethod : IXamlWrappedMethod
+    class XamlWrappedMethod : IXamlWrappedMethod, IXamlEmitableWrappedMethod<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlMethod _method;
 
@@ -410,7 +408,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType { get; }
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             codeGen.EmitCall(_method, swallowResult);
         }
@@ -419,7 +417,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlWrappedMethodWithCasts : IXamlWrappedMethod
+    class XamlWrappedMethodWithCasts : IXamlWrappedMethod, IXamlEmitableWrappedMethodWithLocals<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlWrappedMethod _method;
 
@@ -435,7 +433,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType => _method.ReturnType;
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             int firstCast = -1; 
             for (var c = ParametersWithThis.Count - 1; c >= 0; c--)
@@ -465,14 +463,14 @@ namespace XamlX.Ast
                 }
             }
 
-            _method.Emit(context, codeGen, swallowResult);
+            context.Emit(_method, codeGen, swallowResult);
         }
     }
     
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlMethodWithCasts : IXamlCustomEmitMethod
+    class XamlMethodWithCasts : IXamlCustomEmitMethod<IXamlILEmitter>
     {
         private readonly IXamlMethod _method;
         private readonly IReadOnlyList<IXamlType> _baseParametersWithThis;
@@ -670,7 +668,5 @@ namespace XamlX.Ast
                 .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
             return XamlILNodeEmitResult.Type(0, Value.Type.GetClrType());
         }
-
-
     }
 }

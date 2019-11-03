@@ -10,7 +10,7 @@ namespace XamlX.IL.Emitters
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertyAssignmentEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
+    class PropertyAssignmentEmitter : IXamlAstLocalsNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
         List<IXamlPropertySetter> ValidateAndGetSetters(XamlPropertyAssignmentNode an)
         {
@@ -33,7 +33,7 @@ namespace XamlX.IL.Emitters
             return lst;
         }
         
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;
@@ -52,7 +52,7 @@ namespace XamlX.IL.Emitters
             {
                 var setter = an.PossibleSetters.First();
                 context.Emit(value, codeGen, setter.Parameters.Last());
-                setter.Emit(codeGen);
+                context.Emit(setter, codeGen);
             }
             else
             {
@@ -104,7 +104,7 @@ namespace XamlX.IL.Emitters
                         hadJumps = true;
                     
                     ILEmitHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
-                    setter.Emit(codeGen);
+                    context.Emit(setter, codeGen);
                     if (hadJumps)
                     {
                         codeGen.Br(exit);

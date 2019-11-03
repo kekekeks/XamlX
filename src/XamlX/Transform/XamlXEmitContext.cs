@@ -64,6 +64,79 @@ namespace XamlX.Transform
             return res;
         }
 
+        public void Emit(IXamlPropertySetter setter, TBackendEmitter codeGen)
+        {
+            bool foundEmitter = EmitCore(setter, codeGen);
+
+            if (!foundEmitter)
+            {
+                throw new InvalidOperationException("Unable to find emitter for property setter type: " + setter.GetType().ToString());
+            }
+        }
+
+        protected virtual bool EmitCore(IXamlPropertySetter setter, TBackendEmitter codeGen)
+        {
+            bool foundEmitter = false;
+            foreach (var e in Emitters)
+            {
+                if (e is IXamlPropertySetterEmitter<TBackendEmitter> pse)
+                {
+                    foundEmitter = pse.EmitCall(setter, codeGen);
+                    if (foundEmitter)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (!foundEmitter)
+            {
+                if (setter is IXamlEmitablePropertySetter<TBackendEmitter> eps)
+                {
+                    foundEmitter = true;
+                    eps.Emit(codeGen);
+                }
+            }
+
+            return foundEmitter;
+        }
+
+        public void Emit(IXamlWrappedMethod wrapped, TBackendEmitter codeGen, bool swallowResult)
+        {
+            bool foundEmitter = EmitCore(wrapped, codeGen, swallowResult);
+
+            if (!foundEmitter)
+            {
+                throw new InvalidOperationException("Unable to find emitter for wrapped method type: " + wrapped.GetType().ToString());
+            }
+        }
+
+        protected virtual bool EmitCore(IXamlWrappedMethod wrapped, TBackendEmitter codeGen, bool swallowResult)
+        {
+            bool foundEmitter = false;
+            foreach (var e in Emitters)
+            {
+                if (e is IXamlWrappedMethodEmitter<TBackendEmitter, TEmitResult> wme)
+                {
+                    foundEmitter = wme.EmitCall(this, wrapped, codeGen, swallowResult);
+                    if (foundEmitter)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (!foundEmitter)
+            {
+                if (wrapped is IXamlEmitableWrappedMethod<TBackendEmitter, TEmitResult> ewm)
+                {
+                    ewm.Emit(this, codeGen, swallowResult);
+                }
+            }
+
+            return foundEmitter;
+        }
+
         private TEmitResult EmitCore(IXamlAstNode value, TBackendEmitter codeGen, IXamlType expectedType)
         {
             TEmitResult res = EmitNode(value, codeGen);
@@ -165,5 +238,47 @@ namespace XamlX.Transform
         where TEmitResult : IXamlEmitResult
     {
         TEmitResult Emit(XamlXEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+    }
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlCustomEmitMethod<TBackendEmitter> : IXamlMethod
+    {
+        void EmitCall(TBackendEmitter emitter);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlPropertySetterEmitter<TBackendEmitter>
+    {
+        bool EmitCall(IXamlPropertySetter setter, TBackendEmitter emitter);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlEmitablePropertySetter<TBackendEmitter> : IXamlPropertySetter
+    {
+        void Emit(TBackendEmitter emitter);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlWrappedMethodEmitter<TBackendEmitter, TEmitResult>
+        where TEmitResult : IXamlEmitResult
+    {
+        bool EmitCall(XamlXEmitContext<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
+    }
+
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlEmitableWrappedMethod<TBackendEmitter, TEmitResult> : IXamlWrappedMethod
+        where TEmitResult: IXamlEmitResult
+    {
+        void Emit(XamlXEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
     }
 }

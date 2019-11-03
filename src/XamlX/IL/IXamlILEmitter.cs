@@ -30,12 +30,4 @@ namespace XamlX.IL
         IXamlILEmitter Emit(OpCode code, IXamlLocal local);
         void InsertSequencePoint(IFileSource file, int line, int position);
     }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlCustomEmitMethod : IXamlMethod
-    {
-        void EmitCall(IXamlILEmitter emitter);
-    }
 }
