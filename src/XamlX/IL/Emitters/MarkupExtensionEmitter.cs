@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform;
 
 namespace XamlX.IL.Emitters
@@ -10,7 +11,7 @@ namespace XamlX.IL.Emitters
 #endif
     class MarkupExtensionEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen)
         {
 
             if (!(node is XamlMarkupExtensionNode me))

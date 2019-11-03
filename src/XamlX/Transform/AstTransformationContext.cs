@@ -9,10 +9,10 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlAstTransformationContext : XamlContextBase
+    class AstTransformationContext : XamlContextBase
     {
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
-        public XamlTransformerConfiguration Configuration { get; }
+        public TransformerConfiguration Configuration { get; }
         public IXamlAstValueNode RootObject { get; set; }
         public bool StrictMode { get; }
 
@@ -29,7 +29,7 @@ namespace XamlX.Transform
         public IXamlAstNode ParseError(string message, IXamlAstNode offender, IXamlAstNode ret) =>
             Error(ret, new XamlParseException(message, offender));
 
-        public XamlAstTransformationContext(XamlTransformerConfiguration configuration,
+        public AstTransformationContext(TransformerConfiguration configuration,
             Dictionary<string, string> namespaceAliases, bool strictMode = true)
         {
             Configuration = configuration;
@@ -39,10 +39,10 @@ namespace XamlX.Transform
 
         class Visitor : IXamlAstVisitor
         {
-            private readonly XamlAstTransformationContext _context;
+            private readonly AstTransformationContext _context;
             private readonly IXamlAstTransformer _transformer;
 
-            public Visitor(XamlAstTransformationContext context, IXamlAstTransformer transformer)
+            public Visitor(AstTransformationContext context, IXamlAstTransformer transformer)
             {
                 _context = context;
                 _transformer = transformer;

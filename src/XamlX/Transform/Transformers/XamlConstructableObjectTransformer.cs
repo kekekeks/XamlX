@@ -13,7 +13,7 @@ namespace XamlX.Transform.Transformers
     class XamlConstructableObjectTransformer : IXamlAstTransformer
     {
         IXamlConstructor TransformArgumentsAndGetConstructor(
-            XamlAstTransformationContext context,
+            AstTransformationContext context,
             XamlAstObjectNode n)
         {
             var type = n.Type.GetClrType();
@@ -47,7 +47,7 @@ namespace XamlX.Transform.Transformers
             return ctor;
         }
 
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstObjectNode ni)
             {

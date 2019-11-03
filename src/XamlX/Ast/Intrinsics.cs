@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
@@ -19,7 +20,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen.Emit(OpCodes.Ldnull);
             return XamlILNodeEmitResult.Type(0, XamlPseudoType.Null);
@@ -49,7 +50,7 @@ namespace XamlX.Ast
             Value = Value.Visit(visitor) as IXamlAstTypeReference;
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var type = Value.GetClrType();
             var method = _systemType.Methods.FirstOrDefault(m =>
@@ -96,7 +97,7 @@ namespace XamlX.Ast
             return rv;
         }
         
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var type = TargetType.GetClrType();
             var member = ResolveMember(type);
@@ -152,7 +153,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (Constant is string)
                 codeGen.Emit(OpCodes.Ldstr, (string) Constant);
@@ -180,7 +181,7 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal)
@@ -206,7 +207,7 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal)
@@ -238,7 +239,7 @@ namespace XamlX.Ast
         }
 
         public override IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, Method.DeclaringType);
             codeGen

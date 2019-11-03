@@ -11,7 +11,7 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlTransformerConfiguration
+    class TransformerConfiguration
     {
         private Dictionary<Type, object> _extras = new Dictionary<Type, object>();
         /// <summary>
@@ -35,7 +35,7 @@ namespace XamlX.Transform
         /// <typeparam name="T"></typeparam>
         public void AddExtra<T>(T extra) => _extras[typeof(T)] = extra;
 
-        public delegate bool XamlValueConverter(XamlAstTransformationContext context,
+        public delegate bool XamlValueConverter(AstTransformationContext context,
             IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode result);
         
         public IXamlTypeSystem TypeSystem { get; }
@@ -49,7 +49,7 @@ namespace XamlX.Transform
             
         };
 
-        public XamlTransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
+        public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
             XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
             XamlValueConverter customValueConverter = null)
         {

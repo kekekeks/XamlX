@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using XamlX.TypeSystem;
 
-namespace XamlX.Transform
+namespace XamlX.Emit
 {
 #if !XAMLX_INTERNAL
     public

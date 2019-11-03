@@ -5,9 +5,9 @@ namespace Benchmarks
 {
     class BenchmarksXamlConfiguration
     {
-        public static XamlTransformerConfiguration Configure(IXamlTypeSystem typeSystem)
+        public static TransformerConfiguration Configure(IXamlTypeSystem typeSystem)
         {
-            return new XamlTransformerConfiguration(typeSystem,
+            return new TransformerConfiguration(typeSystem,
                 typeSystem.FindAssembly("Benchmarks"),
                 new XamlLanguageTypeMappings(typeSystem)
                 {

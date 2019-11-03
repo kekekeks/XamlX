@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlContentConvertTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (!(node is XamlAstObjectNode on))
                 return node;

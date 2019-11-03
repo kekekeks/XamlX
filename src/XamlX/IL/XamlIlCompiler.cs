@@ -5,6 +5,8 @@ using XamlX.Ast;
 using XamlX.Transform;
 using XamlX.IL.Emitters;
 using XamlX.TypeSystem;
+using XamlX.Emit;
+using XamlX.Compiler;
 
 namespace XamlX.IL
 {
@@ -20,7 +22,7 @@ namespace XamlX.IL
         }
 
         public XamlILCompiler(
-            XamlTransformerConfiguration configuration,
+            TransformerConfiguration configuration,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             bool fillWithDefaults)
             : base(configuration, emitMappings, fillWithDefaults)
@@ -50,7 +52,7 @@ namespace XamlX.IL
                 _emitMappings);
         }
 
-        protected override XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
+        protected override XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
@@ -68,7 +70,7 @@ namespace XamlX.IL
                 codeGen.Emit(OpCodes.Stloc, contextLocal);
             }
 
-            var emitContext = new XamlEmitContext(codeGen, _configuration,
+            var emitContext = new ILEmitContext(codeGen, _configuration,
                 _emitMappings, context, contextLocal, createSubType,
                 file, Emitters);
             return emitContext;
@@ -127,7 +129,7 @@ namespace XamlX.IL
             if (namespaceInfoBuilder != null)
             {
                 staticProviders.Add(
-                    IL.XamlNamespaceInfoHelper.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
+                    NamespaceInfoProvider.EmitNamespaceInfoProvider(_configuration, namespaceInfoBuilder, doc));
             }
 
             var context = new RuntimeContext(contextType,

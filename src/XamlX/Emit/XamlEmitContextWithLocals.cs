@@ -2,22 +2,23 @@
 using System.Collections.Generic;
 using System.Text;
 using XamlX.Ast;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
-namespace XamlX.Transform
+namespace XamlX.Emit
 {
 #if !XAMLX_INTERNAL
     public
 #endif
-    abstract class XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> : XamlXEmitContext<TBackendEmitter, TEmitResult>
+    abstract class XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> : XamlEmitContext<TBackendEmitter, TEmitResult>
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
         private readonly Dictionary<XamlAstCompilerLocalNode, IXamlLocal>
             _locals = new Dictionary<XamlAstCompilerLocalNode, IXamlLocal>();
 
-        public XamlXEmitContextWithLocals(TBackendEmitter emitter,
-            XamlTransformerConfiguration configuration,
+        public XamlEmitContextWithLocals(TBackendEmitter emitter,
+            TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
@@ -132,7 +133,7 @@ namespace XamlX.Transform
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(IXamlAstNode node, XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL
@@ -142,7 +143,7 @@ namespace XamlX.Transform
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult Emit(XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL
@@ -152,7 +153,7 @@ namespace XamlX.Transform
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
-        bool EmitCall(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
+        bool EmitCall(XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
     }
 
 #if !XAMLX_INTERNAL
@@ -162,6 +163,6 @@ namespace XamlX.Transform
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
-        void Emit(XamlXEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
+        void Emit(XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
     }
 }

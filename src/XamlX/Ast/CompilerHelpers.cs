@@ -4,6 +4,7 @@ using XamlX.IL.Emitters;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
 using XamlX.IL;
+using XamlX.Emit;
 
 namespace XamlX.Ast
 {
@@ -26,7 +27,7 @@ namespace XamlX.Ast
         }
         
         IXamlAstTypeReference IXamlAstValueNode.Type => _typeReference;
-        public XamlILNodeEmitResult Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.LoadLocalValue(this, codeGen);
             return XamlILNodeEmitResult.Type(0, Type);
@@ -54,7 +55,7 @@ namespace XamlX.Ast
             Local = (XamlAstCompilerLocalNode) Local.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
@@ -72,7 +73,7 @@ namespace XamlX.Ast
         {
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var res = context.Emit(Value, codeGen, Value.Type.GetClrType());
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
@@ -103,7 +104,7 @@ namespace XamlX.Ast
             Imperative = imperative;
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             // Discard the stack value we are "supposed" to manipulate
             codeGen.Pop();
@@ -138,7 +139,7 @@ namespace XamlX.Ast
             Manipulation = (IXamlAstManipulationNode) Manipulation.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             context.Emit(Manipulation, codeGen, null);
@@ -157,7 +158,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen.Ldloc(context.ContextLocal);
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
@@ -183,7 +184,7 @@ namespace XamlX.Ast
             Type = (IXamlAstTypeReference) Type.Visit(visitor);
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, context.Configuration.WellKnownTypes.Object);
             var t = Type.GetClrType();
@@ -206,7 +207,7 @@ namespace XamlX.Ast
         {
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             XamlNeedsParentStackCache.Verify(context, this);
             return context.Emit(Value, codeGen, Value.Type.GetClrType());

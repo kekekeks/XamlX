@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using XamlX.Ast;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -51,31 +49,9 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlLanguageEmitMappings<TBackendEmitter, TEmitResult>
-        where TEmitResult : IXamlEmitResult
-    {
-        public Func<XamlXEmitContext<TBackendEmitter, TEmitResult>, TBackendEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
-        public XamlContextTypeBuilderCallback<TBackendEmitter> ContextTypeBuilderCallback { get; set; }
-        public XamlContextFactoryCallback<TBackendEmitter, TEmitResult> ContextFactoryCallback { get; set; }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
     interface IXamlCustomAttributeResolver
     {
         IXamlCustomAttribute GetCustomAttribute(IXamlType type, IXamlType attributeType);
         IXamlCustomAttribute GetCustomAttribute(IXamlProperty property, IXamlType attributeType);
     }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlTypeBuilder<TBackendEmitter> typeBuilder, TBackendEmitter constructor);
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    delegate void XamlContextFactoryCallback<TBackendEmitter, TEmitResult>(XamlRuntimeContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter)
-        where TEmitResult : IXamlEmitResult;
 }

@@ -10,7 +10,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlTopDownInitializationTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             var usableAttrs = context.Configuration.TypeMappings.UsableDuringInitializationAttributes;
             if (!(usableAttrs?.Count > 0))

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 using XamlX.Ast;
+using XamlX.Emit;
+using XamlX.Transform;
 using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
-namespace XamlX.Transform
+namespace XamlX.Compiler
 {
 #if !XAMLX_INTERNAL
     public
@@ -13,7 +15,7 @@ namespace XamlX.Transform
     abstract class XamlImperativeCompiler<TBackendEmitter, TEmitResult> : XamlCompiler<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        public XamlImperativeCompiler(XamlTransformerConfiguration configuration,
+        public XamlImperativeCompiler(TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings, bool fillWithDefaults)
             : base(configuration, emitMappings, fillWithDefaults)
         {

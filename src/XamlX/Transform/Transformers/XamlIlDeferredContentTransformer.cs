@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlDeferredContentTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (!(node is XamlPropertyAssignmentNode pa))
                 return node;

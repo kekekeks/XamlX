@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
+using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 

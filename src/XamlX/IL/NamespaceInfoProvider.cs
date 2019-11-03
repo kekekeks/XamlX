@@ -11,9 +11,9 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlNamespaceInfoHelper
+    static class NamespaceInfoProvider
     {
-        public static IXamlField EmitNamespaceInfoProvider(XamlTransformerConfiguration configuration,
+        public static IXamlField EmitNamespaceInfoProvider(TransformerConfiguration configuration,
             IXamlTypeBuilder<IXamlILEmitter> typeBuilder, XamlDocument document)
         {
             var iface = configuration.TypeMappings.XmlNamespaceInfoProvider;
@@ -60,7 +60,7 @@ namespace XamlX.IL
                     .Newobj(listType.FindConstructor(new List<IXamlType>()))
                     .Stloc(listLocal);
 
-                var resolved = Transform.XamlNamespaceInfoHelper.TryResolve(configuration, alias.Value);
+                var resolved = Transform.NamespaceInfoHelper.TryResolve(configuration, alias.Value);
                 if (resolved != null)
                 {
                     foreach (var rns in resolved)

@@ -11,7 +11,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlNewObjectTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstConstructableObjectNode obj)
             {

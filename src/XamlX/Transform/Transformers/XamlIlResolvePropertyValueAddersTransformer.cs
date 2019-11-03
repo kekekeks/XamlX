@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.IL;
 using XamlX.TypeSystem;
 
@@ -11,7 +12,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlResolvePropertyValueAddersTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstClrProperty prop && prop.Getter != null)
             {

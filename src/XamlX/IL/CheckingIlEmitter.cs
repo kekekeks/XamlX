@@ -10,7 +10,7 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class CheckingIlEmitter : IXamlILEmitter
+    class CheckingILEmitter : IXamlILEmitter
     {
         private readonly IXamlILEmitter _inner;
 
@@ -23,10 +23,9 @@ namespace XamlX.IL
         private List<IXamlLabel> _labelsToMarkOnNextInstruction = new List<IXamlLabel>();
         private bool _paused;
 
-        public CheckingIlEmitter(IXamlILEmitter inner)
+        public CheckingILEmitter(IXamlILEmitter inner)
         {
             _inner = inner;
-
         }        
         
         class Instruction
@@ -176,7 +175,7 @@ namespace XamlX.IL
             if (_paused)
                 return;
             _instructions.Add(new Instruction(_instructions.Count, change));
-            (_inner as CheckingIlEmitter)?.ExplicitStack(change);
+            (_inner as CheckingILEmitter)?.ExplicitStack(change);
         }
         
         void Track(OpCode code, object operand)

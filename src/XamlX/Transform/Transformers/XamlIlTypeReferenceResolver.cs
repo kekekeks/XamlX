@@ -16,7 +16,7 @@ namespace XamlX.Transform.Transformers
                 new Dictionary<(string, string, bool), IXamlType>();
         }
         
-        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
+        public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments,
             IXamlLineInfo lineInfo,
             bool strict)
@@ -41,7 +41,7 @@ namespace XamlX.Transform.Transformers
                 return ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo, strict);
         }
 
-        static XamlAstClrTypeReference ResolveTypeCore(XamlAstTransformationContext context,
+        static XamlAstClrTypeReference ResolveTypeCore(AstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
             bool strict)
         {
@@ -71,7 +71,7 @@ namespace XamlX.Transform.Transformers
 
             if (found == null)
             {
-                var resolvedNamespaces = XamlNamespaceInfoHelper.TryResolve(context.Configuration, xmlns);
+                var resolvedNamespaces = NamespaceInfoHelper.TryResolve(context.Configuration, xmlns);
                 if (resolvedNamespaces?.Count > 0)
                     found = Attempt(formedName =>
                     {
@@ -102,7 +102,7 @@ namespace XamlX.Transform.Transformers
             return null;
         }
 
-        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
+        public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
             string xmlName, bool isMarkupExtension, IXamlLineInfo lineInfo,
             bool strict)
         {
@@ -119,7 +119,7 @@ namespace XamlX.Transform.Transformers
             return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo, strict);
         }
 
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstXmlTypeReference xmlref)
             {
@@ -132,7 +132,7 @@ namespace XamlX.Transform.Transformers
             return node;
         }
 
-        public static XamlAstClrTypeReference ResolveType(XamlAstTransformationContext context,
+        public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
             XamlAstXmlTypeReference xmlref, bool strict)
         {
             return ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.IsMarkupExtension,

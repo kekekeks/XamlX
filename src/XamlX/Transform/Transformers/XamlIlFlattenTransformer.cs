@@ -7,7 +7,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlFlattenTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlManipulationGroupNode group && group.Children.Count == 1)
                 return group.Children[0];

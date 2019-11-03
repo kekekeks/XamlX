@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using System.Xml;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -12,11 +13,11 @@ namespace XamlX.IL
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlEmitContext : XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult>
+    class ILEmitContext : XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public bool EnableIlVerification { get; }
 
-        public XamlEmitContext(IXamlILEmitter emitter, XamlTransformerConfiguration configuration,
+        public ILEmitContext(IXamlILEmitter emitter, TransformerConfiguration configuration,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
             IXamlLocal contextLocal,
@@ -29,14 +30,14 @@ namespace XamlX.IL
         
         protected override XamlILNodeEmitResult EmitNode(IXamlAstNode value, IXamlILEmitter codeGen)
         {
-            CheckingIlEmitter parent = null;
-            CheckingIlEmitter checkedEmitter = null;
+            CheckingILEmitter parent = null;
+            CheckingILEmitter checkedEmitter = null;
             if (EnableIlVerification)
             {
-                parent = codeGen as CheckingIlEmitter;
+                parent = codeGen as CheckingILEmitter;
 
                 parent?.Pause();
-                checkedEmitter = new CheckingIlEmitter(codeGen);
+                checkedEmitter = new CheckingILEmitter(codeGen);
             }
 #if XAMLX_DEBUG
             var res = base.EmitNode(value, checkedEmitter);

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -33,7 +34,7 @@ namespace XamlX.IL.Emitters
             return lst;
         }
         
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;

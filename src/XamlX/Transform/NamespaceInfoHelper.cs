@@ -10,9 +10,8 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlNamespaceInfoHelper
+    static class NamespaceInfoHelper
     {
-        
         public class NamespaceResolveResult
         {
             public string ClrNamespace { get; set; }
@@ -20,7 +19,7 @@ namespace XamlX.Transform
             public string AssemblyName { get; set; }
         }
         
-        public static List<NamespaceResolveResult> TryResolve(XamlTransformerConfiguration config, string xmlns)
+        public static List<NamespaceResolveResult> TryResolve(TransformerConfiguration config, string xmlns)
         {
             if (config.XmlnsMappings.Namespaces.TryGetValue(xmlns, out var lst))
             {

@@ -9,7 +9,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlKnownDirectivesTransformer : IXamlAstTransformer
     {
-        public IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node)
+        public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstObjectNode ni && ni.Type is XamlAstXmlTypeReference type)
             {

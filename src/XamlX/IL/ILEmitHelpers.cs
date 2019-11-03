@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -32,13 +33,13 @@ namespace XamlX.IL
                     TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
         }
 
-        public static void EmitConvert(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node, IXamlType what,
+        public static void EmitConvert(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node, IXamlType what,
             IXamlType to, IXamlLocal local)
         {
             EmitConvert(context, node, what, to, lda => ilgen.Emit(lda ? OpCodes.Ldloca : OpCodes.Ldloc, local));
         }
 
-        public static void EmitConvert(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node,
+        public static void EmitConvert(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node,
             IXamlType what,
             IXamlType to)
         {
@@ -57,7 +58,7 @@ namespace XamlX.IL
             local?.Dispose();
         }
         
-        public static void EmitConvert(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlLineInfo node, IXamlType what,
+        public static void EmitConvert(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlLineInfo node, IXamlType what,
             IXamlType to, Func<bool, IXamlILEmitter> ld)
         {
             if (what.Equals(to))

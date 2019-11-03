@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
@@ -42,7 +43,7 @@ namespace XamlX.Ast
         public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
         
         public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
-            XamlTransformerConfiguration cfg) : base(lineInfo)
+            TransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
@@ -437,7 +438,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType { get; }
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             codeGen.EmitCall(_method, swallowResult);
         }
@@ -462,7 +463,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType => _method.ReturnType;
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlXEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             int firstCast = -1; 
             for (var c = ParametersWithThis.Count - 1; c >= 0; c--)
@@ -574,7 +575,7 @@ namespace XamlX.Ast
         public IXamlAstTypeReference Type { get; }
         
         public XamlDeferredContentNode(IXamlAstValueNode value, 
-            XamlTransformerConfiguration config) : base(value)
+            TransformerConfiguration config) : base(value)
         {
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
@@ -587,7 +588,7 @@ namespace XamlX.Ast
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
 
-        void CompileBuilder(XamlEmitContext context)
+        void CompileBuilder(ILEmitContext context)
         {
             var il = context.Emitter;
             // Initialize the context
@@ -633,7 +634,7 @@ namespace XamlX.Ast
             il.Ret();
         }
 
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
@@ -642,7 +643,7 @@ namespace XamlX.Ast
             {
                 isp
             }, "Build", true, true, false);
-            CompileBuilder(new XamlEmitContext(buildMethod.Generator, context.Configuration,
+            CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
                 createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
@@ -686,7 +687,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type => Value.Type;
-        public XamlILNodeEmitResult Emit(XamlXEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal);

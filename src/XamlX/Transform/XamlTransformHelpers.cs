@@ -18,7 +18,7 @@ namespace XamlX.Transform
             
         }
 
-        public static IReadOnlyList<IXamlMethod> FindPossibleAdders(XamlAstTransformationContext context,
+        public static IReadOnlyList<IXamlMethod> FindPossibleAdders(AstTransformationContext context,
             IXamlType type)
         {
             IReadOnlyList<IXamlMethod> FindPossibleAddersImpl()
@@ -77,7 +77,7 @@ namespace XamlX.Transform
 
 
         public static IEnumerable<IXamlMethod> GetMarkupExtensionProvideValueAlternatives(
-            XamlAstTransformationContext context,
+            AstTransformationContext context,
             IXamlType type)
         {
             var sp = context.Configuration.TypeMappings.ServiceProvider;
@@ -93,7 +93,7 @@ namespace XamlX.Transform
                 new Dictionary<IXamlType, IXamlMethod>();
         }
 
-        public static bool TryConvertMarkupExtension(XamlAstTransformationContext context,
+        public static bool TryConvertMarkupExtension(AstTransformationContext context,
             IXamlAstValueNode node, out XamlMarkupExtensionNode o)
         {
             var cache = context.GetOrCreateItem<MarkupExtensionProvideValueCache>();
@@ -131,7 +131,7 @@ namespace XamlX.Transform
             return true;
         }
 
-        public static bool TryGetCorrectlyTypedValue(XamlAstTransformationContext context,
+        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
             IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode rv)
         {
             if (type.IsAssignableFrom(node.Type.GetClrType()))
@@ -143,7 +143,7 @@ namespace XamlX.Transform
             return TryConvertValue(context, node, type, null, out rv);
         }
 
-        public static IXamlType TryGetTypeConverterFromCustomAttribute(XamlTransformerConfiguration cfg,
+        public static IXamlType TryGetTypeConverterFromCustomAttribute(TransformerConfiguration cfg,
             IXamlCustomAttribute attribute)
         {
 
@@ -159,7 +159,7 @@ namespace XamlX.Transform
         }
 
 
-        public static bool TryConvertValue(XamlAstTransformationContext context,
+        public static bool TryConvertValue(AstTransformationContext context,
                 IXamlAstValueNode node, IXamlType type, XamlAstClrProperty propertyContext,
                 out IXamlAstValueNode rv)
         {    

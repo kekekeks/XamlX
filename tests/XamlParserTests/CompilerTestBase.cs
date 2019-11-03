@@ -9,18 +9,19 @@ using XamlX.Parsers;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using XamlX.IL;
+using XamlX.Emit;
 
 namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
         private readonly IXamlTypeSystem _typeSystem;
-        public XamlTransformerConfiguration Configuration { get; }
+        public TransformerConfiguration Configuration { get; }
 
         private CompilerTestBase(IXamlTypeSystem typeSystem)
         {
             _typeSystem = typeSystem;
-            Configuration = new XamlTransformerConfiguration(typeSystem,
+            Configuration = new TransformerConfiguration(typeSystem,
                 typeSystem.FindAssembly("XamlParserTests"),
                 new XamlLanguageTypeMappings(typeSystem)
                 {

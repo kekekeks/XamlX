@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
+using XamlX.Transform;
 using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
-namespace XamlX.Transform
+namespace XamlX.Compiler
 {
 #if !XAMLX_INTERNAL
     public
@@ -13,7 +15,7 @@ namespace XamlX.Transform
     abstract class XamlCompiler<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        protected readonly XamlTransformerConfiguration _configuration;
+        protected readonly TransformerConfiguration _configuration;
         protected readonly XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> _emitMappings;
 
         public List<IXamlAstTransformer> Transformers { get; } = new List<IXamlAstTransformer>();
@@ -21,7 +23,7 @@ namespace XamlX.Transform
 
         public List<object> Emitters { get; } = new List<object>();
 
-        public XamlCompiler(XamlTransformerConfiguration configuration,
+        public XamlCompiler(TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             bool fillWithDefaults)
         {
@@ -50,8 +52,8 @@ namespace XamlX.Transform
             }
         }
 
-        public XamlAstTransformationContext CreateTransformationContext(XamlDocument doc, bool strict)
-            => new XamlAstTransformationContext(_configuration, doc.NamespaceAliases, strict);
+        public AstTransformationContext CreateTransformationContext(XamlDocument doc, bool strict)
+            => new AstTransformationContext(_configuration, doc.NamespaceAliases, strict);
         
         public void Transform(XamlDocument doc, bool strict = true)
         {
@@ -71,18 +73,9 @@ namespace XamlX.Transform
             doc.Root = root;
         }
 
-        protected abstract XamlXEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
+        protected abstract XamlEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
-    }
-
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlAstTransformer
-    {
-        IXamlAstNode Transform(XamlAstTransformationContext context, IXamlAstNode node);
     }
 }

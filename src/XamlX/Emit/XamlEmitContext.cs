@@ -4,15 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using XamlX.Ast;
+using XamlX.Transform;
 using XamlX.TypeSystem;
 
-namespace XamlX.Transform
+namespace XamlX.Emit
 {
-
 #if !XAMLX_INTERNAL
     public
 #endif
-    abstract class XamlXEmitContext<TBackendEmitter, TEmitResult> : XamlContextBase
+    abstract class XamlEmitContext<TBackendEmitter, TEmitResult> : XamlContextBase
         where TEmitResult : IXamlEmitResult
     {
         public IFileSource File { get; }
@@ -20,14 +20,14 @@ namespace XamlX.Transform
 
         private IXamlAstNode _currentNode;
 
-        public XamlTransformerConfiguration Configuration { get; }
+        public TransformerConfiguration Configuration { get; }
         public XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> EmitMappings { get; }
         public XamlRuntimeContext<TBackendEmitter, TEmitResult> RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
         public Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> CreateSubType { get; }
         public TBackendEmitter Emitter { get; }
 
-        public XamlXEmitContext(TBackendEmitter emitter, XamlTransformerConfiguration configuration,
+        public XamlEmitContext(TBackendEmitter emitter, TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
@@ -229,7 +229,7 @@ namespace XamlX.Transform
     interface IXamlAstNodeEmitter<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(IXamlAstNode node, XamlXEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult Emit(IXamlAstNode node, XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL
@@ -238,7 +238,7 @@ namespace XamlX.Transform
     interface IXamlAstEmitableNode<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(XamlXEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult Emit(XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 #if !XAMLX_INTERNAL
     public
@@ -270,7 +270,7 @@ namespace XamlX.Transform
     interface IXamlWrappedMethodEmitter<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        bool EmitCall(XamlXEmitContext<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
+        bool EmitCall(XamlEmitContext<TBackendEmitter, TEmitResult> context, IXamlWrappedMethod method, TBackendEmitter emitter, bool swallowResult);
     }
 
 
@@ -280,6 +280,6 @@ namespace XamlX.Transform
     interface IXamlEmitableWrappedMethod<TBackendEmitter, TEmitResult> : IXamlWrappedMethod
         where TEmitResult: IXamlEmitResult
     {
-        void Emit(XamlXEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
+        void Emit(XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
     }
 }
