@@ -39,7 +39,7 @@ namespace XamlX.IL.Emitters
                                    && context.GetOrCreateItem<XamlNeedsParentStackCache>().NeedsParentStack(node);
             if(addToParentStack)
             {
-                using (var local = context.GetLocal(init.Type))
+                using (var local = context.GetLocalOfType(init.Type))
                     codeGen
                         .Stloc(local.Local)
                         .Ldloc(context.ContextLocal)

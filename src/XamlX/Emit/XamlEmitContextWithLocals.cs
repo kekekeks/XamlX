@@ -29,9 +29,7 @@ namespace XamlX.Emit
         {
         }
 
-        public abstract void StoreLocal(XamlAstCompilerLocalNode node, TBackendEmitter codeGen);
-
-        protected IXamlLocal TryGetLocalForNode(XamlAstCompilerLocalNode node, TBackendEmitter codeGen, bool throwOnUninitialized)
+        public IXamlLocal GetLocalForNode(XamlAstCompilerLocalNode node, TBackendEmitter codeGen, bool throwOnUninitialized)
         {
             if (!_locals.TryGetValue(node, out var local))
             {
@@ -46,7 +44,7 @@ namespace XamlX.Emit
 
         public abstract void LoadLocalValue(XamlAstCompilerLocalNode node, TBackendEmitter codeGen);
 
-        public XamlLocalsPool.PooledLocal GetLocal(IXamlType type)
+        public XamlLocalsPool.PooledLocal GetLocalOfType(IXamlType type)
         {
             return Emitter.LocalsPool.GetLocal(type);
         }

@@ -79,7 +79,7 @@ namespace XamlX.IL
                 {
                     // We need to store the value to a temporary variable, since *address*
                     // is required (probably for  method call on the value type)
-                    local = GetLocal(returnedType);
+                    local = GetLocalOfType(returnedType);
                     codeGen
                         .Stloc(local.Local)
                         .Ldloca(local.Local);
@@ -89,16 +89,6 @@ namespace XamlX.IL
                 return codeGen;
             });
             local?.Dispose();
-        }
-
-        public override void StoreLocal(XamlAstCompilerLocalNode node, IXamlILEmitter codeGen)
-        {
-            codeGen.Stloc(TryGetLocalForNode(node, codeGen, false));
-        }
-
-        public override void LoadLocalValue(XamlAstCompilerLocalNode node, IXamlILEmitter codeGen)
-        {
-            codeGen.Ldloc(TryGetLocalForNode(node, codeGen, true));
         }
     }
 
