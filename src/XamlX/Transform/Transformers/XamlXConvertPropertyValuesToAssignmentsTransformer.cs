@@ -190,8 +190,10 @@ namespace XamlX.Transform.Transformers
                     init.Manipulation = VisitManipulationNode(init.Manipulation);
                 return man;
             }
-                
-            if (value is XamlXAstObjectNode astObject)
+
+            var probe = (value is XamlXValueWithSideEffectNodeBase side) ? side.Value : value;
+
+            if (probe is XamlXAstObjectNode astObject)
                 ProcessDirectiveCandidateList(astObject.Children);
             else if (value is XamlXValueWithManipulationNode vman)
             {
