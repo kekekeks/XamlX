@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
+using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
