@@ -29,7 +29,8 @@ namespace XamlX.Ast
         IXamlAstTypeReference IXamlAstValueNode.Type => _typeReference;
         public XamlILNodeEmitResult Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
-            context.LoadLocalValue(this, codeGen);
+            var lcl = context.GetLocalForNode(this, codeGen, throwOnUninitialized: true);
+            codeGen.Ldloc(lcl);
             return XamlILNodeEmitResult.Type(0, Type);
         }
     }
@@ -59,7 +60,8 @@ namespace XamlX.Ast
         {
             var rv = context.Emit(Value, codeGen, Local.Type);
             codeGen.Emit(OpCodes.Dup);
-            context.StoreLocal(Local, codeGen);
+            var lcl = context.GetLocalForNode(Local, codeGen, throwOnUninitialized: false);
+            codeGen.Stloc(lcl);
             return XamlILNodeEmitResult.Type(0, rv.ReturnType);
         }
     }

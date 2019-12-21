@@ -480,7 +480,7 @@ namespace XamlX.Ast
                     codeGen.Castclass(_method.ParametersWithThis[c]);
                     if (c > firstCast)
                     {
-                        var l = context.GetLocal(_method.ParametersWithThis[c]);
+                        var l = context.GetLocalOfType(_method.ParametersWithThis[c]);
                         codeGen.Stloc(l.Local);
                         locals.Push(l);
                     }
@@ -602,7 +602,7 @@ namespace XamlX.Ast
             {
                 // Attempt to get the root object from parent service provider
                 var noRoot = il.DefineLabel();
-                using (var loc = context.GetLocal(context.Configuration.WellKnownTypes.Object))
+                using (var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object))
                     il
                         // if(arg == null) goto noRoot;
                         .Ldarg_0()

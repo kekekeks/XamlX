@@ -70,7 +70,7 @@ namespace XamlX.IL
                 {
                     if (to.GenericTypeDefinition?.Equals(context.Configuration.WellKnownTypes.NullableT) == true)
                     {
-                        using (var loc = context.GetLocal(to))
+                        using (var loc = context.GetLocalOfType(to))
                             ld(false)
                                 .Pop()
                                 .Ldloca(loc.Local)
