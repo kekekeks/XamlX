@@ -23,9 +23,9 @@ namespace XamlX.Compiler
             {
                 Transformers.AddRange(new IXamlAstTransformer[]
                 {
-                    new XamlNewObjectTransformer(),
-                    new XamlDeferredContentTransformer(),
-                    new XamlTopDownInitializationTransformer(),
+                    new NewObjectTransformer(),
+                    new DeferredContentTransformer(),
+                    new TopDownInitializationTransformer(),
                 });
             }
         }

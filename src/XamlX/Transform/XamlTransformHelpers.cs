@@ -199,7 +199,7 @@ namespace XamlX.Transform
 
                 if (type.FullName == "System.Type")
                 {
-                    var resolvedType = XamlTypeReferenceResolver.ResolveType(context, tn.Text, false, tn, true);
+                    var resolvedType = TypeReferenceResolver.ResolveType(context, tn.Text, false, tn, true);
                     rv = new XamlTypeExtensionNode(tn, resolvedType, type);
                     return true;
                 }

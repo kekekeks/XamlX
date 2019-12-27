@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlTypeReferenceResolver : IXamlAstTransformer
+    class TypeReferenceResolver : IXamlAstTransformer
     {
         class TypeResolverCache
         {

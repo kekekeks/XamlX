@@ -6,7 +6,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXArgumentsTransformer : IXamlAstTransformer
+    class XArgumentsTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

@@ -33,21 +33,21 @@ namespace XamlX.Compiler
             {
                 Transformers = new List<IXamlAstTransformer>
                 {
-                    new XamlKnownDirectivesTransformer(),
+                    new KnownDirectivesTransformer(),
                     new XamlIntrinsicsTransformer(),
-                    new XamlXArgumentsTransformer(),
-                    new XamlTypeReferenceResolver(),
-                    new XamlMarkupExtensionTransformer(),
-                    new XamlPropertyReferenceResolver(),
-                    new XamlContentConvertTransformer(),
-                    new XamlResolveContentPropertyTransformer(),
-                    new XamlResolvePropertyValueAddersTransformer(),
-                    new XamlConvertPropertyValuesToAssignmentsTransformer(),
-                    new XamlConstructableObjectTransformer()
+                    new XArgumentsTransformer(),
+                    new TypeReferenceResolver(),
+                    new MarkupExtensionTransformer(),
+                    new PropertyReferenceResolver(),
+                    new ContentConvertTransformer(),
+                    new ResolveContentPropertyTransformer(),
+                    new ResolvePropertyValueAddersTransformer(),
+                    new ConvertPropertyValuesToAssignmentsTransformer(),
+                    new ConstructableObjectTransformer()
                 };
                 SimplificationTransformers = new List<IXamlAstTransformer>
                 {
-                    new XamlFlattenTransformer()
+                    new FlattenAstTransformer()
                 };
             }
         }

@@ -10,7 +10,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlResolvePropertyValueAddersTransformer : IXamlAstTransformer
+    class ResolvePropertyValueAddersTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

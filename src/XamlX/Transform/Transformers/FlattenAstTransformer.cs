@@ -5,7 +5,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlFlattenTransformer : IXamlAstTransformer
+    class FlattenAstTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

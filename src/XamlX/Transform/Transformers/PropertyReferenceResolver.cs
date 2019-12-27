@@ -8,7 +8,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlPropertyReferenceResolver : IXamlAstTransformer
+    class PropertyReferenceResolver : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

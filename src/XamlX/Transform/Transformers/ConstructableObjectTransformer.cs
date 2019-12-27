@@ -10,7 +10,7 @@ namespace XamlX.Transform.Transformers
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlConstructableObjectTransformer : IXamlAstTransformer
+    class ConstructableObjectTransformer : IXamlAstTransformer
     {
         IXamlConstructor TransformArgumentsAndGetConstructor(
             AstTransformationContext context,
