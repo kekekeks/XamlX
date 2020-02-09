@@ -1,46 +1,46 @@
 
 using System.Collections.Generic;
 using XamlX.TypeSystem;
-using Visitor = XamlX.Ast.IXamlXAstVisitor;
+using Visitor = XamlX.Ast.IXamlAstVisitor;
 namespace XamlX.Ast
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXLineInfo
+    interface IXamlLineInfo
     {
         int Line { get; set; }
         int Position { get; set; }   
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstVisitor
+    interface IXamlAstVisitor
     {
-        IXamlXAstNode Visit(IXamlXAstNode node);
-        void Push(IXamlXAstNode node);
+        IXamlAstNode Visit(IXamlAstNode node);
+        void Push(IXamlAstNode node);
         void Pop();
     }
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstNode : IXamlXLineInfo
+    interface IXamlAstNode : IXamlLineInfo
     {
         void VisitChildren(Visitor visitor);
-        IXamlXAstNode Visit(Visitor visitor);
+        IXamlAstNode Visit(Visitor visitor);
     }
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    abstract class XamlXAstNode : IXamlXAstNode
+    abstract class XamlAstNode : IXamlAstNode
     {
         public int Line { get; set; }
         public int Position { get; set; }
 
-        public XamlXAstNode(IXamlXLineInfo lineInfo)
+        public XamlAstNode(IXamlLineInfo lineInfo)
         {
             Line = lineInfo.Line;
             Position = lineInfo.Position;
@@ -51,7 +51,7 @@ namespace XamlX.Ast
             
         }
         
-        public IXamlXAstNode Visit(Visitor visitor)
+        public IXamlAstNode Visit(Visitor visitor)
         {
             var node = visitor.Visit(this);
             try
@@ -67,7 +67,7 @@ namespace XamlX.Ast
             return node;
         }
 
-        protected static void VisitList<T>(IList<T> list, Visitor visitor) where T : IXamlXAstNode
+        protected static void VisitList<T>(IList<T> list, Visitor visitor) where T : IXamlAstNode
         {
             for (var c = 0; c < list.Count; c++)
             {
@@ -76,81 +76,81 @@ namespace XamlX.Ast
         }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstManipulationNode : IXamlXAstNode
+    interface IXamlAstManipulationNode : IXamlAstNode
     {
         
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstNodeNeedsParentStack
+    interface IXamlAstNodeNeedsParentStack
     {
         bool NeedsParentStack { get; }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstImperativeNode : IXamlXAstNode
+    interface IXamlAstImperativeNode : IXamlAstNode
     {
         
     }
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstValueNode : IXamlXAstNode
+    interface IXamlAstValueNode : IXamlAstNode
     {
-        IXamlXAstTypeReference Type { get; }
+        IXamlAstTypeReference Type { get; }
     }
     
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstTypeReference : IXamlXAstNode
+    interface IXamlAstTypeReference : IXamlAstNode
     {
         bool IsMarkupExtension { get; }
-        bool Equals(IXamlXAstTypeReference other);
+        bool Equals(IXamlAstTypeReference other);
     }
     
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlXAstPropertyReference : IXamlXAstNode
+    interface IXamlAstPropertyReference : IXamlAstNode
     {
         
     }
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    static class XamlXAstExtensions
+    static class XamlAstExtensions
     {
-        public static IXamlXType GetClrType(this IXamlXAstTypeReference r)
+        public static IXamlType GetClrType(this IXamlAstTypeReference r)
         {
-            if (r is XamlXAstClrTypeReference clr)
+            if (r is XamlAstClrTypeReference clr)
                 return clr.Type;
-            throw new XamlXParseException($"Unable to convert {r} to CLR type", r);
+            throw new XamlParseException($"Unable to convert {r} to CLR type", r);
         }
         
-        public static XamlXAstClrTypeReference GetClrTypeReference(this IXamlXAstTypeReference r)
+        public static XamlAstClrTypeReference GetClrTypeReference(this IXamlAstTypeReference r)
         {
-            if (r is XamlXAstClrTypeReference clr)
+            if (r is XamlAstClrTypeReference clr)
                 return clr;
-            throw new XamlXParseException($"Unable to convert {r} to CLR type", r);
+            throw new XamlParseException($"Unable to convert {r} to CLR type", r);
         }
         
-        public static XamlXAstClrProperty GetClrProperty(this IXamlXAstPropertyReference r)
+        public static XamlAstClrProperty GetClrProperty(this IXamlAstPropertyReference r)
         {
-            if (r is XamlXAstClrProperty clr)
+            if (r is XamlAstClrProperty clr)
                 return clr;
-            throw new XamlXParseException($"Unable to convert {r} to CLR property", r);
+            throw new XamlParseException($"Unable to convert {r} to CLR property", r);
         }
     }
 }

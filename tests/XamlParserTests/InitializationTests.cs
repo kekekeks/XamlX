@@ -134,7 +134,6 @@ namespace XamlParserTests
         [Fact]
         public void UsableDuringInitialization_Should_Revert_Initialization_Order()
         {
-            
             CompileAndRun(@"
 <InitializationTestsTopDownClass xmlns='test' Property='123'>
     <InitializationTestsTopDownClass.Child>

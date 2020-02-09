@@ -4,23 +4,19 @@ using XamlX.Ast;
 
 namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
     class SystemXamlMarkupExtensionParser
     {
-
-
-
-        
-        public static IXamlXAstValueNode Parse(IXamlXLineInfo li, string ext,
-            Func<string, XamlXAstXmlTypeReference> typeResolver)
+        public static IXamlAstValueNode Parse(IXamlLineInfo li, string ext,
+            Func<string, XamlAstXmlTypeReference> typeResolver)
         {
             var ctx = new MeScannerContext(typeResolver, li);
             var scanner = new MeScanner(ctx, ext, li.Line, li.Position);
 
             var currentTypeStack = new Stack<MeScannerTypeName>();
-            IXamlXAstValueNode ReadExtension()
+            IXamlAstValueNode ReadExtension()
             {
                 if (scanner.Token != MeTokenType.Open)
                     throw new MeScannerParseException("Unexpected token " + scanner.Token);
@@ -33,7 +29,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 currentTypeStack.Push(ctx.CurrentType);
                 ctx.CurrentType = extType;
 
-                var rv = new XamlXAstObjectNode(li, extType.TypeReference);
+                var rv = new XamlAstObjectNode(li, extType.TypeReference);
                 
                 
                 while (true)
@@ -48,7 +44,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         if (scanner.Token != MeTokenType.EqualSign)
                             throw new MeScannerParseException("Unexpected token " + scanner.Token);
                         var propValue = Read();
-                        rv.Children.Add(new XamlXAstXamlPropertyValueNode(li, prop, propValue));
+                        rv.Children.Add(new XamlAstXamlPropertyValueNode(li, prop, propValue));
                     }
                     else if (scanner.Token == MeTokenType.String || scanner.Token == MeTokenType.QuotedMarkupExtension
                                                                  || scanner.Token == MeTokenType.Open)
@@ -69,17 +65,17 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 return rv;
             }
 
-            IXamlXAstValueNode Read()
+            IXamlAstValueNode Read()
             {
                 scanner.Read();
                 return ReadCurrent();
             }
             
-            IXamlXAstValueNode ReadCurrent()
+            IXamlAstValueNode ReadCurrent()
             {
                 
                 if (scanner.Token == MeTokenType.String)
-                    return new XamlXAstTextNode(li, scanner.TokenText);
+                    return new XamlAstTextNode(li, scanner.TokenText);
                 if (scanner.Token == MeTokenType.Open)
                     return ReadExtension();
                 if (scanner.Token == MeTokenType.QuotedMarkupExtension)

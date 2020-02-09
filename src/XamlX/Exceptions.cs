@@ -4,51 +4,51 @@ using XamlX.Ast;
 
 namespace XamlX
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXParseException : XmlException
+    class XamlParseException : XmlException
     {
-        public XamlXParseException(string message, int line, int position) : base(
+        public XamlParseException(string message, int line, int position) : base(
             $"{message} (line {line} position {position})",
             null, line, position)
         {
         }
 
-        public XamlXParseException(string message, IXamlXLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
+        public XamlParseException(string message, IXamlLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
         {
             
         }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXTransformException : XamlXParseException
+    class XamlTransformException : XamlParseException
     {
-        public XamlXTransformException(string message, IXamlXLineInfo lineInfo) : base(message, lineInfo)
+        public XamlTransformException(string message, IXamlLineInfo lineInfo) : base(message, lineInfo)
         {
 
         }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXLoadException : XamlXParseException
+    class XamlLoadException : XamlParseException
     {
-        public XamlXLoadException(string message, IXamlXLineInfo lineInfo) : base(message, lineInfo)
+        public XamlLoadException(string message, IXamlLineInfo lineInfo) : base(message, lineInfo)
         {
         }
     }
 
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXTypeSystemException : Exception
+    class XamlTypeSystemException : Exception
     {
-        public XamlXTypeSystemException(string message) : base(message)
+        public XamlTypeSystemException(string message) : base(message)
         {
             
         }

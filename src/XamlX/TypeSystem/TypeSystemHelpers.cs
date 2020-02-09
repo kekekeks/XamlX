@@ -8,7 +8,7 @@ using XamlX.Transform;
 
 namespace XamlX.TypeSystem
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
     class TypeSystemHelpers
@@ -27,28 +27,10 @@ namespace XamlX.TypeSystem
             return (long) Convert.ChangeType(literal, typeof(long));
         }
 
-        public static void EmitFieldLiteral(IXamlXField field, IXamlXEmitter codeGen)
-        {
-            var ftype = field.FieldType.IsEnum ? field.FieldType.GetEnumUnderlyingType() : field.FieldType;
-                    
-            if (ftype.Name == "UInt64" || ftype.Name == "Int64")
-                codeGen.Emit(OpCodes.Ldc_I8,
-                    TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
-            else if (ftype.Name == "Double")
-                codeGen.Emit(OpCodes.Ldc_R8, (double) field.GetLiteralValue());
-            else if (ftype.Name == "Single")
-                codeGen.Emit(OpCodes.Ldc_R4, (float) field.GetLiteralValue());
-            else if (ftype.Name == "String")
-                codeGen.Emit(OpCodes.Ldstr, (string) field.GetLiteralValue());
-            else
-                codeGen.Emit(OpCodes.Ldc_I4,
-                    TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
-        }
-
-        public static XamlXConstantNode GetLiteralFieldConstantNode(IXamlXField field, IXamlXLineInfo info)
-            => new XamlXConstantNode(info, field.FieldType, GetLiteralFieldConstantValue(field));
+        public static XamlConstantNode GetLiteralFieldConstantNode(IXamlField field, IXamlLineInfo info)
+            => new XamlConstantNode(info, field.FieldType, GetLiteralFieldConstantValue(field));
         
-        public static object GetLiteralFieldConstantValue(IXamlXField field)
+        public static object GetLiteralFieldConstantValue(IXamlField field)
         {
             var value = field.GetLiteralValue();
             
@@ -61,11 +43,11 @@ namespace XamlX.TypeSystem
 
 
 
-        public static bool TryGetEnumValueNode(IXamlXType enumType, string value, IXamlXLineInfo lineInfo, out XamlXConstantNode rv)
+        public static bool TryGetEnumValueNode(IXamlType enumType, string value, IXamlLineInfo lineInfo, out XamlConstantNode rv)
         {
             if (TryGetEnumValue(enumType, value, out var constant))
             {
-                rv = new XamlXConstantNode(lineInfo, enumType, constant);
+                rv = new XamlConstantNode(lineInfo, enumType, constant);
                 return true;
             }
 
@@ -73,7 +55,7 @@ namespace XamlX.TypeSystem
             return false;
         }
         
-        public static bool TryGetEnumValue(IXamlXType enumType, string value, out object rv)
+        public static bool TryGetEnumValue(IXamlType enumType, string value, out object rv)
         {
             rv = null;
             if (long.TryParse(value, out var parsedLong))
@@ -126,7 +108,7 @@ namespace XamlX.TypeSystem
             throw new ArgumentException("Unsupported type " + l.GetType());
         }
 
-        public static bool ParseConstantIfTypeAllows(string s, IXamlXType type, IXamlXLineInfo info, out XamlXConstantNode rv)
+        public static bool ParseConstantIfTypeAllows(string s, IXamlType type, IXamlLineInfo info, out XamlConstantNode rv)
         {
             rv = null;
             if (type.Namespace != "System")
@@ -162,110 +144,11 @@ namespace XamlX.TypeSystem
             var r = Parse();
             if (r != null)
             {
-                rv = new XamlXConstantNode(info, type, r);
+                rv = new XamlConstantNode(info, type, r);
                 return true;
             }
 
             return false;
-        }
-
-        public static void EmitConvert(XamlXEmitContext context, IXamlXEmitter ilgen, IXamlXLineInfo node, IXamlXType what,
-            IXamlXType to, IXamlXLocal local)
-        {
-            EmitConvert(context, node, what, to, lda => ilgen.Emit(lda ? OpCodes.Ldloca : OpCodes.Ldloc, local));
-        }
-
-        public static void EmitConvert(XamlXEmitContext context, IXamlXEmitter ilgen, IXamlXLineInfo node,
-            IXamlXType what,
-            IXamlXType to)
-        {
-            XamlXLocalsPool.PooledLocal local = null;
-
-            EmitConvert(context, node, what, to, lda =>
-            {
-                if (!lda)
-                    return ilgen;
-                local = ilgen.LocalsPool.GetLocal(what);
-                ilgen
-                    .Stloc(local.Local)
-                    .Ldloca(local.Local);
-                return ilgen;
-            });
-            local?.Dispose();
-        }
-        
-        public static void EmitConvert(XamlXEmitContext context, IXamlXLineInfo node, IXamlXType what,
-            IXamlXType to, Func<bool, IXamlXEmitter> ld)
-        {
-            if (what.Equals(to))
-                ld(false);
-            else if (what == XamlXPseudoType.Null)
-            {
-                
-                if (to.IsValueType)
-                {
-                    if (to.GenericTypeDefinition?.Equals(context.Configuration.WellKnownTypes.NullableT) == true)
-                    {
-                        using (var loc = context.GetLocal(to))
-                            ld(false)
-                                .Pop()
-                                .Ldloca(loc.Local)
-                                .Emit(OpCodes.Initobj, to)
-                                .Ldloc(loc.Local);
-
-                    }
-                    else
-                        throw new XamlXLoadException("Unable to convert {x:Null} to " + to.GetFqn(), node);
-                }
-                else
-                    ld(false);
-            }
-            else if (what.IsValueType && to.IsValueType)
-            {
-                if (to.IsNullableOf(what))
-                {
-                    ld(false).Emit(OpCodes.Newobj,
-                        to.Constructors.First(c =>
-                            c.Parameters.Count == 1 && c.Parameters[0].Equals(what)));
-                }
-                else if (what.IsNullableOf(what))
-                    ld(true)
-                        .EmitCall(what.FindMethod(m => m.Name == "get_Value"));
-                else
-                    throw new XamlXLoadException(
-                        $"Don't know how to convert value type {what.GetFullName()} to value type {to.GetFullName()}",
-                        node);
-            }
-            else if (!to.IsValueType && what.IsValueType)
-            {
-                if (!to.IsAssignableFrom(what))
-                    throw new XamlXLoadException(
-                        $"Don't know how to convert value type {what.GetFullName()} to reference type {to.GetFullName()}",
-                        node);
-                ld(false).Box(what);
-            }
-            else if(to.IsValueType && !what.IsValueType)
-            {
-                if (!(what.Namespace == "System" && what.Name == "Object"))
-                    throw new XamlXLoadException(
-                        $"Don't know how to convert reference type {what.GetFullName()} to value type {to.GetFullName()}",
-                        node);
-                ld(false).Unbox_Any(to);
-            }
-            else
-            {
-                if (to.IsAssignableFrom(what))
-                    // Downcast, always safe
-                    ld(false);
-                else if (what.IsInterface || what.IsAssignableFrom(to))
-                    // Upcast or cast from interface, might throw InvalidCastException
-                    ld(false).Emit(OpCodes.Castclass, to);
-                else
-                    // Types are completely unrelated, e. g. string to List<int> conversion attempt
-                    throw new XamlXLoadException(
-                        $"Don't know how to convert reference type {what.GetFullName()} to reference type {to.GetFullName()}",
-                        node);
-            }
         }
     }
 }

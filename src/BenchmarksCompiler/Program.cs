@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -6,6 +6,8 @@ using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using XamlX.Emit;
+using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -20,14 +22,20 @@ namespace BenchmarksCompiler
             var refs = File.ReadAllLines(refsPath).Concat(new[] {target});
             var typeSystem = new CecilTypeSystem(refs, target);
             var asm = typeSystem.GetAssembly(typeSystem.FindAssembly("Benchmarks"));
-            var config = Benchmarks.BenchmarksXamlXConfiguration.Configure(typeSystem);
+            var config = Benchmarks.BenchmarksXamlConfiguration.Configure(typeSystem);
             var loadBench = asm.MainModule.Types.First(t => t.Name == "LoadBenchmark");
-            var baseMethod = loadBench.Methods.First(m => m.Name == "LoadXamlXPrecompiled");
+            var baseMethod = loadBench.Methods.First(m => m.Name == "LoadXamlPrecompiled");
 
-            var ct = new TypeDefinition("_XamlXRuntime", "XamlXContext", TypeAttributes.Class,
+            var ct = new TypeDefinition("_XamlRuntime", "XamlContext", TypeAttributes.Class,
                 asm.MainModule.TypeSystem.Object);
+
+            asm.MainModule.Types.Add(ct);
+
             var ctb = typeSystem.CreateTypeBuilder(ct);
-            var compiler = new XamlXCompiler(config, true);
+            var compiler = new XamlILCompiler(
+                config,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true);
             var  contextTypeDef = compiler.CreateContextType(ctb);
             
             asm.MainModule.Types.Add(ct);
@@ -42,7 +50,7 @@ namespace BenchmarksCompiler
                 if (bt != loadBench)
                     continue;
 
-                var loadMethod = lb.Methods.FirstOrDefault(m => m.Name == "LoadXamlXPrecompiled");
+                var loadMethod = lb.Methods.FirstOrDefault(m => m.Name == "LoadXamlPrecompiled");
                 if (loadMethod != null)
                     lb.Methods.Remove(loadMethod);
 
@@ -53,13 +61,13 @@ namespace BenchmarksCompiler
                 while (xml[0] > 128)
                     xml = xml.Substring(1);
                 
-                var parsed = XamlX.Parsers.XDocumentXamlXParser.Parse(xml);
+                var parsed = XamlX.Parsers.XDocumentXamlParser.Parse(xml);
                 compiler.Transform(parsed);
                 compiler.Compile(parsed, typeSystem.CreateTypeBuilder(lb), contextTypeDef,
-                    "PopulateXamlXPrecompiled", "LoadXamlXPrecompiled",
-                    "XamlXXmlInfo", resource.Name, null);
+                    "PopulateXamlPrecompiled", "LoadXamlPrecompiled",
+                    "XamlXmlInfo", resource.Name, null);
                 
-                loadMethod = lb.Methods.First(m => m.Name == "LoadXamlXPrecompiled");
+                loadMethod = lb.Methods.First(m => m.Name == "LoadXamlPrecompiled");
                 loadMethod.ReturnType = asm.MainModule.TypeSystem.Object;
                 loadMethod.Overrides.Add(baseMethod);
                 loadMethod.Body.OptimizeMacros();

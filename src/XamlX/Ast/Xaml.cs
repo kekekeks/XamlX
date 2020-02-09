@@ -1,21 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.TypeSystem;
-using Visitor = XamlX.Ast.IXamlXAstVisitor;
+using Visitor = XamlX.Ast.IXamlAstVisitor;
 namespace XamlX.Ast
 {
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstXmlDirective : XamlXAstNode, IXamlXAstManipulationNode
+    class XamlAstXmlDirective : XamlAstNode, IXamlAstManipulationNode
     {
         public string Namespace { get; set; }
         public string Name { get; set; }
-        public List<IXamlXAstValueNode> Values { get; set; }
+        public List<IXamlAstValueNode> Values { get; set; }
 
-        public XamlXAstXmlDirective(IXamlXLineInfo lineInfo,
-            string ns, string name, IEnumerable<IXamlXAstValueNode> values) : base(lineInfo)
+        public XamlAstXmlDirective(IXamlLineInfo lineInfo,
+            string ns, string name, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
         {
             Namespace = ns;
             Name = name;
@@ -28,23 +28,23 @@ namespace XamlX.Ast
         }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstXamlPropertyValueNode : XamlXAstNode, IXamlXAstManipulationNode
+    class XamlAstXamlPropertyValueNode : XamlAstNode, IXamlAstManipulationNode
     {
-        public IXamlXAstPropertyReference Property { get; set; }
-        public List<IXamlXAstValueNode> Values { get; set; }
+        public IXamlAstPropertyReference Property { get; set; }
+        public List<IXamlAstValueNode> Values { get; set; }
 
-        public XamlXAstXamlPropertyValueNode(IXamlXLineInfo lineInfo,
-            IXamlXAstPropertyReference property, IXamlXAstValueNode value) : base(lineInfo)
+        public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
+            IXamlAstPropertyReference property, IXamlAstValueNode value) : base(lineInfo)
         {
             Property = property;
-            Values = new List<IXamlXAstValueNode> {value};
+            Values = new List<IXamlAstValueNode> {value};
         }
         
-        public XamlXAstXamlPropertyValueNode(IXamlXLineInfo lineInfo,
-            IXamlXAstPropertyReference property, IEnumerable<IXamlXAstValueNode> values) : base(lineInfo)
+        public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
+            IXamlAstPropertyReference property, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
         {
             Property = property;
             Values = values.ToList();
@@ -52,28 +52,28 @@ namespace XamlX.Ast
 
         public override void VisitChildren(Visitor visitor)
         {
-            Property = (IXamlXAstPropertyReference) Property.Visit(visitor);
+            Property = (IXamlAstPropertyReference) Property.Visit(visitor);
             VisitList(Values, visitor);
         }
     }
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstObjectNode : XamlXAstNode, IXamlXAstValueNode
+    class XamlAstObjectNode : XamlAstNode, IXamlAstValueNode
     {
-        public XamlXAstObjectNode(IXamlXLineInfo lineInfo, IXamlXAstTypeReference type) : base(lineInfo)
+        public XamlAstObjectNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
         {
             Type = type;
         }
 
-        public IXamlXAstTypeReference Type { get; set; }
-        public List<IXamlXAstNode> Children { get; set; } = new List<IXamlXAstNode>();
-        public List<IXamlXAstValueNode> Arguments { get; set; } = new List<IXamlXAstValueNode>();
+        public IXamlAstTypeReference Type { get; set; }
+        public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
+        public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
 
         public override void VisitChildren(Visitor visitor)
         {
-            Type = (IXamlXAstTypeReference) Type.Visit(visitor);
+            Type = (IXamlAstTypeReference) Type.Visit(visitor);
             VisitList(Arguments, visitor);
             VisitList(Children, visitor);
         }
@@ -81,41 +81,41 @@ namespace XamlX.Ast
     
     
 
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstTextNode : XamlXAstNode, IXamlXAstValueNode
+    class XamlAstTextNode : XamlAstNode, IXamlAstValueNode
     {
         public string Text { get; set; }
 
-        public XamlXAstTextNode(IXamlXLineInfo lineInfo, string text, IXamlXType type = null) : base(lineInfo)
+        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, IXamlType type = null) : base(lineInfo)
         {
             Text = text;
             if (type != null)
-                Type = new XamlXAstClrTypeReference(lineInfo, type, false);
+                Type = new XamlAstClrTypeReference(lineInfo, type, false);
             else
-                Type = new XamlXAstXmlTypeReference(lineInfo, XamlNamespaces.Xaml2006, "String");
+                Type = new XamlAstXmlTypeReference(lineInfo, XamlNamespaces.Xaml2006, "String");
         }
 
         public override void VisitChildren(Visitor visitor)
         {
-            Type = (IXamlXAstTypeReference) Type.Visit(visitor);
+            Type = (IXamlAstTypeReference) Type.Visit(visitor);
         }
 
-        public IXamlXAstTypeReference Type { get; set; }
+        public IXamlAstTypeReference Type { get; set; }
     }
     
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstNamePropertyReference : XamlXAstNode, IXamlXAstPropertyReference
+    class XamlAstNamePropertyReference : XamlAstNode, IXamlAstPropertyReference
     {
-        public IXamlXAstTypeReference DeclaringType { get; set; }
+        public IXamlAstTypeReference DeclaringType { get; set; }
         public string Name { get; set; }
-        public IXamlXAstTypeReference TargetType { get; set; }
+        public IXamlAstTypeReference TargetType { get; set; }
 
-        public XamlXAstNamePropertyReference(IXamlXLineInfo lineInfo,
-            IXamlXAstTypeReference declaringType, string name, IXamlXAstTypeReference targetType) : base(lineInfo)
+        public XamlAstNamePropertyReference(IXamlLineInfo lineInfo,
+            IXamlAstTypeReference declaringType, string name, IXamlAstTypeReference targetType) : base(lineInfo)
         {
             DeclaringType = declaringType;
             Name = name;
@@ -124,8 +124,8 @@ namespace XamlX.Ast
 
         public override void VisitChildren(Visitor visitor)
         {
-            DeclaringType = (IXamlXAstTypeReference) DeclaringType.Visit(visitor);
-            TargetType = (IXamlXAstTypeReference) TargetType.Visit(visitor);
+            DeclaringType = (IXamlAstTypeReference) DeclaringType.Visit(visitor);
+            TargetType = (IXamlAstTypeReference) TargetType.Visit(visitor);
         }
     }
 }

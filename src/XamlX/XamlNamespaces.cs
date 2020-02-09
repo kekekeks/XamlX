@@ -1,6 +1,6 @@
 namespace XamlX
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
         class XamlNamespaces

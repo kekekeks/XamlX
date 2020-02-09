@@ -1,26 +1,26 @@
 using System.Collections.Generic;
 using System.Linq;
-using Visitor = XamlX.Ast.IXamlXAstVisitor;
+using Visitor = XamlX.Ast.IXamlAstVisitor;
 namespace XamlX.Ast
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
-    class XamlXAstXmlTypeReference : XamlXAstNode, IXamlXAstTypeReference
+    class XamlAstXmlTypeReference : XamlAstNode, IXamlAstTypeReference
     {
         public string XmlNamespace { get; set; }
         public string Name { get; set; }
         public bool IsMarkupExtension { get; set; }
 
-        public bool Equals(IXamlXAstTypeReference other) =>
-            other is XamlXAstXmlTypeReference xml
+        public bool Equals(IXamlAstTypeReference other) =>
+            other is XamlAstXmlTypeReference xml
             && xml.Name == Name && xml.XmlNamespace == XmlNamespace
             && xml.IsMarkupExtension == IsMarkupExtension;
 
-        public List<XamlXAstXmlTypeReference> GenericArguments { get; set; } = new List<XamlXAstXmlTypeReference>();
+        public List<XamlAstXmlTypeReference> GenericArguments { get; set; } = new List<XamlAstXmlTypeReference>();
 
-        public XamlXAstXmlTypeReference(IXamlXLineInfo lineInfo, string xmlNamespace, string name,
-            IEnumerable<XamlXAstXmlTypeReference> genericArguments = null) : base(lineInfo)
+        public XamlAstXmlTypeReference(IXamlLineInfo lineInfo, string xmlNamespace, string name,
+            IEnumerable<XamlAstXmlTypeReference> genericArguments = null) : base(lineInfo)
         {
             XmlNamespace = xmlNamespace;
             Name = name;

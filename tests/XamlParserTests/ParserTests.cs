@@ -12,7 +12,7 @@ namespace XamlParserTests
 {
     public class ParserTests
     {
-        class NullLineInfo : IXamlXLineInfo
+        class NullLineInfo : IXamlLineInfo
         {
             public int Line { get; set; } = 1;
             public int Position { get; set; } = 1;
@@ -21,7 +21,7 @@ namespace XamlParserTests
         [Fact]
         public void Parser_Should_Be_Able_To_Parse_A_Simple_Tree()
         {
-            var root = XDocumentXamlXParser.Parse(
+            var root = XDocumentXamlParser.Parse(
                 @"
 <Root xmlns='rootns' xmlns:t='testns' xmlns:d='directive' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2, Prop3={Extension}, Prop4=test3}'
@@ -43,17 +43,17 @@ namespace XamlParserTests
 
 </Root>");
             var ni = new NullLineInfo();
-            var rootType = new XamlXAstXmlTypeReference(ni, "rootns", "Root");
-            var childType = new XamlXAstXmlTypeReference(ni, "rootns", "Child");
-            var subChildType = new XamlXAstXmlTypeReference(ni, "rootns", "SubChild");
-            var nsSubChildType = new XamlXAstXmlTypeReference(ni, "testns", "SubChild");
-            var namespacedType = new XamlXAstXmlTypeReference(ni, "testns", "Namespaced");
-            var extensionType = new XamlXAstXmlTypeReference(ni, "rootns", "Extension")
+            var rootType = new XamlAstXmlTypeReference(ni, "rootns", "Root");
+            var childType = new XamlAstXmlTypeReference(ni, "rootns", "Child");
+            var subChildType = new XamlAstXmlTypeReference(ni, "rootns", "SubChild");
+            var nsSubChildType = new XamlAstXmlTypeReference(ni, "testns", "SubChild");
+            var namespacedType = new XamlAstXmlTypeReference(ni, "testns", "Namespaced");
+            var extensionType = new XamlAstXmlTypeReference(ni, "rootns", "Extension")
             {
                 IsMarkupExtension = true
             };
 
-            var other = new XamlXDocument
+            var other = new XamlDocument
             {
                 NamespaceAliases = new Dictionary<string, string>
                 {
@@ -62,122 +62,122 @@ namespace XamlParserTests
                     ["d"] = "directive",
                     ["x"] = "http://schemas.microsoft.com/winfx/2006/xaml"
                 },
-                Root = new XamlXAstObjectNode(ni, rootType)
+                Root = new XamlAstObjectNode(ni, rootType)
                 {
                     Children =
                     {
                         // <Child
-                        new XamlXAstObjectNode(ni, childType)
+                        new XamlAstObjectNode(ni, childType)
                         {
                             Children =
                             {
                                 // Ext='{Extension 123, 321, Prop=test, Prop2=test2}'
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "Ext", childType),
-                                    new XamlXAstObjectNode(ni, extensionType)
+                                    new XamlAstObjectNode(ni, extensionType)
                                     {
                                         Arguments =
                                         {
-                                            new XamlXAstTextNode(ni, "123"),
-                                            new XamlXAstTextNode(ni, "321"),
+                                            new XamlAstTextNode(ni, "123"),
+                                            new XamlAstTextNode(ni, "321"),
                                         },
                                         Children =
                                         {
-                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                            new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop", extensionType),
-                                                new XamlXAstTextNode(ni, "test")),
-                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                new XamlAstTextNode(ni, "test")),
+                                            new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop2", extensionType),
-                                                new XamlXAstTextNode(ni, "test2")),
-                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                new XamlAstTextNode(ni, "test2")),
+                                            new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop3", extensionType),
-                                                new XamlXAstObjectNode(ni, extensionType)),
-                                            new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                                new XamlAstObjectNode(ni, extensionType)),
+                                            new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop4", extensionType),
-                                                new XamlXAstTextNode(ni, "test3")),
+                                                new XamlAstTextNode(ni, "test3")),
                                         }
                                     }),                             
                                 //Other.Prop='{}Not extension'
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
-                                        new XamlXAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
-                                    new XamlXAstTextNode(ni, "Not extension")),
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
+                                        new XamlAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
+                                    new XamlAstTextNode(ni, "Not extension")),
                                 //  Prop1='123' 
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "Prop1", childType),
-                                    new XamlXAstTextNode(ni, "123")),
+                                    new XamlAstTextNode(ni, "123")),
                                 // Root.AttachedProp='AttachedValue'
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         rootType, "AttachedProp", childType),
-                                    new XamlXAstTextNode(ni, "AttachedValue")),
+                                    new XamlAstTextNode(ni, "AttachedValue")),
                                 //t:Namespaced.AttachedProp='AttachedValue'
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         namespacedType, "AttachedProp", childType),
-                                    new XamlXAstTextNode(ni, "AttachedValue")),
+                                    new XamlAstTextNode(ni, "AttachedValue")),
                                 //d:Directive='DirectiveValue'>
-                                new XamlXAstXmlDirective(ni, "directive", "Directive", new[]
+                                new XamlAstXmlDirective(ni, "directive", "Directive", new[]
                                 {
-                                    new XamlXAstTextNode(ni, "DirectiveValue")
+                                    new XamlAstTextNode(ni, "DirectiveValue")
                                 }),
                                 //d:DirectiveExt='{Extension 123}'>
-                                new XamlXAstXmlDirective(ni, "directive", "DirectiveExt", new[]
+                                new XamlAstXmlDirective(ni, "directive", "DirectiveExt", new[]
                                 {
-                                    new XamlXAstObjectNode(ni, extensionType)
+                                    new XamlAstObjectNode(ni, extensionType)
                                     {
                                         Arguments =
                                         {
-                                            new XamlXAstTextNode(ni, "123"),
+                                            new XamlAstTextNode(ni, "123"),
                                         }
                                     }
                                 }),
                                 // <t:SubChild Prop='321' Root.AttachedProp='AttachedValue'/>
-                                new XamlXAstObjectNode(ni, nsSubChildType)
+                                new XamlAstObjectNode(ni, nsSubChildType)
                                 {
                                     Children =
                                     {
-                                        new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                        new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 nsSubChildType, "Prop", nsSubChildType),
-                                            new XamlXAstTextNode(ni, "321")),
+                                            new XamlAstTextNode(ni, "321")),
                                         // Root.AttachedProp='AttachedValue'
-                                        new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                        new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 rootType, "AttachedProp", nsSubChildType),
-                                            new XamlXAstTextNode(ni, "AttachedValue")),
+                                            new XamlAstTextNode(ni, "AttachedValue")),
                                     }
                                 },
                                 //<Child.DottedProp>DottedValue</Child.DottedProp>
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "DottedProp", childType),
                                     new[]
                                     {
-                                        new XamlXAstTextNode(ni, "DottedValue")
+                                        new XamlAstTextNode(ni, "DottedValue")
                                     }),
                                 // <Root.AttachedDottedProp>AttachedValue</Root.AttachedDottedProp>
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         rootType, "AttachedDottedProp", childType),
                                     new[]
                                     {
-                                        new XamlXAstTextNode(ni, "AttachedValue")
+                                        new XamlAstTextNode(ni, "AttachedValue")
                                     }),
                                 //<Child.NodeListProp>
-                                new XamlXAstXamlPropertyValueNode(ni, new XamlXAstNamePropertyReference(ni,
+                                new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "NodeListProp", childType),
                                     new[]
                                     {
                                         // <SubChild/>
-                                        new XamlXAstObjectNode(ni, subChildType),
+                                        new XamlAstObjectNode(ni, subChildType),
                                         // <SubChild/>
-                                        new XamlXAstObjectNode(ni, subChildType),
+                                        new XamlAstObjectNode(ni, subChildType),
                                     })
                             }
                         },
                         //<GenericType x:TypeArguments='Child,t:NamespacedGeneric(Child,GenericType(Child, t:Namespaced))'/>
-                        new XamlXAstObjectNode(ni, new XamlXAstXmlTypeReference(ni, "rootns", "GenericType",
+                        new XamlAstObjectNode(ni, new XamlAstXmlTypeReference(ni, "rootns", "GenericType",
                             new[]
                             {
                                 childType,
-                                new XamlXAstXmlTypeReference(ni, "testns", "NamespacedGeneric", new[]
+                                new XamlAstXmlTypeReference(ni, "testns", "NamespacedGeneric", new[]
                                 {
                                     childType,
-                                    new XamlXAstXmlTypeReference(ni, "rootns", "GenericType", new[]
+                                    new XamlAstXmlTypeReference(ni, "rootns", "GenericType", new[]
                                     {
                                         childType,
                                         namespacedType
@@ -194,7 +194,7 @@ namespace XamlParserTests
         [Theory, InlineData(false), InlineData(true)]
         public void Parser_Should_Handle_Ignorable_Content(bool map)
         {
-            var root = XDocumentXamlXParser.Parse(@"
+            var root = XDocumentXamlParser.Parse(@"
 <Root xmlns='rootns' xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' 
     mc:Ignorable='d d2' xmlns:d='test' xmlns:d2='test2'
     d:DataContext='123' d2:Lalala='321'>
@@ -202,27 +202,27 @@ namespace XamlParserTests
 </Root>
  ", map ? new Dictionary<string, string>() {["test"] = "mapped"} : null);
             var ni = new NullLineInfo();
-            var rootType = new XamlXAstXmlTypeReference(ni, "rootns", "Root");
+            var rootType = new XamlAstXmlTypeReference(ni, "rootns", "Root");
 
             if (map)
             {
-                Helpers.StructDiff(root.Root, new XamlXAstObjectNode(ni, rootType)
+                Helpers.StructDiff(root.Root, new XamlAstObjectNode(ni, rootType)
                 {
                     Children =
                     {
-                        new XamlXAstXmlDirective(ni, "mapped", "DataContext", new[] {new XamlXAstTextNode(ni, "123"),}),
-                        new XamlXAstObjectNode(ni, new XamlXAstXmlTypeReference(ni, "mapped", "DesignWidth"))
+                        new XamlAstXmlDirective(ni, "mapped", "DataContext", new[] {new XamlAstTextNode(ni, "123"),}),
+                        new XamlAstObjectNode(ni, new XamlAstXmlTypeReference(ni, "mapped", "DesignWidth"))
                         {
                             Children =
                             {
-                                new XamlXAstTextNode(ni, "test")
+                                new XamlAstTextNode(ni, "test")
                             }
                         }
                     }
                 });
             }
             else
-                Helpers.StructDiff(root.Root, new XamlXAstObjectNode(ni, rootType)
+                Helpers.StructDiff(root.Root, new XamlAstObjectNode(ni, rootType)
                 {
 
                 });
@@ -233,9 +233,9 @@ namespace XamlParserTests
         {
             var ni = new NullLineInfo();
             var parsed = XamlMarkupExtensionParser.Parse(ni, "{Binding }",
-                n => new XamlXAstXmlTypeReference(ni, "", n));
-            Helpers.StructDiff(parsed, new XamlXAstObjectNode(new NullLineInfo(),
-                new XamlXAstXmlTypeReference(ni, "", "Binding")
+                n => new XamlAstXmlTypeReference(ni, "", n));
+            Helpers.StructDiff(parsed, new XamlAstObjectNode(new NullLineInfo(),
+                new XamlAstXmlTypeReference(ni, "", "Binding")
                 {
                     IsMarkupExtension = true
                 }));

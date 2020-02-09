@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
@@ -21,10 +21,10 @@ namespace Benchmarks
 			{
 				//var benchmark = new LoadSimpleBenchmark();
 				var benchmark = new LoadComplexBenchmark();
-				benchmark.XamlXPrecompiled();
+				benchmark.XamlPrecompiled();
 				for (int i = 0; i < 1000; i++)
 				{
-					benchmark.XamlXPrecompiled();
+					benchmark.XamlPrecompiled();
 				}
 				return;
 			}

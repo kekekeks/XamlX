@@ -56,7 +56,7 @@ namespace XamlParserTests
                 foreach (var prop in parsed.GetType().GetProperties()
                     .Where(p => p.GetMethod != null && p.GetMethod.IsPublic))
                 {
-                    if (prop.DeclaringType == typeof(XamlXAstNode)
+                    if (prop.DeclaringType == typeof(XamlAstNode)
                         && (prop.Name == "Line" || prop.Name == "Position"))
                     {
                         if(!isRoot && (int)prop.GetValue(parsed) == 0)

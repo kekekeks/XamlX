@@ -7,21 +7,23 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-// We are trying to keep the code as close to the original as possible
-// so it would be easier to port future changes
-// That's why those mappings to shims are here
-
-using XamlParserContext = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerContext;
-using XamlType = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerTypeName;
-using XamlMember = XamlX.Ast.XamlXAstNamePropertyReference;
-using XamlTypeName = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerTypeName;
-using SR = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSr;
-using SRID = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSRID;
-using XamlParseException = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerParseException;
-using SpecialBracketCharacters = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSpecialBracketCharacters;
-using KnownStrings = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerKnownStrings;
 namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 {
+
+    // We are trying to keep the code as close to the original as possible
+    // so it would be easier to port future changes
+    // That's why those mappings to shims are here
+    
+    using XamlParserContext = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerContext;
+    using XamlType = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerTypeName;
+    using XamlMember = XamlX.Ast.XamlAstNamePropertyReference;
+    using XamlTypeName = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerTypeName;
+    using SR = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSr;
+    using SRID = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSRID;
+    using XamlParseException = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerParseException;
+    using SpecialBracketCharacters = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerSpecialBracketCharacters;
+    using KnownStrings = XamlX.Parsers.SystemXamlMarkupExtensionParser.MeScannerKnownStrings;
+
     // Markup Extension Tokenizer AKA Scanner.
 
     enum MeTokenType
@@ -604,7 +606,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
         private SpecialBracketCharacters GetBracketCharacterForProperty(string propertyName)
         {
             return null;
-            // XamlX resolves markup extension types after parsing the initial AST,
+            // Xaml resolves markup extension types after parsing the initial AST,
             // so custom brackets aren't supported
             /*
             SpecialBracketCharacters bracketCharacters = null;

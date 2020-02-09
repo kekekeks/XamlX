@@ -7,6 +7,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
+using XamlX.IL;
 using XamlX.Parsers;
 using XamlX.Runtime;
 using XamlX.Transform;
@@ -33,18 +35,21 @@ namespace Benchmarks
                 foreach (var p in xt.GetProperties())
                     p.GetCustomAttributes();
             }
-            typeof(IXamlXParentStackProviderV1).Assembly.GetCustomAttributes();
+            typeof(IXamlParentStackProviderV1).Assembly.GetCustomAttributes();
             
             
             var typeSystem = new SreTypeSystem();
-            var configuration = BenchmarksXamlXConfiguration.Configure(typeSystem);
-            var parsed = XDocumentXamlXParser.Parse(xaml);
-            
-            var compiler = new XamlXCompiler(configuration, true);
+            var configuration = BenchmarksXamlConfiguration.Configure(typeSystem);
+            var parsed = XDocumentXamlParser.Parse(xaml);
+
+            var compiler = new XamlILCompiler(
+                configuration,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true);
             compiler.Transform(parsed);
             
             
-            var parsedTsType = ((IXamlXAstValueNode) parsed.Root).Type.GetClrType();
+            var parsedTsType = ((IXamlAstValueNode) parsed.Root).Type.GetClrType();
             
 #if !NETCOREAPP
             var path = Path.GetDirectoryName(typeof(BenchCompiler).Assembly.GetModules()[0].FullyQualifiedName);
@@ -63,7 +68,7 @@ namespace Benchmarks
             
             var parserTypeBuilder = ((SreTypeSystem) typeSystem).CreateTypeBuilder(t);
             compiler.Compile(parsed, parserTypeBuilder,  contextTypeDef, "Populate", "Build",
-                "XamlXNamespaceInfo", "https://github.com/kekekeks/XamlX", null);
+                "XamlNamespaceInfo", "https://github.com/kekekeks/Xaml", null);
             
             var created = t.CreateType();
 

@@ -8,20 +8,22 @@ using XamlX.Ast;
 using XamlX.Parsers;
 using XamlX.Transform;
 using XamlX.TypeSystem;
+using XamlX.IL;
+using XamlX.Emit;
 
 namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
-        private readonly IXamlXTypeSystem _typeSystem;
-        public XamlXTransformerConfiguration Configuration { get; }
+        private readonly IXamlTypeSystem _typeSystem;
+        public TransformerConfiguration Configuration { get; }
 
-        private CompilerTestBase(IXamlXTypeSystem typeSystem)
+        private CompilerTestBase(IXamlTypeSystem typeSystem)
         {
             _typeSystem = typeSystem;
-            Configuration = new XamlXTransformerConfiguration(typeSystem,
+            Configuration = new TransformerConfiguration(typeSystem,
                 typeSystem.FindAssembly("XamlParserTests"),
-                new XamlXLanguageTypeMappings(typeSystem)
+                new XamlLanguageTypeMappings(typeSystem)
                 {
                     XmlnsAttributes =
                     {
@@ -43,8 +45,8 @@ namespace XamlParserTests
                     RootObjectProvider = typeSystem.GetType("XamlParserTests.ITestRootObjectProvider"),
                     UriContextProvider = typeSystem.GetType("XamlParserTests.ITestUriContext"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
-                    ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlXParentStackProviderV1"),
-                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXXmlNamespaceInfoProviderV1")
+                    ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlParentStackProviderV1"),
+                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1")
                 }
             );
         }
@@ -53,13 +55,19 @@ namespace XamlParserTests
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
-        XamlXDocument Compile(IXamlXTypeBuilder builder, IXamlXType context, string xaml)
+        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
         {
-            var parsed = XDocumentXamlXParser.Parse(xaml);
-            var compiler = new XamlXCompiler(Configuration, true) { EnableIlVerification = true };
+            var parsed = XDocumentXamlParser.Parse(xaml);
+            var compiler = new XamlILCompiler(
+                Configuration,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true)
+            {
+                EnableIlVerification = true
+            };
             compiler.Transform(parsed);
             compiler.Compile(parsed, builder, context, "Populate", "Build",
-                "XamlXNamespaceInfo",
+                "XamlNamespaceInfo",
                 "http://example.com/", null);
             return parsed;
         }
@@ -86,7 +94,11 @@ namespace XamlParserTests
             var ct = dm.DefineType(t.Name + "Context");
             var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
             var contextTypeDef =
-                XamlXContextDefinition.GenerateContextClass(ctb, _typeSystem, Configuration.TypeMappings);
+                XamlILContextDefinition.GenerateContextClass(
+                    ctb,
+                    _typeSystem,
+                    Configuration.TypeMappings,
+                    new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>());
             
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);

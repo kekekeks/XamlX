@@ -4,7 +4,7 @@ using XamlX.Ast;
 
 namespace XamlX.Parsers
 {
-#if !XAMLIL_INTERNAL
+#if !XAMLX_INTERNAL
     public
 #endif
     sealed class XamlMarkupExtensionParser
@@ -35,29 +35,29 @@ namespace XamlX.Parsers
             RootEnd
         }
 
-        public static XamlXAstObjectNode Parse(IXamlXLineInfo info, string ext, Func<string, XamlXAstXmlTypeReference> typeResolver)
+        public static XamlAstObjectNode Parse(IXamlLineInfo info, string ext, Func<string, XamlAstXmlTypeReference> typeResolver)
         {
             var root = ParseNode(ext);
 
-            IXamlXAstValueNode Convert(object node)
+            IXamlAstValueNode Convert(object node)
             {
                 if (node is string s)
-                    return new XamlXAstTextNode(info, s);
+                    return new XamlAstTextNode(info, s);
                 var n = (Node) node;
 
                 var type = typeResolver(n.Name);
                 type.IsMarkupExtension = true;
-                var rv = new XamlXAstObjectNode(info, type);
+                var rv = new XamlAstObjectNode(info, type);
                 foreach (var pa in n.PositionalArguments)
                     rv.Arguments.Add(Convert(pa));
                 foreach (var arg in n.NamedArguments)
-                    rv.Children.Add(new XamlXAstXamlPropertyValueNode(info,
-                        new XamlXAstNamePropertyReference(info, rv.Type, arg.name, rv.Type), Convert(arg.value)));
+                    rv.Children.Add(new XamlAstXamlPropertyValueNode(info,
+                        new XamlAstNamePropertyReference(info, rv.Type, arg.name, rv.Type), Convert(arg.value)));
 
                 return rv;
             }
 
-            return (XamlXAstObjectNode) Convert(root);
+            return (XamlAstObjectNode) Convert(root);
         }
         
         static Node ParseNode(string ext)

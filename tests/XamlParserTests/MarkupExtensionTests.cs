@@ -145,7 +145,7 @@ namespace XamlParserTests
         [Fact]
         public void Value_Type_To_Reference_Type_Should_Trigger_Compile_Error()
         {
-            Assert.Throws<XamlXLoadException>(() => Compile(@"
+            Assert.Throws<XamlLoadException>(() => Compile(@"
 <MarkupExtensionTestsClass xmlns='test' 
     StringProperty='{ServiceProviderIntValue}'/>"));
         }
@@ -153,7 +153,7 @@ namespace XamlParserTests
         [Fact]
         public void Mismatched_Value_Type_To_Value_Type_Should_Trigger_Compile_Error()
         {
-            Assert.Throws<XamlXLoadException>(() => Compile(@"
+            Assert.Throws<XamlLoadException>(() => Compile(@"
 <MarkupExtensionTestsClass xmlns='test' 
     DoubleProperty='{ServiceProviderIntValue}'/>"));
         }

@@ -6,14 +6,14 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 {
     class MeScannerContext
     {
-        private readonly Func<string, XamlXAstXmlTypeReference> _typeResolver;
-        private readonly IXamlXLineInfo _lineInfo;
+        private readonly Func<string, XamlAstXmlTypeReference> _typeResolver;
+        private readonly IXamlLineInfo _lineInfo;
 
-        public MeScannerContext(Func<string, XamlXAstXmlTypeReference> typeResolver, IXamlXLineInfo lineInfo)
+        public MeScannerContext(Func<string, XamlAstXmlTypeReference> typeResolver, IXamlLineInfo lineInfo)
         {
             _typeResolver = typeResolver;
             _lineInfo = lineInfo;
-            CurrentType = new MeScannerTypeName(new XamlXAstXmlTypeReference(lineInfo, "invalid", "invalid"));
+            CurrentType = new MeScannerTypeName(new XamlAstXmlTypeReference(lineInfo, "invalid", "invalid"));
         }
         
         public MeScannerBracketModeParseParameters CurrentBracketModeParseParameters { get; }
@@ -22,19 +22,19 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
         public MeScannerTypeName CurrentType { get; set; }
         public MeScannerContext FindNamespaceByPrefix => this;
 
-        public Func<string, XamlXAstXmlTypeReference> TypeResolver => _typeResolver;
+        public Func<string, XamlAstXmlTypeReference> TypeResolver => _typeResolver;
 
-        public XamlXAstNamePropertyReference ResolvePropertyName(string pname)
+        public XamlAstNamePropertyReference ResolvePropertyName(string pname)
         {
             if (pname.Contains("."))
             {
                 var parts = pname.Split(new[] { '.' }, 2);
                 var decraringType = _typeResolver(parts[0]);
-                return new XamlXAstNamePropertyReference(_lineInfo, decraringType, parts[1],
+                return new XamlAstNamePropertyReference(_lineInfo, decraringType, parts[1],
                     CurrentType.TypeReference);
             }
             else
-                return new XamlXAstNamePropertyReference(_lineInfo, CurrentType.TypeReference, pname,
+                return new XamlAstNamePropertyReference(_lineInfo, CurrentType.TypeReference, pname,
                     CurrentType.TypeReference);
 
         }
@@ -42,9 +42,9 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
     
     class MeScannerTypeName
     {
-        public XamlXAstXmlTypeReference TypeReference { get; }
+        public XamlAstXmlTypeReference TypeReference { get; }
 
-        public MeScannerTypeName(XamlXAstXmlTypeReference typeReference)
+        public MeScannerTypeName(XamlAstXmlTypeReference typeReference)
         {
             TypeReference = typeReference;
         }
