@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -11,10 +12,23 @@ namespace XamlParserTests
         
         public Dictionary<object, object> NonContentChildren { get; set; } = new Dictionary<object, object>();
     }
-    
-    
+
     public class DictionaryTests : CompilerTestBase
     {
+        [Fact]
+        public void Extensions_Should_Be_Able_To_Populate_Content_Lists_With_MarkupExtensions()
+        {
+            var res = CompileAndRun(@"
+<SimpleClassWithDictionaryContent xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <ServiceProviderValue x:Key='test'/>
+    <SimpleClassWithDictionaryContent Test='321' x:Key='{x:Type SimpleClassWithDictionaryContent}'/>
+    <SimpleClassWithDictionaryContent.NonContentChildren>
+        <SimpleClassWithDictionaryContent Test='ch' x:Key='test2'/>
+    </SimpleClassWithDictionaryContent.NonContentChildren>
+</SimpleClassWithDictionaryContent>");
+
+        }
+
         [Fact]
         public void Compiler_Should_Be_Able_To_Populate_Dictionary_Content()
         {
