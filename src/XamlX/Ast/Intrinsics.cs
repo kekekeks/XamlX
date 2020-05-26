@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using XamlX.Emit;
+using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
@@ -10,7 +12,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlNullExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlNullExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlNullExtensionNode(IXamlLineInfo lineInfo) : base(lineInfo)
         {
@@ -18,17 +20,17 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen.Emit(OpCodes.Ldnull);
-            return XamlNodeEmitResult.Type(0, XamlPseudoType.Null);
+            return XamlILNodeEmitResult.Type(0, XamlPseudoType.Null);
         }
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlTypeExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlTypeExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlType _systemType;
 
@@ -48,7 +50,7 @@ namespace XamlX.Ast
             Value = Value.Visit(visitor) as IXamlAstTypeReference;
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var type = Value.GetClrType();
             var method = _systemType.Methods.FirstOrDefault(m =>
@@ -61,14 +63,14 @@ namespace XamlX.Ast
             codeGen
                 .Emit(OpCodes.Ldtoken, type)
                 .EmitCall(method);
-            return XamlNodeEmitResult.Type(0, _systemType);
+            return XamlILNodeEmitResult.Type(0, _systemType);
         }
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlStaticExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlStaticExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlStaticExtensionNode(XamlAstObjectNode lineInfo, IXamlAstTypeReference targetType, string member) : base(lineInfo)
         {
@@ -95,24 +97,24 @@ namespace XamlX.Ast
             return rv;
         }
         
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var type = TargetType.GetClrType();
             var member = ResolveMember(type);
             if (member is IXamlProperty prop)
             {
                 codeGen.Emit(OpCodes.Call, prop.Getter);
-                return XamlNodeEmitResult.Type(0, prop.Getter.ReturnType);
+                return XamlILNodeEmitResult.Type(0, prop.Getter.ReturnType);
             }
             else if (member is IXamlField field)
             {
                 if (field.IsLiteral)
                 {
-                    TypeSystemHelpers.EmitFieldLiteral(field, codeGen);
+                    ILEmitHelpers.EmitFieldLiteral(field, codeGen);
                 }
                 else
                     codeGen.Emit(OpCodes.Ldsfld, field);
-                return XamlNodeEmitResult.Type(0, field.FieldType);
+                return XamlILNodeEmitResult.Type(0, field.FieldType);
             }
             else
                 throw new XamlLoadException(
@@ -137,7 +139,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlConstantNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlConstantNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public object Constant { get; }
 
@@ -151,26 +153,26 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type { get; }
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (Constant is string)
                 codeGen.Emit(OpCodes.Ldstr, (string) Constant);
             else if (Constant is long || Constant is ulong)
-                codeGen.Emit(OpCodes.Ldc_I8, TypeSystemHelpers.ConvertLiteralToLong(Constant));
+                codeGen.Emit(OpCodes.Ldc_I8, TypeSystem.TypeSystemHelpers.ConvertLiteralToLong(Constant));
             else if (Constant is float f)
                 codeGen.Emit(OpCodes.Ldc_R4, f);
             else if (Constant is double d)
                 codeGen.Emit(OpCodes.Ldc_R8, d);
             else
-                codeGen.Emit(OpCodes.Ldc_I4, TypeSystemHelpers.ConvertLiteralToInt(Constant));
-            return XamlNodeEmitResult.Type(0, Type.GetClrType());
+                codeGen.Emit(OpCodes.Ldc_I4, TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlRootObjectNode(XamlAstObjectNode root) : base(root)
         {
@@ -179,12 +181,12 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.RootObjectField);
-            return XamlNodeEmitResult.Type(0, Type.GetClrType());
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -196,7 +198,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlIntermediateRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlIntermediateRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public XamlIntermediateRootObjectNode(IXamlLineInfo lineInfo, XamlTypeWellKnownTypes types) : base(lineInfo)
         {
@@ -205,12 +207,12 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
-            return XamlNodeEmitResult.Type(0, Type.GetClrType());
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -223,7 +225,7 @@ namespace XamlX.Ast
     public
 #endif
     class XamlLoadMethodDelegateNode : XamlValueWithSideEffectNodeBase,
-        IXamlAstEmitableNode
+        IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlType DelegateType { get; }
         public IXamlMethod Method { get; }
@@ -237,14 +239,14 @@ namespace XamlX.Ast
         }
 
         public override IXamlAstTypeReference Type { get; }
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             context.Emit(Value, codeGen, Method.DeclaringType);
             codeGen
                 .Ldftn(Method)
                 .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            return XamlNodeEmitResult.Type(0, DelegateType);
+            return XamlILNodeEmitResult.Type(0, DelegateType);
         }
     }
 }

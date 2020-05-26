@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
     <PropertyGroup>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>

@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using XamlX.Emit;
+using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
@@ -41,7 +43,7 @@ namespace XamlX.Ast
         public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
         
         public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
-            XamlTransformerConfiguration cfg) : base(lineInfo)
+            TransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
@@ -85,7 +87,7 @@ namespace XamlX.Ast
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
-    class XamlDirectCallPropertySetter : IXamlPropertySetter
+    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
@@ -122,7 +124,6 @@ namespace XamlX.Ast
         IXamlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
-        void Emit(IXamlILEmitter codegen);
     }
 
 #if !XAMLX_INTERNAL
@@ -309,8 +310,37 @@ namespace XamlX.Ast
 
         public override void VisitChildren(Visitor visitor)
         {
-            Type = (IXamlAstTypeReference) Type.Visit(visitor);
+            Type = (IXamlAstTypeReference)Type.Visit(visitor);
             VisitList(Arguments, visitor);
+        }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlAstConstructableObjectNode : XamlAstNode, IXamlAstValueNode
+    {
+        public XamlAstConstructableObjectNode(IXamlLineInfo lineInfo,
+            XamlAstClrTypeReference type, IXamlConstructor ctor,
+            List<IXamlAstValueNode> arguments,
+            List<IXamlAstNode> children) : base(lineInfo)
+        {
+            Type = type;
+            Constructor = ctor;
+            Arguments = arguments;
+            Children = children;
+        }
+
+        public IXamlAstTypeReference Type { get; set; }
+        public IXamlConstructor Constructor { get; }
+        public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
+        public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
+
+        public override void VisitChildren(Visitor visitor)
+        {
+            Type = (IXamlAstTypeReference)Type.Visit(visitor);
+            VisitList(Arguments, visitor);
+            VisitList(Children, visitor);
         }
     }
 
@@ -387,13 +417,12 @@ namespace XamlX.Ast
         IXamlType ReturnType { get; }
         IXamlType DeclaringType { get; }
         IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult);
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlWrappedMethod : IXamlWrappedMethod
+    class XamlWrappedMethod : IXamlWrappedMethod, IXamlEmitableWrappedMethod<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlMethod _method;
 
@@ -409,7 +438,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType { get; }
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             codeGen.EmitCall(_method, swallowResult);
         }
@@ -418,7 +447,7 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlWrappedMethodWithCasts : IXamlWrappedMethod
+    class XamlWrappedMethodWithCasts : IXamlWrappedMethod, IXamlEmitableWrappedMethodWithLocals<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlWrappedMethod _method;
 
@@ -434,7 +463,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType => _method.ReturnType;
         public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
-        public void Emit(XamlEmitContext context, IXamlILEmitter codeGen, bool swallowResult)
+        public void Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
             int firstCast = -1; 
             for (var c = ParametersWithThis.Count - 1; c >= 0; c--)
@@ -451,7 +480,7 @@ namespace XamlX.Ast
                     codeGen.Castclass(_method.ParametersWithThis[c]);
                     if (c > firstCast)
                     {
-                        var l = context.GetLocal(_method.ParametersWithThis[c]);
+                        var l = context.GetLocalOfType(_method.ParametersWithThis[c]);
                         codeGen.Stloc(l.Local);
                         locals.Push(l);
                     }
@@ -464,14 +493,14 @@ namespace XamlX.Ast
                 }
             }
 
-            _method.Emit(context, codeGen, swallowResult);
+            context.Emit(_method, codeGen, swallowResult);
         }
     }
     
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlMethodWithCasts : IXamlCustomEmitMethod
+    class XamlMethodWithCasts : IXamlCustomEmitMethod<IXamlILEmitter>
     {
         private readonly IXamlMethod _method;
         private readonly IReadOnlyList<IXamlType> _baseParametersWithThis;
@@ -540,13 +569,13 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+    class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
         public XamlDeferredContentNode(IXamlAstValueNode value, 
-            XamlTransformerConfiguration config) : base(value)
+            TransformerConfiguration config) : base(value)
         {
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
@@ -559,7 +588,7 @@ namespace XamlX.Ast
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
 
-        void CompileBuilder(XamlEmitContext context)
+        void CompileBuilder(ILEmitContext context)
         {
             var il = context.Emitter;
             // Initialize the context
@@ -573,7 +602,7 @@ namespace XamlX.Ast
             {
                 // Attempt to get the root object from parent service provider
                 var noRoot = il.DefineLabel();
-                using (var loc = context.GetLocal(context.Configuration.WellKnownTypes.Object))
+                using (var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object))
                     il
                         // if(arg == null) goto noRoot;
                         .Ldarg_0()
@@ -605,19 +634,20 @@ namespace XamlX.Ast
             il.Ret();
         }
 
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlXClosure_" + Guid.NewGuid(), so);
+            var subType = context.CreateSubType("XamlClosure_" + Guid.NewGuid(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
             }, "Build", true, true, false);
-            CompileBuilder(new XamlEmitContext(buildMethod.Generator, context.Configuration,
-                context.RuntimeContext, buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                (s, type) => subType.DefineSubType(type, s, false), context.File,
-                context.EnableIlVerification, context.Emitters));
+            CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
+                context.EmitMappings, runtimeContext: context.RuntimeContext,
+                contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
+                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                emitters: context.Emitters));
 
             var funcType = Type.GetClrType();
             codeGen
@@ -635,14 +665,14 @@ namespace XamlX.Ast
             }
             
             subType.CreateType();
-            return XamlNodeEmitResult.Type(0, funcType);
+            return XamlILNodeEmitResult.Type(0, funcType);
         }
     }
 #if !XAMLX_INTERNAL
     public
 #endif
     class XamlDeferredContentInitializeIntermediateRootNode 
-        : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode
+        : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         public IXamlAstValueNode Value { get; set; }
 
@@ -657,7 +687,7 @@ namespace XamlX.Ast
         }
 
         public IXamlAstTypeReference Type => Value.Type;
-        public XamlNodeEmitResult Emit(XamlEmitContext context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             codeGen
                 .Ldloc(context.ContextLocal);
@@ -666,9 +696,7 @@ namespace XamlX.Ast
                 .Stfld(context.RuntimeContext.IntermediateRootObjectField)
                 .Ldloc(context.ContextLocal)
                 .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
-            return XamlNodeEmitResult.Type(0, Value.Type.GetClrType());
+            return XamlILNodeEmitResult.Type(0, Value.Type.GetClrType());
         }
-
-
     }
 }

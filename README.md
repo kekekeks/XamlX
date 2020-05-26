@@ -4,7 +4,7 @@ General purpose pluggable XAML compiler with no runtime dependencies.
 Currently being used by Avalonia project as the XAML engine.
 
 The compiler isn't tied to Avalonia in any way, shape or form and can be used for any purposes 
-by configuring `XamlLanguageTypeMappings` to match the needs of your particular framework.
+by configuring `XamlXLanguageTypeMappings` to match the needs of your particular framework.
 Further customization can be done by AST manipulations, see examples of those in Avaloni repository.
 
 ![default](https://user-images.githubusercontent.com/1067584/52111361-90ad7900-2614-11e9-8133-a5aa6ebb1804.png)
