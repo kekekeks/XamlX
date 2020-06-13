@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using BenchmarkDotNet.Attributes;
 using System.Collections.Generic;
 using System.IO;
@@ -49,22 +49,22 @@ namespace Benchmarks
 */
 		private Func<IServiceProvider, object> _compiled;
 		[Benchmark]
-		public void XamlX()
+		public void Xaml()
 		{
 			_compiled = _compiled ?? BenchCompiler.Compile(new StreamReader(GetStream()).ReadToEnd());
 			_compiled(null);
 		}
 
-		public virtual object LoadXamlXPrecompiled(IServiceProvider sp)
+		public virtual object LoadXamlPrecompiled(IServiceProvider sp)
 		{
 			// This method will be overridden by Cecil
 			throw new NotImplementedException();
 		}
 		
 		[Benchmark]
-		public void XamlXPrecompiled()
+		public void XamlPrecompiled()
 		{
-			LoadXamlXPrecompiled(null);
+			LoadXamlPrecompiled(null);
 		}
 		
 	}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,14 +51,6 @@ namespace XamlX.TypeSystem
         IReadOnlyList<IXamlType> Parameters { get; }
         IXamlType DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlCustomEmitMethod : IXamlMethod
-    {
-        void EmitCall(IXamlILEmitter emitter);
     }
 
 #if !XAMLX_INTERNAL
@@ -145,31 +137,6 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlILEmitter
-    {
-        IXamlTypeSystem TypeSystem { get; }
-        IXamlILEmitter Emit(OpCode code);
-        IXamlILEmitter Emit(OpCode code, IXamlField field);
-        IXamlILEmitter Emit(OpCode code, IXamlMethod method);
-        IXamlILEmitter Emit(OpCode code, IXamlConstructor ctor);
-        IXamlILEmitter Emit(OpCode code, string arg);
-        IXamlILEmitter Emit(OpCode code, int arg);
-        IXamlILEmitter Emit(OpCode code, long arg);
-        IXamlILEmitter Emit(OpCode code, IXamlType type);
-        IXamlILEmitter Emit(OpCode code, float arg);
-        IXamlILEmitter Emit(OpCode code, double arg);
-        IXamlLocal DefineLocal(IXamlType type);
-        IXamlLabel DefineLabel();
-        IXamlILEmitter MarkLabel(IXamlLabel label);
-        IXamlILEmitter Emit(OpCode code, IXamlLabel label);
-        IXamlILEmitter Emit(OpCode code, IXamlLocal local);
-        void InsertSequencePoint(IFileSource file, int line, int position);
-        XamlLocalsPool LocalsPool { get; }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
     interface IFileSource
     {
         string FilePath { get; }
@@ -192,41 +159,39 @@ namespace XamlX.TypeSystem
         
     }
 
-    
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlMethodBuilder : IXamlMethod
-    {
-        IXamlILEmitter Generator { get; }
-    }
-    
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlConstructorBuilder : IXamlConstructor
-    {
-        IXamlILEmitter Generator { get; }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IXamlTypeBuilder : IXamlType
+    interface IXamlTypeBuilder<TBackendEmitter> : IXamlType
     {
         IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic);
         void AddInterfaceImplementation(IXamlType type);
 
-        IXamlMethodBuilder DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
+        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
             bool isInterfaceImpl, IXamlMethod overrideMethod = null);
 
         IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
-        IXamlConstructorBuilder DefineConstructor(bool isStatic, params IXamlType[] args);
+        IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
-        IXamlTypeBuilder DefineSubType(IXamlType baseType, string name, bool isPublic);
+        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlMethodBuilder<TBackendEmitter> : IXamlMethod
+    {
+        TBackendEmitter Generator { get; }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlConstructorBuilder<TBackendEmitter> : IXamlConstructor
+    {
+        TBackendEmitter Generator { get; }
+    }
 
 #if !XAMLX_INTERNAL
     public
@@ -468,18 +433,6 @@ namespace XamlX.TypeSystem
             return type.IsNullable() && type.GenericArguments[0].Equals(vtype);
         }
 
-        public static IXamlILEmitter EmitCall(this IXamlILEmitter emitter, IXamlMethod method, bool swallowResult = false)
-        {
-            if(method is IXamlCustomEmitMethod custom)
-                custom.EmitCall(emitter);
-            else
-                emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
-
-            if (swallowResult && !(method.ReturnType.Namespace == "System" && method.ReturnType.Name == "Void"))
-                emitter.Pop();
-            return emitter;
-        }
-
         public static IXamlType MakeGenericType(this IXamlType type, params IXamlType[] typeArguments)
             => type.MakeGenericType(typeArguments);
 
@@ -536,16 +489,6 @@ namespace XamlX.TypeSystem
             var lst = method.Parameters.ToList();
             lst.Insert(0, method.DeclaringType);
             return lst;
-        }
-        
-        public static IXamlILEmitter DebugHatch(this IXamlILEmitter emitter, string message)
-        {
-            #if DEBUG
-            var debug = emitter.TypeSystem.GetType("XamlX.XamlXDebugHatch").FindMethod(m => m.Name == "Debug");
-            emitter.Emit(OpCodes.Ldstr, message);
-            emitter.Emit(OpCodes.Call, debug);
-            #endif
-            return emitter;
         }
     }
     

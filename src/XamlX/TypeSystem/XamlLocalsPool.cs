@@ -8,17 +8,18 @@ namespace XamlX.TypeSystem
 #endif
     class XamlLocalsPool
     {
-        private readonly IXamlILEmitter _emitter;
+        private readonly Func<IXamlType, IXamlLocal> _localFactory;
 
         private readonly List<(IXamlType type, IXamlLocal local)> _localsPool =
             new List<(IXamlType, IXamlLocal)>();
+
         public sealed class PooledLocal : IDisposable
         {
             public IXamlLocal Local { get; private set; }
             private readonly XamlLocalsPool _parent;
             private readonly IXamlType _type;
 
-            public PooledLocal( XamlLocalsPool parent, IXamlType type, IXamlLocal local)
+            public PooledLocal(XamlLocalsPool parent, IXamlType type, IXamlLocal local)
             {
                 Local = local;
                 _parent = parent;
@@ -34,9 +35,9 @@ namespace XamlX.TypeSystem
             }
         }
         
-        public XamlLocalsPool(IXamlILEmitter emitter)
+        public XamlLocalsPool(Func<IXamlType, IXamlLocal> localFactory)
         {
-            _emitter = emitter;
+            _localFactory = localFactory;
         }
         
         public PooledLocal GetLocal(IXamlType type)
@@ -51,7 +52,7 @@ namespace XamlX.TypeSystem
                 }
             }
 
-            return new PooledLocal(this, type, _emitter.DefineLocal(type));
+            return new PooledLocal(this, type, _localFactory(type));
 
         }
     }
