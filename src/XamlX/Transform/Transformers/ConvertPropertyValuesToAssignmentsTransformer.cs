@@ -199,6 +199,10 @@ namespace XamlX.Transform.Transformers
             {
                 vman.Manipulation = VisitManipulationNode(vman.Manipulation);
             }
+            else if (value is XamlMarkupExtensionNode mext)
+            {
+                return FindAndRemoveKey(mext.Value);
+            }
 
             return keyNode;
 

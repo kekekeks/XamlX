@@ -18,6 +18,12 @@ namespace XamlParserTests
         public List<int> IntList2 { get; } = new List<int>();
     }
 
+    public class MarkupExtensionContentDictionaryClass
+    {
+        [Content]
+        public Dictionary<string, int> IntDic { get; } = new Dictionary<string, int>();
+    }
+
     public class ObjectTestExtension
     {
         public object Returned { get; set; }
@@ -113,6 +119,19 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' IntList2='{ServiceProviderValue}'>
 </MarkupExtensionTestsClass>", CreateValueProvider(123));
             Assert.Equal(new[] {123}, res.IntList2);
+        }
+
+        [Fact]
+        public void Extensions_Should_Be_Able_To_Populate_Content_Dictionaries()
+        {
+            var res = (MarkupExtensionContentDictionaryClass) CompileAndRun(@"
+<MarkupExtensionContentDictionaryClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <ServiceProviderValue x:Key='First'/>
+    <ServiceProviderValue x:Key='Second'/> 
+</MarkupExtensionContentDictionaryClass>", CreateValueProvider(123));
+            Assert.Equal(2, res.IntDic.Count);
+            Assert.Equal(123, res.IntDic["First"]);
+            Assert.Equal(123, res.IntDic["Second"]);
         }
 
         [Fact]
