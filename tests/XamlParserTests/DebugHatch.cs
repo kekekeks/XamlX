@@ -1,6 +1,6 @@
 namespace XamlX
 {
-    public class XamlXDebugHatch
+    public class XamlDebugHatch
     {
         public static void Debug(string point)
         {

@@ -1,45 +1,38 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}"
-ProjectSection(SolutionItems) = preProject
-	README.md = README.md
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX", "src\XamlX\XamlX.csproj", "{3986513F-FAE6-4DA6-9221-51837AFC9B3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlX", "src\XamlX\XamlX.csproj", "{3986513F-FAE6-4DA6-9221-51837AFC9B3C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{55203DEB-3DB3-4907-8275-7FBE48185148}"
-ProjectSection(SolutionItems) = preProject
-	tests\Tests.Common.props = tests\Tests.Common.props
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		tests\Tests.Common.props = tests\Tests.Common.props
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlParserTests", "tests\XamlParserTests\XamlParserTests.csproj", "{6512A859-F453-4388-9DAA-9B0C3E62956E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlParserTests", "tests\XamlParserTests\XamlParserTests.csproj", "{6512A859-F453-4388-9DAA-9B0C3E62956E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "src\Benchmarks\Benchmarks.csproj", "{F1C1F27D-20E5-4097-8647-0BDD74CC11FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "src\Benchmarks\Benchmarks.csproj", "{F1C1F27D-20E5-4097-8647-0BDD74CC11FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Runtime", "src\XamlX.Runtime\XamlX.Runtime.csproj", "{E232146D-783D-4927-AB4D-26569AE50F78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlX.Runtime", "src\XamlX.Runtime\XamlX.Runtime.csproj", "{E232146D-783D-4927-AB4D-26569AE50F78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Cecil", "src\XamlX.Cecil\XamlX.Cecil.csproj", "{655CC2E8-C076-4DE8-8671-B7C7792DF7A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlX.IL.Cecil", "src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj", "{655CC2E8-C076-4DE8-8671-B7C7792DF7A3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CecilTests", "tests\CecilTests\CecilTests.csproj", "{20135939-0E5C-4906-9097-67F13945D042}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CecilTests", "tests\CecilTests\CecilTests.csproj", "{20135939-0E5C-4906-9097-67F13945D042}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CecilNetstandardTests", "tests\CecilNetstandardTests\CecilNetstandardTests.csproj", "{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CecilNetstandardTests", "tests\CecilNetstandardTests\CecilNetstandardTests.csproj", "{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BenchmarksCompiler", "src\BenchmarksCompiler\BenchmarksCompiler.csproj", "{0DC5F69A-C150-4590-90D7-303B9654011C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenchmarksCompiler", "src\BenchmarksCompiler\BenchmarksCompiler.csproj", "{0DC5F69A-C150-4590-90D7-303B9654011C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{3986513F-FAE6-4DA6-9221-51837AFC9B3C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
-		{6512A859-F453-4388-9DAA-9B0C3E62956E} = {55203DEB-3DB3-4907-8275-7FBE48185148}
-		{F1C1F27D-20E5-4097-8647-0BDD74CC11FB} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
-		{E232146D-783D-4927-AB4D-26569AE50F78} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
-		{655CC2E8-C076-4DE8-8671-B7C7792DF7A3} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
-		{20135939-0E5C-4906-9097-67F13945D042} = {55203DEB-3DB3-4907-8275-7FBE48185148}
-		{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE} = {55203DEB-3DB3-4907-8275-7FBE48185148}
-		{0DC5F69A-C150-4590-90D7-303B9654011C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{3986513F-FAE6-4DA6-9221-51837AFC9B3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -74,5 +67,21 @@ Global
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3986513F-FAE6-4DA6-9221-51837AFC9B3C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{6512A859-F453-4388-9DAA-9B0C3E62956E} = {55203DEB-3DB3-4907-8275-7FBE48185148}
+		{F1C1F27D-20E5-4097-8647-0BDD74CC11FB} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{E232146D-783D-4927-AB4D-26569AE50F78} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{655CC2E8-C076-4DE8-8671-B7C7792DF7A3} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{20135939-0E5C-4906-9097-67F13945D042} = {55203DEB-3DB3-4907-8275-7FBE48185148}
+		{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE} = {55203DEB-3DB3-4907-8275-7FBE48185148}
+		{0DC5F69A-C150-4590-90D7-303B9654011C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B701ADE9-89EA-4C9D-BB51-0AA4E8E07217}
 	EndGlobalSection
 EndGlobal

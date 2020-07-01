@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using XamlX.Ast;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -45,22 +43,8 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
-        public Func<XamlEmitContext, IXamlILEmitter, XamlAstClrProperty, bool> ProvideValueTargetPropertyEmitter { get; set; }
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
-        public XamlContextTypeBuilderCallback ContextTypeBuilderCallback { get; set; }
-        public XamlContextFactoryCallback ContextFactoryCallback { get; set; }
-        
     }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    delegate void XamlContextTypeBuilderCallback(IXamlTypeBuilder typeBuilder, IXamlILEmitter constructor);
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    delegate void XamlContextFactoryCallback(XamlContext context, IXamlILEmitter emitter);
 
 #if !XAMLX_INTERNAL
     public

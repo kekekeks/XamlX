@@ -43,7 +43,7 @@ If strongly typed markup extension overload is available, it's used to avoid unn
 - IProvideValueTarget (property name is provided for regular properties, RuntimeMethodInfo is provided for attached ones)
 - IUriContext
 - Primitive types (sys:String, sys:Int32, sys:TimeSpan etc) https://docs.microsoft.com/en-us/dotnet/framework/xaml-services/built-in-types-for-common-xaml-language-primitives
-- Runtime xmlns information via `IXamlXXmlNamespaceInfoProvider` (provides `Dictionary<string, List<(string clrNamespace, string asm)>`)
+- Runtime xmlns information via `IXamlXmlNamespaceInfoProvider` (provides `Dictionary<string, List<(string clrNamespace, string asm)>`)
 
 - xml:space Handling in XAML (automatically via XmlReader)
 - Event handlers from codebehind
@@ -70,7 +70,7 @@ Features marked with *[opt]* are considered optional and will be implemented aft
 
 
 These are questinable due to heavy reliance on reflection:
-- IXamlTypeResolver (can be implemented in runtime via `IXamlXXmlNamespaceInfoProviderV1`) *[dontneed]*
+- IXamlTypeResolver (can be implemented in runtime via `IXamlXmlNamespaceInfoProviderV1`) *[dontneed]*
 - IXamlNameResolver (probably without forward references) *[dontneed]*
 - IXamlNamespaceResolver *[dontneed]*
 
@@ -101,7 +101,7 @@ x:Code Intrinsic XAML Type (probably use Roslyn to inline C# code)
 
 ## Possible optimizations (TODO):
 
-- Right now if IXamlXParentStack feature is enabled, each object initialization triggers push/pop to the parent objects stack. 
+- Right now if IXamlParentStack feature is enabled, each object initialization triggers push/pop to the parent objects stack. 
 That could be optimized out for objects that don't have anything that uses IServiceProvider (markup extensions, `TypeConverter`'s, `DeferredContent`) inside of them
 - Parent's `RootObject` could be saved in a closure, right deferred content builder attempts to extract it from
 passed `IServiceProvider` 

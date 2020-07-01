@@ -9,10 +9,6 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 #endif
     class SystemXamlMarkupExtensionParser
     {
-
-
-
-        
         public static IXamlAstValueNode Parse(IXamlLineInfo li, string ext,
             Func<string, XamlAstXmlTypeReference> typeResolver)
         {
