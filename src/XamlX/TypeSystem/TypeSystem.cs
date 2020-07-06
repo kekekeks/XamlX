@@ -51,6 +51,7 @@ namespace XamlX.TypeSystem
         IReadOnlyList<IXamlType> Parameters { get; }
         IXamlType DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -101,6 +102,7 @@ namespace XamlX.TypeSystem
         bool IsStatic { get; }
         bool IsLiteral { get; }
         object GetLiteralValue();
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
     }
 
 #if !XAMLX_INTERNAL

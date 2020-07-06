@@ -520,6 +520,8 @@ namespace XamlX.Ast
         public bool IsPublic => true;
         public bool IsStatic => true;
         public IReadOnlyList<IXamlType> Parameters { get; }
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
+        
         public void EmitCall(IXamlILEmitter codeGen)
         {
             int firstCast = -1; 
