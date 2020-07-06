@@ -61,6 +61,12 @@ namespace XamlX.TypeSystem
             public bool IsPublic => Definition.IsPublic;
             public bool IsStatic => Definition.IsStatic;
 
+            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
+                _attributes ?? (_attributes =
+                    Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>

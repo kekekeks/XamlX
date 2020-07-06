@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 
 namespace XamlX.TypeSystem
@@ -25,6 +27,12 @@ namespace XamlX.TypeSystem
             public bool IsPublic => _def.IsPublic;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
+
+            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
+                _attributes ?? (_attributes =
+                    _def.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
             public object GetLiteralValue()
             {
                 if (IsLiteral && _def.HasConstant)
