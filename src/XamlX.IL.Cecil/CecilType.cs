@@ -47,6 +47,8 @@ namespace XamlX.TypeSystem
                 return CecilHelpers.Equals(Reference, o.Reference);
             }
 
+            public override string ToString() => Definition.ToString();
+
             public object Id => Reference.FullName;
             public string Name => Reference.Name;
             public string FullName => Reference.FullName;
