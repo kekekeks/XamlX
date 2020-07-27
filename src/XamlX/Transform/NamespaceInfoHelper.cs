@@ -53,6 +53,19 @@ namespace XamlX.Transform
                 };
             }
 
+            const string usingPrefix = "using:";
+            if (xmlns.StartsWith(usingPrefix))
+            {
+                var ns = xmlns.Substring(usingPrefix.Length);
+                return new List<NamespaceResolveResult>
+                {
+                    new NamespaceResolveResult
+                    {
+                        ClrNamespace = ns
+                    }
+                };
+            }
+
             return null;
         }
     }
