@@ -73,6 +73,23 @@ namespace XamlX.Transform
             // Check the base type first, we'll need to throw on duplicate Content property later
             if (type.BaseType != null)
                 found = FindContentProperty(type.BaseType);
+
+            foreach (var contentAttributeOnType in GetCustomAttribute(type, TypeMappings.ContentAttributes))
+            {
+                if (contentAttributeOnType.Parameters[0] is string propertyName)
+                {
+                    IXamlProperty contentProperty = type.GetAllProperties().FirstOrDefault(prop => prop.Name == propertyName);
+                    if (contentProperty is null)
+                    {
+                        throw new XamlTypeSystemException($"The property name '{propertyName}' specified in the content property of {type.GetFqn()} does not exist.");
+                    }
+
+                    if (found != null && !contentProperty.Equals(found))
+                        throw new XamlTypeSystemException(
+                            "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
+                    found = contentProperty;
+                }
+            }
             
             foreach (var p in type.Properties)
             {
