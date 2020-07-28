@@ -609,7 +609,7 @@ namespace XamlIl.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlIlClosure_" + Guid.NewGuid(), so);
+            var subType = context.CreateSubType("XamlIlClosure_" + context.GetNextUniqueContextId(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp

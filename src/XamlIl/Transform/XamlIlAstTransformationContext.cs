@@ -13,6 +13,10 @@ namespace XamlIl.Transform
     {
         private Dictionary<Type, object> _items = new Dictionary<Type, object>();  
         private List<IXamlIlAstNode> _parentNodes = new List<IXamlIlAstNode>();
+        private int _idCount;
+        
+        public int GetNextUniqueContextId () => ++_idCount;
+        
         public T GetItem<T>() => (T) _items[typeof(T)];
 
         public T GetOrCreateItem<T>() where T : new()
