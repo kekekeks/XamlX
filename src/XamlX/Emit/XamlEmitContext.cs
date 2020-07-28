@@ -216,15 +216,12 @@ namespace XamlX.Emit
             return res;
         }
 
-
         public string GetUniqueID()
         {
             Interlocked.Increment(ref _counter);
             return $"C{_counter}";
         }
     }
-
-
 
 #if !XAMLX_INTERNAL
     public
