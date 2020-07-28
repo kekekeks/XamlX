@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Helpers;
 
 namespace XamlX.TypeSystem
 {
@@ -214,7 +215,7 @@ namespace XamlX.TypeSystem
         }
         public bool Equals(IXamlType other) => other == this;
 
-        public object Id { get; } = Guid.NewGuid();
+        public object Id { get; } = DeterministicName.Get();
         public string Name { get; }
         public string Namespace { get; } = "";
         public string FullName => Name;

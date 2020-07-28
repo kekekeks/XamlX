@@ -10,6 +10,7 @@ using XamlX.Transform;
 using XamlX.TypeSystem;
 using XamlX.IL;
 using XamlX.Emit;
+using XamlX.Helpers;
 
 namespace XamlParserTests
 {
@@ -82,15 +83,15 @@ namespace XamlParserTests
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
         {
             #if !NETCOREAPP && !NETSTANDARD
-            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
+            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(DeterministicName.GetString()),
                 AssemblyBuilderAccess.RunAndSave,
                 Directory.GetCurrentDirectory());
             #else
-            var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.Run);
+            var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DeterministicName.GetString()), AssemblyBuilderAccess.Run);
             #endif
 
             var dm = da.DefineDynamicModule("testasm.dll");
-            var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
+            var t = dm.DefineType(DeterministicName.GetString(), TypeAttributes.Public);
             var ct = dm.DefineType(t.Name + "Context");
             var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
             var contextTypeDef =

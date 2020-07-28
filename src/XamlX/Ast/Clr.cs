@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Emit;
+using XamlX.Helpers;
 using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
@@ -640,7 +641,7 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + Guid.NewGuid(), so);
+            var subType = context.CreateSubType("XamlClosure_" + DeterministicName.GetString(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
