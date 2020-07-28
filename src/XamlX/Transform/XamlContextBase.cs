@@ -14,7 +14,7 @@ namespace XamlX.Transform
         private readonly List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
         private int _idCount;
         
-        public int GetNextId () => ++_idCount;
+        public int GetNextUniqueContextId () => ++_idCount;
         
         public T GetItem<T>() => (T)_items[typeof(T)];
 
