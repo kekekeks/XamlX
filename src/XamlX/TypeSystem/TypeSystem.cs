@@ -215,7 +215,7 @@ namespace XamlX.TypeSystem
         }
         public bool Equals(IXamlType other) => other == this;
 
-        public object Id { get; } = DeterministicName.Get();
+        public object Id { get; } = DeterministicName.GetString();
         public string Name { get; }
         public string Namespace { get; } = "";
         public string FullName => Name;
