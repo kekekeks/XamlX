@@ -53,15 +53,15 @@ namespace Benchmarks
             
 #if !NETCOREAPP
             var path = Path.GetDirectoryName(typeof(BenchCompiler).Assembly.GetModules()[0].FullyQualifiedName);
-            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(DeterministicName.Get()),
+            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(DeterministicName.GetString()),
                 AssemblyBuilderAccess.RunAndSave,
                 path);
 #else
-            var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DeterministicName.Get()), AssemblyBuilderAccess.Run);
+            var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DeterministicName.GetString()), AssemblyBuilderAccess.Run);
 #endif
             
             var dm = da.DefineDynamicModule("testasm.dll");
-            var t = dm.DefineType(DeterministicName.Get(), TypeAttributes.Public);
+            var t = dm.DefineType(DeterministicName.GetString(), TypeAttributes.Public);
 
             var ctb = dm.DefineType(t.Name + "Context", TypeAttributes.Public);
             var  contextTypeDef = compiler.CreateContextType(((SreTypeSystem)typeSystem).CreateTypeBuilder(ctb));
