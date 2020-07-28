@@ -53,7 +53,7 @@ namespace Benchmarks
             
 #if !NETCOREAPP
             var path = Path.GetDirectoryName(typeof(BenchCompiler).Assembly.GetModules()[0].FullyQualifiedName);
-            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(compiler.),
+            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
                 AssemblyBuilderAccess.RunAndSave,
                 path);
 #else
