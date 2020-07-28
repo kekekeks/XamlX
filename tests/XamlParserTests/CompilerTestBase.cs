@@ -10,7 +10,6 @@ using XamlX.Transform;
 using XamlX.TypeSystem;
 using XamlX.IL;
 using XamlX.Emit;
-using XamlX.Helpers;
 
 namespace XamlParserTests
 {
