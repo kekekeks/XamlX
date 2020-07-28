@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Xml;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -26,6 +27,7 @@ namespace XamlX.Emit
         public IXamlLocal ContextLocal { get; }
         public Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> CreateSubType { get; }
         public TBackendEmitter Emitter { get; }
+        private long _counter;
 
         public XamlEmitContext(TBackendEmitter emitter, TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
@@ -213,7 +215,16 @@ namespace XamlX.Emit
             foundEmitter = false;
             return res;
         }
+
+
+        public string GetUniqueID()
+        {
+            Interlocked.Increment(ref _counter);
+            return $"C{_counter}";
+        }
     }
+
+
 
 #if !XAMLX_INTERNAL
     public
