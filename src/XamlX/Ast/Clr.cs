@@ -640,7 +640,7 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + Guid.NewGuid(), so);
+            var subType = context.CreateSubType("XamlClosure_" + context.GetNextId(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
