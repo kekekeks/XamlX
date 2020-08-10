@@ -10,8 +10,7 @@ namespace XamlX
     class XamlParseException : XmlException
     {
         public XamlParseException(string message, int line, int position) : base(
-            $"{message} (line {line} position {position})",
-            null, line, position)
+            message, null, line, position)
         {
         }
 
