@@ -70,11 +70,7 @@ namespace XamlX.IL.Emitters
     {
         public static void Verify(XamlContextBase ctx, IXamlAstNode node)
         {
-            var cache = ctx.GetItem<XamlNeedsParentStackCache>();
-            // There is no parent stack
-            if (cache == null)
-                return;
-            if (!cache.ContainsKey(node))
+            if (ctx.TryGetItem<XamlNeedsParentStackCache>(out var cache) && !cache.ContainsKey(node))
                 throw new XamlLoadException("Node needs parent stack, but one doesn't seem to be provided", node);
         }
         class ParentStackVisitor : IXamlAstVisitor
