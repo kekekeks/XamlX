@@ -57,7 +57,7 @@ namespace XamlParserTests
             => Compile(xaml).create(prov);
         XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
         {
-            var parsed = XDocumentXamlParser.Parse(xaml);
+            var parsed = XamlParser.Parse(xaml);
             var compiler = new XamlILCompiler(
                 Configuration,
                 new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),

@@ -21,7 +21,7 @@ namespace XamlParserTests
         [Fact]
         public void Parser_Should_Be_Able_To_Parse_A_Simple_Tree()
         {
-            var root = XDocumentXamlParser.Parse(
+            var root = XamlParser.Parse(
                 @"
 <Root xmlns='rootns' xmlns:t='testns' xmlns:d='directive' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2, Prop3={Extension}, Prop4=test3}'
@@ -194,7 +194,7 @@ namespace XamlParserTests
         [Theory, InlineData(false), InlineData(true)]
         public void Parser_Should_Handle_Ignorable_Content(bool map)
         {
-            var root = XDocumentXamlParser.Parse(@"
+            var root = XamlParser.Parse(@"
 <Root xmlns='rootns' xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' 
     mc:Ignorable='d d2' xmlns:d='test' xmlns:d2='test2'
     d:DataContext='123' d2:Lalala='321'>
