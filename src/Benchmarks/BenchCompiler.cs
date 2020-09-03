@@ -40,7 +40,7 @@ namespace Benchmarks
             
             var typeSystem = new SreTypeSystem();
             var configuration = BenchmarksXamlXConfiguration.Configure(typeSystem);
-            var parsed = XDocumentXamlParser.Parse(xaml);
+            var parsed = XamlParser.Parse(xaml);
 
             var compiler = new XamlILCompiler(
                 configuration,

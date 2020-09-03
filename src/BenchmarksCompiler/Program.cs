@@ -61,7 +61,7 @@ namespace BenchmarksCompiler
                 while (xml[0] > 128)
                     xml = xml.Substring(1);
                 
-                var parsed = XamlX.Parsers.XDocumentXamlParser.Parse(xml);
+                var parsed = XamlX.Parsers.XamlParser.Parse(xml);
                 compiler.Transform(parsed);
                 compiler.Compile(parsed, typeSystem.CreateTypeBuilder(lb), contextTypeDef,
                     "PopulateXamlPrecompiled", "LoadXamlPrecompiled",

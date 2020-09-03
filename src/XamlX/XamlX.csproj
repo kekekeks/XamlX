@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="GuiLabs.Language.Xml" Version="1.2.46" />
       <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     </ItemGroup>
 
