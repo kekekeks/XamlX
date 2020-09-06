@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using XamlX.Ast;
 
-namespace PimpMyAvalonia.LanguageServer
+namespace XamlX.Parsers
 {
     public class Position : IXamlLineInfo
     {
@@ -75,20 +75,6 @@ namespace PimpMyAvalonia.LanguageServer
                     character++;
                 }
             }
-
-            //bool checkIfEndedOnNewLine = data.Length > i;
-            //if (checkIfEndedOnNewLine)
-            //{
-            //    if (data[i] == '\n')
-            //    {
-            //        NewLine();
-            //    }
-            //    else if (data[i] == '\r')
-            //    {
-            //        NewLine();
-            //    }
-            //}
-
 
             return new Position(line, character);
         }

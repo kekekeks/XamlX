@@ -10,7 +10,7 @@ using Xunit;
 
 namespace XamlParserTests
 {
-    public class ParserTests
+    public abstract class ParserTests
     {
         class NullLineInfo : IXamlLineInfo
         {

@@ -92,7 +92,7 @@ namespace XamlParserTests
     }
     
     
-    public class InitializationTests : CompilerTestBase
+    public abstract class InitializationTests : CompilerTestBase
     {
         public static string BeginInitEvent = "BeginInit";
         public static string EndInitEvent = "EndInit";

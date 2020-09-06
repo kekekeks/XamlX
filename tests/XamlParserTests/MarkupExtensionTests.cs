@@ -95,9 +95,7 @@ namespace XamlParserTests
         public string Value { get; set; }
     }
 
-
-
-    public class MarkupExtensionTests : CompilerTestBase
+    public abstract class MarkupExtensionTests : CompilerTestBase
     {
         [Fact]
         public void Object_Should_Be_Casted_To_String()
