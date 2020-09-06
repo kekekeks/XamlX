@@ -12,7 +12,7 @@ namespace XamlParserTests
     }
 
    
-    public class ListTests : CompilerTestBase
+    public abstract class ListTests : CompilerTestBase
     {
         [Fact]
         public void Enumerable_Properties_Should_Be_Treated_As_Lists()

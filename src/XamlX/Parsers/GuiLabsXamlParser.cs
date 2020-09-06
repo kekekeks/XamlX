@@ -1,5 +1,4 @@
 ﻿using Microsoft.Language.Xml;
-using PimpMyAvalonia.LanguageServer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -262,7 +261,6 @@ namespace XamlX.Parsers
 
                 }
 
-                SyntaxList<SyntaxNode> syntaxContent = newEl.AsSyntaxElement.Content;
                 if (TryParseText(newEl, out var textNode))
                 {
                     i.Children.Add(textNode);
@@ -293,16 +291,6 @@ namespace XamlX.Parsers
             {
                 if (element != null && element.AsSyntaxElement.Content.Count == 1 && element.AsSyntaxElement.Content[0] is XmlTextSyntax textContent)
                 {
-                    //using (var reader = XmlReader.Create(new StringReader("<a>" +textContent.Value + "</a>")))
-                    //{
-                    //    reader.MoveToContent();
-                    //    string unescapedText = reader.ReadElementContentAsString();
-                    //}
-                    //XmlDocument doc = new XmlDocument();
-                    //string xml = "<a>" + textContent.Value + "</a>";
-                    //doc.LoadXml(xml);
-                    //unescapedText = doc.DocumentElement.InnerText;
-
                     string text = UnescapeXml(textContent.Value);
                     node = new XamlAstTextNode(textContent.AsLi(_text), text.Trim());
                     return true;

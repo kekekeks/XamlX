@@ -17,7 +17,7 @@ namespace XamlParserTests
         public string Test { get; set; }
     }
     
-    public class BasicCompilerTests : CompilerTestBase
+    public abstract class BasicCompilerTests : CompilerTestBase
     {
         [Theory,
             InlineData(false),

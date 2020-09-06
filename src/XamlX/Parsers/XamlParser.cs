@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using XamlX.Ast;
 
@@ -9,13 +10,38 @@ namespace XamlX.Parsers
 #endif
     static class XamlParser
     {
+        static XamlParser()
+        {
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("XAML_USE_LEGACY_PARSER")))
+            {
+                UseLegacyParser = true;
+            }
+        }
+
+        public static bool UseLegacyParser = false;
+
         public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
         {
-            return GuiLabsXamlParser.Parse(s, compatibilityMappings);
+            if (!UseLegacyParser)
+            {
+                return GuiLabsXamlParser.Parse(s, compatibilityMappings);
+            }
+            else
+            {
+                return XDocumentXamlParser.Parse(s, compatibilityMappings);
+            }
+            
         }
         public static XamlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null)
         {
-            return GuiLabsXamlParser.Parse(reader, compatibilityMappings);
+            if (!UseLegacyParser)
+            {
+                return GuiLabsXamlParser.Parse(reader, compatibilityMappings);
+            }
+            else
+            {
+                return XDocumentXamlParser.Parse(reader, compatibilityMappings);
+            }
         }
     }
 }

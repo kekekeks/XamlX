@@ -25,7 +25,7 @@ namespace XamlParserTests
         Foo = 100500
     }
 
-    public class IntrinsicsTests : CompilerTestBase
+    public abstract class IntrinsicsTests : CompilerTestBase
     {
         [Fact]
         public void Null_Extension_Should_Be_Operational()
