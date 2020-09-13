@@ -14,12 +14,26 @@ namespace XamlX.Transform
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
         public TransformerConfiguration Configuration { get; }
         public IXamlAstValueNode RootObject { get; set; }
-        public bool StrictMode { get; }
 
+        [Obsolete("Use error method instead, to report info about errors in AST")]
+        public bool StrictMode => _strictMode;
+
+        private bool _strictMode;
+        public List<Exception> Errors { get; } = new List<Exception>();
+
+        public void Error(Exception e)
+        {
+            if (_strictMode)
+                throw e;
+            else
+                Errors.Add(e);
+        }
         public IXamlAstNode Error(IXamlAstNode node, Exception e)
         {
-            if (StrictMode)
+            if (_strictMode)
                 throw e;
+            else
+                Errors.Add(e);
             return node;
         }
 
@@ -34,7 +48,7 @@ namespace XamlX.Transform
         {
             Configuration = configuration;
             NamespaceAliases = namespaceAliases;
-            StrictMode = strictMode;
+            _strictMode = strictMode;
         }
 
         class Visitor : IXamlAstVisitor
