@@ -39,7 +39,8 @@ namespace XamlX.IL
                     new ManipulationGroupEmitter(),
                     new ValueWithManipulationsEmitter(),
                     new MarkupExtensionEmitter(),
-                    new ObjectInitializationNodeEmitter()
+                    new ObjectInitializationNodeEmitter(),
+                    new ArrayEmitter()
                 });
             }
         }

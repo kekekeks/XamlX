@@ -160,6 +160,9 @@ namespace XamlX.IL
 
         public static IXamlILEmitter Ldelem_ref(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldelem_Ref);
         public static IXamlILEmitter Stelem_ref(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Stelem_Ref);
+
+        public static IXamlILEmitter Stelem(this IXamlILEmitter emitter, IXamlType type) => emitter.Emit(OpCodes.Stelem, type);
+
         public static IXamlILEmitter Ldlen(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldlen);
 
         public static IXamlILEmitter Add(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Add);

@@ -43,7 +43,8 @@ namespace XamlX.Compiler
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
-                    new ConstructableObjectTransformer()
+                    new ConstructableObjectTransformer(),
+                    new ArrayElementTransformer()
                 };
                 SimplificationTransformers = new List<IXamlAstTransformer>
                 {
