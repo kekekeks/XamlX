@@ -6,7 +6,7 @@ namespace XamlX.TypeSystem
 {
     internal class GenericTypeResolver
     {
-        private Dictionary<GenericParameter, TypeReference> lookup = new Dictionary<GenericParameter, TypeReference>();
+        private readonly Dictionary<GenericParameter, TypeReference> lookup = new Dictionary<GenericParameter, TypeReference>();
 
         public void Scan(TypeReference r)
         {
