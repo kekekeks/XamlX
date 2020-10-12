@@ -136,7 +136,7 @@ namespace XamlParserTests
             }, null);
         }
 
-        public static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
+        private static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
         {
             
         }

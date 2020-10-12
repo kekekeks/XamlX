@@ -116,8 +116,8 @@ namespace XamlParserTests
             CheckConversion("TypeProperty", "ConvertersTestClass", 
                 typeof(ConvertersTestClass).ToString());
         }
-        
-        public void CheckConversion(string property, string value, string expected)
+
+        private void CheckConversion(string property, string value, string expected)
         {
             var res = (ConvertersTestClass) CompileAndRun($@"
 <ConvertersTestClass
