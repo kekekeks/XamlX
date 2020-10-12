@@ -9,7 +9,12 @@ on:
 jobs:
   build:
 
-    runs-on: [windows-latest, ubuntu-latest]
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -17,9 +22,5 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.402
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore --no-build --verbosity normal
+      run: dotnet test
