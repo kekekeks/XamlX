@@ -15,6 +15,10 @@ namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
+#if CHECK_MSIL
+        static object s_asmLock = new object();
+#endif
+
         private readonly IXamlTypeSystem _typeSystem;
         public TransformerConfiguration Configuration { get; }
 
@@ -71,7 +75,6 @@ namespace XamlParserTests
                 "http://example.com/", null);
             return parsed;
         }
-        static object s_asmLock = new object();
         
 #if !CECIL
         public CompilerTestBase() : this(new SreTypeSystem())
@@ -81,13 +84,13 @@ namespace XamlParserTests
         
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
         {
-            #if !NETCOREAPP && !NETSTANDARD
+#if !NETCOREAPP && !NETSTANDARD
             var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
                 AssemblyBuilderAccess.RunAndSave,
                 Directory.GetCurrentDirectory());
-            #else
+#else
             var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.Run);
-            #endif
+#endif
 
             var dm = da.DefineDynamicModule("testasm.dll");
             var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
@@ -106,16 +109,18 @@ namespace XamlParserTests
             var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml);
 
             var created = t.CreateTypeInfo();
-            #if !NETCOREAPP && !NETSTANDARD
+#if !NETCOREAPP && !NETSTANDARD
             dm.CreateGlobalFunctions();
+#if CHECK_MSIL
             // Useful for debugging the actual MSIL, don't remove
             lock (s_asmLock)
                 da.Save("testasm.dll");
-            #endif
+#endif
+#endif
 
             return GetCallbacks(created);
         }
-        #endif
+#endif
 
         (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate)
             GetCallbacks(Type created)

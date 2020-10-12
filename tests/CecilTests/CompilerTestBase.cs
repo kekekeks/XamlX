@@ -15,11 +15,11 @@ namespace XamlParserTests
         static CecilTypeSystem CreateCecilTypeSystem()
         {
             var self = typeof(CompilerTestBase).Assembly.GetModules()[0].FullyQualifiedName;
-            #if USE_NETSTANDARD_BUILD
+#if USE_NETSTANDARD_BUILD
             var selfDir = Path.GetDirectoryName(self);
             var selfName = Path.GetFileName(self);
             self = Path.GetFullPath(Path.Combine(selfDir, "../netstandard2.0/", selfName));
-            #endif
+#endif
             var refsPath = self + ".refs";
             var refs = File.ReadAllLines(refsPath).Concat(new[] {self});
             return new CecilTypeSystem(refs, null);
@@ -56,8 +56,10 @@ namespace XamlParserTests
             var ms = new MemoryStream();
             asm.Write(ms);
             var data = ms.ToArray();
+#if CHECK_MSIL
             lock (s_asmLock)
                 File.WriteAllBytes("testasm.dll", data);
+#endif
             
             var loaded = Assembly.Load(data);
             var t = loaded.GetType("TestXaml.Xaml");
