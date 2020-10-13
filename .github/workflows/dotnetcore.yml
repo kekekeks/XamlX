@@ -11,16 +11,27 @@ jobs:
 
     strategy:
       matrix:
-        os: [ windows-latest ]
+        os: [ windows-latest, ubuntu-latest ]
 
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     steps:
+
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.402
-    - name: Test
-      run: dotnet test
+
+    - name: Build CecilNetstandardTests
+      run: dotnet build tests/CecilNetstandardTests/CecilNetstandardTests.csproj
+    - name: Build CecilTests
+      run: dotnet build tests/CecilTests/CecilTests.csproj
+
+    - name: Test for netcoreapp3.1
+      run: dotnet test --framework netcoreapp3.1
+
+    - name: Test for net47
+      if: matrix.os == 'windows-latest'
+      run: dotnet test --framework net47
