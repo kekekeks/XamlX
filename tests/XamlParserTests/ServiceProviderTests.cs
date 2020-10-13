@@ -38,7 +38,14 @@ namespace XamlParserTests
         [Content]
         public List<ServiceProviderTestsClass> Children { get; } = new List<ServiceProviderTestsClass>(); 
     }
-    
+
+    public class ServiceProviderTestsClassForAttached
+    {
+        public static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
+        {
+        }
+    }
+
     public class ServiceProviderTests : CompilerTestBase
     {
         void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
@@ -135,11 +142,6 @@ namespace XamlParserTests
                 return "Value";
             }, null);
         }
-
-        private static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
-        {
-            
-        }
         
         [Fact]
         public void ProvideValueTarget_Provides_Info_About_Properties()
@@ -148,20 +150,25 @@ namespace XamlParserTests
             CompileAndRun(@"
 <ServiceProviderTestsClass xmlns='test' 
     Property='{Callback}'
-    ServiceProviderTests.AttachedProperty='{Callback}'
+    ServiceProviderTestsClassForAttached.AttachedProperty='{Callback}'
 />", sp =>
             {
                 var pt = sp.GetService<ITestProvideValueTarget>();
                 Assert.IsType<ServiceProviderTestsClass>(pt.TargetObject);
                 if(num == 0)
+                {
                     Assert.Equal("Property", pt.TargetProperty);
+                }
                 else if (num == 1)
                 {
                     Assert.Equal("1", ((ServiceProviderTestsClass) pt.TargetObject).Property);
                     Assert.Equal("AttachedProperty", pt.TargetProperty);
                 }
                 else
+                {
                     throw new InvalidOperationException();
+                }
+
                 num++;
                 return num.ToString();
             }, null);
