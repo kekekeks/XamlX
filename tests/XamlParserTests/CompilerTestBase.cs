@@ -84,7 +84,7 @@ namespace XamlParserTests
         
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
         {
-#if !NETCOREAPP && !NETSTANDARD
+#if NETFRAMEWORK
             var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
                 AssemblyBuilderAccess.RunAndSave,
                 Directory.GetCurrentDirectory());
@@ -109,7 +109,7 @@ namespace XamlParserTests
             var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml);
 
             var created = t.CreateTypeInfo();
-#if !NETCOREAPP && !NETSTANDARD
+#if NETFRAMEWORK
             dm.CreateGlobalFunctions();
 #if CHECK_MSIL
             // Useful for debugging the actual MSIL, don't remove
