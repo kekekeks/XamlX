@@ -1,10 +1,11 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 using XamlX.Emit;
+using XamlX.Runtime;
 using XamlX.TypeSystem;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
@@ -13,28 +14,32 @@ namespace XamlParserTests
     public partial class CompilerTestBase
     {
         private static readonly string s_selfDirectory;
-        private static readonly ConcurrentDictionary<string, Assembly> s_nameToAssembly;
+        private static readonly IReadOnlyDictionary<string, Assembly> s_nameToAssembly;
 
         static CompilerTestBase()
         {
             // TODO: It's the hack for VS tests
-            s_selfDirectory = Path.GetDirectoryName(typeof(CompilerTestBase).Assembly.Location);
+            var selfAssembly = typeof(CompilerTestBase).Assembly;
+
+            s_selfDirectory = Path.GetDirectoryName(selfAssembly.Location);
             var baseDirectory = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
             if (s_selfDirectory.Equals(baseDirectory, StringComparison.OrdinalIgnoreCase))
                 return;
-            s_nameToAssembly = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+
+            var xamlRuntimeAssembly = typeof(IXamlParentStackProviderV1).Assembly;
+            s_nameToAssembly = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase)
+            {
+                { selfAssembly.FullName.Split(',')[0], selfAssembly },
+                { xamlRuntimeAssembly.FullName.Split(',')[0], xamlRuntimeAssembly }
+            };
+
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
         }
 
         private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             var name = args.Name.Split(',')[0];
-            if (!s_nameToAssembly.TryGetValue(name, out var assembly))
-            {
-                assembly = Assembly.LoadFile(Path.Combine(s_selfDirectory, name + ".dll"));
-                s_nameToAssembly.TryAdd(name, assembly);
-            }
-            return assembly;
+            return s_nameToAssembly[name];
         }
 
         static CecilTypeSystem CreateCecilTypeSystem()
