@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 using XamlX.Emit;
-using XamlX.Transform;
 using XamlX.TypeSystem;
 using TypeAttributes = Mono.Cecil.TypeAttributes;
 
@@ -27,7 +26,15 @@ namespace XamlParserTests
 
         public CompilerTestBase() : this(CreateCecilTypeSystem())
         {
-            
+#if NETFRAMEWORK
+            // TODO: It's the hack for VS tests
+            var selfDirectory = Path.GetDirectoryName(typeof(CompilerTestBase).Assembly.Location);
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                var name = args.Name.Split(',').First() + ".dll";
+                return Assembly.LoadFile(Path.Combine(selfDirectory, name));
+            };
+#endif
         }
         
         

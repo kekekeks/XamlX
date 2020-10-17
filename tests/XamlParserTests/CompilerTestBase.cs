@@ -1,15 +1,15 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using XamlX.Ast;
+using XamlX.Emit;
+using XamlX.IL;
 using XamlX.Parsers;
+using XamlX.Runtime;
 using XamlX.Transform;
 using XamlX.TypeSystem;
-using XamlX.IL;
-using XamlX.Emit;
 
 namespace XamlParserTests
 {
@@ -75,11 +75,15 @@ namespace XamlParserTests
                 "http://example.com/", null);
             return parsed;
         }
-        
+
 #if !CECIL
+
+        // TODO: It's hack for AppDomain in SreTypeSystem
+        static CompilerTestBase() =>
+            AppDomain.CurrentDomain.Load(typeof(IXamlParentStackProviderV1).Assembly.FullName);
+
         public CompilerTestBase() : this(new SreTypeSystem())
         {
-            
         }
         
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
