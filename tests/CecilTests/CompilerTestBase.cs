@@ -12,7 +12,6 @@ namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
-#if NETFRAMEWORK
         private static readonly string s_selfDirectory;
         private static readonly ConcurrentDictionary<string, Assembly> s_nameToAssembly;
 
@@ -20,6 +19,9 @@ namespace XamlParserTests
         {
             // TODO: It's the hack for VS tests
             s_selfDirectory = Path.GetDirectoryName(typeof(CompilerTestBase).Assembly.Location);
+            var baseDirectory = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+            if (s_selfDirectory.Equals(baseDirectory, StringComparison.OrdinalIgnoreCase))
+                return;
             s_nameToAssembly = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
         }
@@ -34,15 +36,13 @@ namespace XamlParserTests
             }
             return assembly;
         }
-#endif
 
         static CecilTypeSystem CreateCecilTypeSystem()
         {
             var self = typeof(CompilerTestBase).Assembly.GetModules()[0].FullyQualifiedName;
 #if USE_NETSTANDARD_BUILD
-            var selfDir = Path.GetDirectoryName(self);
             var selfName = Path.GetFileName(self);
-            self = Path.GetFullPath(Path.Combine(selfDir, "../netstandard2.0/", selfName));
+            self = Path.GetFullPath(Path.Combine(s_selfDirectory, "../netstandard2.0/", selfName));
 #endif
             var refsPath = self + ".refs";
             var refs = File.ReadAllLines(refsPath).Concat(new[] {self});
