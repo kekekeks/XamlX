@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,6 +12,30 @@ namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
+#if NETFRAMEWORK
+        private static readonly string s_selfDirectory;
+        private static readonly ConcurrentDictionary<string, Assembly> s_nameToAssembly;
+
+        static CompilerTestBase()
+        {
+            // TODO: It's the hack for VS tests
+            s_selfDirectory = Path.GetDirectoryName(typeof(CompilerTestBase).Assembly.Location);
+            s_nameToAssembly = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+        }
+
+        private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            var name = args.Name.Split(',')[0];
+            if (!s_nameToAssembly.TryGetValue(name, out var assembly))
+            {
+                assembly = Assembly.LoadFile(Path.Combine(s_selfDirectory, name + ".dll"));
+                s_nameToAssembly.TryAdd(name, assembly);
+            }
+            return assembly;
+        }
+#endif
+
         static CecilTypeSystem CreateCecilTypeSystem()
         {
             var self = typeof(CompilerTestBase).Assembly.GetModules()[0].FullyQualifiedName;
@@ -26,15 +51,6 @@ namespace XamlParserTests
 
         public CompilerTestBase() : this(CreateCecilTypeSystem())
         {
-#if NETFRAMEWORK
-            // TODO: It's the hack for VS tests
-            var selfDirectory = Path.GetDirectoryName(typeof(CompilerTestBase).Assembly.Location);
-            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                var name = args.Name.Split(',').First() + ".dll";
-                return Assembly.LoadFile(Path.Combine(selfDirectory, name));
-            };
-#endif
         }
         
         
