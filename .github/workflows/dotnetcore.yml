@@ -32,6 +32,12 @@ jobs:
     - name: Test for netcoreapp3.1
       run: dotnet test --framework netcoreapp3.1
 
-    - name: Test for net47
+    - name: Test for net47 CecilNetstandardTests
       if: matrix.os == 'windows-latest'
-      run: dotnet test --framework net47
+      run: dotnet test --framework net47 tests/CecilNetstandardTests/CecilNetstandardTests.csproj
+    - name: Test for net47 CecilTests
+      if: matrix.os == 'windows-latest'
+      run: dotnet test --framework net47 tests/CecilTests/CecilTests.csproj
+    - name: Test for net47 XamlParserTests
+      if: matrix.os == 'windows-latest'
+      run: dotnet test --framework net47 tests/XamlParserTests/XamlParserTests.csproj
