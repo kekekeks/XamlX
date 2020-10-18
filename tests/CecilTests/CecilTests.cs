@@ -3,25 +3,7 @@ using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
-{
-    interface IGenericInterface<T>
-    {
-    }
-    
-    public class GenericBaseType<T>{}
-    
-    public class GenericType<T> : GenericBaseType<T>, IGenericInterface<T>
-    {
-        public T Field;
-        public T Property { get; set; }
-        public T SomeMethod(T x) => x;
-    }
-
-    public class CecilTestType
-    {
-        public GenericType<string> GenericStringField;
-    }
-    
+{    
     public class CecilTests : CompilerTestBase
     {
         [Fact]

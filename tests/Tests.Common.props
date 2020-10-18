@@ -26,14 +26,10 @@
     <ItemGroup>
         <ProjectReference Include="..\TestClasses\TestClasses.csproj" />
     </ItemGroup>
+
     <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
         <Content Include="$(MSBuildThisFileDirectory)\xunit.runner.json" Link="xunit.runner.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
-    <Target Name="GatherReferences" AfterTargets="CoreCompile">
-        <WriteLinesToFile File="$(TargetPath).refs"
-                          Lines="@(ReferencePathWithRefAssemblies)"
-                          Overwrite="true" />
-    </Target>
 </Project>

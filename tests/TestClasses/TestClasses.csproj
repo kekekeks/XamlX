@@ -9,9 +9,20 @@
     <PackageReference Include="xunit" Version="2.4.1" />
   </ItemGroup>
 
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net47' ">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
     <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
   </ItemGroup>
+
+  <Target Name="GatherReferences" AfterTargets="CoreCompile">
+    <WriteLinesToFile File="$(TargetPath).refs" Lines="@(ReferencePathWithRefAssemblies)" Overwrite="true" />
+  </Target>
     
 </Project>

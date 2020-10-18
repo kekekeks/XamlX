@@ -46,10 +46,14 @@ namespace XamlParserTests
 
         static CecilTypeSystem CreateCecilTypeSystem()
         {
-            var self = typeof(CompilerTestBase).Assembly.GetModules()[0].FullyQualifiedName;
-#if USE_NETSTANDARD_BUILD
+            var self = typeof(SimpleClass).Assembly.GetModules()[0].FullyQualifiedName;
             var selfName = Path.GetFileName(self);
-            self = Path.GetFullPath(Path.Combine(s_selfDirectory, "../netstandard2.0/", selfName));
+            var configuration = Path.GetFileName(Path.GetDirectoryName(s_selfDirectory));
+            var dir = Path.Combine(s_selfDirectory, $"../../../../TestClasses/bin/{configuration}");
+#if USE_NETSTANDARD_BUILD
+            self = Path.GetFullPath(Path.Combine(dir, "netstandard2.0", selfName));
+#else
+            self = Path.GetFullPath(Path.Combine(dir, Path.GetFileName(s_selfDirectory), selfName));
 #endif
             var refsPath = self + ".refs";
             var refs = File.ReadAllLines(refsPath).Concat(new[] {self});
