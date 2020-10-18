@@ -1,72 +1,9 @@
 using System;
-using System.Collections.Generic;
 using XamlX;
 using Xunit;
 
 namespace XamlParserTests
 {
-    public class MarkupExtensionTestsClass
-    {
-        public int IntProperty { get; set; }
-        public double DoubleProperty { get; set; }
-        public int? NullableIntProperty { get; set; }
-        public string StringProperty { get; set; }
-        public object ObjectProperty { get; set; }
-        [Content]
-        public List<int> IntList { get; } = new List<int>();
-        public List<int> IntList2 { get; } = new List<int>();
-    }
-
-    public class MarkupExtensionContentDictionaryClass
-    {
-        [Content]
-        public Dictionary<string, int> IntDic { get; } = new Dictionary<string, int>();
-    }
-
-    public class ObjectTestExtension
-    {
-        public object Returned { get; set; }
-        public object ProvideValue()
-        {
-            return Returned;
-        }
-    }
-
-    class DictionaryServiceProvider : Dictionary<Type, object>, IServiceProvider
-    {
-        public IServiceProvider Parent { get; set; }
-        public object GetService(Type serviceType)
-        {
-            if(TryGetValue(serviceType, out var impl))
-               return impl;
-            return Parent?.GetService(serviceType);
-        }
-    }
-
-    public class ExtensionValueHolder
-    {
-        public object Value { get; set; }
-    }
-
-    public class ServiceProviderValueExtension
-    {
-        public object ProvideValue(IServiceProvider sp) =>
-            ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
-    }
-
-    public class ServiceProviderIntValueExtension
-    {
-        public int ProvideValue(IServiceProvider sp) =>
-            (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
-    }
-
-    public class CustomConvertedType
-    {
-        public string Value { get; set; }
-    }
-    
-    
-  
     public class MarkupExtensionTests : CompilerTestBase
     {       
         [Fact]

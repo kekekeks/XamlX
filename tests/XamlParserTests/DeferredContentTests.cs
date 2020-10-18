@@ -4,21 +4,6 @@ using Xunit;
 
 namespace XamlParserTests
 {
-
-    public class DeferredContentTestsClass
-    {
-        [Content, DeferredContent]
-        public object DeferredContent { get; set; }
-        
-        
-        public object ObjectProperty { get; set; }
-    }
-
-    class ConstantRootObjectProvider : ITestRootObjectProvider
-    {
-        public object RootObject { get; set; }
-    }
-
     public class DeferredContentTests : CompilerTestBase
     {
         private DeferredContentTestsClass CompileAndRun(string xaml, CallbackExtensionCallback cb)
@@ -43,26 +28,11 @@ namespace XamlParserTests
             Assert.NotSame(e1, e2);
         }
         
-        public static Func<IServiceProvider, object> Customizer(Func<IServiceProvider, object> builder,
-            IServiceProvider parentServices)
-        {
-            var parentRoot = parentServices.GetService<ITestRootObjectProvider>().RootObject;
-            var cb = parentServices.GetService<CallbackExtensionCallback>();
-
-            return sp => builder(new DictionaryServiceProvider
-            {
-                [typeof(ITestRootObjectProvider)] = new ConstantRootObjectProvider {RootObject = parentRoot},
-                [typeof(CallbackExtensionCallback)] = cb,
-                Parent = sp
-            });
-        }
-        
-        
         [Fact]
         public void DeferredContent_Delegate_Should_Be_Transformed_When_Configured()
         {
             Configuration.TypeMappings.DeferredContentExecutorCustomization =
-                Configuration.TypeSystem.FindType(typeof(DeferredContentTests).FullName)
+                Configuration.TypeSystem.FindType(typeof(CustomizerClass).FullName)
                     .FindMethod(m => m.Name == "Customizer");
 
 

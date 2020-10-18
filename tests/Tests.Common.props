@@ -4,6 +4,7 @@
         <IsPackable>false</IsPackable>
         <ProvideCommandLineArgs>true</ProvideCommandLineArgs>
         <IsCheckMsil>False</IsCheckMsil>
+        <RootNamespace>XamlParserTests</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(IsCheckMsil)'=='True' ">
@@ -12,7 +13,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
-        <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
     </ItemGroup>
 
@@ -24,8 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
-        <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
+        <ProjectReference Include="..\TestClasses\TestClasses.csproj" />
     </ItemGroup>
     <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
         <Content Include="$(MSBuildThisFileDirectory)\xunit.runner.json" Link="xunit.runner.json">
@@ -37,7 +36,4 @@
                           Lines="@(ReferencePathWithRefAssemblies)"
                           Overwrite="true" />
     </Target>
-
-
-
 </Project>

@@ -6,15 +6,8 @@ using Xunit;
 
 namespace XamlParserTests
 {
-    class NullLineInfo : IXamlLineInfo
-    {
-        public int Line { get; set; } = 1;
-        public int Position { get; set; } = 1;
-    }
-
     public class ParserTests
     {
-
         [Fact]
         public void Parser_Should_Be_Able_To_Parse_A_Simple_Tree()
         {

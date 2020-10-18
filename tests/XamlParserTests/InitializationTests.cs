@@ -1,99 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using Xunit;
 
 namespace XamlParserTests
 {
-    public class InitializationTestsClass
-    {
-        private string _prop;
-        private InitializationTestsClass _child;
-
-        [ThreadStatic]
-        public static List<string> Events;
-        [ThreadStatic]
-        public static int NextId;
-
-        public static void Reset()
-        {
-            Events = new List<string>();
-            NextId = 0;
-        }
-
-        public readonly int Id;
-        
-        [Content]
-        public ObservableCollection<InitializationTestsClass> Children { get; } = new ObservableCollection<InitializationTestsClass>();
-
-        public void AddEvent(string ev)
-        {
-            Events.Add($"{Id}:{ev}");
-        }
-        
-        public InitializationTestsClass()
-        {
-            Id = ++NextId;
-            Children.CollectionChanged += (_, ev) =>
-            {
-                foreach (var ni in ev.NewItems)
-                {
-                    AddEvent(InitializationTests.ChildAddedEvent + ":" + ((InitializationTestsClass) ni).Id);
-                }
-            };
-        }
-        
-        public string Property
-        {
-            get => _prop;
-            set
-            {
-                _prop = value;
-                AddEvent(InitializationTests.PropertySetEvent);
-            }
-        }
-        
-        public InitializationTestsClass Child
-        {
-            get => _child;
-            set
-            {
-                _child = value;
-                AddEvent(InitializationTests.ChildAddedEvent + ":" + value.Id);
-            }
-        }
-        
-    }
-    
-    
-
-    public class InitializationTestsSupportInitializeClass : InitializationTestsClass, ISupportInitialize
-    {
-        public void BeginInit()
-        {
-            AddEvent(InitializationTests.BeginInitEvent);
-        }
-
-        public void EndInit()
-        {
-            AddEvent(InitializationTests.EndInitEvent);
-        }
-    }
-
-    [UsableDuringInitialization(true)]
-    public class InitializationTestsTopDownClass : InitializationTestsSupportInitializeClass
-    {
-        
-    }
-    
-    
     public class InitializationTests : CompilerTestBase
     {
-        public static string BeginInitEvent = "BeginInit";
-        public static string EndInitEvent = "EndInit";
-        public static string PropertySetEvent = "PropertySet";
-        public static string ChildAddedEvent = "ChildAdded";
+        public static string BeginInitEvent = EventConstants.BeginInitEvent;
+        public static string EndInitEvent = EventConstants.BeginInitEvent;
+        public static string PropertySetEvent = EventConstants.PropertySetEvent;
+        public static string ChildAddedEvent = EventConstants.ChildAddedEvent;
 
         public InitializationTests()
         {

@@ -27,10 +27,12 @@ namespace XamlParserTests
                 return;
 
             var xamlRuntimeAssembly = typeof(IXamlParentStackProviderV1).Assembly;
+            var testClassesAssembly = typeof(SimpleClass).Assembly;
             s_nameToAssembly = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase)
             {
                 { selfAssembly.FullName.Split(',')[0], selfAssembly },
-                { xamlRuntimeAssembly.FullName.Split(',')[0], xamlRuntimeAssembly }
+                { xamlRuntimeAssembly.FullName.Split(',')[0], xamlRuntimeAssembly },
+                { testClassesAssembly.FullName.Split(',')[0], testClassesAssembly },
             };
 
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;

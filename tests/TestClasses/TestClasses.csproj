@@ -1,7 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;net47;netstandard2.0</TargetFrameworks>
+    <RootNamespace>XamlParserTests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
+    <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
+  </ItemGroup>
     
 </Project>

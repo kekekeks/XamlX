@@ -1,16 +1,8 @@
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
 namespace XamlParserTests
 {
-    public class EnumerableContentClass
-    {
-        [Content]
-        public IEnumerable<SimpleSubClass> Children { get; set; } = new List<SimpleSubClass>();
-    }
-
-   
     public class ListTests : CompilerTestBase
     {
         [Fact]
