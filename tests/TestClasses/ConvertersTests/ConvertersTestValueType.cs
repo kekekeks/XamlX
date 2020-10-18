@@ -12,7 +12,7 @@ namespace XamlParserTests
 
         public static ConvertersTestValueType Parse(string s, IFormatProvider prov)
         {
-            ParseEventRequiredAssert?.Invoke(prov);
+            ParseEventRequiredAssert.Invoke(prov);
             return new ConvertersTestValueType() { Value = s };
         }
     }

@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel;
 using System.Globalization;
 using Xunit;
 
@@ -21,7 +23,13 @@ namespace XamlParserTests
          InlineData("EnumProperty", "100500"),
         ]
         public void Converters_Are_Operational(string property, string value)
-            => CheckConversion(property, value, value);
+        {
+            SubscribeToEventConvertersTestClass(property);
+
+            CheckConversion(property, value, value);
+
+            UnSubscribeToEventConvertersTestClass(property);
+        }
 
         [Fact]
         public void Type_Properties_Are_Converted()
@@ -102,7 +110,53 @@ namespace XamlParserTests
 </ConvertersTestsClassWithConstructor>");
             Assert.Equal(123, res.Int);
             Assert.Equal("01:10:00", res.Converted.ToString());
-            
+        }
+
+        private void SubscribeToEventConvertersTestClass(string property)
+        {
+            switch (property)
+            {
+                case nameof(ConvertersTestClass.CustomProperty):
+                    ConvertersTestValueType.ParseEventRequiredAssert += ConvertersTestValueType_ParseEventRequiredAssert;
+                    return;
+                case nameof(ConvertersTestClass.TypeWithConverterProperty):
+                    TestConverter.ConvertFromEventRequiredAssert += TestConverter_ConvertFromEventRequiredAssert;
+                    return;
+                case nameof(ConvertersTestClass.PropertyWithConverter):
+                    PropertyTestConverter.ConvertFromEventRequiredAssert += PropertyTestConverter_ConvertFromEventRequiredAssert;
+                    return;
+            }
+        }
+
+        private void UnSubscribeToEventConvertersTestClass(string property)
+        {
+            switch (property)
+            {
+                case nameof(ConvertersTestClass.CustomProperty):
+                    ConvertersTestValueType.ParseEventRequiredAssert -= ConvertersTestValueType_ParseEventRequiredAssert;
+                    return;
+                case nameof(ConvertersTestClass.TypeWithConverterProperty):
+                    TestConverter.ConvertFromEventRequiredAssert -= TestConverter_ConvertFromEventRequiredAssert;
+                    return;
+                case nameof(ConvertersTestClass.PropertyWithConverter):
+                    PropertyTestConverter.ConvertFromEventRequiredAssert -= PropertyTestConverter_ConvertFromEventRequiredAssert;
+                    return;
+            }
+        }
+
+        private void ConvertersTestValueType_ParseEventRequiredAssert(IFormatProvider provider) =>
+            Assert.NotNull(provider);
+
+        private void TestConverter_ConvertFromEventRequiredAssert(CultureInfo culture, ITypeDescriptorContext context)
+        {
+            Assert.Equal(CultureInfo.InvariantCulture, culture);
+            Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+        }
+
+        private void PropertyTestConverter_ConvertFromEventRequiredAssert(CultureInfo culture, ITypeDescriptorContext context)
+        {
+            Assert.Equal(CultureInfo.InvariantCulture, culture);
+            Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
         }
     }
 }

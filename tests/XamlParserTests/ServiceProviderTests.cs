@@ -213,10 +213,18 @@ namespace XamlParserTests
         [Fact]
         public void Unknown_Services_Should_Return_null()
         {
+            UnknownServiceUsageExtension.ProvideValueEventRequiredAssert += UnknownServiceUsageExtension_ProvideValueEventRequiredAssert;
+
             var res = (ServiceProviderTestsClass)CompileAndRun(
                 @"<ServiceProviderTestsClass xmlns='test' Property='{UnknownServiceUsage Return=123}'/>");
             Assert.Equal("123", res.Property);
-            
+
+            UnknownServiceUsageExtension.ProvideValueEventRequiredAssert -= UnknownServiceUsageExtension_ProvideValueEventRequiredAssert;
+        }
+
+        private void UnknownServiceUsageExtension_ProvideValueEventRequiredAssert(IServiceProvider provider)
+        {
+            Assert.Null(provider.GetService(typeof(string)));
         }
     }
 }
