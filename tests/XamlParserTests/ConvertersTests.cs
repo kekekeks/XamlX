@@ -1,5 +1,3 @@
-using System;
-using System.ComponentModel;
 using System.Globalization;
 using Xunit;
 
@@ -7,7 +5,6 @@ namespace XamlParserTests
 {
     public class ConvertersTests : CompilerTestBase
     {
-
         [Theory,
          InlineData("Int64Property", "1"),
          InlineData("BoolProperty", "True"),

@@ -1,15 +1,16 @@
 ﻿using System;
-using Xunit;
 
 namespace XamlParserTests
 {
     public class UnknownServiceUsageExtension
     {
+        public event Action<IServiceProvider> ProvideValueEventRequiredAssert;
+
         public object Return { get; set; }
 
         public object ProvideValue(IServiceProvider provider)
         {
-            Assert.Null(provider.GetService(typeof(string)));
+            ProvideValueEventRequiredAssert?.Invoke(provider);
             return Return;
         }
     }
