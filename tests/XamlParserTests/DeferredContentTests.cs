@@ -13,17 +13,19 @@ namespace XamlParserTests
         
         public object ObjectProperty { get; set; }
     }
-    
+
+    class ConstantRootObjectProvider : ITestRootObjectProvider
+    {
+        public object RootObject { get; set; }
+    }
+
     public class DeferredContentTests : CompilerTestBase
     {
-        DeferredContentTestsClass CompileAndRun(string xaml, CallbackExtensionCallback cb)
+        private DeferredContentTestsClass CompileAndRun(string xaml, CallbackExtensionCallback cb)
             => (DeferredContentTestsClass)Compile(xaml).create(new DictionaryServiceProvider
             {
                 [typeof(CallbackExtensionCallback)] = cb,
             });
-
-        
-        
 
         [Fact]
         public void DeferredContent_Should_Generate_Delegate_In_The_Target_Property()
@@ -39,11 +41,6 @@ namespace XamlParserTests
             var e2 = (DeferredContentTestsClass)((Func<IServiceProvider, object>)res.DeferredContent)(null);
             Assert.Equal("321", e2.ObjectProperty);
             Assert.NotSame(e1, e2);
-        }
-
-        class ConstantRootObjectProvider : ITestRootObjectProvider
-        {
-            public object RootObject { get; set; }
         }
         
         public static Func<IServiceProvider, object> Customizer(Func<IServiceProvider, object> builder,

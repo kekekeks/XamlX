@@ -1,15 +1,13 @@
-using System.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using System.Reflection;
 using XamlX.Runtime;
 using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
 {
-
     public class CallbackExtension
     {
         public object ProvideValue(IServiceProvider provider)
@@ -46,19 +44,40 @@ namespace XamlParserTests
         }
     }
 
+    public class ListParentsProvider : List<object>, IXamlParentStackProviderV1
+    {
+        public IEnumerable<object> Parents => this;
+    }
+
+    public class InnerProvider : IServiceProvider, ITestRootObjectProvider
+    {
+        public static IServiceProvider InnerProviderFactory(IServiceProvider outer) =>
+            new InnerProvider(outer);
+
+        private ITestRootObjectProvider _originalRootObjectProvider;
+        public object RootObject => "Definitely not the root object";
+        public object OriginalRootObject => _originalRootObjectProvider.RootObject;
+        public InnerProvider(IServiceProvider parent)
+        {
+            _originalRootObjectProvider = parent.GetService<ITestRootObjectProvider>();
+        }
+
+        public object GetService(Type serviceType)
+        {
+            if (serviceType == typeof(ITestRootObjectProvider))
+                return this;
+            return null;
+        }
+    }
+
     public class ServiceProviderTests : CompilerTestBase
     {
-        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
+        private void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
             => Compile(xaml).create(new DictionaryServiceProvider
             {
                 [typeof(CallbackExtensionCallback)] = cb,
                 [typeof(IXamlParentStackProviderV1)] = parentStack
             });
-
-        class ListParentsProvider : List<object>, IXamlParentStackProviderV1
-        {
-            public IEnumerable<object> Parents => this;
-        }
         
         [Theory,
         InlineData(true),
@@ -174,34 +193,13 @@ namespace XamlParserTests
             }, null);
             Assert.Equal(2, num);
         }
-
-
-        class InnerProvider : IServiceProvider, ITestRootObjectProvider
-        {
-            private ITestRootObjectProvider _originalRootObjectProvider;
-            public object RootObject => "Definitely not the root object";
-            public object OriginalRootObject => _originalRootObjectProvider.RootObject;
-            public InnerProvider(IServiceProvider parent)
-            {
-                _originalRootObjectProvider = parent.GetService<ITestRootObjectProvider>();
-            }
-            
-            public object GetService(Type serviceType)
-            {
-                if (serviceType == typeof(ITestRootObjectProvider))
-                    return this;
-                return null;
-            }
-        }
-
-        public static IServiceProvider InnerProviderFactory(IServiceProvider outer) => new InnerProvider(outer);
         
         [Fact]
         public void Inner_Provider_Interception_Works()
         {
 
             Configuration.TypeMappings.InnerServiceProviderFactoryMethod =
-                Configuration.TypeSystem.GetType(typeof(ServiceProviderTests).FullName)
+                Configuration.TypeSystem.GetType(typeof(InnerProvider).FullName)
                     .FindMethod(m => m.Name == "InnerProviderFactory");
                     
             CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
@@ -213,7 +211,6 @@ namespace XamlParserTests
                 return "Value";
             }, null);
         }
-
 
         [Fact]
         public void Namespace_Info_Should_Be_Preserved()

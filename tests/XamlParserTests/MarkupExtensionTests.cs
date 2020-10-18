@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using XamlX;
-using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
@@ -78,7 +77,7 @@ namespace XamlParserTests
             Assert.Equal("test", res.StringProperty);
         }
         
-        IServiceProvider CreateValueProvider(object value)=>new DictionaryServiceProvider
+        private IServiceProvider CreateValueProvider(object value)=>new DictionaryServiceProvider
         {
             [typeof(ExtensionValueHolder)] = new ExtensionValueHolder() {Value = value}
         };

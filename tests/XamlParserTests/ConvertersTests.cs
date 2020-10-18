@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace XamlParserTests
@@ -19,7 +18,7 @@ namespace XamlParserTests
         public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
         public ConvertersTestsClassWithConverter TypeWithConverterProperty { get; set; }
-        [TypeConverter(typeof(ConvertersTests.PropertyTestConverter))]
+        [TypeConverter(typeof(PropertyTestConverter))]
         public ConvertersTestsClassWithoutConverter PropertyWithConverter { get; set; }
         public ConvertersTestsEnum EnumProperty { get; set; }
     }
@@ -44,7 +43,7 @@ namespace XamlParserTests
         }
     }
 
-    [TypeConverter(typeof(ConvertersTests.TestConverter))]
+    [TypeConverter(typeof(TestConverter))]
     public class ConvertersTestsClassWithConverter
     {
         public string Value { get; set; }
@@ -68,29 +67,29 @@ namespace XamlParserTests
             Converted = converted;
         }
     }
-    
+
+    public class TestConverter : TypeConverter
+    {
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            Assert.Equal(CultureInfo.InvariantCulture, culture);
+            Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+            return new ConvertersTestsClassWithConverter { Value = (string)value };
+        }
+    }
+
+    public class PropertyTestConverter : TypeConverter
+    {
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            Assert.Equal(CultureInfo.InvariantCulture, culture);
+            Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+            return new ConvertersTestsClassWithoutConverter { Value = (string)value };
+        }
+    }
+
     public class ConvertersTests : CompilerTestBase
     {
-
-        public class TestConverter : TypeConverter
-        {
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                Assert.Equal(CultureInfo.InvariantCulture, culture);
-                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
-                return new ConvertersTestsClassWithConverter {Value = (string) value};
-            }
-        }
-        
-        public class PropertyTestConverter : TypeConverter
-        {
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                Assert.Equal(CultureInfo.InvariantCulture, culture);
-                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
-                return new ConvertersTestsClassWithoutConverter {Value = (string) value};
-            }
-        }
 
         [Theory,
          InlineData("Int64Property", "1"),

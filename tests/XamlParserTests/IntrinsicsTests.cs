@@ -17,7 +17,6 @@ namespace XamlParserTests
         public const int IntConstant = 100;
         public const float FloatConstant = 2;
         public const double DoubleConstant = 3;
-        
     }
 
     public enum IntrinsicsTestsEnum : long

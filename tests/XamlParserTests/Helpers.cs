@@ -1,10 +1,7 @@
 using System;
 using System.Collections;
 using System.Linq;
-using System.Reflection.Emit;
-using XamlX;
 using XamlX.Ast;
-using XamlX.TypeSystem;
 
 namespace XamlParserTests
 {

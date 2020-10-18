@@ -143,6 +143,5 @@ namespace XamlParserTests
             
             return (createCb, populateCb);
         }
-        
     }
 }

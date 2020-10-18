@@ -1,5 +1,4 @@
 using System.Linq;
-using Mono.Cecil;
 using XamlX.TypeSystem;
 using Xunit;
 
@@ -7,7 +6,6 @@ namespace XamlParserTests
 {
     interface IGenericInterface<T>
     {
-        
     }
     
     public class GenericBaseType<T>{}
@@ -47,8 +45,6 @@ namespace XamlParserTests
             Assert.Equal("System.String", p.PropertyType.FullName);
             Assert.Equal("System.String", p.Getter.ReturnType.FullName);
             Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
-
-
         }
     }
 }

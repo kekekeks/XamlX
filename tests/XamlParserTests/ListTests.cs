@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -29,6 +28,4 @@ namespace XamlParserTests
             Assert.Equal("test2", res.Children.Last().Test);
         }
     }
-
-
 }

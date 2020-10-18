@@ -2,14 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading;
 using Xunit;
 
 namespace XamlParserTests
 {
-
-    
-    
     public class InitializationTestsClass
     {
         private string _prop;
@@ -156,8 +152,5 @@ namespace XamlParserTests
                 "1:EndInit"
             }, InitializationTestsClass.Events);
         }
-        
-        
-        
     }
 }

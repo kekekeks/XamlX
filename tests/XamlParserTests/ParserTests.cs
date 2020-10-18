@@ -1,8 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
-using XamlX;
 using XamlX.Ast;
 using XamlX.Parsers;
 using Xunit;
@@ -10,13 +6,14 @@ using Xunit;
 
 namespace XamlParserTests
 {
+    class NullLineInfo : IXamlLineInfo
+    {
+        public int Line { get; set; } = 1;
+        public int Position { get; set; } = 1;
+    }
+
     public class ParserTests
     {
-        class NullLineInfo : IXamlLineInfo
-        {
-            public int Line { get; set; } = 1;
-            public int Position { get; set; } = 1;
-        }
 
         [Fact]
         public void Parser_Should_Be_Able_To_Parse_A_Simple_Tree()
