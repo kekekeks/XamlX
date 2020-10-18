@@ -24,13 +24,15 @@ jobs:
       with:
         dotnet-version: 3.1.402
 
-    - name: Build CecilNetstandardTests
-      run: dotnet build tests/CecilNetstandardTests/CecilNetstandardTests.csproj
-    - name: Build CecilTests
-      run: dotnet build tests/CecilTests/CecilTests.csproj
+    - name: Build TestClasses
+      run: dotnet build tests/TestClasses/TestClasses.csproj
 
-    - name: Test for netcoreapp3.1
-      run: dotnet test --framework netcoreapp3.1
+    - name: Test for netcoreapp3.1 CecilNetstandardTests
+      run: dotnet test --framework netcoreapp3.1 tests/CecilNetstandardTests/CecilNetstandardTests.csproj
+    - name: Test for netcoreapp3.1 CecilTests
+      run: dotnet test --framework netcoreapp3.1 tests/CecilTests/CecilTests.csproj
+    - name: Test for netcoreapp3.1 XamlParserTests
+      run: dotnet test --framework netcoreapp3.1 tests/XamlParserTests/XamlParserTests.csproj
 
     - name: Test for net47 CecilNetstandardTests
       if: matrix.os == 'windows-latest'
