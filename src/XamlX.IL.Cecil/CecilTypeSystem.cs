@@ -15,7 +15,7 @@ namespace XamlX.TypeSystem
     #endif
     partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
     {
-        private List<CecilAssembly> _asms = new List<CecilAssembly>();
+        private XamlAssemblyList<CecilAssembly> _asms = new XamlAssemblyList<CecilAssembly>();
         private Dictionary<string, CecilAssembly> _assemblyCache = new Dictionary<string, CecilAssembly>();
         private Dictionary<TypeReference, IXamlType> _typeReferenceCache = new Dictionary<TypeReference, IXamlType>();
         private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic 
@@ -76,7 +76,7 @@ namespace XamlX.TypeSystem
 
         public IXamlAssembly TargetAssembly { get; private set; }
         public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
-        public IReadOnlyList<IXamlAssembly> Assemblies => _asms.AsReadOnly();
+        public IReadOnlyList<IXamlAssembly> Assemblies => _asms;
         public IXamlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
         public IXamlType FindType(string name)

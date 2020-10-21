@@ -14,7 +14,7 @@ namespace XamlX.IL
 #endif
     class SreTypeSystem : IXamlTypeSystem
     {
-        private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
+        private XamlAssemblyList<IXamlAssembly> _assemblies = new XamlAssemblyList<IXamlAssembly>();
         public IReadOnlyList<IXamlAssembly> Assemblies => _assemblies;
         
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
