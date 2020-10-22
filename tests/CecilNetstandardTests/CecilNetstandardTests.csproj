@@ -11,4 +11,9 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
     </ItemGroup>
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+        <Content Include="$(MSBuildThisFileDirectory)\..\xunit.runner.json" Link="xunit.runner.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
 </Project>
