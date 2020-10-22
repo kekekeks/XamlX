@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  configuration: Release
+
 jobs:
   build:
 
@@ -22,20 +25,30 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.402
+        dotnet-version: 3.1.x
 
-    - name: Build TestClasses
-      run: dotnet build tests/TestClasses/TestClasses.csproj
+    - name: Build tests
+      working-directory: tests
+      run: |
+          dotnet build -c ${{ env.configuration }} TestClasses/TestClasses.csproj
+          dotnet build -c ${{ env.configuration }} CecilNetstandardTests/CecilNetstandardTests.csproj
+          dotnet build -c ${{ env.configuration }} CecilTests/CecilTests.csproj
 
-    - name: Test for netcoreapp3.1
-      run: dotnet test --framework netcoreapp3.1
+    - name: Run tests
+      working-directory: tests
+      run: |
+          dotnet test -c ${{ env.configuration }} --no-build CecilNetstandardTests/CecilNetstandardTests.csproj
+          dotnet test -c ${{ env.configuration }} --no-build CecilTests/CecilTests.csproj
 
-    - name: Test for net47 CecilNetstandardTests
+    - name: Build tests XamlParserTests
+      working-directory: tests/XamlParserTests
+      run: dotnet build -c ${{ env.configuration }} XamlParserTests.csproj
+
+    - name: Run tests XamlParserTests netcoreapp3.1
+      working-directory: tests/XamlParserTests
+      run: dotnet test -c ${{ env.configuration }} --no-build --framework netcoreapp3.1 XamlParserTests.csproj
+
+    - name: Run tests XamlParserTests net47
       if: matrix.os == 'windows-latest'
-      run: dotnet test --framework net47 tests/CecilNetstandardTests/CecilNetstandardTests.csproj
-    - name: Test for net47 CecilTests
-      if: matrix.os == 'windows-latest'
-      run: dotnet test --framework net47 tests/CecilTests/CecilTests.csproj
-    - name: Test for net47 XamlParserTests
-      if: matrix.os == 'windows-latest'
-      run: dotnet test --framework net47 tests/XamlParserTests/XamlParserTests.csproj
+      working-directory: tests/XamlParserTests
+      run: dotnet test -c ${{ env.configuration }} --no-build --framework net47 XamlParserTests.csproj
