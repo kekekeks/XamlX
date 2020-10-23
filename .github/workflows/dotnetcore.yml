@@ -27,22 +27,14 @@ jobs:
       with:
         dotnet-version: 3.1.x
 
-    - name: Build tests
-      working-directory: tests
-      run: |
-          dotnet build -c ${{ env.configuration }} TestClasses/TestClasses.csproj
-          dotnet build -c ${{ env.configuration }} CecilNetstandardTests/CecilNetstandardTests.csproj
-          dotnet build -c ${{ env.configuration }} CecilTests/CecilTests.csproj
+    - name: Build
+      run: dotnet build -c ${{ env.configuration }}
 
     - name: Run tests
       working-directory: tests
       run: |
           dotnet test -c ${{ env.configuration }} --no-build CecilNetstandardTests/CecilNetstandardTests.csproj
           dotnet test -c ${{ env.configuration }} --no-build CecilTests/CecilTests.csproj
-
-    - name: Build tests XamlParserTests
-      working-directory: tests/XamlParserTests
-      run: dotnet build -c ${{ env.configuration }} XamlParserTests.csproj
 
     - name: Run tests XamlParserTests netcoreapp3.1
       working-directory: tests/XamlParserTests

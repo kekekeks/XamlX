@@ -5,13 +5,6 @@
     <RootNamespace>XamlParserTests</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net47' ">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
     <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
