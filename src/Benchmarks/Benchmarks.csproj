@@ -22,6 +22,11 @@
       <ProjectReference Include="..\XamlX\XamlX.csproj" />
       <EmbeddedResource Include="*.xml" />
     </ItemGroup>
+
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+      <ProjectReference Include="..\BenchmarksCompiler\BenchmarksCompiler.csproj" PrivateAssets="All" />
+    </ItemGroup>
+
     <Target Name="Precompile" AfterTargets="CoreCompile">
         <Message Importance="high" Text="Precompiling $(TargetPath)" />
         <PropertyGroup>
