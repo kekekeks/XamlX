@@ -18,6 +18,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlParserTests", "tests\XamlParserTests\XamlParserTests.csproj", "{6512A859-F453-4388-9DAA-9B0C3E62956E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks", "src\Benchmarks\Benchmarks.csproj", "{F1C1F27D-20E5-4097-8647-0BDD74CC11FB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0DC5F69A-C150-4590-90D7-303B9654011C} = {0DC5F69A-C150-4590-90D7-303B9654011C}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XamlX.Runtime", "src\XamlX.Runtime\XamlX.Runtime.csproj", "{E232146D-783D-4927-AB4D-26569AE50F78}"
 EndProject

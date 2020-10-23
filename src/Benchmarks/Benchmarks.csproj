@@ -33,7 +33,7 @@
             <PrecompileTarget>$(MSBuildThisFileDirectory)/@(IntermediateAssembly)</PrecompileTarget>
         </PropertyGroup>
         <WriteLinesToFile File="$(PrecompileTarget).refs" Lines="@(ReferencePathWithRefAssemblies)" Overwrite="true" />
-        <Exec Command="dotnet   &quot;$(MSBuildThisFileDirectory)\..\BenchmarksCompiler\bin\$(Configuration)\netcoreapp3.1\BenchmarksCompiler.dll&quot; &quot;$(PrecompileTarget)&quot;"
+        <Exec Command="dotnet   &quot;$(MSBuildThisFileDirectory)/../BenchmarksCompiler/bin/$(Configuration)/netcoreapp3.1/BenchmarksCompiler.dll&quot; &quot;$(PrecompileTarget)&quot;"
               LogStandardErrorAsError="true"
               StandardErrorImportance="high" />
     </Target>
