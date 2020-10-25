@@ -62,7 +62,8 @@ namespace XamlX.TypeSystem
                     AssemblyResolver = this,
                     MetadataResolver = _resolver,
                     ThrowIfSymbolsAreNotMatching = false,
-                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null
+                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null,
+                    ApplyWindowsRuntimeProjections = false
                 });
 
                 var wrapped = RegisterAssembly(asm);

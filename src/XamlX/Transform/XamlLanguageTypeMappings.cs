@@ -18,6 +18,19 @@ namespace XamlX.Transform
                 TypeConverterAttributes.Add(tconv);
         }
 
+        public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem, bool useDefault)
+        {
+            if (useDefault)
+            {
+                ServiceProvider = typeSystem.GetType("System.IServiceProvider");
+                TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
+                SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
+                var tconv = typeSystem.GetType("System.ComponentModel.TypeConverterAttribute");
+                if (tconv != null)
+                    TypeConverterAttributes.Add(tconv);
+            }
+        }
+
         public List<IXamlType> XmlnsAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> ContentAttributes { get; set; } = new List<IXamlType>();
