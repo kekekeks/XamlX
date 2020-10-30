@@ -37,9 +37,26 @@ namespace XamlX.TypeSystem
 
             private Dictionary<string, object> _properties;
 
-            public Dictionary<string, object> Properties =>
-                _properties ?? (_properties =
-                    Data.Properties.ToDictionary(d => d.Name, d => ConvertValue(d.Argument.Value)));
+            public Dictionary<string, object> Properties
+            {
+                get
+                {
+                    if (_properties is null)
+                    {
+                        Dictionary<string, object> properties = new Dictionary<string, object>();
+                        foreach (var prop in Data.Properties)
+                        {
+                            properties.Add(prop.Name, ConvertValue(prop.Argument.Value));
+                        }
+                        foreach (var field in Data.Fields)
+                        {
+                            properties.Add(field.Name, ConvertValue(field.Argument.Value));
+                        }
+                        _properties = properties;
+                    }
+                    return _properties;
+                }
+            }
         }
     }
 }
