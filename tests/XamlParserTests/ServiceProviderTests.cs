@@ -263,6 +263,50 @@ namespace XamlParserTests
         }
         
         [Fact]
+        public void Namespace_Info_Should_Be_Preserved_With_Using_Syntax()
+        {
+            CompileAndRun(@"
+<ServiceProviderTestsClass 
+    xmlns='using:XamlParserTests'
+    xmlns:clr1='using:System.Collections.Generic'
+    xmlns:clr2='using:Dummy'
+    Property='{Callback}'/>", sp =>
+            {
+                var nsList = sp.GetService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                // Direct calls without struct diff because of EntryPointNotFoundException issue before
+                Assert.True(nsList.TryGetValue("clr1", out var xlst));
+                Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
+                Helpers.StructDiff(nsList,
+                    new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
+                    {
+                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "XamlParserTests"
+                            }
+                        },
+                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "System.Collections.Generic"
+                            }
+                        },
+                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "Dummy"
+                            }
+                        }
+                    });
+                
+                return "Value";
+            }, null);
+        }
+        
+        [Fact]
         public void Uri_Context_Is_Usable()
         {
             bool ok = false;

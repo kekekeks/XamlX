@@ -29,14 +29,16 @@ namespace XamlX.Transform
                     Assembly = p.asm
                 }).ToList();
             }
+
+            var prefixStringComparison = StringComparison.Ordinal;
             
             const string clrNamespace = "clr-namespace:";
             const string assemblyNamePrefix = ";assembly=";
-            if (xmlns.StartsWith(clrNamespace))
+            if (xmlns.StartsWith(clrNamespace, prefixStringComparison))
             {
                 var ns = xmlns.Substring(clrNamespace.Length);
                 
-                var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, StringComparison.Ordinal);
+                var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, prefixStringComparison);
                 string asm = config.DefaultAssembly?.Name;
                 if (indexOfAssemblyPrefix != -1)
                 {
@@ -49,6 +51,19 @@ namespace XamlX.Transform
                     {
                         ClrNamespace = ns,
                         AssemblyName = asm
+                    }
+                };
+            }
+
+            const string usingPrefix = "using:";
+            if (xmlns.StartsWith(usingPrefix, prefixStringComparison))
+            {
+                var ns = xmlns.Substring(usingPrefix.Length);
+                return new List<NamespaceResolveResult>
+                {
+                    new NamespaceResolveResult
+                    {
+                        ClrNamespace = ns
                     }
                 };
             }

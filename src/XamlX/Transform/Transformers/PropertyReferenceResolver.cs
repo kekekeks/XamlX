@@ -47,7 +47,7 @@ namespace XamlX.Transform.Transformers
                                                                                     && p.Add != null);
                     if (clrEvent != null)
                         return new XamlAstClrProperty(prop,
-                            prop.Name, declaringType, null, clrEvent.Add);
+                            prop.Name, clrEvent.Add.DeclaringType, null, clrEvent.Add);
                 }
 
                 // Look for attached properties on declaring type

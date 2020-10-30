@@ -378,7 +378,10 @@ namespace XamlX.IL
             Constructor = ctor;
             CreateCallbacks.Add(() => { parentBuilder.CreateType(); });
             
-            EmitPushPopParent(builder, typeSystem);
+            if (ParentListField != null)
+            {
+                EmitPushPopParent(builder, typeSystem);
+            }
             
             CreateAllTypes();
             ContextType = builder.CreateType();
