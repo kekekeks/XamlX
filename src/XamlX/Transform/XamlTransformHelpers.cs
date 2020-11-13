@@ -228,25 +228,6 @@ namespace XamlX.Transform
                                                      && m.Parameters.Count > 0
                                                      && m.Parameters[0].Equals(cfg.WellKnownTypes.String)).ToList();
 
-            // Types with parse method
-            var parser = candidates.FirstOrDefault(m =>
-                             m.Parameters.Count == 2 &&
-                             (
-                                 m.Parameters[1].Equals(cfg.WellKnownTypes.CultureInfo)
-                                 || m.Parameters[1].Equals(cfg.WellKnownTypes.IFormatProvider)
-                             )
-                         )
-                         ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1);
-            if (parser != null)
-            {
-                var args = new List<IXamlAstValueNode> {node};
-                if (parser.Parameters.Count == 2)
-                    args.Add(CreateInvariantCulture());
-
-                rv = new XamlStaticOrTargetedReturnMethodCallNode(node, parser, args);
-                return true;
-            }
-
             if (cfg.TypeMappings.TypeDescriptorContext != null)
             {
                 IXamlType converterType = null;
@@ -276,6 +257,25 @@ namespace XamlX.Transform
                                 }), new XamlAstClrTypeReference(node, type, false)));
                     return true;
                 }
+            }
+
+            // Types with parse method
+            var parser = candidates.FirstOrDefault(m =>
+                             m.Parameters.Count == 2 &&
+                             (
+                                 m.Parameters[1].Equals(cfg.WellKnownTypes.CultureInfo)
+                                 || m.Parameters[1].Equals(cfg.WellKnownTypes.IFormatProvider)
+                             )
+                         )
+                         ?? candidates.FirstOrDefault(m => m.Parameters.Count == 1);
+            if (parser != null)
+            {
+                var args = new List<IXamlAstValueNode> { node };
+                if (parser.Parameters.Count == 2)
+                    args.Add(CreateInvariantCulture());
+
+                rv = new XamlStaticOrTargetedReturnMethodCallNode(node, parser, args);
+                return true;
             }
 
             return false;
