@@ -400,6 +400,23 @@ namespace XamlX.TypeSystem
             return null;
         }
         
+        public static IXamlConstructor GetConstructor(this IXamlType type, List<IXamlType> args = null)
+        {
+            var found = FindConstructor(type, args);
+            if (found == null)
+            {
+                if (args != null && args.Count > 0)
+                {
+                    var argsString = string.Join(", ", args.Select(a => a.GetFullName()));
+                    
+                    throw new XamlTypeSystemException($"Constructor with arguments {argsString} is not found on type {type.GetFqn()}");
+                }
+                
+                throw new XamlTypeSystemException($"Constructor with no arguments is not found on type {type.GetFqn()}");
+            }
+            return found;
+        }
+        
         public static IXamlConstructor FindConstructor(this IXamlType type, List<IXamlType> args = null)
         {
             if(args == null)
