@@ -23,17 +23,20 @@ namespace XamlX.Transform
 
         public void Error(Exception e)
         {
+            Errors.Add(e);
             if (_strictMode)
+            {
                 throw e;
-            else
-                Errors.Add(e);
+            }
         }
+
         public IXamlAstNode Error(IXamlAstNode node, Exception e)
         {
+            Errors.Add(e);
             if (_strictMode)
+            {
                 throw e;
-            else
-                Errors.Add(e);
+            }
             return node;
         }
 

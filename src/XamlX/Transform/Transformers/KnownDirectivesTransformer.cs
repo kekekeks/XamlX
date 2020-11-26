@@ -21,10 +21,8 @@ namespace XamlX.Transform.Transformers
                         {
                             if(ch is IXamlAstValueNode vn)
                                 vnodes.Add(vn);
-                            context.Error(ni, new XamlParseException(
-                                    "Only value nodes are allowed as directive children elements", ch));
-                                
-                            
+                            context.ParseError("Only value nodes are allowed as directive children elements", ch);
+                            return ni;
                         }
 
                         return new XamlAstXmlDirective(ni, type.XmlNamespace, type.Name, vnodes);

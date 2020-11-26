@@ -16,9 +16,11 @@ namespace XamlX.Transform.Transformers
                     .Where(d => d.Type is XamlAstXmlTypeReference xref
                                 && xref.XmlNamespace == XamlNamespaces.Xaml2006 && xref.Name == "Arguments").ToList();
                 if (argDirectives.Count > 1)
-                    context.Error(
-                    new XamlParseException("x:Arguments directive is specified more than once",
-                        argDirectives[1]));
+                {
+                    context.ParseError("x:Arguments directive is specified more than once", argDirectives[1]);
+                    return node;
+                }
+                    
                 if (argDirectives.Count == 0)
                     return node;
                 ni.Arguments = argDirectives[0].Children.OfType<IXamlAstValueNode>().ToList();

@@ -16,16 +16,13 @@ namespace XamlX.Transform.Transformers
             {
                 if (!(prop.DeclaringType is XamlAstClrTypeReference declaringRef))
                 {
-                    context.Error(node,
-                        new XamlParseException(
-                            $"Unable to resolve property {prop.Name} on {prop.DeclaringType}", node));
+                    context.ParseError($"Unable to resolve property {prop.Name} on {prop.DeclaringType}", node);
                     return node;
                 }
 
                 if (!(prop.TargetType is XamlAstClrTypeReference targetRef))
                 {
-                    context.Error(node, 
-                        new XamlParseException($"Unable to resolve property on {prop.DeclaringType}", node));
+                    context.ParseError($"Unable to resolve property on {prop.DeclaringType}", node);
                     return node;
                 }
 
@@ -78,10 +75,7 @@ namespace XamlX.Transform.Transformers
                 if (adder != null)
                     return new XamlAstClrProperty(prop, prop.Name, declaringType, null, adder);
 
-                context.Error(node,
-                    new XamlParseException(
-                        $"Unable to resolve suitable regular or attached property {prop.Name} on type {declaringType.GetFqn()}",
-                        node));
+                context.ParseError($"Unable to resolve suitable regular or attached property {prop.Name} on type {declaringType.GetFqn()}",node);
                 return null;
             }
 
