@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using XamlX;
 using XamlX.Ast;
 using XamlX.Parsers;
 using XamlX.Transform;

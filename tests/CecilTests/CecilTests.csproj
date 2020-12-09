@@ -9,5 +9,6 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
+      <ProjectReference Include="..\..\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
     </ItemGroup>
 </Project>
