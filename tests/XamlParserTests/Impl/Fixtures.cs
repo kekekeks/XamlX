@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using XamlX;
 using XamlX.Parsers;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace XamlParserTests.Impl
     {
         public GuiLabsFixture()
         {
-            XamlParser.UseLegacyParser = false;
+            XamlParser.UseXDocumentParser = false;
         }
 
         public void Dispose()
@@ -23,7 +24,7 @@ namespace XamlParserTests.Impl
     {
         public XDocumentFixture()
         {
-            XamlParser.UseLegacyParser = true;
+            XamlParser.UseXDocumentParser = true;
         }
 
         public void Dispose()

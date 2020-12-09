@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CecilNetstandardTests", "te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenchmarksCompiler", "src\BenchmarksCompiler\BenchmarksCompiler.csproj", "{0DC5F69A-C150-4590-90D7-303B9654011C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Parser.GuiLabs", "XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj", "{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +86,7 @@ Global
 		{20135939-0E5C-4906-9097-67F13945D042} = {55203DEB-3DB3-4907-8275-7FBE48185148}
 		{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE} = {55203DEB-3DB3-4907-8275-7FBE48185148}
 		{0DC5F69A-C150-4590-90D7-303B9654011C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B701ADE9-89EA-4C9D-BB51-0AA4E8E07217}

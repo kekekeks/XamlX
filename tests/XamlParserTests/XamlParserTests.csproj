@@ -3,4 +3,7 @@
         <TargetFrameworks>netcoreapp2.1;net47</TargetFrameworks>
     </PropertyGroup>
     <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
+    <ItemGroup>
+      <ProjectReference Include="..\..\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
+    </ItemGroup>
 </Project>
