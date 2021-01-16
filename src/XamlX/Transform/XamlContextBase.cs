@@ -12,9 +12,6 @@ namespace XamlX.Transform
     {
         private readonly Dictionary<Type, object> _items = new Dictionary<Type, object>();
         private readonly List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
-        private int _idCount;
-        
-        public int GetNextUniqueContextId () => ++_idCount;
         
         public T GetItem<T>() => (T)_items[typeof(T)];
 
