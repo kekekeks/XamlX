@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
@@ -11,7 +12,7 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    class TransformerConfiguration
+    class TransformerConfiguration : IXamlIdentifierGenerator
     {
         private Dictionary<Type, object> _extras = new Dictionary<Type, object>();
         /// <summary>
@@ -143,6 +144,11 @@ namespace XamlX.Transform
             foreach(var t in types)
             foreach (var a in GetCustomAttribute(prop, t))
                 yield return a;
+        }
+
+        public virtual string GenerateIdentifierPart()
+        {
+            return Guid.NewGuid().ToString().Replace("-","");
         }
     }
 
