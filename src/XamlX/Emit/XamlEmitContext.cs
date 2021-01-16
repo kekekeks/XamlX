@@ -283,4 +283,12 @@ namespace XamlX.Emit
     {
         void Emit(XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter, bool swallowResult);
     }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlIdentifierGenerator
+    {
+        string GenerateIdentifierPart();
+    }
 }

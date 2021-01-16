@@ -12,7 +12,7 @@ namespace XamlX.Compiler
 #if !XAMLX_INTERNAL
     public
 #endif
-    abstract class XamlCompiler<TBackendEmitter, TEmitResult>
+    abstract class XamlCompiler<TBackendEmitter, TEmitResult> : IXamlIdentifierGenerator
         where TEmitResult : IXamlEmitResult
     {
         protected readonly TransformerConfiguration _configuration;
@@ -77,5 +77,10 @@ namespace XamlX.Compiler
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
+
+        public virtual string GenerateIdentifierPart()
+        {
+            return Guid.NewGuid().ToString().Replace("-","");
+        }
     }
 }
