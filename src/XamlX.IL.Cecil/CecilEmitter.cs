@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using XamlX.IL;
 using MethodBody = Mono.Cecil.Cil.MethodBody;
 using SreOpCode = System.Reflection.Emit.OpCode;
@@ -21,7 +22,6 @@ namespace XamlX.TypeSystem
             TypeReference Import(TypeReference r)
             {
                 var rv = M.ImportReference(r);
-
                 if (r is GenericInstanceType gi)
                 {
                     for (var c = 0; c < gi.GenericArguments.Count; c++)
@@ -34,17 +34,7 @@ namespace XamlX.TypeSystem
             FieldReference Import(FieldReference f)
             {
                 var rv = M.ImportReference(f);
-                var fieldType = rv.FieldType;
-
-                if (fieldType is GenericInstanceType)
-                {
-                    var resolver = new GenericTypeResolver();
-                    resolver.Scan(f.DeclaringType);
-                    resolver.Scan(f.FieldType);
-                    fieldType = resolver.Resolve(f.FieldType);
-                }
-
-                rv.FieldType = Import(fieldType);
+                rv.FieldType = Import(rv.FieldType);
                 return rv;
             }
             
