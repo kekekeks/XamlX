@@ -40,6 +40,8 @@ namespace XamlX.Compiler
                     new MarkupExtensionTransformer(),
                     new PropertyReferenceResolver(),
                     new ContentConvertTransformer(),
+                    // This should come before actual content property processing
+                    new WhitespaceBetweenPropertyValuesTransformer(),
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),

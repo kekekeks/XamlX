@@ -7,6 +7,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
+    /// <summary>
+    /// Converts from AST node <see cref="XamlAstXamlPropertyValueNode"/> to <see cref="XamlPropertyAssignmentNode"/>
+    /// for code generation.
+    /// </summary>
 #if !XAMLX_INTERNAL
     public
 #endif

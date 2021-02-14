@@ -135,7 +135,7 @@ namespace XamlParserTests
         {
             var content =
                 TestContentControlContent(
-                    $"{AllWhitespace}<Control.Tag>Red</Control.Tag>{AllWhitespace}<Control.Focusable>false</Control.Focusable> CONTENT",
+                    $"{AllWhitespace}<Control.StrProp>Red</Control.StrProp>{AllWhitespace}<Control.BoolProp>false</Control.BoolProp> CONTENT",
                     xmlPreserve: true);
             Assert.Equal(" CONTENT", content);
         }
@@ -296,9 +296,12 @@ namespace XamlParserTests
 
     public class Control
     {
+        public string StrProp { get; set; }
+
+        public bool BoolProp { get; set; }
     }
 
-    public class ContentControl
+    public class ContentControl : Control
     {
         [Content]
         public object Content { get; set; }
