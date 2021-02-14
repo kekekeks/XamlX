@@ -74,7 +74,14 @@ namespace XamlParserTests
         static object s_asmLock = new object();
         
 #if !CECIL
-        public CompilerTestBase() : this(new SreTypeSystem())
+        private static SreTypeSystem CreateTypeSystem()
+        {
+            // Force XamlX.Runtime to be loaded, or else it won't be included in the type system
+            Assembly.Load("XamlX.Runtime");
+            return new SreTypeSystem();
+        }
+
+        public CompilerTestBase() : this(CreateTypeSystem())
         {
             
         }
