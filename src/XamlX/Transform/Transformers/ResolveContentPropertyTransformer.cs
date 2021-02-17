@@ -38,9 +38,19 @@ namespace XamlX.Transform.Transformers
                             {
                                 var adders = XamlTransformHelpers.FindPossibleAdders(context, ni.Type.GetClrType());
                                 if (adders.Count == 0)
+                                {
+                                    // If there's no content property, strip all whitespace-only nodes and continue
+                                    WhitespaceNormalization.RemoveWhitespaceNodes(ni.Children);
+                                    if (!ni.Children.Contains(child))
+                                    {
+                                        continue;
+                                    }
+
                                     throw new XamlParseException(
                                         $"No Content property or any Add methods found for type {ni.Type.GetClrType().GetFqn()}",
                                         child);
+                                }
+
                                 propertyNode = new XamlAstXamlPropertyValueNode(ni, new XamlAstClrProperty(ni,
                                         "Content", ni.Type.GetClrType(), null,
                                         adders.Select(a => new XamlDirectCallPropertySetter(a)
@@ -54,7 +64,6 @@ namespace XamlX.Transform.Transformers
                         propertyNode.Values.Insert(0, valueNode);
                         ni.Children.RemoveAt(c);
                     }
-                    
                 }
 
                 if (propertyNode != null)

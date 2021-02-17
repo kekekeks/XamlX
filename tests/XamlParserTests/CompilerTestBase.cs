@@ -34,6 +34,14 @@ namespace XamlParserTests
                     {
                         typeSystem.GetType("XamlParserTests.ContentAttribute")
                     },
+                    WhitespaceSignificantCollectionAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.WhitespaceSignificantCollectionAttribute")
+                    },
+                    TrimSurroundingWhitespaceAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.TrimSurroundingWhitespaceAttribute")
+                    },
                     UsableDuringInitializationAttributes =
                     {
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")

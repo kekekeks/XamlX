@@ -41,12 +41,14 @@ namespace XamlX.Ast
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
         public IXamlType DeclaringType { get; set; }
         public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
-        
+        public IXamlType PropertyType { get; }
+
         public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
             TransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
+            PropertyType = property.PropertyType;
             if (property.Setter != null)
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();

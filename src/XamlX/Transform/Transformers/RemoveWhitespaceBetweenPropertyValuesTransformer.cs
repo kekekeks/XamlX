@@ -3,10 +3,10 @@ using XamlX.Ast;
 namespace XamlX.Transform.Transformers
 {
     /// <summary>
-    /// This transformer drops insignificant whitespace between <see cref="XamlAstXamlPropertyValueNode">
+    /// This transformer drops insignificant whitespace before and between <see cref="XamlAstXamlPropertyValueNode">
     /// AST property value nodes</see> within <see cref="XamlAstObjectNode">AST object nodes</see>.
     /// </summary>
-    public class WhitespaceBetweenPropertyValuesTransformer : IXamlAstTransformer
+    public class RemoveWhitespaceBetweenPropertyValuesTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

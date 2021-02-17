@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -33,7 +34,6 @@ namespace XamlX.Parsers
         {
             var xr = XmlReader.Create(reader, new XmlReaderSettings
             {
-                IgnoreWhitespace = true,
                 DtdProcessing = DtdProcessing.Ignore
             });
             xr = new CompatibleXmlReader(xr, compatibilityMappings ?? new Dictionary<string, string>());
@@ -138,11 +138,18 @@ namespace XamlX.Parsers
                     }
                 }
 
-                return new XamlAstTextNode(info, ext);
+                // Do not apply XAML whitespace normalization to attribute values
+                return new XamlAstTextNode(info, ext, true);
             }
 
-            XamlAstObjectNode ParseNewInstance(XElement el, bool root)
+            XamlAstObjectNode ParseNewInstance(XElement el, bool root, XmlSpace spaceMode)
             {
+                var declaredMode = el.GetDeclaredWhitespaceMode();
+                if (declaredMode != XmlSpace.None)
+                {
+                    spaceMode = declaredMode;
+                }
+
                 if (el.Name.LocalName.Contains("."))
                     throw ParseError(el, "Dots aren't allowed in type names");
                 var type = GetTypeReference(el);
@@ -206,12 +213,12 @@ namespace XamlX.Parsers
                                 new XamlAstXmlTypeReference(el.AsLi(), elementNode.Name.NamespaceName,
                                     pair[0]), pair[1], type
                             ),
-                            ParseValueNodeChildren(elementNode)
+                            ParseValueNodeChildren(elementNode, spaceMode)
                         ));
                     }
                     else
                     {
-                        var parsed = ParseValueNode(node);
+                        var parsed = ParseValueNode(node, spaceMode);
                         if (parsed != null)
                             i.Children.Add(parsed);
                     }
@@ -221,21 +228,25 @@ namespace XamlX.Parsers
                 return i;
             }
 
-            IXamlAstValueNode ParseValueNode(XNode node)
+            IXamlAstValueNode ParseValueNode(XNode node, XmlSpace spaceMode)
             {
                 if (node is XElement el)
-                    return ParseNewInstance(el, false);
+                    return ParseNewInstance(el, false, spaceMode);
                 if (node is XText text)
-                    return new XamlAstTextNode(node.AsLi(), text.Value);
+                {
+                    var preserveWhitespace = spaceMode == XmlSpace.Preserve;
+                    return new XamlAstTextNode(node.AsLi(), text.Value, preserveWhitespace);
+                }
+
                 return null;
             }
 
-            List<IXamlAstValueNode> ParseValueNodeChildren(XElement parent)
+            List<IXamlAstValueNode> ParseValueNodeChildren(XElement parent, XmlSpace spaceMode)
             {
                 var lst = new List<IXamlAstValueNode>();
                 foreach (var n in parent.Nodes())
                 {
-                    var parsed = ParseValueNode(n);
+                    var parsed = ParseValueNode(n, spaceMode);
                     if (parsed != null)
                         lst.Add(parsed);
                 }
@@ -245,7 +256,7 @@ namespace XamlX.Parsers
             Exception ParseError(IXmlLineInfo line, string message) =>
                 new XamlParseException(message, line.LineNumber, line.LinePosition);
 
-            public XamlAstObjectNode Parse() => (XamlAstObjectNode) ParseNewInstance(_root, true);
+            public XamlAstObjectNode Parse() => (XamlAstObjectNode) ParseNewInstance(_root, true, XmlSpace.Default);
         }
     }
 
@@ -269,5 +280,33 @@ namespace XamlX.Parsers
             return new WrappedLineInfo(info);
         }
 
+        private static readonly XName SpaceAttributeName = XName.Get("space", XNamespace.Xml.NamespaceName);
+
+        // Get the xml:space mode declared on the node - if it's an element, None otherwise.
+        public static XmlSpace GetDeclaredWhitespaceMode(this XNode node)
+        {
+            if (node is XElement element)
+            {
+                var declaredMode = element.Attribute(SpaceAttributeName);
+                if (declaredMode == null)
+                {
+                    return XmlSpace.None;
+                }
+
+                switch (declaredMode.Value)
+                {
+                    case "default":
+                        return XmlSpace.Default;
+                    case "preserve":
+                        return XmlSpace.Preserve;
+                    default:
+                        return XmlSpace.None;
+                }
+            }
+            else
+            {
+                return XmlSpace.None;
+            }
+        }
     }
 }

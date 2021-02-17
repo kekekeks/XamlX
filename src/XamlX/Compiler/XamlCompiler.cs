@@ -38,11 +38,13 @@ namespace XamlX.Compiler
                     new XArgumentsTransformer(),
                     new TypeReferenceResolver(),
                     new MarkupExtensionTransformer(),
+                    new TextNodeMerger(),
                     new PropertyReferenceResolver(),
                     new ContentConvertTransformer(),
                     // This should come before actual content property processing
-                    new WhitespaceBetweenPropertyValuesTransformer(),
+                    new RemoveWhitespaceBetweenPropertyValuesTransformer(),
                     new ResolveContentPropertyTransformer(),
+                    new ApplyWhitespaceNormalization(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()

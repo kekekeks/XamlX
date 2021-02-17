@@ -75,7 +75,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             {
                 
                 if (scanner.Token == MeTokenType.String)
-                    return new XamlAstTextNode(li, scanner.TokenText);
+                    return new XamlAstTextNode(li, scanner.TokenText, true);
                 if (scanner.Token == MeTokenType.Open)
                     return ReadExtension();
                 if (scanner.Token == MeTokenType.QuotedMarkupExtension)

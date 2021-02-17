@@ -93,6 +93,19 @@ namespace XamlParserTests
             Assert.Null(content);
         }
 
+        // This is non-obvious, but remaining whitespace nodes are still stripped, even when using
+        // xml:space="preserve", unless the control opts-in to whitespace significance.
+        // In case a text-node is not purely whitespace, i.e. " A ", the leading and trailing whitespace
+        // is preserved due to xml:space="preserve", and it is not dropped even for controls not opting into
+        // whitespace.
+        [Fact]
+        [Trait("Category", "xml:space='preserve'")]
+        public void StringPropertiesWillReceiveWhitespaceOnlyWithXmlSpacePreserve()
+        {
+            var content = TestContentControlContent<Control>($"<Control><Control.StrProp>{AllWhitespace}</Control.StrProp></Control>", xmlPreserve: true);
+            Assert.Equal(AllWhitespace, content.StrProp);
+        }
+
         [Fact]
         [Trait("Category", "xml:space='preserve'")]
         public void LeadingAndTrailingWhiteSpaceIsNotTrimmedWithXmlSpacePreserve()
@@ -125,7 +138,7 @@ namespace XamlParserTests
         {
             var content =
                 TestContentControlContent(
-                    $"{AllWhitespace}<Control.Tag>Red</Control.Tag>{AllWhitespace}<Control.Focusable>false</Control.Focusable> CONTENT");
+                    $"{AllWhitespace}<Control.StrProp>Red</Control.StrProp>{AllWhitespace}<Control.BoolProp>false</Control.BoolProp> CONTENT");
             Assert.Equal("CONTENT", content);
         }
 
@@ -149,7 +162,7 @@ namespace XamlParserTests
             // This normalization is due to XML spec 3.3.3 Attribute-Value Normalization
             Assert.Equal("   X   ", content.Content);
 
-            content = TestContentControlContent<ContentControl>(xaml, xmlPreserve:true);
+            content = TestContentControlContent<ContentControl>(xaml, xmlPreserve: true);
             // This normalization is due to XML spec 3.3.3 Attribute-Value Normalization
             Assert.Equal("   X   ", content.Content);
         }
@@ -164,14 +177,21 @@ namespace XamlParserTests
             Assert.Equal(AllWhitespace, content.Content);
         }
 
+        // xml:space=preserve can be used to disable whitespace normalization for property setters too,
+        // even though the schema does not allow the attribute to be set on the property-setter itself,
+        // it's value is inherited from the parent.
         [Fact]
         [Trait("Category", "PropertySetters")]
         public void XmlSpacePreserveAffectsPropertySetterElement()
         {
-            var content = TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>");
+            // Whitespace normalization is applied normally
+            var content =
+                TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>");
             Assert.Null(content);
 
-            content = TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>", xmlPreserve:true);
+            // Whitespace normalization isn't applied, because the parent has xml:space="preserve"
+            content = TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>",
+                xmlPreserve: true);
             Assert.Equal(AllWhitespace, content);
         }
 
@@ -179,21 +199,28 @@ namespace XamlParserTests
         [Trait("Category", "MixedContent")]
         public void WhiteSpaceAroundNestedControlIsTrimmedWithoutOptIn()
         {
-            var content = TestMixedContent($"{AllWhitespace}<Control/>{AllWhitespace}");
-            Assert.Collection(content, c => Assert.IsType<Control>(c));
+            var content = TestMixedContent($"{AllWhitespace}<Control/>{AllWhitespace}<Control/>{AllWhitespace}");
+            Assert.Collection(content,
+                c => Assert.IsType<Control>(c),
+                c => Assert.IsType<Control>(c)
+            );
         }
 
         [Fact]
         [Trait("Category", "MixedContent")]
         public void WhiteSpaceAroundNestedControlIsTrimmedWithoutOptInEvenWithXmlSpacePreserve()
         {
-            var content = TestMixedContent($"{AllWhitespace}<Control/>{AllWhitespace}", preserveSpace: true);
-            Assert.Collection(content, c => Assert.IsType<Control>(c));
+            var content = TestMixedContent($"{AllWhitespace}<Control/>{AllWhitespace}<Control/>{AllWhitespace}",
+                preserveSpace: true);
+            Assert.Collection(content,
+                c => Assert.IsType<Control>(c),
+                c => Assert.IsType<Control>(c)
+            );
         }
 
         [Fact]
         [Trait("Category", "MixedContent")]
-        public void TextAcrossCommentsIsMergedInto()
+        public void TextAcrossCommentsIsMerged()
         {
             var content = TestMixedContent($"{AllWhitespace}<!-- X -->{AllWhitespace}", preserveSpace: true,
                 whiteSpaceOptIn: true);
@@ -226,11 +253,12 @@ namespace XamlParserTests
             );
         }
 
+        // This is important for TextBlock for space between Spans/Runs and normal text
         [Fact]
         [Trait("Category", "TrimSurroundingWhitespace")]
         public void WhiteSpaceInNodesAroundNormalControlIsPreservedWhenOptingIn()
         {
-            var content = TestMixedContent("A <Control/> B", whiteSpaceOptIn:true);
+            var content = TestMixedContent("A <Control/> B", whiteSpaceOptIn: true);
             Assert.Collection(
                 content,
                 x => Assert.Equal("A ", x),
@@ -239,16 +267,59 @@ namespace XamlParserTests
             );
         }
 
+        // This is important for TextBlock for space between Spans/Runs.
         [Fact]
         [Trait("Category", "TrimSurroundingWhitespace")]
-        public void WhiteSpaceInNodesAroundTrimAroundControlIsTrimmedWhenOptingIn()
+        public void WhitespaceBetweenNonTextNodesIsPreservedWhenOptingIn()
         {
-            var content = TestMixedContent("A <TrimControl/> B", whiteSpaceOptIn:true);
+            var content = TestMixedContent("<Control/> <Control/>", whiteSpaceOptIn: true);
+            Assert.Collection(
+                content,
+                x => Assert.IsType<Control>(x),
+                x => Assert.Equal(" ", x),
+                x => Assert.IsType<Control>(x)
+            );
+        }
+
+        [Fact]
+        [Trait("Category", "TrimSurroundingWhitespace")]
+        public void WhitespaceInTextNodesAroundTrimAroundControlIsTrimmedWhenOptingIn()
+        {
+            var content = TestMixedContent("A <TrimControl/> B", whiteSpaceOptIn: true);
             Assert.Collection(
                 content,
                 x => Assert.Equal("A", x),
                 x => Assert.IsType<TrimControl>(x),
                 x => Assert.Equal("B", x)
+            );
+        }
+
+        [Fact]
+        [Trait("Category", "TrimSurroundingWhitespace")]
+        public void TrimSurroundingWhitespaceIsDisabledByXmlSpacePreserve()
+        {
+            var content = TestMixedContent("A <TrimControl/> B", whiteSpaceOptIn: true, preserveSpace: true);
+            Assert.Collection(
+                content,
+                x => Assert.Equal("A ", x),
+                x => Assert.IsType<TrimControl>(x),
+                x => Assert.Equal(" B", x)
+            );
+        }
+
+        [Fact]
+        [Trait("Category", "TrimSurroundingWhitespace")]
+        public void WhitespaceSurroundingTrimControlIsTrimmedWhenOptingIn()
+        {
+            // The comments in the string ensure that this happens AFTER merging text nodes OR the algorithm
+            // is capable of trimming multiple whitespace nodes.
+            var content = TestMixedContent("<Control/> <!-- --> <TrimControl/> <!-- --> <Control/>",
+                whiteSpaceOptIn: true);
+            Assert.Collection(
+                content,
+                x => Assert.IsType<Control>(x),
+                x => Assert.IsType<TrimControl>(x),
+                x => Assert.IsType<Control>(x)
             );
         }
 
@@ -291,7 +362,6 @@ namespace XamlParserTests
 
             return (T) result;
         }
-
     }
 
     public class Control
@@ -313,18 +383,20 @@ namespace XamlParserTests
         public List<object> Content { get; } = new List<object>();
     }
 
+    // This control uses a collection as it's content property which declares
+    // the WhitespaceSignificantCollection property.
     public class WhitespaceOptInControl
     {
         [Content]
         public WhitespaceOptInCollection Content { get; } = new WhitespaceOptInCollection();
     }
 
-    // TODO [WhitespaceSignificantCollection]
+    [WhitespaceSignificantCollection]
     public class WhitespaceOptInCollection : List<object>
     {
     }
 
-    // TODO [TrimSurroundingWhitespace]
+    [TrimSurroundingWhitespace]
     public class TrimControl
     {
     }

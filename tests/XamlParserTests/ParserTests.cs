@@ -66,6 +66,8 @@ namespace XamlParserTests
                 {
                     Children =
                     {
+                        // Whitespace preceeding first child
+                        new  XamlAstTextNode(ni, "\n    "),
                         // <Child
                         new XamlAstObjectNode(ni, childType)
                         {
@@ -78,45 +80,45 @@ namespace XamlParserTests
                                     {
                                         Arguments =
                                         {
-                                            new XamlAstTextNode(ni, "123"),
-                                            new XamlAstTextNode(ni, "321"),
+                                            new XamlAstTextNode(ni, "123", true),
+                                            new XamlAstTextNode(ni, "321", true),
                                         },
                                         Children =
                                         {
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop", extensionType),
-                                                new XamlAstTextNode(ni, "test")),
+                                                new XamlAstTextNode(ni, "test", true)),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop2", extensionType),
-                                                new XamlAstTextNode(ni, "test2")),
+                                                new XamlAstTextNode(ni, "test2", true)),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop3", extensionType),
                                                 new XamlAstObjectNode(ni, extensionType)),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop4", extensionType),
-                                                new XamlAstTextNode(ni, "test3")),
+                                                new XamlAstTextNode(ni, "test3", true)),
                                         }
                                     }),                             
                                 //Other.Prop='{}Not extension'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         new XamlAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
-                                    new XamlAstTextNode(ni, "Not extension")),
+                                    new XamlAstTextNode(ni, "Not extension", true)),
                                 //  Prop1='123' 
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "Prop1", childType),
-                                    new XamlAstTextNode(ni, "123")),
+                                    new XamlAstTextNode(ni, "123", true)),
                                 // Root.AttachedProp='AttachedValue'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         rootType, "AttachedProp", childType),
-                                    new XamlAstTextNode(ni, "AttachedValue")),
+                                    new XamlAstTextNode(ni, "AttachedValue", true)),
                                 //t:Namespaced.AttachedProp='AttachedValue'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         namespacedType, "AttachedProp", childType),
-                                    new XamlAstTextNode(ni, "AttachedValue")),
+                                    new XamlAstTextNode(ni, "AttachedValue", true)),
                                 //d:Directive='DirectiveValue'>
                                 new XamlAstXmlDirective(ni, "directive", "Directive", new[]
                                 {
-                                    new XamlAstTextNode(ni, "DirectiveValue")
+                                    new XamlAstTextNode(ni, "DirectiveValue", true)
                                 }),
                                 //d:DirectiveExt='{Extension 123}'>
                                 new XamlAstXmlDirective(ni, "directive", "DirectiveExt", new[]
@@ -125,10 +127,11 @@ namespace XamlParserTests
                                     {
                                         Arguments =
                                         {
-                                            new XamlAstTextNode(ni, "123"),
+                                            new XamlAstTextNode(ni, "123", true),
                                         }
                                     }
                                 }),
+                                new XamlAstTextNode(ni, "\n        "),
                                 // <t:SubChild Prop='321' Root.AttachedProp='AttachedValue'/>
                                 new XamlAstObjectNode(ni, nsSubChildType)
                                 {
@@ -136,13 +139,14 @@ namespace XamlParserTests
                                     {
                                         new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 nsSubChildType, "Prop", nsSubChildType),
-                                            new XamlAstTextNode(ni, "321")),
+                                            new XamlAstTextNode(ni, "321", true)),
                                         // Root.AttachedProp='AttachedValue'
                                         new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 rootType, "AttachedProp", nsSubChildType),
-                                            new XamlAstTextNode(ni, "AttachedValue")),
+                                            new XamlAstTextNode(ni, "AttachedValue", true)),
                                     }
                                 },
+                                new XamlAstTextNode(ni, "\n        "),
                                 //<Child.DottedProp>DottedValue</Child.DottedProp>
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "DottedProp", childType),
@@ -150,6 +154,7 @@ namespace XamlParserTests
                                     {
                                         new XamlAstTextNode(ni, "DottedValue")
                                     }),
+                                new XamlAstTextNode(ni, "\n        "),
                                 // <Root.AttachedDottedProp>AttachedValue</Root.AttachedDottedProp>
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         rootType, "AttachedDottedProp", childType),
@@ -157,18 +162,25 @@ namespace XamlParserTests
                                     {
                                         new XamlAstTextNode(ni, "AttachedValue")
                                     }),
+                                new XamlAstTextNode(ni, "\n        "),
                                 //<Child.NodeListProp>
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "NodeListProp", childType),
-                                    new[]
+                                    new IXamlAstValueNode[]
                                     {
+                                        new XamlAstTextNode(ni, "\n            "),
                                         // <SubChild/>
                                         new XamlAstObjectNode(ni, subChildType),
+                                        new XamlAstTextNode(ni, "\n            "),
                                         // <SubChild/>
                                         new XamlAstObjectNode(ni, subChildType),
-                                    })
+                                        new XamlAstTextNode(ni, "\n        ")
+                                    }),
+                                new XamlAstTextNode(ni, "\n    "),
                             }
                         },
+                        // Whitespace between child and generic type
+                        new  XamlAstTextNode(ni, "\n    "),
                         //<GenericType x:TypeArguments='Child,t:NamespacedGeneric(Child,GenericType(Child, t:Namespaced))'/>
                         new XamlAstObjectNode(ni, new XamlAstXmlTypeReference(ni, "rootns", "GenericType",
                             new[]
@@ -183,7 +195,9 @@ namespace XamlParserTests
                                         namespacedType
                                     }),
                                 }),
-                            }))
+                            })),
+                        // Whitespace after generic type
+                        new  XamlAstTextNode(ni, "\n\n"),
                     }
                 }
             };
@@ -210,21 +224,26 @@ namespace XamlParserTests
                 {
                     Children =
                     {
-                        new XamlAstXmlDirective(ni, "mapped", "DataContext", new[] {new XamlAstTextNode(ni, "123"),}),
+                        new XamlAstXmlDirective(ni, "mapped", "DataContext", new[] {new XamlAstTextNode(ni, "123", true),}),
+                        new XamlAstTextNode(ni, "\n    "),
                         new XamlAstObjectNode(ni, new XamlAstXmlTypeReference(ni, "mapped", "DesignWidth"))
                         {
                             Children =
                             {
                                 new XamlAstTextNode(ni, "test")
                             }
-                        }
+                        },
+                        new XamlAstTextNode(ni, "\n")
                     }
                 });
             }
             else
                 Helpers.StructDiff(root.Root, new XamlAstObjectNode(ni, rootType)
                 {
-
+                    Children =
+                    {
+                        new XamlAstTextNode(ni, "\n    ")
+                    }
                 });
         }
 
