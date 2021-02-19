@@ -80,24 +80,16 @@ namespace XamlParserTests
             Assert.Equal("A\nB\nC", content);
         }
 
-        // This is non-obvious, but remaining whitespace nodes are still stripped, even when using
-        // xml:space="preserve", unless the control opts-in to whitespace significance.
-        // In case a text-node is not purely whitespace, i.e. " A ", the leading and trailing whitespace
-        // is preserved due to xml:space="preserve", and it is not dropped even for controls not opting into
-        // whitespace.
+        // This behavior differs from WPF, where a string property maintains the white-space, while an
+        // object property does not.
         [Fact]
         [Trait("Category", "xml:space='preserve'")]
         public void WhiteSpaceOnlyTextNodesAreStrippedForControlsNotOptingInEvenWithXmlSpacePreserve()
         {
             var content = TestContentControlContent(AllWhitespace, xmlPreserve: true);
-            Assert.Null(content);
+            Assert.Equal(AllWhitespace, content);
         }
 
-        // This is non-obvious, but remaining whitespace nodes are still stripped, even when using
-        // xml:space="preserve", unless the control opts-in to whitespace significance.
-        // In case a text-node is not purely whitespace, i.e. " A ", the leading and trailing whitespace
-        // is preserved due to xml:space="preserve", and it is not dropped even for controls not opting into
-        // whitespace.
         [Fact]
         [Trait("Category", "xml:space='preserve'")]
         public void StringPropertiesWillReceiveWhitespaceOnlyWithXmlSpacePreserve()

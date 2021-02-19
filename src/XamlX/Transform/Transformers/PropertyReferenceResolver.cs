@@ -47,7 +47,7 @@ namespace XamlX.Transform.Transformers
                                                                                     && p.Add != null);
                     if (clrEvent != null)
                         return new XamlAstClrProperty(prop,
-                            prop.Name, clrEvent.Add.DeclaringType, null, clrEvent.Add);
+                            prop.Name, clrEvent.Add.DeclaringType, context.Configuration, null, clrEvent.Add);
                 }
 
                 // Look for attached properties on declaring type
@@ -75,10 +75,10 @@ namespace XamlX.Transform.Transformers
                 }
 
                 if (setter != null || getter != null)
-                    return new XamlAstClrProperty(prop, prop.Name, declaringType, getter, setter);
+                    return new XamlAstClrProperty(prop, prop.Name, declaringType, context.Configuration, getter, setter);
 
                 if (adder != null)
-                    return new XamlAstClrProperty(prop, prop.Name, declaringType, null, adder);
+                    return new XamlAstClrProperty(prop, prop.Name, declaringType, context.Configuration, null, adder);
 
                 if (context.StrictMode)
                     throw new XamlParseException(

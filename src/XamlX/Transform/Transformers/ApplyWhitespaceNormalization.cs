@@ -19,12 +19,15 @@ namespace XamlX.Transform.Transformers
                 );
 
                 // This heuristic applies to property types that are collections
+                var wellKnownTypes = context.Configuration.WellKnownTypes;
                 var property = propertyNode.Property.GetClrProperty();
                 var propertyType = property.PropertyType;
-                if (context.Configuration.WellKnownTypes.IList.IsAssignableFrom(propertyType)
-                    || context.Configuration.WellKnownTypes.IListOfT.IsAssignableFrom(propertyType)
-                    || context.Configuration.WellKnownTypes.IEnumerable.IsAssignableFrom(propertyType)
-                    || context.Configuration.WellKnownTypes.IEnumerableT.IsAssignableFrom(propertyType))
+                // we have to exclude string explicitly, since that is also enumerable
+                if (!propertyType.IsAssignableFrom(wellKnownTypes.String)
+                    && (wellKnownTypes.IList.IsAssignableFrom(propertyType)
+                        || wellKnownTypes.IListOfT.IsAssignableFrom(propertyType)
+                        || wellKnownTypes.IEnumerable.IsAssignableFrom(propertyType)
+                        || wellKnownTypes.IEnumerableT.IsAssignableFrom(propertyType)))
                 {
                     var significantWhitespaceCollection =
                         context.Configuration.IsWhitespaceSignificantCollection(propertyType);

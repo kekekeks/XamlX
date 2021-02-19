@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
@@ -70,17 +71,44 @@ namespace XamlX.Ast
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType, 
+            TransformerConfiguration cfg,
             IXamlMethod getter, IEnumerable<IXamlPropertySetter> setters) : base(lineInfo)
         {
             Name = name;
             DeclaringType = declaringType;
             Getter = getter;
             if (setters != null)
+            {
                 Setters.AddRange(setters);
+            }
+
+            if (getter != null)
+            {
+                PropertyType = getter.ReturnType;
+            }
+            else
+            {
+                foreach (var setter in Setters)
+                {
+                    if (setter.Parameters.Count == 1)
+                    {
+                        // Emulate an IEnumerable<T> for methods like Add(T)
+                        if (setter.BinderParameters.AllowMultiple)
+                        {
+                            PropertyType = cfg.WellKnownTypes.IEnumerableT.MakeGenericType(setter.Parameters[0]);
+                        }
+                        else
+                        {
+                            PropertyType = setter.Parameters[0];
+                        }
+                    }
+                }
+            }
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
-            IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
+            TransformerConfiguration cfg,
+            IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType, cfg,
             getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
