@@ -25,7 +25,10 @@ namespace XamlX.Transform
 
         private static bool IsWhitespace(char ch)
         {
-            return ch == ' ' || ch == '\n' || ch == '\t';
+            // While the XAML spec does not list \r, the implementation still considers it
+            // Usually, the XML parser will already normalize newlines, but one can still
+            // insert a character entity (&#x0D;) to bypass it, which will then be caught here.
+            return ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r';
         }
 
         internal static string NormalizeWhitespace(string text, bool trimStart = false, bool trimEnd = false)

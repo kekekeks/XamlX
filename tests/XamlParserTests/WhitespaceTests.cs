@@ -12,8 +12,12 @@ namespace XamlParserTests
     {
         private const string Ns = "xmlns='test'";
 
-        // As per the XAML docs, these three characters are considered whitespace
+        // As per the XAML docs, these three characters are considered whitespace,
+        // we also add \r to simulate character entities bypassing the XML parser
         private const string AllWhitespace = " \n\t";
+
+        // CharacterEntity representation of AllWhitespace
+        private const string CharacterEntities = "&#x20;&#xA;&#x9;";
 
         private readonly ITestOutputHelper _output;
 
@@ -65,6 +69,16 @@ namespace XamlParserTests
         }
 
         [Fact]
+        public void CharacterEntitiesAreRecognizedAsWhitespace()
+        {
+            // We add a carriage return here since it can be used to bypass the parsers normalization
+            // and does behave differently between \r and &#xD; (\r always gets converted to \n, while &#xD; does not).
+            var entities = $"{CharacterEntities}&#xD;";
+            var content = TestContentControlContent($"{entities}A{entities}B{entities}");
+            Assert.Equal("A B", content);
+        }
+
+        [Fact]
         public void CommentNodesAreIgnoredForWhitespaceNormalization()
         {
             var content = TestContentControlContent(" <!-- X --> ");
@@ -78,6 +92,16 @@ namespace XamlParserTests
         {
             var content = TestContentControlContent("A\rB\r\nC", xmlPreserve: true);
             Assert.Equal("A\nB\nC", content);
+        }
+
+        // As an exception to the aforementioned spec, character entities bypass the XML parser's normalization
+        // and will result in \r being passed through when xml:space=preserve is being used.
+        [Fact]
+        [Trait("Category", "xml:space='preserve'")]
+        public void CarriageReturnCharacterEntityIsMaintainedWithXmlSpacePreserve()
+        {
+            var content = TestContentControlContent("A&#x0D;B&#x0D;\nC", xmlPreserve: true);
+            Assert.Equal("A\rB\r\nC", content);
         }
 
         // This behavior differs from WPF, where a string property maintains the white-space, while an
@@ -164,7 +188,7 @@ namespace XamlParserTests
         [Trait("Category", "PropertySetters")]
         public void CharacterEntitiesInAttributesAreNotSubjectToAttributeValueNormalization()
         {
-            var xaml = $"<ContentControl Content=\" &#xA;&#x9;\" />";
+            var xaml = $"<ContentControl Content=\"{CharacterEntities}\" />";
             var content = TestContentControlContent<ContentControl>(xaml);
             Assert.Equal(AllWhitespace, content.Content);
         }
