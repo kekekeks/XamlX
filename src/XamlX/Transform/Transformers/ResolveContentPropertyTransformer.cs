@@ -52,7 +52,7 @@ namespace XamlX.Transform.Transformers
                                 }
 
                                 propertyNode = new XamlAstXamlPropertyValueNode(ni, new XamlAstClrProperty(ni,
-                                        "Content", ni.Type.GetClrType(), context.Configuration, null,
+                                        "Content", ni.Type.GetClrType(), null,
                                         adders.Select(a => new XamlDirectCallPropertySetter(a)
                                         {
                                             BinderParameters = {AllowMultiple = true}

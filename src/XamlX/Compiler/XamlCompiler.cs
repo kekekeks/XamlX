@@ -44,8 +44,8 @@ namespace XamlX.Compiler
                     // This should come before actual content property processing
                     new RemoveWhitespaceBetweenPropertyValuesTransformer(),
                     new ResolveContentPropertyTransformer(),
-                    new ApplyWhitespaceNormalization(),
                     new ResolvePropertyValueAddersTransformer(),
+                    new ApplyWhitespaceNormalization(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()
                 };

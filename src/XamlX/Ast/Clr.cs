@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
@@ -42,14 +41,12 @@ namespace XamlX.Ast
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
         public IXamlType DeclaringType { get; set; }
         public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
-        public IXamlType PropertyType { get; }
-
+        
         public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
             TransformerConfiguration cfg) : base(lineInfo)
         {
             Name = property.Name;
             Getter = property.Getter;
-            PropertyType = property.PropertyType;
             if (property.Setter != null)
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
@@ -71,44 +68,17 @@ namespace XamlX.Ast
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType, 
-            TransformerConfiguration cfg,
             IXamlMethod getter, IEnumerable<IXamlPropertySetter> setters) : base(lineInfo)
         {
             Name = name;
             DeclaringType = declaringType;
             Getter = getter;
             if (setters != null)
-            {
                 Setters.AddRange(setters);
-            }
-
-            if (getter != null)
-            {
-                PropertyType = getter.ReturnType;
-            }
-            else
-            {
-                foreach (var setter in Setters)
-                {
-                    if (setter.Parameters.Count == 1)
-                    {
-                        // Emulate an IEnumerable<T> for methods like Add(T)
-                        if (setter.BinderParameters.AllowMultiple)
-                        {
-                            PropertyType = cfg.WellKnownTypes.IEnumerableT.MakeGenericType(setter.Parameters[0]);
-                        }
-                        else
-                        {
-                            PropertyType = setter.Parameters[0];
-                        }
-                    }
-                }
-            }
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
-            TransformerConfiguration cfg,
-            IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType, cfg,
+            IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
             getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
