@@ -6,7 +6,10 @@ namespace XamlX.Transform.Transformers
     // See: https://docs.microsoft.com/en-us/dotnet/desktop/xaml-services/white-space-processing
     // Must be applied after content has been transformed to a XamlAstXamlPropertyValueNode,
     // and after ResolvePropertyValueAddersTransformer has resolved the Add methods for collection properties
-    public class ApplyWhitespaceNormalization : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class ApplyWhitespaceNormalization : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

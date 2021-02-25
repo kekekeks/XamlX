@@ -4,7 +4,10 @@ using XamlX.Ast;
 namespace XamlX.Transform.Transformers
 {
     // Merges adjacent text nodes
-    public class TextNodeMerger : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class TextNodeMerger : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {

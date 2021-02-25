@@ -6,7 +6,10 @@ namespace XamlX.Transform.Transformers
     /// This transformer drops insignificant whitespace before and between <see cref="XamlAstXamlPropertyValueNode">
     /// AST property value nodes</see> within <see cref="XamlAstObjectNode">AST object nodes</see>.
     /// </summary>
-    public class RemoveWhitespaceBetweenPropertyValuesTransformer : IXamlAstTransformer
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class RemoveWhitespaceBetweenPropertyValuesTransformer : IXamlAstTransformer
     {
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
