@@ -97,6 +97,14 @@ namespace XamlX.TypeSystem
             }
             if (left is GenericInstanceType leftGi && right is GenericInstanceType rightGi)
             {
+                if (!Equals(leftGi.ElementType, rightGi.ElementType))
+                {
+                    return false;
+                }
+                if (leftGi.GenericArguments.Count != rightGi.GenericArguments.Count)
+                {
+                    return false;
+                }
                 for(var c=0; c<leftGi.GenericArguments.Count;c++)
                     if (!Equals(leftGi.GenericArguments[c], rightGi.GenericArguments[c]))
                         return false;
