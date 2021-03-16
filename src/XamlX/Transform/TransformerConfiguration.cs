@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
@@ -44,6 +45,7 @@ namespace XamlX.Transform
         public XamlXmlnsMappings XmlnsMappings { get; }
         public XamlTypeWellKnownTypes WellKnownTypes { get; }
         public XamlValueConverter CustomValueConverter { get; }
+        public IXamlIdentifierGenerator IdentifierGenerator { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
             
@@ -51,7 +53,8 @@ namespace XamlX.Transform
 
         public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
             XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
-            XamlValueConverter customValueConverter = null)
+            XamlValueConverter customValueConverter = null,
+            IXamlIdentifierGenerator identifierGenerator = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
@@ -59,6 +62,7 @@ namespace XamlX.Transform
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
+            IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
         IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
