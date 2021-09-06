@@ -130,7 +130,7 @@ namespace XamlX.TypeSystem
 #endif
     interface IXamlTypeSystem
     {
-        IReadOnlyList<IXamlAssembly> Assemblies { get; }
+        IEnumerable<IXamlAssembly> Assemblies { get; }
         IXamlAssembly FindAssembly(string substring);
         IXamlType FindType(string name);
         IXamlType FindType(string name, string assembly);

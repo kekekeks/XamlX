@@ -15,7 +15,7 @@ namespace XamlX.IL
     class SreTypeSystem : IXamlTypeSystem
     {
         private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
-        public IReadOnlyList<IXamlAssembly> Assemblies => _assemblies;
+        public IEnumerable<IXamlAssembly> Assemblies => EnumerateList(_assemblies);
         
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
 
@@ -80,6 +80,12 @@ namespace XamlX.IL
             }
 
             return null;
+        }
+
+        private static IEnumerable<T> EnumerateList<T>(IList<T> list)
+        {
+            for (var c = 0; c < list.Count; c++)
+                yield return list[c];
         }
 
         class SreAssembly : IXamlAssembly
