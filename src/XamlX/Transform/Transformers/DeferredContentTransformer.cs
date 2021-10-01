@@ -1,5 +1,6 @@
 using System.Linq;
 using XamlX.Ast;
+using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
@@ -15,7 +16,9 @@ namespace XamlX.Transform.Transformers
             var deferredAttrs = context.Configuration.TypeMappings.DeferredContentPropertyAttributes;
             if (deferredAttrs.Count == 0)
                 return node;
-            if (!pa.Property.CustomAttributes.Any(ca => deferredAttrs.Any(da => da.Equals(ca.Type))))
+            var deferredAttr =
+                pa.Property.CustomAttributes.FirstOrDefault(ca => deferredAttrs.Any(da => da.Equals(ca.Type)));
+            if (deferredAttr == null)
                 return node;
 
             if (pa.Values.Count != 1)
@@ -30,9 +33,27 @@ namespace XamlX.Transform.Transformers
                     "this shouldn't happen in default Xaml configuration, probably some AST transformer have broken the structure",
                     node);
             manipulation.Value = new XamlDeferredContentInitializeIntermediateRootNode(manipulation.Value);
+
             
+            // Find the type param for the customizer.
+            // In Avalonia that's TemplateContentAttribute::TemplateResult property
+            // It is used to return a somewhat strongly typed results from templates
+            IXamlType typeParam = null;
+            var customizationTypeParamPropertyNames = context.Configuration.TypeMappings
+                .DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames;
+            if (customizationTypeParamPropertyNames != null && customizationTypeParamPropertyNames.Any())
+            {
+                foreach (var propertyName in customizationTypeParamPropertyNames)
+                {
+                    if (deferredAttr.Properties.TryGetValue(propertyName, out var value))
+                    {
+                        typeParam = (IXamlType)value;
+                        break;
+                    }
+                }
+            }
             pa.Values[0] =
-                new XamlDeferredContentNode(pa.Values[0], context.Configuration);
+                new XamlDeferredContentNode(pa.Values[0], typeParam, context.Configuration);
             return node;
         }
     }

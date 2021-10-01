@@ -56,6 +56,7 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
+        public List<string> DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames { get; set; } = new List<string>();
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
     }
 
