@@ -38,7 +38,8 @@ namespace XamlX.Transform.Transformers
             // Find the type param for the customizer.
             // In Avalonia that's TemplateContentAttribute::TemplateResult property
             // It is used to return a somewhat strongly typed results from templates
-            IXamlType typeParam = null;
+            IXamlType typeParam = context.Configuration.TypeMappings
+                .DeferredContentExecutorCustomizationDefaultTypeParameter;
             var customizationTypeParamPropertyNames = context.Configuration.TypeMappings
                 .DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames;
             if (customizationTypeParamPropertyNames != null && customizationTypeParamPropertyNames.Any())
