@@ -39,9 +39,9 @@ namespace XamlX.Transform.Transformers
                 if (xml.Name == "Null")
                     return new XamlNullExtensionNode(node);
                 if (xml.Name == "True")
-                    return new XamlBoolExtensionNode(node, true, context.Configuration.WellKnownTypes);
+                    return new XamlConstantNode(node, context.Configuration.WellKnownTypes.Boolean, true);
                 if (xml.Name == "False")
-                    return new XamlBoolExtensionNode(node, false, context.Configuration.WellKnownTypes);
+                    return new XamlConstantNode(node, context.Configuration.WellKnownTypes.Boolean, false);
                 if (xml.Name == "Type")
                 {
                     var textNode = ResolveArgumentOrValue("x:Type", "TypeName");

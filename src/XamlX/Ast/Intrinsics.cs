@@ -30,27 +30,6 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlBoolExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
-    {
-        private readonly bool _value;
-        public XamlBoolExtensionNode(IXamlLineInfo lineInfo, bool value, XamlTypeWellKnownTypes types) : base(lineInfo)
-        {
-            _value = value;
-            Type = new XamlAstClrTypeReference(lineInfo, types.Boolean, false);
-        }
-
-        public IXamlAstTypeReference Type { get; }
-        public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
-        {
-            // context.Configuration.WellKnownTypes
-            codeGen.Emit(_value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-            return XamlILNodeEmitResult.Type(0, context.Configuration.WellKnownTypes.Boolean);
-        }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
     class XamlTypeExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
         private readonly IXamlType _systemType;
@@ -183,6 +162,8 @@ namespace XamlX.Ast
                 codeGen.Emit(OpCodes.Ldc_R4, f);
             else if (Constant is double d)
                 codeGen.Emit(OpCodes.Ldc_R8, d);
+            else if (Constant is bool b)
+                codeGen.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             else
                 codeGen.Emit(OpCodes.Ldc_I4, TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
