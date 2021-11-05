@@ -35,9 +35,13 @@ namespace XamlX.Transform.Transformers
                         return (XamlAstTextNode) context.ParseError("x:Type parameter should be a text node", value, node);
                     return textNode;
                 }
-                
+
                 if (xml.Name == "Null")
                     return new XamlNullExtensionNode(node);
+                if (xml.Name == "True")
+                    return new XamlConstantNode(node, context.Configuration.WellKnownTypes.Boolean, true);
+                if (xml.Name == "False")
+                    return new XamlConstantNode(node, context.Configuration.WellKnownTypes.Boolean, false);
                 if (xml.Name == "Type")
                 {
                     var textNode = ResolveArgumentOrValue("x:Type", "TypeName");
