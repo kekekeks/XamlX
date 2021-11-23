@@ -79,7 +79,7 @@ namespace XamlX.Ast
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
+            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
         }
