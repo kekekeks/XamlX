@@ -88,9 +88,16 @@ namespace XamlX.Ast
     {
         public string Text { get; set; }
 
-        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, IXamlType type = null) : base(lineInfo)
+        /// <summary>
+        /// Indicates whether this value was created from an XML node where xml:space="preserve" was in effect.
+        /// </summary>
+        public bool PreserveWhitespace { get; }
+
+        /// <param name="preserveWhitespace">True if XAML whitespace normalization should NOT be applied to this text value (i.e. xml:space="preserve" or attribute values).</param>
+        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, bool preserveWhitespace = false, IXamlType type = null) : base(lineInfo)
         {
             Text = text;
+            PreserveWhitespace = preserveWhitespace;
             if (type != null)
                 Type = new XamlAstClrTypeReference(lineInfo, type, false);
             else

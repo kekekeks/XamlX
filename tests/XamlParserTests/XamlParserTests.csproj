@@ -2,5 +2,5 @@
     <PropertyGroup>
         <TargetFrameworks>netcoreapp2.1;net47</TargetFrameworks>
     </PropertyGroup>
-    <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props"/>
+    <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
 </Project>

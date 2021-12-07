@@ -65,7 +65,7 @@ namespace XamlX.Transform
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
-        IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
+        private readonly IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
 
         public IXamlProperty FindContentProperty(IXamlType type)
         {
@@ -112,7 +112,57 @@ namespace XamlX.Transform
 
             return _contentPropertyCache[type.Id] = found;
         }
-        
+
+        private readonly IDictionary<object, bool> _whitespaceSignificantCollectionCache = new Dictionary<object, bool>();
+
+        /// <summary>
+        /// Checks whether the given type is annotated as a collection that treats whitespace as significant.
+        /// </summary>
+        public bool IsWhitespaceSignificantCollection(IXamlType type)
+        {
+            return IsAttributePresentInTypeHierarchy(
+                type,
+                TypeMappings.WhitespaceSignificantCollectionAttributes,
+                _whitespaceSignificantCollectionCache
+            );
+        }
+
+        private readonly IDictionary<object, bool> _trimSurroundingWhitespaceCache = new Dictionary<object, bool>();
+
+        /// <summary>
+        /// Checks whether the given type is annotated to indicate that surrounding whitespace should be trimmed
+        /// even if it is contained in a <see cref="IsWhitespaceSignificantCollection(XamlX.TypeSystem.IXamlType)">
+        /// whitespace-significant collection</see>. Note that this behavior is diabled in an xml:space="preserve"
+        /// scope.
+        /// </summary>
+        public bool IsTrimSurroundingWhitespaceElement(IXamlType type)
+        {
+            return IsAttributePresentInTypeHierarchy(
+                type,
+                TypeMappings.TrimSurroundingWhitespaceAttributes,
+                _trimSurroundingWhitespaceCache
+            );
+        }
+
+        private bool IsAttributePresentInTypeHierarchy(IXamlType type, List<IXamlType> attributes, IDictionary<object, bool> cache)
+        {
+            if (attributes.Count == 0)
+                return false;
+            if (cache.TryGetValue(type.Id, out var result))
+                return result;
+
+            // Check the base type first
+            if (type.BaseType != null)
+                result = IsAttributePresentInTypeHierarchy(type.BaseType, attributes, cache);
+
+            // Check if the current type has any of the configured attributes
+            if (!result)
+            {
+                result = GetCustomAttribute(type, attributes).Any();
+            }
+
+            return cache[type.Id] = result;
+        }
 
         public IEnumerable<IXamlCustomAttribute> GetCustomAttribute(IXamlType type, IXamlType attributeType)
         {
