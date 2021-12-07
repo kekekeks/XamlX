@@ -272,10 +272,11 @@ namespace XamlX.IL
             {
                 Type = type;
                 _data = data;
+                object ConvertAttributeValue(object v) => v is Type t ? system.ResolveType(t) : v;
                 Parameters = data.ConstructorArguments.Select(p =>
-                    p.Value is Type t ? system.ResolveType(t) : p.Value
-                ).ToList();
-                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName, x => x.TypedValue.Value) ??
+                    ConvertAttributeValue(p.Value)).ToList();
+                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName,
+                                 x => ConvertAttributeValue(x.TypedValue.Value)) ??
                              new Dictionary<string, object>();
             }
             

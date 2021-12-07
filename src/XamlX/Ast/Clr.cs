@@ -573,12 +573,15 @@ namespace XamlX.Ast
 #endif
     class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        private readonly IXamlType _deferredContentCustomizationTypeParameter;
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
-        public XamlDeferredContentNode(IXamlAstValueNode value, 
+        public XamlDeferredContentNode(IXamlAstValueNode value,
+            IXamlType deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
+            _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
@@ -661,9 +664,14 @@ namespace XamlX.Ast
             // Allow to save values from the parent context, pass own service provider, etc, etc
             if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
             {
+                
+                var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
+                if (_deferredContentCustomizationTypeParameter != null)
+                    customization =
+                        customization.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
                 codeGen
                     .Ldloc(context.ContextLocal)
-                    .EmitCall(context.Configuration.TypeMappings.DeferredContentExecutorCustomization);
+                    .EmitCall(customization);
             }
             
             subType.CreateType();
