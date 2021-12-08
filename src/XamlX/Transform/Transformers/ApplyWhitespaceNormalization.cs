@@ -49,7 +49,7 @@ namespace XamlX.Transform.Transformers
                 if (!setter.BinderParameters.AllowMultiple)
                 {
                     // If the property can accept a scalar string, it'll get whitespace nodes by default
-                    if (parameterType.IsAssignableFrom(wellKnownTypes.String))
+                    if (parameterType.Equals(wellKnownTypes.String) || parameterType.Equals(wellKnownTypes.Object))
                     {
                         return true;
                     }

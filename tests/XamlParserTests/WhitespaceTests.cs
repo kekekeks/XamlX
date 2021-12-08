@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -338,6 +340,16 @@ namespace XamlParserTests
                 x => Assert.IsType<Control>(x)
             );
         }
+        
+        [Fact]
+        [Trait("Category", "MixedContent")]
+        public void WhitespaceShouldBeTrimmedForPlainIEnumerableContentProperty()
+        {
+            var content = ReadXaml<MixedEnumerableContentControl>($"<MixedEnumerableContentControl xmlns='test'>{AllWhitespace}<Control/>{AllWhitespace}<Control/>{AllWhitespace}</MixedEnumerableContentControl>");
+            Assert.Collection(content.Items.Cast<object>(),
+                c => Assert.IsType<Control>(c),
+                c => Assert.IsType<Control>(c));
+        }
 
         private object TestContentControlContent(string rawContent, bool xmlPreserve = false)
         {
@@ -397,6 +409,11 @@ namespace XamlParserTests
     {
         [Content]
         public List<object> Content { get; } = new List<object>();
+    }
+
+    public class MixedEnumerableContentControl
+    {
+        [Content] public IEnumerable Items { get; set; } = new List<object>();
     }
 
     // This control uses a collection as it's content property which declares
