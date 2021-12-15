@@ -123,14 +123,28 @@ namespace XamlX.Transform
         {
             for (var i = nodes.Count - 1; i >= 0; i--)
             {
-                if (nodes[i] is XamlAstTextNode textChild)
+                if (ShouldRemoveNode(nodes[i]))
                 {
-                    if (IsWhitespace(textChild.Text))
-                    {
-                        nodes.RemoveAt(i);
-                    }
+                    nodes.RemoveAt(i);
                 }
             }
+        }
+
+        private static bool ShouldRemoveNode(IXamlAstNode node)
+        {
+            switch (node)
+            {
+                case XamlAstTextNode textChild:
+                    { 
+                        return IsWhitespace(textChild.Text);
+                    }
+                case XamlValueWithSideEffectNodeBase sideEffectNode:
+                    {
+                        return ShouldRemoveNode(sideEffectNode.Value);
+                    }
+            }
+
+            return false;
         }
     }
 }
