@@ -651,7 +651,9 @@ namespace XamlX.Ast
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                createSubType: (s, type) => subType.DefineSubType(type, s, false),
+                createDelegateSubType: (s, returnType, parameters) => subType.CreateDelegateSubType(s, false, returnType, parameters), 
+                file: context.File,
                 emitters: context.Emitters));
 
             var funcType = Type.GetClrType();
