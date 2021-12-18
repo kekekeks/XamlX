@@ -334,14 +334,14 @@ namespace XamlX.IL
 
         class SreConstructor : SreMethodBase, IXamlConstructor
         {
-            public ConstructorInfo Constuctor { get; }
+            public ConstructorInfo Constructor { get; }
             public SreConstructor(SreTypeSystem system, ConstructorInfo ctor) : base(system, ctor)
             {
-                Constuctor = ctor;
+                Constructor = ctor;
             }
 
             public bool Equals(IXamlConstructor other) 
-                => ((SreConstructor) other)?.Constuctor.Equals(Constuctor) == true;
+                => ((SreConstructor) other)?.Constructor.Equals(Constructor) == true;
         }
 
         class SreProperty : SreMemberInfo, IXamlProperty
@@ -450,7 +450,7 @@ namespace XamlX.IL
 
             public IXamlILEmitter Emit(OpCode code, IXamlConstructor ctor)
             {
-                _ilg.Emit(code, ((SreConstructor) ctor).Constuctor);
+                _ilg.Emit(code, ((SreConstructor) ctor).Constructor);
                 return this;
             }
 
@@ -595,6 +595,22 @@ namespace XamlX.IL
                 {
                     throw new NotImplementedException();
                 }
+
+                public bool IsRuntimeImplemented
+                {
+                    get => (MethodBuilder.MethodImplementationFlags & MethodImplAttributes.Runtime) != 0;
+                    set
+                    {
+                        if (value)
+                        {
+                            MethodBuilder.SetImplementationFlags(MethodBuilder.MethodImplementationFlags | MethodImplAttributes.Runtime);
+                        }
+                        else
+                        {
+                            MethodBuilder.SetImplementationFlags(MethodBuilder.MethodImplementationFlags & ~MethodImplAttributes.Runtime);
+                        }
+                    }
+                }
             }
             
             public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
@@ -633,6 +649,21 @@ namespace XamlX.IL
                 }
 
                 public IXamlILEmitter Generator { get; }
+                public bool IsRuntimeImplemented
+                {
+                    get => (Constructor.MethodImplementationFlags & MethodImplAttributes.Runtime) != 0;
+                    set
+                    {
+                        if (value)
+                        {
+                            ((ConstructorBuilder)Constructor).SetImplementationFlags(Constructor.MethodImplementationFlags | MethodImplAttributes.Runtime);
+                        }
+                        else
+                        {
+                            ((ConstructorBuilder)Constructor).SetImplementationFlags(Constructor.MethodImplementationFlags & ~MethodImplAttributes.Runtime);
+                        }
+                    }
+                }
             }
 
             

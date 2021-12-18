@@ -184,6 +184,7 @@ namespace XamlX.TypeSystem
 #endif
     interface IXamlMethodBuilder<TBackendEmitter> : IXamlMethod
     {
+        bool IsRuntimeImplemented { get; set; }
         TBackendEmitter Generator { get; }
     }
 
@@ -192,6 +193,7 @@ namespace XamlX.TypeSystem
 #endif
     interface IXamlConstructorBuilder<TBackendEmitter> : IXamlConstructor
     {
+        bool IsRuntimeImplemented { get; set; }
         TBackendEmitter Generator { get; }
     }
 

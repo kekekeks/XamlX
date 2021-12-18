@@ -113,6 +113,22 @@ namespace XamlX.TypeSystem
 
                 return new CecilMethod(TypeSystem, instantiation, _declaringTypeReference);
             }
+
+            public bool IsRuntimeImplemented
+            {
+                get => (Definition.ImplAttributes & MethodImplAttributes.Runtime) != 0;
+                set
+                {
+                    if (value)
+                    {
+                        Definition.ImplAttributes |= MethodImplAttributes.Runtime;
+                    }
+                    else
+                    {
+                        Definition.ImplAttributes = (Definition.ImplAttributes & ~MethodImplAttributes.Runtime);
+                    }
+                }
+            }
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
@@ -125,6 +141,22 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlConstructor other) => other is CecilConstructor cm
                                                             && cm.Reference.Equals(Reference);
+
+            public bool IsRuntimeImplemented
+            {
+                get => (Definition.ImplAttributes & MethodImplAttributes.Runtime) != 0;
+                set
+                {
+                    if (value)
+                    {
+                        Definition.ImplAttributes |= MethodImplAttributes.Runtime;
+                    }
+                    else
+                    {
+                        Definition.ImplAttributes = (Definition.ImplAttributes & ~MethodImplAttributes.Runtime);
+                    }
+                }
+            }
         }
     }
 }
