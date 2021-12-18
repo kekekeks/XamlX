@@ -662,6 +662,28 @@ namespace XamlX.IL
                 return new SreTypeBuilder(_system, builder);
             }
 
+            public IXamlType CreateDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            {
+                var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
+                if (isPublic)
+                    attrs |= TypeAttributes.NestedPublic;
+                else
+                    attrs |= TypeAttributes.NestedPrivate;
+
+                var builder = _tb.DefineNestedType(name, attrs, typeof(MulticastDelegate));
+
+                builder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig, CallingConventions.Standard, new[] { typeof(object), typeof(IntPtr) })
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
+                builder.DefineMethod("Invoke",
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                    ((SreType)returnType).Type,
+                    parameterTypes.Select(p => ((SreType)p).Type).ToArray())
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
+                return new SreType(_system, null, builder.CreateTypeInfo());
+            }
+
             public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> args)
             {
                 var builders = _tb.DefineGenericParameters(args.Select(x=>x.Key).ToArray());
