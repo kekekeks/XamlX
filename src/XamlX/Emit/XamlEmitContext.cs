@@ -31,7 +31,8 @@ namespace XamlX.Emit
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType, IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
+            IFileSource file,
             IEnumerable<object> emitters)
         {
             File = file;
