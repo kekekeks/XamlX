@@ -23,10 +23,10 @@ namespace XamlX.Emit
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> defineDelegateSubType,
             IFileSource file,
             IEnumerable<object> emitters)
-            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, createSubType, createDelegateSubType, file, emitters)
+            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, createSubType, defineDelegateSubType, file, emitters)
         {
         }
 

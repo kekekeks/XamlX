@@ -55,7 +55,7 @@ namespace XamlX.IL
         protected override XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> defineDelegateSubType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             bool needContextLocal)
         {
@@ -73,7 +73,7 @@ namespace XamlX.IL
 
             var emitContext = new ILEmitContext(codeGen, _configuration,
                 _emitMappings, context, contextLocal, createSubType,
-                createDelegateSubType,
+                defineDelegateSubType,
                 file, Emitters);
             return emitContext;
         }
@@ -81,7 +81,7 @@ namespace XamlX.IL
         protected override void CompileBuild(
             IFileSource fileSource,
             IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateType,
+            Func<string, IXamlType, IEnumerable<IXamlType>,  IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             IXamlMethod compiledPopulate)
         {
@@ -104,7 +104,7 @@ namespace XamlX.IL
         /// </summary>
         protected override void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             // Uncomment to inspect generated IL in debugger

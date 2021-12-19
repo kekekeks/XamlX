@@ -114,7 +114,7 @@ namespace XamlX.TypeSystem
                 return new CecilTypeBuilder(TypeSystem, (CecilAssembly) Assembly, td);
             }
 
-            public IXamlType CreateDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
             {
                 var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
                 if (isPublic)

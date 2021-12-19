@@ -652,7 +652,7 @@ namespace XamlX.Ast
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
                 createSubType: (s, type) => subType.DefineSubType(type, s, false),
-                createDelegateSubType: (s, returnType, parameters) => subType.CreateDelegateSubType(s, false, returnType, parameters), 
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters), 
                 file: context.File,
                 emitters: context.Emitters));
 
