@@ -70,7 +70,7 @@ namespace XamlX.Compiler
                     typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
                         namespaceInfoClassName, false),
                 (name, bt) => typeBuilder.DefineSubType(bt, name, false),
-                (s, returnType, parameters) => typeBuilder.CreateDelegateSubType(s, false, returnType, parameters),
+                (s, returnType, parameters) => typeBuilder.DefineDelegateSubType(s, false, returnType, parameters),
                 baseUri, fileSource);
         }
 
@@ -78,7 +78,7 @@ namespace XamlX.Compiler
             IXamlMethodBuilder<TBackendEmitter> populateMethod, IXamlMethodBuilder<TBackendEmitter> buildMethod,
             IXamlTypeBuilder<TBackendEmitter> namespaceInfoBuilder,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createClosure,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> createDelegateType,
             string baseUri, IFileSource fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
@@ -97,13 +97,13 @@ namespace XamlX.Compiler
 
         protected abstract void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> DefineDelegateSubType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context);
 
         protected abstract void CompileBuild(
             IFileSource fileSource,
             IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlType> createDelegateType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> createDelegateType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context,
             IXamlMethod compiledPopulate);
 
