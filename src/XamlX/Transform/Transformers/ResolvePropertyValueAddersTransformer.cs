@@ -37,6 +37,7 @@ namespace XamlX.Transform.Transformers
             }
 
             public IXamlType TargetType { get; }
+            public IXamlType ParameterType => Parameters.Last();
 
             public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters
             {
@@ -44,6 +45,35 @@ namespace XamlX.Transform.Transformers
             };
             
             public IReadOnlyList<IXamlType> Parameters { get; }
+
+            public bool Matches(IReadOnlyList<IXamlAstValueNode> arguments)
+            {
+                var parameters = _adder.ParametersWithThis().Skip(1).ToList();
+
+                if (arguments.Count == parameters.Count)
+                {
+                    for (var i = 0; i < parameters.Count; ++i)
+                    {
+                        var argument = arguments[i];
+                        var parameter = parameters[i];
+
+                        // Don't allow x:Null
+                        if (!BinderParameters.AllowXNull && XamlPseudoType.Null.Equals(argument.Type))
+                            return false;
+
+                        // Direct cast
+                        if (parameter.IsAssignableFrom(argument.Type.GetClrType()))
+                            return true;
+
+                        // Upcast from System.Object
+                        //if (argument.Equals(_config.WellKnownTypes.Object))
+                        //    return true;
+                    }
+                }
+
+                return false;
+            }
+
             public void Emit(IXamlILEmitter emitter)
             {
                 var locals = new Stack<XamlLocalsPool.PooledLocal>();

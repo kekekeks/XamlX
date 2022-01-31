@@ -56,8 +56,8 @@ namespace XamlParserTests
             var ms = new MemoryStream();
             asm.Write(ms);
             var data = ms.ToArray();
-            lock (s_asmLock)
-                File.WriteAllBytes("testasm.dll", data);
+            //lock (s_asmLock)
+            //    File.WriteAllBytes("testasm.dll", data);
             
             var loaded = Assembly.Load(data);
             var t = loaded.GetType("TestXaml.Xaml");

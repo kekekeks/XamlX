@@ -48,7 +48,7 @@ namespace XamlX.Ast
             Name = property.Name;
             Getter = property.Getter;
             if (property.Setter != null)
-                Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
+                Setters.Add(new XamlDirectCallPropertySetter(cfg, property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
             var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
@@ -78,8 +78,9 @@ namespace XamlX.Ast
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
+            TransformerConfiguration cfg,
             IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
+            getter, setters.Select(x => new XamlDirectCallPropertySetter(cfg, x)))
         {
 
         }
@@ -89,20 +90,52 @@ namespace XamlX.Ast
 
     class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
     {
+        private readonly TransformerConfiguration _config;
         private readonly IXamlMethod _method;
+
         public IXamlType TargetType { get; }
+        public IXamlType ParameterType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
-        public IReadOnlyList<IXamlType> Parameters { get; }
+
         public void Emit(IXamlILEmitter codegen)
         {
             codegen.EmitCall(_method, true);
         }
 
-        public XamlDirectCallPropertySetter(IXamlMethod method)
+        public bool Matches(IReadOnlyList<IXamlAstValueNode> arguments)
         {
+            var parameters = _method.ParametersWithThis().Skip(1).ToList();
+
+            if (arguments.Count == parameters.Count)
+            {
+                for (var i = 0; i < parameters.Count; ++i)
+                {
+                    var argument = arguments[i];
+                    var parameter = parameters[i];
+
+                    // Don't allow x:Null
+                    if (!BinderParameters.AllowXNull && XamlPseudoType.Null.Equals(argument.Type))
+                        return false;
+
+                    // Direct cast
+                    if (parameter.IsAssignableFrom(argument.Type.GetClrType()))
+                        return true;
+
+                    // Upcast from System.Object
+                    if (argument.Equals(_config.WellKnownTypes.Object))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        public XamlDirectCallPropertySetter(TransformerConfiguration config, IXamlMethod method)
+        {
+            _config = config;
             _method = method;
-            Parameters = method.ParametersWithThis().Skip(1).ToList();
             TargetType = method.ThisOrFirstParameter();
+            ParameterType = method.Parameters[0];
         }
     }
 
@@ -123,7 +156,8 @@ namespace XamlX.Ast
     {
         IXamlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
-        IReadOnlyList<IXamlType> Parameters { get; }
+        IXamlType ParameterType { get; }
+        bool Matches(IReadOnlyList<IXamlAstValueNode> arguments);
     }
 
 #if !XAMLX_INTERNAL
@@ -132,16 +166,15 @@ namespace XamlX.Ast
     class XamlPropertyAssignmentNode : XamlAstNode, IXamlAstManipulationNode
     {
         public XamlAstClrProperty Property { get; }
-        public List<IXamlPropertySetter> PossibleSetters { get; set; }
+        public IXamlPropertySetter Setter => Property.Setters.FirstOrDefault(x => x.Matches(Values));
         public List<IXamlAstValueNode> Values { get; set; }
 
         public XamlPropertyAssignmentNode(IXamlLineInfo lineInfo,
             XamlAstClrProperty property,
-            IEnumerable<IXamlPropertySetter> setters, IEnumerable<IXamlAstValueNode> values)
+            IEnumerable<IXamlAstValueNode> values)
             : base(lineInfo)
         {
             Property = property;
-            PossibleSetters = setters.ToList();
             Values = values.ToList();
         }
 

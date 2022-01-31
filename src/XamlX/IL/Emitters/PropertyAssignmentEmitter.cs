@@ -13,21 +13,34 @@ namespace XamlX.IL.Emitters
 #endif
     class PropertyAssignmentEmitter : IXamlAstLocalsNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        List<IXamlPropertySetter> ValidateAndGetSetters(XamlPropertyAssignmentNode an)
+        List<IXamlPropertySetter> ValidateAndGetSetters(XamlPropertyAssignmentNode an,
+            AstTransformationContext context)
         {
-            var lst = an.PossibleSetters.Where(x => x.Parameters.Count == an.Values.Count).ToList();
-            if(an.Values.Count>1 && lst.Count>1)
-                for (var c = 0; c < an.Values.Count - 2; c++)
+            var result = new List<IXamlPropertySetter>();
+
+            foreach (var setter in an.Property.Setters)
+            {
+                if (setter.Matches(an.Values))
                 {
-                    var failed = an.PossibleSetters.FirstOrDefault(x =>
-                        !x.Parameters[c].IsDirectlyAssignableFrom(an.Values[c].Type.GetClrType()));
-                    if (failed != null)
+                    result.Add(setter);
+                }
+                else
+                {
+                    var valueArgIndex = an.Values.Count - 1;
+                    var valueArg = an.Values[valueArgIndex];
+
+                    if (XamlTransformHelpers.TryConvertValue(context, valueArg, setter.ParameterType, an.Property,
+                                out var converted))
                     {
-                        throw new XamlLoadException(
-                            $"Can not statically cast {an.Values[c].Type.GetClrType().GetFqn()} to {failed.Parameters[c].GetFqn()} and runtime type checking is only supported for the last setter argument",
-                            an);
+
+                        arguments[valueArgIndex] = converted;
+                        return new XamlPropertyAssignmentNode(valueNode,
+                            property, new[] { setter }, arguments);
                     }
                 }
+            }
+
+            var lst = an.Property.Setters.Where(x => x.Matches(an.Values)).ToList();
 
             if (lst.Count == 0)
                 throw new XamlLoadException("No setters found for property assignment", an);
@@ -39,7 +52,7 @@ namespace XamlX.IL.Emitters
             if (!(node is XamlPropertyAssignmentNode an))
                 return null;
 
-            var setters = ValidateAndGetSetters(an);
+            var setters = ValidateAndGetSetters(an, context.);
             for (var c = 0; c < an.Values.Count - 1; c++)
             {
                 context.Emit(an.Values[c], codeGen, an.Values[c].Type.GetClrType());
@@ -51,8 +64,8 @@ namespace XamlX.IL.Emitters
             // If there is only one available setter or if value is a value type, always use the first one
             if (setters.Count == 1 || isValueType)
             {
-                var setter = an.PossibleSetters.First();
-                context.Emit(value, codeGen, setter.Parameters.Last());
+                var setter = setters.First();
+                context.Emit(value, codeGen, setter.ParameterType);
                 context.Emit(setter, codeGen);
             }
             else
@@ -65,7 +78,7 @@ namespace XamlX.IL.Emitters
                 
                 foreach (var setter in setters)
                 {
-                    var type = setter.Parameters.Last();
+                    var type = setter.ParameterType;
                     
                     // We have already checked this type or its base type
                     if (checkedTypes.Any(ch => ch.IsAssignableFrom(type)))

@@ -37,7 +37,7 @@ namespace XamlParserTests
 
             // Make sure that BindingSetter is available after the "bind me" value has been substituted with
             // a new Binding instance.
-            Assert.Contains(propertyAssignment.PossibleSetters, x => x is BindingSetter);
+            //Assert.Contains(propertyAssignment.Setters, x => x is BindingSetter);
         }
 
         private class TestCompiler : XamlILCompiler
@@ -107,12 +107,18 @@ namespace XamlParserTests
             public BindingSetter(IXamlType targetType, IXamlType bindingType)
             {
                 TargetType = targetType;
-                Parameters = new[] { bindingType };
+                ParameterType = bindingType;
             }
 
             public IXamlType TargetType { get; }
+            public IXamlType ParameterType { get; }
             public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
             public IReadOnlyList<IXamlType> Parameters { get; }
+
+            public bool Matches(IReadOnlyList<IXamlAstValueNode> arguments)
+            {
+                throw new System.NotImplementedException();
+            }
         }
     }
 }
