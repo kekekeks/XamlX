@@ -79,7 +79,7 @@ namespace XamlX.Ast
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
+            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
         }
@@ -573,12 +573,15 @@ namespace XamlX.Ast
 #endif
     class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        private readonly IXamlType _deferredContentCustomizationTypeParameter;
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
-        public XamlDeferredContentNode(IXamlAstValueNode value, 
+        public XamlDeferredContentNode(IXamlAstValueNode value,
+            IXamlType deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
+            _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
@@ -640,7 +643,7 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + context.GetNextUniqueContextId(), so);
+            var subType = context.CreateSubType("XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
@@ -648,7 +651,9 @@ namespace XamlX.Ast
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                createSubType: (s, type) => subType.DefineSubType(type, s, false),
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters), 
+                file: context.File,
                 emitters: context.Emitters));
 
             var funcType = Type.GetClrType();
@@ -661,9 +666,14 @@ namespace XamlX.Ast
             // Allow to save values from the parent context, pass own service provider, etc, etc
             if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
             {
+                
+                var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
+                if (_deferredContentCustomizationTypeParameter != null)
+                    customization =
+                        customization.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
                 codeGen
                     .Ldloc(context.ContextLocal)
-                    .EmitCall(context.Configuration.TypeMappings.DeferredContentExecutorCustomization);
+                    .EmitCall(customization);
             }
             
             subType.CreateType();

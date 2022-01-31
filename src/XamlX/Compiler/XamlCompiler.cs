@@ -38,10 +38,14 @@ namespace XamlX.Compiler
                     new XArgumentsTransformer(),
                     new TypeReferenceResolver(),
                     new MarkupExtensionTransformer(),
+                    new TextNodeMerger(),
                     new PropertyReferenceResolver(),
                     new ContentConvertTransformer(),
+                    // This should come before actual content property processing
+                    new RemoveWhitespaceBetweenPropertyValuesTransformer(),
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
+                    new ApplyWhitespaceNormalization(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()
                 };
@@ -76,6 +80,7 @@ namespace XamlX.Compiler
         protected abstract XamlEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> createDelegateType,
             TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
     }
 }

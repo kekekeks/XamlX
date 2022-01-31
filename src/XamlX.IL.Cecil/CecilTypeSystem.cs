@@ -77,7 +77,7 @@ namespace XamlX.TypeSystem
 
         public IXamlAssembly TargetAssembly { get; private set; }
         public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
-        public IReadOnlyList<IXamlAssembly> Assemblies => _asms.AsReadOnly();
+        public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
         public IXamlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
         public IXamlType FindType(string name)

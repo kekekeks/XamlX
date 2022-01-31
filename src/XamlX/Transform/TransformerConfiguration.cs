@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using XamlX.Ast;
+using XamlX.Emit;
 using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
@@ -44,6 +45,7 @@ namespace XamlX.Transform
         public XamlXmlnsMappings XmlnsMappings { get; }
         public XamlTypeWellKnownTypes WellKnownTypes { get; }
         public XamlValueConverter CustomValueConverter { get; }
+        public IXamlIdentifierGenerator IdentifierGenerator { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
             
@@ -51,7 +53,8 @@ namespace XamlX.Transform
 
         public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
             XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
-            XamlValueConverter customValueConverter = null)
+            XamlValueConverter customValueConverter = null,
+            IXamlIdentifierGenerator identifierGenerator = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
@@ -59,9 +62,10 @@ namespace XamlX.Transform
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
+            IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
-        IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
+        private readonly IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
 
         public IXamlProperty FindContentProperty(IXamlType type)
         {
@@ -108,7 +112,57 @@ namespace XamlX.Transform
 
             return _contentPropertyCache[type.Id] = found;
         }
-        
+
+        private readonly IDictionary<object, bool> _whitespaceSignificantCollectionCache = new Dictionary<object, bool>();
+
+        /// <summary>
+        /// Checks whether the given type is annotated as a collection that treats whitespace as significant.
+        /// </summary>
+        public bool IsWhitespaceSignificantCollection(IXamlType type)
+        {
+            return IsAttributePresentInTypeHierarchy(
+                type,
+                TypeMappings.WhitespaceSignificantCollectionAttributes,
+                _whitespaceSignificantCollectionCache
+            );
+        }
+
+        private readonly IDictionary<object, bool> _trimSurroundingWhitespaceCache = new Dictionary<object, bool>();
+
+        /// <summary>
+        /// Checks whether the given type is annotated to indicate that surrounding whitespace should be trimmed
+        /// even if it is contained in a <see cref="IsWhitespaceSignificantCollection(XamlX.TypeSystem.IXamlType)">
+        /// whitespace-significant collection</see>. Note that this behavior is diabled in an xml:space="preserve"
+        /// scope.
+        /// </summary>
+        public bool IsTrimSurroundingWhitespaceElement(IXamlType type)
+        {
+            return IsAttributePresentInTypeHierarchy(
+                type,
+                TypeMappings.TrimSurroundingWhitespaceAttributes,
+                _trimSurroundingWhitespaceCache
+            );
+        }
+
+        private bool IsAttributePresentInTypeHierarchy(IXamlType type, List<IXamlType> attributes, IDictionary<object, bool> cache)
+        {
+            if (attributes.Count == 0)
+                return false;
+            if (cache.TryGetValue(type.Id, out var result))
+                return result;
+
+            // Check the base type first
+            if (type.BaseType != null)
+                result = IsAttributePresentInTypeHierarchy(type.BaseType, attributes, cache);
+
+            // Check if the current type has any of the configured attributes
+            if (!result)
+            {
+                result = GetCustomAttribute(type, attributes).Any();
+            }
+
+            return cache[type.Id] = result;
+        }
 
         public IEnumerable<IXamlCustomAttribute> GetCustomAttribute(IXamlType type, IXamlType attributeType)
         {

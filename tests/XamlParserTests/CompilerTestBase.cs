@@ -38,6 +38,14 @@ namespace XamlParserTests
                     {
                         typeSystem.GetType("XamlParserTests.ContentAttribute")
                     },
+                    WhitespaceSignificantCollectionAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.WhitespaceSignificantCollectionAttribute")
+                    },
+                    TrimSurroundingWhitespaceAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.TrimSurroundingWhitespaceAttribute")
+                    },
                     UsableDuringInitializationAttributes =
                     {
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
@@ -77,6 +85,13 @@ namespace XamlParserTests
         }
 
 #if !CECIL
+        private static SreTypeSystem CreateTypeSystem()
+        {
+            // Force XamlX.Runtime to be loaded, or else it won't be included in the type system
+            Assembly.Load("XamlX.Runtime");
+            return new SreTypeSystem();
+        }
+
 
         // TODO: It's hack for AppDomain in SreTypeSystem
         static CompilerTestBase()
@@ -85,7 +100,7 @@ namespace XamlParserTests
             AppDomain.CurrentDomain.Load(typeof(SimpleClass).Assembly.FullName);
         }
 
-        public CompilerTestBase() : this(new SreTypeSystem())
+        public CompilerTestBase() : this(CreateTypeSystem())
         {
         }
         

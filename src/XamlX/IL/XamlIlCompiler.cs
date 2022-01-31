@@ -55,6 +55,7 @@ namespace XamlX.IL
         protected override XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> defineDelegateSubType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             bool needContextLocal)
         {
@@ -72,6 +73,7 @@ namespace XamlX.IL
 
             var emitContext = new ILEmitContext(codeGen, _configuration,
                 _emitMappings, context, contextLocal, createSubType,
+                defineDelegateSubType,
                 file, Emitters);
             return emitContext;
         }
@@ -79,11 +81,12 @@ namespace XamlX.IL
         protected override void CompileBuild(
             IFileSource fileSource,
             IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>,  IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             IXamlMethod compiledPopulate)
         {
             var needContextLocal = !(rootInstance is XamlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
-            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, needContextLocal);
+            var emitContext = InitCodeGen(fileSource, createSubType, createDelegateType, codeGen, context, needContextLocal);
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
             emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
@@ -101,11 +104,12 @@ namespace XamlX.IL
         /// </summary>
         protected override void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation,
             Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
             IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             // Uncomment to inspect generated IL in debugger
             //codeGen = new RecordingIlEmitter(codeGen);
-            var emitContext = InitCodeGen(fileSource, createSubType, codeGen, context, true);
+            var emitContext = InitCodeGen(fileSource, createSubType, createDelegateType, codeGen, context, true);
 
             codeGen
                 .Emit(OpCodes.Ldloc, emitContext.ContextLocal)

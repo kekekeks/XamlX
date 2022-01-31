@@ -80,6 +80,9 @@ namespace XamlX.IL
                     ? emitter.Emit(OpCodes.Ldc_I4_1)
                     : emitter.Emit(OpCodes.Ldc_I4, arg);
 
+        public static IXamlILEmitter Ldc_R8(this IXamlILEmitter emitter, double arg)
+            => emitter.Emit(OpCodes.Ldc_R8, arg);
+
         public static IXamlILEmitter Beq(this IXamlILEmitter emitter, IXamlLabel label)
             => emitter.Emit(OpCodes.Beq, label);
 

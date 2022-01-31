@@ -145,11 +145,10 @@ namespace XamlX.Ast
 
         public XamlConstantNode(IXamlLineInfo lineInfo, IXamlType type, object constant) : base(lineInfo)
         {
-            if (!constant.GetType().IsPrimitive)
+            if (!constant.GetType().IsPrimitive && constant.GetType() != typeof(string))
                 throw new ArgumentException($"Don't know how to emit {constant.GetType()} constant");
             Constant = constant;
             Type = new XamlAstClrTypeReference(lineInfo, type, false);
-
         }
 
         public IXamlAstTypeReference Type { get; }
@@ -163,6 +162,8 @@ namespace XamlX.Ast
                 codeGen.Emit(OpCodes.Ldc_R4, f);
             else if (Constant is double d)
                 codeGen.Emit(OpCodes.Ldc_R8, d);
+            else if (Constant is bool b)
+                codeGen.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             else
                 codeGen.Emit(OpCodes.Ldc_I4, TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());

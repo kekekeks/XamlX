@@ -15,7 +15,7 @@ namespace XamlX.IL
     class SreTypeSystem : IXamlTypeSystem
     {
         private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
-        public IReadOnlyList<IXamlAssembly> Assemblies => _assemblies;
+        public IEnumerable<IXamlAssembly> Assemblies => EnumerateList(_assemblies);
         
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
 
@@ -80,6 +80,12 @@ namespace XamlX.IL
             }
 
             return null;
+        }
+
+        private static IEnumerable<T> EnumerateList<T>(IList<T> list)
+        {
+            for (var c = 0; c < list.Count; c++)
+                yield return list[c];
         }
 
         class SreAssembly : IXamlAssembly
@@ -266,10 +272,11 @@ namespace XamlX.IL
             {
                 Type = type;
                 _data = data;
+                object ConvertAttributeValue(object v) => v is Type t ? system.ResolveType(t) : v;
                 Parameters = data.ConstructorArguments.Select(p =>
-                    p.Value is Type t ? system.ResolveType(t) : p.Value
-                ).ToList();
-                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName, x => x.TypedValue.Value) ??
+                    ConvertAttributeValue(p.Value)).ToList();
+                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName,
+                                 x => ConvertAttributeValue(x.TypedValue.Value)) ??
                              new Dictionary<string, object>();
             }
             
@@ -652,6 +659,28 @@ namespace XamlX.IL
                 var builder  = _tb.DefineNestedType(name, attrs,
                     ((SreType) baseType).Type);
                 
+                return new SreTypeBuilder(_system, builder);
+            }
+
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            {
+                var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
+                if (isPublic)
+                    attrs |= TypeAttributes.NestedPublic;
+                else
+                    attrs |= TypeAttributes.NestedPrivate;
+
+                var builder = _tb.DefineNestedType(name, attrs, typeof(MulticastDelegate));
+
+                builder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig, CallingConventions.Standard, new[] { typeof(object), typeof(IntPtr) })
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
+                builder.DefineMethod("Invoke",
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                    ((SreType)returnType).Type,
+                    parameterTypes.Select(p => ((SreType)p).Type).ToArray())
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
                 return new SreTypeBuilder(_system, builder);
             }
 

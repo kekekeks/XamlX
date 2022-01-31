@@ -130,7 +130,7 @@ namespace XamlX.TypeSystem
 #endif
     interface IXamlTypeSystem
     {
-        IReadOnlyList<IXamlAssembly> Assemblies { get; }
+        IEnumerable<IXamlAssembly> Assemblies { get; }
         IXamlAssembly FindAssembly(string substring);
         IXamlType FindType(string name);
         IXamlType FindType(string name, string assembly);
@@ -176,6 +176,7 @@ namespace XamlX.TypeSystem
         IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
         IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
+        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 
@@ -193,6 +194,14 @@ namespace XamlX.TypeSystem
     interface IXamlConstructorBuilder<TBackendEmitter> : IXamlConstructor
     {
         TBackendEmitter Generator { get; }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlDelegateTypeBuilder
+    {
+        IXamlType DefineDelegateType(IXamlType returnType, IList<IXamlType> argumentTypes);
     }
 
 #if !XAMLX_INTERNAL
@@ -398,6 +407,23 @@ namespace XamlX.TypeSystem
             if (type.BaseType != null && !signature.DeclaringOnly)
                 return FindMethod(type.BaseType, signature);
             return null;
+        }
+        
+        public static IXamlConstructor GetConstructor(this IXamlType type, List<IXamlType> args = null)
+        {
+            var found = FindConstructor(type, args);
+            if (found == null)
+            {
+                if (args != null && args.Count > 0)
+                {
+                    var argsString = string.Join(", ", args.Select(a => a.GetFullName()));
+                    
+                    throw new XamlTypeSystemException($"Constructor with arguments {argsString} is not found on type {type.GetFqn()}");
+                }
+                
+                throw new XamlTypeSystemException($"Constructor with no arguments is not found on type {type.GetFqn()}");
+            }
+            return found;
         }
         
         public static IXamlConstructor FindConstructor(this IXamlType type, List<IXamlType> args = null)

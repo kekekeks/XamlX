@@ -25,13 +25,16 @@ namespace XamlX.Emit
         public XamlRuntimeContext<TBackendEmitter, TEmitResult> RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
         public Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> CreateSubType { get; }
+        public Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> DefineDelegateSubType { get; }
         public TBackendEmitter Emitter { get; }
 
         public XamlEmitContext(TBackendEmitter emitter, TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType, IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> defineDelegateSubType,
+            IFileSource file,
             IEnumerable<object> emitters)
         {
             File = file;
@@ -41,6 +44,7 @@ namespace XamlX.Emit
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
             CreateSubType = createSubType;
+            DefineDelegateSubType = defineDelegateSubType;
             EmitMappings = emitMappings;
         }
 

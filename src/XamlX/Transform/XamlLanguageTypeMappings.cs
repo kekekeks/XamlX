@@ -34,6 +34,8 @@ namespace XamlX.Transform
         public List<IXamlType> XmlnsAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> ContentAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> WhitespaceSignificantCollectionAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> TrimSurroundingWhitespaceAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> TypeConverterAttributes { get; set; } = new List<IXamlType>();
         public IXamlType ServiceProvider { get; set; }
         public IXamlType TypeDescriptorContext { get; set; }
@@ -56,6 +58,8 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
+        public IXamlType DeferredContentExecutorCustomizationDefaultTypeParameter { get; set; }
+        public List<string> DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames { get; set; } = new List<string>();
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
     }
 
