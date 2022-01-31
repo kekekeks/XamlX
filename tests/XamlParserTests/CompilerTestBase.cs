@@ -79,8 +79,11 @@ namespace XamlParserTests
 #if !CECIL
 
         // TODO: It's hack for AppDomain in SreTypeSystem
-        static CompilerTestBase() =>
+        static CompilerTestBase()
+        {
             AppDomain.CurrentDomain.Load(typeof(IXamlParentStackProviderV1).Assembly.FullName);
+            AppDomain.CurrentDomain.Load(typeof(SimpleClass).Assembly.FullName);
+        }
 
         public CompilerTestBase() : this(new SreTypeSystem())
         {
