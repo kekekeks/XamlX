@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -98,6 +99,7 @@ namespace XamlParserTests
         {
             AppDomain.CurrentDomain.Load(typeof(IXamlParentStackProviderV1).Assembly.FullName);
             AppDomain.CurrentDomain.Load(typeof(SimpleClass).Assembly.FullName);
+            AppDomain.CurrentDomain.Load(typeof(TypeConverterAttribute).Assembly.FullName);
         }
 
         public CompilerTestBase() : this(CreateTypeSystem())
