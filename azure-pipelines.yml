@@ -18,7 +18,7 @@ jobs:
         inputs:
           script: |
             dotnet --info
-            dotnet test --logger "trx;LogFileName=artifacts/test-results/xamlx.trx"
+            dotnet test --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
@@ -47,7 +47,7 @@ jobs:
         inputs:
           script: |
             dotnet --info
-            dotnet test --logger "trx;LogFileName=artifacts/test-results/xamlx.trx"
+            dotnet test --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2
         inputs:
