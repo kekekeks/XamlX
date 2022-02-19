@@ -21,7 +21,7 @@ jobs:
             dotnet --info
             dotnet build
             dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net4.7 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net47 --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
@@ -52,7 +52,7 @@ jobs:
             dotnet --info
             dotnet build
             dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net4.7 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net47 --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2
         inputs:
