@@ -114,6 +114,36 @@ namespace XamlX.TypeSystem
                 return new CecilTypeBuilder(TypeSystem, (CecilAssembly) Assembly, td);
             }
 
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            {
+                var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
+                if (isPublic)
+                    attrs |= TypeAttributes.NestedPublic;
+                else
+                    attrs |= TypeAttributes.NestedPrivate;
+
+                var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.FindType("System.MulticastDelegate")));
+
+                Definition.NestedTypes.Add(builder);
+
+                var ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.HideBySig, GetReference(returnType));
+                ctor.ImplAttributes = MethodImplAttributes.Managed | MethodImplAttributes.Runtime;
+                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.GetType("System.Object"))));
+                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.GetType("System.IntPtr"))));
+
+                builder.Methods.Add(ctor);
+
+                var invoke = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.HideBySig, GetReference(returnType));
+                invoke.ImplAttributes = MethodImplAttributes.Managed | MethodImplAttributes.Runtime;
+
+                foreach (var param in parameterTypes)
+                {
+                    invoke.Parameters.Add(new ParameterDefinition(GetReference(param)));
+                };
+
+                return new CecilTypeBuilder(TypeSystem, (CecilAssembly)Assembly, builder);
+            }
+
             public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> args)
             {
                 foreach (var arg in args)

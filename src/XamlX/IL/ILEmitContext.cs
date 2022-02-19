@@ -21,9 +21,12 @@ namespace XamlX.IL
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType, IFileSource file, IEnumerable<object> emitters)
+            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> defineDelegateSubType,
+            IFileSource file,
+            IEnumerable<object> emitters)
             : base(emitter, configuration, emitMappings, runtimeContext,
-                contextLocal, createSubType, file, emitters)
+                contextLocal, createSubType, defineDelegateSubType, file, emitters)
         {
             EnableIlVerification = configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification;
         }

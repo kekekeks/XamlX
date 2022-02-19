@@ -7,6 +7,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
+    /// <summary>
+    /// Converts from AST node <see cref="XamlAstXamlPropertyValueNode"/> to <see cref="XamlPropertyAssignmentNode"/>
+    /// for code generation.
+    /// </summary>
 #if !XAMLX_INTERNAL
     public
 #endif
@@ -18,6 +22,9 @@ namespace XamlX.Transform.Transformers
             {
                 var property = valueNode.Property.GetClrProperty();
                 var assignments = new List<XamlPropertyAssignmentNode>();
+
+                WhitespaceNormalization.RemoveWhitespaceNodes(valueNode.Values);
+
                 foreach (var v in valueNode.Values)
                 {
                     var keyNode = FindAndRemoveKey(v);

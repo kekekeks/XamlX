@@ -176,6 +176,7 @@ namespace XamlX.TypeSystem
         IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
         IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
+        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 
@@ -193,6 +194,14 @@ namespace XamlX.TypeSystem
     interface IXamlConstructorBuilder<TBackendEmitter> : IXamlConstructor
     {
         TBackendEmitter Generator { get; }
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlDelegateTypeBuilder
+    {
+        IXamlType DefineDelegateType(IXamlType returnType, IList<IXamlType> argumentTypes);
     }
 
 #if !XAMLX_INTERNAL

@@ -42,7 +42,7 @@ namespace XamlX.Parsers
             IXamlAstValueNode Convert(object node)
             {
                 if (node is string s)
-                    return new XamlAstTextNode(info, s);
+                    return new XamlAstTextNode(info, s, true);
                 var n = (Node) node;
 
                 var type = typeResolver(n.Name);

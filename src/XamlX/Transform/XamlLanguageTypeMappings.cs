@@ -34,6 +34,8 @@ namespace XamlX.Transform
         public List<IXamlType> XmlnsAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> ContentAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> WhitespaceSignificantCollectionAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> TrimSurroundingWhitespaceAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> TypeConverterAttributes { get; set; } = new List<IXamlType>();
         public IXamlType ServiceProvider { get; set; }
         public IXamlType TypeDescriptorContext { get; set; }

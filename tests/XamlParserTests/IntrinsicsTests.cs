@@ -10,6 +10,8 @@ namespace XamlParserTests
         public object ObjectProperty { get; set; }
         public int IntProperty { get; set; }
         public Type TypeProperty { get; set; }
+        public bool BoolProperty { get; set; }
+        public bool? NullableBoolProperty { get; set; }
 
         public static object StaticProp { get; } = "StaticPropValue";
         public static object StaticField = "StaticFieldValue";
@@ -17,7 +19,6 @@ namespace XamlParserTests
         public const int IntConstant = 100;
         public const float FloatConstant = 2;
         public const double DoubleConstant = 3;
-        
     }
 
     public enum IntrinsicsTestsEnum : long
@@ -88,6 +89,61 @@ namespace XamlParserTests
         public void Static_Extension_Resolves_Enum_Values()
         {
             Static_Extension_Resolves_Values(IntrinsicsTestsEnum.Foo, "IntrinsicsTestsEnum.Foo");
+        }
+
+        [Theory,
+            InlineData(true, "x:True"),
+            InlineData(false, "x:False")]
+        public void Boolean_Extension_Can_Be_Set_To_Object(bool expected, string value)
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun($@"
+<IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.ObjectProperty><{value}/></IntrinsicsTestsClass.ObjectProperty>
+</IntrinsicsTestsClass>");
+            Assert.Equal(expected, res.ObjectProperty);
+        }
+
+        [Theory,
+            InlineData(true, "x:True"),
+            InlineData(false, "x:False")]
+        public void Boolean_Extension_Can_Be_Set_To_Bool(bool expected, string value)
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun($@"
+<IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.BoolProperty><{value}/></IntrinsicsTestsClass.BoolProperty>
+</IntrinsicsTestsClass>");
+            Assert.Equal(expected, res.BoolProperty);
+        }
+
+        [Theory,
+            InlineData(true, "x:True"),
+            InlineData(false, "x:False")]
+        public void Boolean_Extension_Can_Be_Set_To_NullableBool(bool expected, string value)
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun($@"
+<IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.NullableBoolProperty><{value}/></IntrinsicsTestsClass.NullableBoolProperty>
+</IntrinsicsTestsClass>");
+            Assert.Equal(expected, res.NullableBoolProperty);
+        }
+
+        [Theory,
+            InlineData(true, "x:True"),
+            InlineData(false, "x:False")]
+        public void Boolean_Extension_Can_Be_Used_As_Markup_Ext(bool expected, string value)
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun($@"
+<IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+                      ObjectProperty='{{{value}}}' />");
+            Assert.Equal(expected, res.ObjectProperty);
+        }
+
+        [Fact]
+        public void Boolean_Extension_Should_Cause_Compilation_Error_When_Applied_To_Wrong_Type()
+        {
+            Assert.Throws<XamlLoadException>(() => Compile(@"
+<IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+                      IntProperty='{x:True}' />"));
         }
     }
 }

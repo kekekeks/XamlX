@@ -79,7 +79,7 @@ namespace XamlX.Ast
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
+            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
         }
@@ -651,7 +651,9 @@ namespace XamlX.Ast
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                createSubType: (s, type) => subType.DefineSubType(type, s, false),
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters), 
+                file: context.File,
                 emitters: context.Emitters));
 
             var funcType = Type.GetClrType();

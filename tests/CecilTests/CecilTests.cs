@@ -50,5 +50,15 @@ namespace XamlParserTests
 
 
         }
+
+        [Fact]
+        public void Dictionary_Not_Assignable_From_String()
+        {
+            var stringType = Configuration.TypeSystem.FindType("System.String");
+            var dictBase = Configuration.TypeSystem.GetType("System.Collections.Generic.IDictionary`2");
+            var stringStringDict = dictBase.MakeGenericType(stringType, stringType);
+
+            Assert.False(stringStringDict.IsAssignableFrom(stringType));
+        }
     }
 }

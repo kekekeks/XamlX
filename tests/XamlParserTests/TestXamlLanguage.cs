@@ -10,6 +10,16 @@ namespace XamlParserTests
         
     }
 
+    public class WhitespaceSignificantCollectionAttribute : Attribute
+    {
+
+    }
+
+    public class TrimSurroundingWhitespaceAttribute : Attribute
+    {
+
+    }
+
     public class XmlnsDefinitionAttribute : Attribute
     {
         public XmlnsDefinitionAttribute(string xmlNamespace, string clrNamespace)
