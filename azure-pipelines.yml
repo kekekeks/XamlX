@@ -17,6 +17,7 @@ jobs:
         displayName: 'Run Tests'
         inputs:
           script: |
+            mono --version
             dotnet --info
             dotnet build
             dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
