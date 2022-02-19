@@ -103,6 +103,22 @@ namespace XamlX.TypeSystem
             _assemblyDic.TryGetValue(d, out var asm);
             return asm;
         }
+
+        static string GetTypeReferenceKey(TypeReference reference)
+        {
+            if (reference is GenericParameter gp)
+            {
+                if (gp.Owner is TypeReference tr)
+                    return tr.FullName + "|GenericParameter|" + reference.FullName;
+                else if (gp.Owner is MethodReference mr)
+                    return GetTypeReferenceKey(mr.DeclaringType) + mr.FullName + "|GenericParameter|" +
+                           reference.FullName;
+                else 
+                    throw new ArgumentException("Unable to get key for " + gp.Owner.GetType().FullName);
+            }
+
+            return reference.FullName;
+        }
         
         IXamlType Resolve(TypeReference reference)
         {
@@ -125,9 +141,8 @@ namespace XamlX.TypeSystem
                 }
                 else
                 {
-                    var key = reference.FullName;
-                    if (reference is GenericParameter gp)
-                        key = ((TypeReference)gp.Owner).FullName + "|GenericParameter|" + key;
+                    var key = GetTypeReferenceKey(reference);
+
                     if (!_unresolvedTypeCache.TryGetValue(key, out rv))
                         _unresolvedTypeCache[key] =
                             rv = new UnresolvedCecilType(reference);
