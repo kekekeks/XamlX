@@ -18,7 +18,9 @@ jobs:
         inputs:
           script: |
             dotnet --info
-            dotnet test --logger "trx" --results-directory artifacts/test-results
+            dotnet build
+            dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net4.7 --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
@@ -47,7 +49,9 @@ jobs:
         inputs:
           script: |
             dotnet --info
-            dotnet test --logger "trx" --results-directory artifacts/test-results
+            dotnet build
+            dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net4.7 --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2
         inputs:
