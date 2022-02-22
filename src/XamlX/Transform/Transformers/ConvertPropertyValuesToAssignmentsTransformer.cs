@@ -23,8 +23,6 @@ namespace XamlX.Transform.Transformers
                 var property = valueNode.Property.GetClrProperty();
                 var assignments = new List<XamlPropertyAssignmentNode>();
 
-                WhitespaceNormalization.RemoveWhitespaceNodes(valueNode.Values);
-
                 foreach (var v in valueNode.Values)
                 {
                     var keyNode = FindAndRemoveKey(v);
