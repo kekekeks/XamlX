@@ -63,23 +63,29 @@ namespace XamlX.Transform
                     if (!rv[c].ThisOrFirstParameter().Equals(type))
                         rv[c] = new XamlMethodWithCasts(rv[c], new[] {type}.Concat(rv[c].Parameters));
 
-                var addChildT = inspectTypes.Where(t => t.GenericTypeDefinition?.Equals(context.Configuration.TypeMappings.IAddChildOfT) == true);
-
-                foreach (var t in addChildT)
+                if(context.Configuration.TypeMappings.IAddChildOfT != null)
                 {
-                    var adder = t.FindMethod(x => x.Name == "AddChild");
+                    var addChildT = inspectTypes.Where(t => t.GenericTypeDefinition?.Equals(context.Configuration.TypeMappings.IAddChildOfT) == true);
 
-                    rv.Add(adder);
+                    foreach (var t in addChildT)
+                    {
+                        var adder = t.FindMethod(x => x.Name == "AddChild");
+
+                        rv.Add(adder);
+                    }
                 }
 
-                var addChild = inspectTypes.SingleOrDefault(t => t.Equals(context.Configuration.TypeMappings.IAddChild) == true);
-
-                if (addChild != null)
+                if(context.Configuration.TypeMappings.IAddChild != null)
                 {
-                    var adder = addChild.FindMethod(x => x.Name == "AddChild");
+                    var addChild = inspectTypes.SingleOrDefault(t => t.Equals(context.Configuration.TypeMappings.IAddChild) == true);
 
-                    rv.Add(adder);
-                }
+                    if (addChild != null)
+                    {
+                        var adder = addChild.FindMethod(x => x.Name == "AddChild");
+
+                        rv.Add(adder);
+                    }
+                }              
 
                 return rv;
             }
