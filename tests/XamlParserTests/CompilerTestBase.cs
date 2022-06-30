@@ -54,9 +54,11 @@ namespace XamlParserTests
                     UriContextProvider = typeSystem.GetType("XamlParserTests.ITestUriContext"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlParentStackProviderV1"),
-                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1")
+                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1"),
+                    IAddChild = typeSystem.GetType("XamlParserTests.IAddChild"),
+                    IAddChildOfT = typeSystem.GetType("XamlParserTests.IAddChild`1")
                 }
-            );
+            ); ;
         }
 
         protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);

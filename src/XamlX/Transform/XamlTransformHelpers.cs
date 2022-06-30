@@ -63,6 +63,30 @@ namespace XamlX.Transform
                     if (!rv[c].ThisOrFirstParameter().Equals(type))
                         rv[c] = new XamlMethodWithCasts(rv[c], new[] {type}.Concat(rv[c].Parameters));
 
+                if(context.Configuration.TypeMappings.IAddChildOfT != null)
+                {
+                    var addChildT = inspectTypes.Where(t => t.GenericTypeDefinition?.Equals(context.Configuration.TypeMappings.IAddChildOfT) == true);
+
+                    foreach (var t in addChildT)
+                    {
+                        var adder = t.FindMethod(x => x.Name == "AddChild");
+
+                        rv.Add(adder);
+                    }
+                }
+
+                if(context.Configuration.TypeMappings.IAddChild != null)
+                {
+                    var addChild = inspectTypes.SingleOrDefault(t => t.Equals(context.Configuration.TypeMappings.IAddChild) == true);
+
+                    if (addChild != null)
+                    {
+                        var adder = addChild.FindMethod(x => x.Name == "AddChild");
+
+                        rv.Add(adder);
+                    }
+                }              
+
                 return rv;
             }
             

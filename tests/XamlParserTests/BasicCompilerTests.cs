@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using XamlX;
 using Xunit;
 
 namespace XamlParserTests
@@ -17,6 +18,33 @@ namespace XamlParserTests
         public string Test { get; set; }
     }
     
+    public class ObjectWithAddChild : IAddChild
+    {
+        public object Child { get; private set; }
+
+        void IAddChild.AddChild(object child)
+        {
+            Child = child;
+        }
+    }
+
+    public class ObjectWithGenericAddChild : IAddChild<string>
+    {
+        public object Child { get; private set; }
+
+        public string Text { get; private set; }
+
+        void IAddChild.AddChild(object child)
+        {
+            Child = child;
+        }
+
+        void IAddChild<string>.AddChild(string text)
+        {
+            Text = text;
+        }
+    }
+
     public class BasicCompilerTests : CompilerTestBase
     {
         [Theory,
@@ -40,8 +68,32 @@ namespace XamlParserTests
             Assert.Equal("321", res.Test2);
             Assert.Equal("test", res.Children[0].Test);
             Assert.Equal("test2", res.Children[1].Test);
+        }    
+
+        [Fact]
+        public void Compiler_Should_Compile_Xaml_With_IAddChild()
+        {
+            var comp = Compile(@"<ObjectWithAddChild xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</ObjectWithAddChild>");
+
+            var res = (ObjectWithAddChild)comp.create(null);
+
+            comp.populate(null, res);
+
+            Assert.Equal("123", res.Child);
+        }
+
+        [Fact]
+        public void Compiler_Should_Compile_Xaml_With_Generic_IAddChild()
+        {
+            var comp = Compile(@"<ObjectWithGenericAddChild xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</ObjectWithGenericAddChild>");
+
+            var res = (ObjectWithGenericAddChild)comp.create(null);
+
+            comp.populate(null, res);
+
+            Assert.Null(res.Child);
+
+            Assert.Equal("123", res.Text);
         }
     }
-
-
 }
