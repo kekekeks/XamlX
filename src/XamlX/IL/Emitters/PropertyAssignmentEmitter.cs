@@ -51,7 +51,7 @@ namespace XamlX.IL.Emitters
             // If there is only one available setter or if value is a value type, always use the first one
             if (setters.Count == 1 || isValueType)
             {
-                var setter = an.PossibleSetters.First();
+                var setter = setters[0];
                 context.Emit(value, codeGen, setter.Parameters.Last());
                 context.Emit(setter, codeGen);
             }

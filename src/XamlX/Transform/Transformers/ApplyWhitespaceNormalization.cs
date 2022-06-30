@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
@@ -22,7 +23,7 @@ namespace XamlX.Transform.Transformers
                 );
 
                 var property = propertyNode.Property.GetClrProperty();
-                if (!WantsWhitespaceOnlyElements(context.Configuration, property))
+                if (!WantsWhitespaceOnlyElements(context.Configuration, property, childNodes))
                 {
                     WhitespaceNormalization.RemoveWhitespaceNodes(childNodes);
                 }
@@ -32,7 +33,7 @@ namespace XamlX.Transform.Transformers
         }
 
         private bool WantsWhitespaceOnlyElements(TransformerConfiguration config,
-            XamlAstClrProperty property)
+            XamlAstClrProperty property, IList<IXamlAstValueNode> childNodes)
         {
             var wellKnownTypes = config.WellKnownTypes;
 
@@ -48,6 +49,10 @@ namespace XamlX.Transform.Transformers
                 var parameterType = setter.Parameters[0];
                 if (!setter.BinderParameters.AllowMultiple)
                 {
+                    if(childNodes.Count > 1)
+                    {
+                        return false;
+                    }
                     // If the property can accept a scalar string, it'll get whitespace nodes by default
                     if (parameterType.Equals(wellKnownTypes.String) || parameterType.Equals(wellKnownTypes.Object))
                     {
