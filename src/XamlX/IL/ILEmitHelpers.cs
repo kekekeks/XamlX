@@ -20,8 +20,7 @@ namespace XamlX.IL
             var ftype = field.FieldType.IsEnum ? field.FieldType.GetEnumUnderlyingType() : field.FieldType;
 
             if (ftype.Name == "UInt64" || ftype.Name == "Int64")
-                codeGen.Emit(OpCodes.Ldc_I8,
-                    TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
+                codeGen.Emit(OpCodes.Ldc_I8, TypeSystemHelpers.ConvertLiteralToLong(field.GetLiteralValue()));
             else if (ftype.Name == "Double")
                 codeGen.Emit(OpCodes.Ldc_R8, (double)field.GetLiteralValue());
             else if (ftype.Name == "Single")
@@ -29,14 +28,13 @@ namespace XamlX.IL
             else if (ftype.Name == "String")
                 codeGen.Emit(OpCodes.Ldstr, (string)field.GetLiteralValue());
             else
-                codeGen.Emit(OpCodes.Ldc_I4,
-                    TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
+                codeGen.Ldc_I4(TypeSystemHelpers.ConvertLiteralToInt(field.GetLiteralValue()));
         }
 
         public static void EmitConvert(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node, IXamlType what,
             IXamlType to, IXamlLocal local)
         {
-            EmitConvert(context, node, what, to, lda => ilgen.Emit(lda ? OpCodes.Ldloca : OpCodes.Ldloc, local));
+            EmitConvert(context, node, what, to, lda => lda ? ilgen.Ldloca(local) : ilgen.Ldloc(local));
         }
 
         public static void EmitConvert(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen, IXamlLineInfo node,

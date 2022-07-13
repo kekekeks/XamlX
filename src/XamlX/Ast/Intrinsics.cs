@@ -165,7 +165,7 @@ namespace XamlX.Ast
             else if (Constant is bool b)
                 codeGen.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             else
-                codeGen.Emit(OpCodes.Ldc_I4, TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
+                codeGen.Ldc_I4(TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
     }

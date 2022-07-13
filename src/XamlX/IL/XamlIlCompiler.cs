@@ -68,7 +68,7 @@ namespace XamlX.IL
                 codeGen
                     .Emit(OpCodes.Ldarg_0);
                 context.Factory(codeGen);
-                codeGen.Emit(OpCodes.Stloc, contextLocal);
+                codeGen.Stloc(contextLocal);
             }
 
             var emitContext = new ILEmitContext(codeGen, _configuration,
@@ -91,12 +91,12 @@ namespace XamlX.IL
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
             emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
             codeGen
-                .Emit(OpCodes.Stloc, rv)
-                .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Ldloc, rv)
+                .Stloc(rv)
+                .Ldarg_0()
+                .Ldloc(rv)
                 .EmitCall(compiledPopulate)
-                .Emit(OpCodes.Ldloc, rv)
-                .Emit(OpCodes.Ret);
+                .Ldloc(rv)
+                .Ret();
         }
 
         /// <summary>
@@ -112,10 +112,10 @@ namespace XamlX.IL
             var emitContext = InitCodeGen(fileSource, createSubType, createDelegateType, codeGen, context, true);
 
             codeGen
-                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.RootObjectField)
-                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.IntermediateRootObjectField)
                 .Emit(OpCodes.Ldarg_1);

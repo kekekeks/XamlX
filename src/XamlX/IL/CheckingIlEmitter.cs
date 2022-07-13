@@ -238,6 +238,20 @@ namespace XamlX.IL
             return this;
         }
 
+        public IXamlILEmitter Emit(OpCode code, sbyte arg)
+        {
+            Track(code, arg);
+            _inner.Emit(code, arg);
+            return this;
+        }
+        
+        public IXamlILEmitter Emit(OpCode code, byte arg)
+        {
+            Track(code, arg);
+            _inner.Emit(code, arg);
+            return this;
+        }
+
         public IXamlILEmitter Emit(OpCode code, IXamlType type)
         {
             Track(code, type);

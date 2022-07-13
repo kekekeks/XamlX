@@ -132,6 +132,12 @@ namespace XamlX.TypeSystem
 
             public IXamlILEmitter Emit(SreOpCode code, long arg)
                 => Emit(Instruction.Create(Dic[code], arg));
+            
+            public IXamlILEmitter Emit(SreOpCode code, sbyte arg)
+                => Emit(Instruction.Create(Dic[code], arg));
+            
+            public IXamlILEmitter Emit(SreOpCode code, byte arg)
+                => Emit(Instruction.Create(Dic[code], arg));
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlType type)
                 => Emit(Instruction.Create(Dic[code], Import(((ITypeReference) type).Reference)));
@@ -143,9 +149,11 @@ namespace XamlX.TypeSystem
                 => Emit(Instruction.Create(Dic[code], arg));
 
 
-            class CecilLocal : IXamlLocal
+            class CecilLocal : IXamlILLocal
             {
                 public VariableDefinition Variable { get; set; }
+
+                public int Index => Variable.Index;
             }
 
             class CecilLabel : IXamlLabel

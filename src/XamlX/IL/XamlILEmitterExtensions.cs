@@ -36,7 +36,15 @@ namespace XamlX.IL
         }
 
         public static IXamlILEmitter Ldarg(this IXamlILEmitter emitter, int arg)
-    => emitter.Emit(OpCodes.Ldarg, arg);
+            => arg switch
+            {
+                0 => emitter.Emit(OpCodes.Ldarg_0),
+                1 => emitter.Emit(OpCodes.Ldarg_1),
+                2 => emitter.Emit(OpCodes.Ldarg_2),
+                3 => emitter.Emit(OpCodes.Ldarg_3),
+                >= 4 and <= byte.MaxValue => emitter.Emit(OpCodes.Ldarg_S, (byte) arg),
+                _ => emitter.Emit(OpCodes.Ldarg, arg)
+            };
 
         public static IXamlILEmitter Ldarg_0(this IXamlILEmitter emitter)
             => emitter.Emit(OpCodes.Ldarg_0);
@@ -57,13 +65,32 @@ namespace XamlX.IL
             => emitter.Emit(OpCodes.Stsfld, field);
 
         public static IXamlILEmitter Ldloc(this IXamlILEmitter emitter, IXamlLocal local)
-            => emitter.Emit(OpCodes.Ldloc, local);
+            => (local as IXamlILLocal)?.Index switch
+            {
+                0 => emitter.Emit(OpCodes.Ldloc_0),
+                1 => emitter.Emit(OpCodes.Ldloc_1),
+                2 => emitter.Emit(OpCodes.Ldloc_2),
+                3 => emitter.Emit(OpCodes.Ldloc_3),
+                >= 4 and <= byte.MaxValue => emitter.Emit(OpCodes.Ldloc_S, local),
+                _ => emitter.Emit(OpCodes.Ldloc, local)
+            };
 
         public static IXamlILEmitter Ldloca(this IXamlILEmitter emitter, IXamlLocal local)
-            => emitter.Emit(OpCodes.Ldloca, local);
+        {
+            var index = (local as IXamlILLocal)?.Index;
+            return emitter.Emit(index is >= 0 and <= byte.MaxValue ? OpCodes.Ldloca_S : OpCodes.Ldloca, local);
+        }
 
-        public static IXamlILEmitter Stloc(this IXamlILEmitter emitter, IXamlLocal local)
-            => emitter.Emit(OpCodes.Stloc, local);
+        public static IXamlILEmitter Stloc(this IXamlILEmitter emitter, IXamlLocal local) 
+            => (local as IXamlILLocal)?.Index switch
+            {
+                0 => emitter.Emit(OpCodes.Stloc_0),
+                1 => emitter.Emit(OpCodes.Stloc_1),
+                2 => emitter.Emit(OpCodes.Stloc_2),
+                3 => emitter.Emit(OpCodes.Stloc_3),
+                >= 4 and <= byte.MaxValue => emitter.Emit(OpCodes.Stloc_S, local),
+                _ => emitter.Emit(OpCodes.Stloc, local)
+            };
 
         public static IXamlILEmitter Ldnull(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Ldnull);
 
@@ -74,11 +101,21 @@ namespace XamlX.IL
             => emitter.Emit(OpCodes.Throw);
 
         public static IXamlILEmitter Ldc_I4(this IXamlILEmitter emitter, int arg)
-            => arg == 0
-                ? emitter.Emit(OpCodes.Ldc_I4_0)
-                : arg == 1
-                    ? emitter.Emit(OpCodes.Ldc_I4_1)
-                    : emitter.Emit(OpCodes.Ldc_I4, arg);
+            => arg switch
+            {
+                0 => emitter.Emit(OpCodes.Ldc_I4_0),
+                1 => emitter.Emit(OpCodes.Ldc_I4_1),
+                2 => emitter.Emit(OpCodes.Ldc_I4_2),
+                3 => emitter.Emit(OpCodes.Ldc_I4_3),
+                4 => emitter.Emit(OpCodes.Ldc_I4_4),
+                5 => emitter.Emit(OpCodes.Ldc_I4_5),
+                6 => emitter.Emit(OpCodes.Ldc_I4_6),
+                7 => emitter.Emit(OpCodes.Ldc_I4_7),
+                8 => emitter.Emit(OpCodes.Ldc_I4_8),
+                -1 => emitter.Emit(OpCodes.Ldc_I4_M1),
+                >= sbyte.MinValue and <= sbyte.MaxValue => emitter.Emit(OpCodes.Ldc_I4_S, (sbyte) arg),
+                _ => emitter.Emit(OpCodes.Ldc_I4, arg)
+            };
 
         public static IXamlILEmitter Ldc_R8(this IXamlILEmitter emitter, double arg)
             => emitter.Emit(OpCodes.Ldc_R8, arg);

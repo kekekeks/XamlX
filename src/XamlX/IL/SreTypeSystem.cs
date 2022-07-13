@@ -472,6 +472,18 @@ namespace XamlX.IL
                 return this;
             }
             
+            public IXamlILEmitter Emit(OpCode code, sbyte arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, byte arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
             public IXamlILEmitter Emit(OpCode code, float arg)
             {
                 _ilg.Emit(code, arg);
@@ -542,9 +554,11 @@ namespace XamlX.IL
                 }
             }
             
-            class SreLocal : IXamlLocal
+            class SreLocal : IXamlILLocal
             {
                 public LocalBuilder Local { get; }
+
+                public int Index => Local.LocalIndex;
 
                 public SreLocal(LocalBuilder local)
                 {
