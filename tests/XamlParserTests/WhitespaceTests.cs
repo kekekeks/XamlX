@@ -351,6 +351,67 @@ namespace XamlParserTests
                 c => Assert.IsType<Control>(c));
         }
 
+        [Fact]
+        [Trait("Category", "TrimSurroundingWhitespace")]
+        public void WhitespaceShouldNotBeTrimmedForWhitespaceOptInCollection()
+        {
+            var xaml = @"
+<ControlWithInlines  xmlns='test'>
+   with <InlineWithInlines>several</InlineWithInlines>
+    <InlineWithInlines>Span</InlineWithInlines>
+  </ControlWithInlines>
+";       
+                var content = ReadXaml<ControlWithInlines>(xaml);
+
+                Assert.Collection(
+                   content.Inlines,
+                   x =>
+                   {
+                       Assert.IsType<Run>(x);
+                       var run = (Run)x;
+                       Assert.Equal("with ", run.Text);
+                   },
+                   x =>
+                   {
+                       Assert.IsType<InlineWithInlines>(x);
+
+                       var span = (InlineWithInlines)x;
+
+                       Assert.Single(span.Inlines);
+
+                       var inline = span.Inlines[0];
+
+                       Assert.IsType<Run>(inline);
+
+                       var run = (Run)inline;
+
+                       Assert.Equal("several", run.Text);
+                   },
+                   x => {
+                       Assert.IsType<Run>(x);
+                       var run = (Run)x;
+                       Assert.Equal(" ", run.Text);
+                   },
+                   x =>
+                   {
+                       Assert.IsType<InlineWithInlines>(x);
+
+                       var span = (InlineWithInlines)x;
+
+                       Assert.Single(span.Inlines);
+
+                       var inline = span.Inlines[0];
+
+                       Assert.IsType<Run>(inline);
+
+                       var run = (Run)inline;
+
+                       Assert.Equal("Span", run.Text);
+                   }
+               );
+            
+        }
+
         private object TestContentControlContent(string rawContent, bool xmlPreserve = false)
         {
             var xmlSpaceAttr = xmlPreserve ? " xml:space='preserve'" : "";
@@ -427,6 +488,37 @@ namespace XamlParserTests
     [WhitespaceSignificantCollection]
     public class WhitespaceOptInCollection : List<object>
     {
+    }
+
+    public class ControlWithInlines
+    {
+        [Content]
+        public InlineCollection Inlines { get; set; } = new InlineCollection(); //The setter here is important because it causes whitespace removal
+    }
+
+    public class Inline
+    {
+
+    }
+
+    public class Run : Inline
+    {
+        public string Text { get; set; }
+    }
+
+    public class InlineWithInlines : Inline
+    {
+        [Content]
+        public InlineCollection Inlines { get; set; } = new InlineCollection(); //The setter here is important because it causes whitespace removal
+    }
+
+    [WhitespaceSignificantCollection]
+    public class InlineCollection : List<Inline>
+    {
+        public void Add(string text)
+        {
+            Add(new Run { Text = text });
+        }
     }
 
     [TrimSurroundingWhitespace]
