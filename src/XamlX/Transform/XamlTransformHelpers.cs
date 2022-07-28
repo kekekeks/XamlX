@@ -57,11 +57,6 @@ namespace XamlX.Transform
                     .OrderByDescending(x => x.ThisOrFirstParameter().Equals(actualType))
                     .ThenBy(x => x.ThisOrFirstParameter().IsInterface)
                     .ToList();
-                
-                // Add casts
-                for (var c = 0; c < rv.Count; c++)
-                    if (!rv[c].ThisOrFirstParameter().Equals(type))
-                        rv[c] = new XamlMethodWithCasts(rv[c], new[] {type}.Concat(rv[c].Parameters));
 
                 if(context.Configuration.TypeMappings.IAddChildOfT != null)
                 {
