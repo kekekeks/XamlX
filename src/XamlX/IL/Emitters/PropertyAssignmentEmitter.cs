@@ -98,13 +98,16 @@ namespace XamlX.IL.Emitters
                             .Dup()
                             .Isinst(type)
                             .Brfalse(Next());
+                        
+                        if (type.IsValueType)
+                            codeGen.Unbox_Any(type);
+                        
                         checkNext = true;
                     }
 
                     if (checkNext)
                         hadJumps = true;
-                    
-                    ILEmitHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
+
                     context.Emit(setter, codeGen);
                     if (hadJumps)
                     {
