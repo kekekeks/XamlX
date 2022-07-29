@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -53,6 +51,8 @@ namespace XamlX.IL
                 .Ldarg_0()
                 .Ldloc(dicLocal)
                 .Stfld(instField);
+
+            IXamlMethod createInfoMethod = null;
             
             foreach (var alias in document.NamespaceAliases)
             {
@@ -60,28 +60,19 @@ namespace XamlX.IL
                     .Newobj(listType.FindConstructor(new List<IXamlType>()))
                     .Stloc(listLocal);
 
-                var resolved = Transform.NamespaceInfoHelper.TryResolve(configuration, alias.Value);
+                var resolved = NamespaceInfoHelper.TryResolve(configuration, alias.Value);
                 if (resolved != null)
                 {
                     foreach (var rns in resolved)
                     {
+                        createInfoMethod ??= EmitCreateNamespaceInfoMethod(configuration, typeBuilder, infoType);
+
                         ctor.Generator
                             .Ldloc(listLocal)
-                            .Newobj(infoType.FindConstructor());
-                        if (rns.ClrNamespace != null)
-                            ctor.Generator
-                                .Dup()
-                                .Ldstr(rns.ClrNamespace)
-                                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrNamespace"));
-
-                        var asmName = rns.AssemblyName ?? rns.Assembly?.Name;
-                        if (asmName != null)
-                            ctor.Generator
-                                .Dup()
-                                .Ldstr(asmName)
-                                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrAssemblyName"));
-
-                        ctor.Generator.EmitCall(listAdd);
+                            .Ldstr(rns.ClrNamespace)
+                            .Ldstr(rns.AssemblyName ?? rns.Assembly?.Name)
+                            .EmitCall(createInfoMethod)
+                            .EmitCall(listAdd);
                     }
                 }
 
@@ -101,7 +92,30 @@ namespace XamlX.IL
                 .Ret();
 
             return singletonField;
-            //return typeBuilder.CreateType().Fields.First(f => f.Name == "Singleton");
+        }
+
+        private static IXamlMethod EmitCreateNamespaceInfoMethod(TransformerConfiguration configuration, 
+            IXamlTypeBuilder<IXamlILEmitter> typeBuilder, IXamlType infoType)
+        {
+            // C#: private static XamlXmlNamespaceInfoV1 CreateNamespaceInfo(string arg0, string arg1)
+            var method = typeBuilder.DefineMethod(
+                infoType,
+                new[] { configuration.WellKnownTypes.String, configuration.WellKnownTypes.String },
+                "CreateNamespaceInfo",
+                false, true, false);
+
+            // C#: return new XamlXmlNamespaceInfoV1() { ClrNamespace = arg0, ClrAssemblyName = arg1 }
+            method.Generator
+                .Newobj(infoType.FindConstructor())
+                .Dup()
+                .Ldarg_0()
+                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrNamespace"))
+                .Dup()
+                .Ldarg(1)
+                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrAssemblyName"))
+                .Ret();
+
+            return method;
         }
     }
 }
