@@ -97,6 +97,8 @@ namespace XamlX.IL
                 .EmitCall(compiledPopulate)
                 .Ldloc(rv)
                 .Ret();
+
+            emitContext.ExecuteAfterEmitCallbacks();
         }
 
         /// <summary>
@@ -121,6 +123,8 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ldarg_1);
             emitContext.Emit(manipulation, codeGen, null);
             codeGen.Emit(OpCodes.Ret);
+
+            emitContext.ExecuteAfterEmitCallbacks();
         }
 
         protected override XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> CreateRuntimeContext(

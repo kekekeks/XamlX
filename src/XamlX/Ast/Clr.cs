@@ -87,12 +87,13 @@ namespace XamlX.Ast
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
-    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
+    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>, IEquatable<XamlDirectCallPropertySetter>
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
         public IReadOnlyList<IXamlType> Parameters { get; }
+        
         public void Emit(IXamlILEmitter codegen)
         {
             codegen.EmitCall(_method, true);
@@ -103,17 +104,64 @@ namespace XamlX.Ast
             _method = method;
             Parameters = method.ParametersWithThis().Skip(1).ToList();
             TargetType = method.ThisOrFirstParameter();
+
+            bool allowNull = Parameters.Last().AcceptsNull();
+            BinderParameters = new PropertySetterBinderParameters
+            {
+                AllowMultiple = false,
+                AllowXNull = allowNull,
+                AllowRuntimeNull = allowNull
+            };
         }
+
+        public bool Equals(XamlDirectCallPropertySetter other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+
+            return _method.Equals(other._method) && BinderParameters.Equals(other.BinderParameters);
+        }
+
+        public override bool Equals(object obj)
+            => Equals(obj as XamlDirectCallPropertySetter);
+
+        public override int GetHashCode() 
+            => (_method.GetHashCode() * 397) ^ BinderParameters.GetHashCode();
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertySetterBinderParameters
+    class PropertySetterBinderParameters : IEquatable<PropertySetterBinderParameters>
     {
         public bool AllowMultiple { get; set; }
         public bool AllowXNull { get; set; } = true;
         public bool AllowRuntimeNull { get; set; } = true;
+
+        public bool Equals(PropertySetterBinderParameters other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+            
+            return AllowMultiple == other.AllowMultiple 
+                   && AllowXNull == other.AllowXNull
+                   && AllowRuntimeNull == other.AllowRuntimeNull;
+        }
+
+        public override bool Equals(object obj) 
+            => Equals(obj as PropertySetterBinderParameters);
+
+        public override int GetHashCode()
+        {
+            int hashCode = AllowMultiple.GetHashCode();
+            hashCode = (hashCode * 397) ^ AllowXNull.GetHashCode();
+            hashCode = (hashCode * 397) ^ AllowRuntimeNull.GetHashCode();
+            return hashCode;
+        }
     }
     
 #if !XAMLX_INTERNAL
@@ -637,6 +685,8 @@ namespace XamlX.Ast
 
             context.Emit(Value, context.Emitter, context.Configuration.WellKnownTypes.Object);
             il.Ret();
+
+            context.ExecuteAfterEmitCallbacks();
         }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
