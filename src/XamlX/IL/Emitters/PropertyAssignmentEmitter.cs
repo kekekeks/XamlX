@@ -38,25 +38,33 @@ namespace XamlX.IL.Emitters
             if (node is not XamlPropertyAssignmentNode an)
                 return null;
 
-            var setters = ValidateAndGetSetters(an);
-            for (var c = 0; c < an.Values.Count - 1; c++)
-                context.Emit(an.Values[c], codeGen, an.Values[c].Type.GetClrType());
-
             var dynamicValue = an.Values.Last();
             var dynamicValueType = dynamicValue.Type.GetClrType();
 
+            var setters = ValidateAndGetSetters(an);
             RemoveRedundantSetters(dynamicValueType, setters);
 
             if (setters.Count == 1)
             {
                 var setter = setters[0];
-                context.Emit(dynamicValue, codeGen, setter.Parameters.Last());
-                context.Emit(setter, codeGen);
+
+                if (setter is IXamlILOptimizedEmitablePropertySetter optimizedSetter)
+                    optimizedSetter.EmitWithArguments(context, codeGen, an.Values);
+                else
+                {
+                    for (var i = 0; i < an.Values.Count - 1; ++i)
+                        context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
+                    context.Emit(dynamicValue, codeGen, setter.Parameters.Last());
+                    context.Emit(setter, codeGen);
+                }
             }
             else
             {
                 var valueTypes = an.Values.Select(x => x.Type.GetClrType()).ToArray();
                 var method = GetOrCreateDynamicSetterMethod(an.Property.DeclaringType, valueTypes, setters, context);
+
+                for (var i = 0; i < an.Values.Count - 1; ++i)
+                    context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
                 context.Emit(dynamicValue, codeGen, dynamicValueType);
                 codeGen.EmitCall(method);
             }

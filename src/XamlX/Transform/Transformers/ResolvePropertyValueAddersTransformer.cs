@@ -24,7 +24,7 @@ namespace XamlX.Transform.Transformers
             return node;
         }
         
-        class AdderSetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>, IEquatable<AdderSetter>
+        class AdderSetter : IXamlILOptimizedEmitablePropertySetter, IEquatable<AdderSetter>
         {
             private readonly IXamlMethod _getter;
             private readonly IXamlMethod _adder;
@@ -66,6 +66,19 @@ namespace XamlX.Transform.Transformers
                 while (locals.Count>0)
                     using (var loc = locals.Pop())
                         emitter.Ldloc(loc.Local);
+                emitter.EmitCall(_adder, true);
+            }
+
+            public void EmitWithArguments(
+                XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context,
+                IXamlILEmitter emitter,
+                IReadOnlyList<IXamlAstValueNode> arguments)
+            {
+                emitter.EmitCall(_getter);
+
+                for (var i = 0; i < arguments.Count; ++i)
+                    context.Emit(arguments[i], emitter, Parameters[i]);
+
                 emitter.EmitCall(_adder, true);
             }
 

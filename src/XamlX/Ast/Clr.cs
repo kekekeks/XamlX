@@ -87,16 +87,36 @@ namespace XamlX.Ast
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
-    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>, IEquatable<XamlDirectCallPropertySetter>
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlILOptimizedEmitablePropertySetter : IXamlEmitablePropertySetter<IXamlILEmitter>
+    {
+        void EmitWithArguments(
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlILEmitter emitter,
+            IReadOnlyList<IXamlAstValueNode> arguments);
+    }
+
+    class XamlDirectCallPropertySetter : IXamlILOptimizedEmitablePropertySetter, IEquatable<XamlDirectCallPropertySetter>
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
         public IReadOnlyList<IXamlType> Parameters { get; }
         
-        public void Emit(IXamlILEmitter codegen)
+        public void Emit(IXamlILEmitter emitter)
+            => emitter.EmitCall(_method, true);
+
+        public void EmitWithArguments(
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlILEmitter emitter,
+            IReadOnlyList<IXamlAstValueNode> arguments)
         {
-            codegen.EmitCall(_method, true);
+            for (var i = 0; i < arguments.Count; ++i)
+                context.Emit(arguments[i], emitter, Parameters[i]);
+
+            emitter.EmitCall(_method, true);
         }
 
         public XamlDirectCallPropertySetter(IXamlMethod method)
@@ -702,7 +722,7 @@ namespace XamlX.Ast
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
                 createSubType: (s, type) => subType.DefineSubType(type, s, false),
-                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters), 
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters),
                 file: context.File,
                 emitters: context.Emitters));
 
@@ -712,11 +732,11 @@ namespace XamlX.Ast
                 .Ldftn(buildMethod)
                 .Newobj(funcType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            
+
             // Allow to save values from the parent context, pass own service provider, etc, etc
             if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
             {
-                
+
                 var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
                 if (_deferredContentCustomizationTypeParameter != null)
                     customization =
