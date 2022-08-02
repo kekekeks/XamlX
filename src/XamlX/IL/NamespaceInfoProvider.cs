@@ -11,111 +11,177 @@ namespace XamlX.IL
 #endif
     static class NamespaceInfoProvider
     {
-        public static IXamlField EmitNamespaceInfoProvider(TransformerConfiguration configuration,
-            IXamlTypeBuilder<IXamlILEmitter> typeBuilder, XamlDocument document)
+        public static IXamlField EmitNamespaceInfoProvider(
+            TransformerConfiguration configuration,
+            IXamlTypeBuilder<IXamlILEmitter> typeBuilder,
+            XamlDocument document)
         {
-            var iface = configuration.TypeMappings.XmlNamespaceInfoProvider;
-            typeBuilder.AddInterfaceImplementation(iface);
-            var method = iface.FindMethod(m => m.Name == "get_XmlNamespaces");
-            var instField = typeBuilder.DefineField(method.ReturnType, "_services", false, false);
-            var singletonField = typeBuilder.DefineField(iface, "Singleton", true, true);
+            var nsInfoProviderType = configuration.TypeMappings.XmlNamespaceInfoProvider;
+            var getNamespacesInterfaceMethod = nsInfoProviderType.FindMethod(m => m.Name == "get_XmlNamespaces");
+            var roDictionaryType = getNamespacesInterfaceMethod.ReturnType;
+            var nsInfoType = roDictionaryType.GenericArguments[1].GenericArguments[0];
 
-            var impl = typeBuilder.DefineMethod(method.ReturnType, null, method.Name, true, false, true);
-            typeBuilder.DefineProperty(method.ReturnType, "XmlNamespaces", null, impl);
-            impl.Generator
-                .LdThisFld(instField)
-                .Ret();
+            typeBuilder.AddInterfaceImplementation(nsInfoProviderType);
+            var namespacesField = typeBuilder.DefineField(roDictionaryType, "_xmlNamespaces", false, false);
+            var singletonField = typeBuilder.DefineField(nsInfoProviderType, "Singleton", true, true);
 
-            var infoType = method.ReturnType.GenericArguments[1].GenericArguments[0];
-            
-            var ctor = typeBuilder.DefineConstructor(false);
-            var listType = configuration.TypeSystem.FindType("System.Collections.Generic.List`1")
-                .MakeGenericType(infoType);
-            var listInterfaceType = configuration.TypeSystem.FindType("System.Collections.Generic.IReadOnlyList`1")
-                .MakeGenericType(infoType);
-            var listAdd = listType.FindMethod("Add", configuration.WellKnownTypes.Void, true, infoType);
-            
-            var dictionaryType = configuration.TypeSystem.FindType("System.Collections.Generic.Dictionary`2")
-                .MakeGenericType(configuration.WellKnownTypes.String, listInterfaceType);
-            var dictionaryAdd = dictionaryType.FindMethod("Add", configuration.WellKnownTypes.Void, true,
-                configuration.WellKnownTypes.String, listInterfaceType);
-            
-            var dicLocal = ctor.Generator.DefineLocal(dictionaryType);
-            var listLocal = ctor.Generator.DefineLocal(listType);
-
-            ctor.Generator
-                .Ldarg_0()
-                .Emit(OpCodes.Call, configuration.WellKnownTypes.Object.FindConstructor())
-                .Emit(OpCodes.Newobj, dictionaryType.FindConstructor())
-                .Stloc(dicLocal)
-                .Ldarg_0()
-                .Ldloc(dicLocal)
-                .Stfld(instField);
-
-            IXamlMethod createInfoMethod = null;
-            
-            foreach (var alias in document.NamespaceAliases)
+            IXamlMethod EmitCreateNamespaceInfoMethod()
             {
-                ctor.Generator
-                    .Newobj(listType.FindConstructor(new List<IXamlType>()))
-                    .Stloc(listLocal);
+                // private static XamlXmlNamespaceInfoV1 CreateNamespaceInfo(string arg0, string arg1)
+                var method = typeBuilder.DefineMethod(
+                    nsInfoType,
+                    new[] { configuration.WellKnownTypes.String, configuration.WellKnownTypes.String },
+                    "CreateNamespaceInfo",
+                    false, true, false);
 
-                var resolved = NamespaceInfoHelper.TryResolve(configuration, alias.Value);
-                if (resolved != null)
-                {
-                    foreach (var rns in resolved)
-                    {
-                        createInfoMethod ??= EmitCreateNamespaceInfoMethod(configuration, typeBuilder, infoType);
+                // return new XamlXmlNamespaceInfoV1() { ClrNamespace = arg0, ClrAssemblyName = arg1 }
+                method.Generator
+                    .Newobj(nsInfoType.FindConstructor())
+                    .Dup()
+                    .Ldarg_0()
+                    .EmitCall(nsInfoType.FindMethod(m => m.Name == "set_ClrNamespace"))
+                    .Dup()
+                    .Ldarg(1)
+                    .EmitCall(nsInfoType.FindMethod(m => m.Name == "set_ClrAssemblyName"))
+                    .Ret();
 
-                        ctor.Generator
-                            .Ldloc(listLocal)
-                            .Ldstr(rns.ClrNamespace)
-                            .Ldstr(rns.AssemblyName ?? rns.Assembly?.Name)
-                            .EmitCall(createInfoMethod)
-                            .EmitCall(listAdd);
-                    }
-                }
-
-                ctor.Generator
-                    .Ldloc(dicLocal)
-                    .Ldstr(alias.Key)
-                    .Ldloc(listLocal)
-                    .EmitCall(dictionaryAdd, true);
+                return method;
             }
 
-            ctor.Generator.Ret();
+            var createNamespaceInfoMethod = EmitCreateNamespaceInfoMethod();
 
-            var sctor = typeBuilder.DefineConstructor(true);
-            sctor.Generator
-                .Newobj(ctor)
-                .Stsfld(singletonField)
-                .Ret();
+            IXamlMethod EmitCreateNamespacesMethod()
+            {
+                // C#: private static IReadOnlyDictionary<string, IReadOnlyList<string>> CreateNamespaces()
+                var method = typeBuilder.DefineMethod(
+                    roDictionaryType,
+                    null,
+                    "CreateNamespaces",
+                    false, true, false);
+
+                var roListType = configuration.TypeSystem.FindType("System.Collections.Generic.IReadOnlyList`1")
+                    .MakeGenericType(nsInfoType);
+
+                var dictionaryType = configuration.TypeSystem.FindType("System.Collections.Generic.Dictionary`2")
+                    .MakeGenericType(configuration.WellKnownTypes.String, roListType);
+
+                var dictionaryCtor = dictionaryType.FindConstructor(new List<IXamlType> { configuration.WellKnownTypes.Int32 });
+
+                var dictionaryAddMethod = dictionaryType.FindMethod(
+                    "Add",
+                    configuration.WellKnownTypes.Void, true, configuration.WellKnownTypes.String, roListType);
+
+                var codeGen = method.Generator;
+                var dictionaryLocal = codeGen.DefineLocal(dictionaryType);
+
+                // C#: var dic = new Dictionary<string, IReadOnlyList<string>>(`capacity`);
+                codeGen
+                    .Ldc_I4(document.NamespaceAliases.Count)
+                    .Newobj(dictionaryCtor)
+                    .Stloc(dictionaryLocal);
+
+                foreach (var alias in document.NamespaceAliases)
+                {
+                    codeGen
+                        .Ldloc(dictionaryLocal)
+                        .Ldstr(alias.Key);
+
+                    var resolveResults = NamespaceInfoHelper.TryResolve(configuration, alias.Value) ?? new();
+
+                    // C#: var array = new XamlXmlNamespaceInfoV1[`count`];
+                    codeGen
+                        .Ldc_I4(resolveResults.Count)
+                        .Newarr(nsInfoType);
+
+                    for (int i = 0; i < resolveResults.Count; ++i)
+                    {
+                        var resolveResult = resolveResults[i];
+
+                        // C#: array[`i`] = CreateNamespace(`namespace`, `assemblyName`);
+                        codeGen
+                            .Dup()
+                            .Ldc_I4(i)
+                            .Ldstr(resolveResult.ClrNamespace)
+                            .Ldstr(resolveResult.AssemblyName ?? resolveResult.Assembly?.Name)
+                            .EmitCall(createNamespaceInfoMethod)
+                            .Stelem_ref();
+                    }
+
+                    // C#: dic.Add(`alias`, array);
+                    codeGen.EmitCall(dictionaryAddMethod, true);
+                }
+
+                // C#: return dic;
+                codeGen
+                    .Ldloc(dictionaryLocal)
+                    .Ret();
+
+                return method;
+            }
+
+            var createNamespacesMethod = EmitCreateNamespacesMethod();
+
+            void EmitNamespacesProperty()
+            {
+                // C#: private IReadOnlyDictionary<string, IReadOnlyList<string>> get_XmlNamespaces()
+                var method = typeBuilder.DefineMethod(
+                    roDictionaryType,
+                    null,
+                    getNamespacesInterfaceMethod.Name,
+                    true, false, true);
+
+                var hasValueLabel = method.Generator.DefineLabel();
+
+                method.Generator
+                    // C#: if (this._xmlNamespaces == null)
+                    .Ldarg_0()
+                    .Ldfld(namespacesField)
+                    .Brtrue(hasValueLabel)
+                    // C#:     this._xmlNamespaces = CreateNamespaces();
+                    .Ldarg_0()
+                    .EmitCall(createNamespacesMethod)
+                    .Stfld(namespacesField)
+                    // C#: return this._xmlNamespaces
+                    .MarkLabel(hasValueLabel)
+                    .Ldarg_0()
+                    .Ldfld(namespacesField)
+                    .Ret();
+
+                typeBuilder.DefineProperty(roDictionaryType, "XmlNamespaces", null, method);
+            }
+
+            EmitNamespacesProperty();
+
+            IXamlConstructor EmitConstructor()
+            {
+                var ctor = typeBuilder.DefineConstructor(false);
+
+                // C#: base()
+                ctor.Generator
+                    .Ldarg_0()
+                    .Emit(OpCodes.Call, configuration.WellKnownTypes.Object.FindConstructor())
+                    .Ret();
+
+                return ctor;
+            }
+
+            var ctor = EmitConstructor();
+
+            void EmitStaticConstructor()
+            {
+                var cctor = typeBuilder.DefineConstructor(true);
+
+                // C#: _singleton = new NamespaceInfoProvider();
+                cctor.Generator
+                    .Newobj(ctor)
+                    .Stsfld(singletonField)
+                    .Ret();
+            }
+
+            EmitStaticConstructor();
 
             return singletonField;
         }
 
-        private static IXamlMethod EmitCreateNamespaceInfoMethod(TransformerConfiguration configuration, 
-            IXamlTypeBuilder<IXamlILEmitter> typeBuilder, IXamlType infoType)
-        {
-            // C#: private static XamlXmlNamespaceInfoV1 CreateNamespaceInfo(string arg0, string arg1)
-            var method = typeBuilder.DefineMethod(
-                infoType,
-                new[] { configuration.WellKnownTypes.String, configuration.WellKnownTypes.String },
-                "CreateNamespaceInfo",
-                false, true, false);
-
-            // C#: return new XamlXmlNamespaceInfoV1() { ClrNamespace = arg0, ClrAssemblyName = arg1 }
-            method.Generator
-                .Newobj(infoType.FindConstructor())
-                .Dup()
-                .Ldarg_0()
-                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrNamespace"))
-                .Dup()
-                .Ldarg(1)
-                .EmitCall(infoType.FindMethod(m => m.Name == "set_ClrAssemblyName"))
-                .Ret();
-
-            return method;
-        }
     }
 }
