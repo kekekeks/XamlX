@@ -61,7 +61,7 @@ namespace XamlX.IL.Emitters
             else
             {
                 var valueTypes = an.Values.Select(x => x.Type.GetClrType()).ToArray();
-                var method = GetOrCreateDynamicSetterMethod(an.Property.DeclaringType, valueTypes, setters, context);
+                var method = GetOrCreateDynamicSetterMethod(an.Property.DeclaringType, valueTypes, setters, dynamicValue, context);
 
                 for (var i = 0; i < an.Values.Count - 1; ++i)
                     context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
@@ -96,7 +96,7 @@ namespace XamlX.IL.Emitters
                     return;
                 }
 
-                // the value type has already been handled by a previous setter
+                // we have already found a previous setter that matches the value's type or its base type
                 if (setters.Take(index).Any(previous => IsAssignableToWithNullability(setter, previous)))
                 {
                     setters.RemoveAt(index);
@@ -115,6 +115,7 @@ namespace XamlX.IL.Emitters
             IXamlType parentType,
             IReadOnlyList<IXamlType> valueTypes,
             IReadOnlyList<IXamlPropertySetter> setters,
+            IXamlLineInfo lineInfo,
             XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             if (!context.TryGetItem(out DynamicSettersCache cache))
@@ -145,7 +146,7 @@ namespace XamlX.IL.Emitters
                     context.File,
                     context.Emitters);
 
-                EmitDynamicSetterMethod(valueTypes, setters, newContext);
+                EmitDynamicSetterMethod(valueTypes, setters, lineInfo, newContext);
 
                 cache.MethodByCacheKey[cacheKey] = method;
             }
@@ -156,6 +157,7 @@ namespace XamlX.IL.Emitters
         private static void EmitDynamicSetterMethod(
             IReadOnlyList<IXamlType> valueTypes,
             IReadOnlyList<IXamlPropertySetter> setters,
+            IXamlLineInfo lineInfo,
             XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             var codeGen = context.Emitter;
@@ -165,30 +167,48 @@ namespace XamlX.IL.Emitters
                 codeGen.Ldarg(i + 1);
 
             var dynamicValueType = valueTypes.Last();
-            IXamlLabel firstAllowingNull = null;
+            IXamlPropertySetter firstSetterAllowingNull = null;
             IXamlLabel next = null;
+
+            void EmitSetterAfterChecks(IXamlPropertySetter setter, IXamlType typeOnStack)
+            {
+                // Convert is needed for T to T? and null to T?, wil be a no-op in other cases
+                ILEmitHelpers.EmitConvert(context, codeGen, lineInfo, typeOnStack, setter.Parameters.Last());
+                context.Emit(setter, codeGen);
+                codeGen.Ret();
+            }
 
             foreach (var setter in setters)
             {
+                if (setter.BinderParameters.AllowRuntimeNull)
+                    firstSetterAllowingNull ??= setter;
+
                 if (next != null)
                 {
                     codeGen.MarkLabel(next);
                     next = null;
                 }
 
-                // Only do dynamic checks if we know that type is not assignable by downcast
-                var type = setter.Parameters.Last();
-                if (!type.IsAssignableFrom(dynamicValueType))
+                var parameterType = setter.Parameters.Last();
+                IXamlType typeOnStack = dynamicValueType;
+
+                // Only do dynamic checks if we know that the value is not assignable by downcast
+                if (!parameterType.IsAssignableFrom(dynamicValueType))
                 {
+                    // for Nullable<T>, check if the value is a T, null is handled later
+                    var checkedType = parameterType.IsNullable() ? parameterType.GenericArguments[0] : parameterType;
+
                     next = codeGen.DefineLabel();
 
                     codeGen
                         .Dup()
-                        .Isinst(type)
+                        .Isinst(checkedType)
                         .Brfalse(next);
 
-                    if (type.IsValueType)
-                        codeGen.Unbox_Any(type);
+                    if (checkedType.IsValueType)
+                        codeGen.Unbox_Any(checkedType);
+
+                    typeOnStack = checkedType;
                 }
                 else if (!setter.BinderParameters.AllowRuntimeNull)
                 {
@@ -199,17 +219,7 @@ namespace XamlX.IL.Emitters
                         .Brfalse(next);
                 }
 
-                if (next != null)
-                {
-                    if (setter.BinderParameters.AllowRuntimeNull && firstAllowingNull == null)
-                    {
-                        firstAllowingNull = codeGen.DefineLabel();
-                        codeGen.MarkLabel(firstAllowingNull);
-                    }
-                }
-
-                context.Emit(setter, codeGen);
-                codeGen.Ret();
+                EmitSetterAfterChecks(setter, typeOnStack);
 
                 if (next == null)
                     break;
@@ -219,24 +229,23 @@ namespace XamlX.IL.Emitters
             {
                 codeGen.MarkLabel(next);
 
-                // the value didn't match any type, but it may be null, if so jump to the first setter allowing null
-                if (firstAllowingNull != null)
-                {
-                    codeGen
-                        .Dup()
-                        .Brfalse(firstAllowingNull);
-                }
+                // the value didn't match any type, but it may be null: either emit a setter allowing null, or throw
+                next = codeGen.DefineLabel();
+                codeGen
+                    .Dup()
+                    .Brtrue(next);
+
+                if (firstSetterAllowingNull != null)
+                    EmitSetterAfterChecks(firstSetterAllowingNull, XamlPseudoType.Null);
                 else
                 {
-                    next = codeGen.DefineLabel();
                     codeGen
-                        .Dup()
-                        .Brtrue(next)
                         .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
                             .FindConstructor())
                         .Throw();
-                    codeGen.MarkLabel(next);
                 }
+
+                codeGen.MarkLabel(next);
 
                 codeGen
                     .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
