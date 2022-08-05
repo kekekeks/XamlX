@@ -30,6 +30,11 @@ namespace XamlX.TypeSystem
             {
                 if (reference.GetType() == typeof(TypeReference))
                     reference = reference.Resolve();
+                else if (reference is RequiredModifierType modReqType)
+                    reference = modReqType.ElementType;
+                else if (reference is OptionalModifierType modOptType)
+                    reference = modOptType.ElementType;
+
                 var definition = reference.Resolve();
                 var asm = TypeSystem.FindAsm(definition.Module.Assembly);
                 if (!_definitions.TryGetValue(definition, out var dentry))
