@@ -47,7 +47,8 @@ namespace XamlX.Compiler
                     new ResolvePropertyValueAddersTransformer(),
                     new ApplyWhitespaceNormalization(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
-                    new ConstructableObjectTransformer()
+                    new ConstructableObjectTransformer(),
+                    new ArrayElementTransformer()
                 };
                 SimplificationTransformers = new List<IXamlAstTransformer>
                 {

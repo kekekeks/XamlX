@@ -145,5 +145,44 @@ namespace XamlParserTests
 <IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
                       IntProperty='{x:True}' />"));
         }
+
+        [Fact]
+        public void Array_Extension()
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun(@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.ObjectProperty>
+        <x:Array Type='{x:Type x:Object}'>
+            <x:Object>A</x:Object>
+            <x:String>B</x:String>
+            <x:Int32>42</x:Int32>
+        </x:Array>
+    </IntrinsicsTestsClass.ObjectProperty>
+</IntrinsicsTestsClass>");
+
+            var array = (object[])res.ObjectProperty;
+
+            Assert.Equal("A", array[0]);
+            Assert.Equal("B", array[1]);
+            Assert.Equal(42, array[2]);
+        }
+
+        [Fact]
+        public void Array_Extension_Inline()
+        {
+            var res = (IntrinsicsTestsClass)CompileAndRun(@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    ObjectProperty='{x:Array 3, 5, 0, Type={x:Type x:Int32}}' />");
+
+            var array = (int[])res.ObjectProperty;
+
+            Assert.Equal(3, array[0]);
+            Assert.Equal(5, array[1]);
+            Assert.Equal(0, array[2]);
+        }
     }
 }

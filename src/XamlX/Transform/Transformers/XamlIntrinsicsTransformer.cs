@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
@@ -90,6 +93,56 @@ namespace XamlX.Transform.Transformers
                     return new XamlStaticExtensionNode(ni,
                         new XamlAstXmlTypeReference(ni, resolvedNs, tmpair[0], xml.GenericArguments),
                         tmpair[1]);
+                }
+
+                if (xml.Name == "Array")
+                {
+                    var elements = new List<IXamlAstValueNode>(ni.Arguments);
+
+                    IXamlAstValueNode type = null;
+
+                    foreach (var child in ni.Children)
+                    {
+                        if (child is XamlAstXamlPropertyValueNode propertyNode)
+                        {
+                            if (propertyNode.Property is XamlAstNamePropertyReference reference)
+                            {
+                                if (reference.Name.Equals("Type", StringComparison.Ordinal))
+                                {
+                                    if (type is object)
+                                    {
+                                        throw new XamlParseException("Duplicate Type property on x:Array!", ni);
+                                    }
+
+                                    if (propertyNode.Values.Count != 1)
+                                    {
+                                        throw new XamlParseException("The Type property on x:Array should have a single value!", ni);
+                                    }
+
+                                    type = propertyNode.Values[0];
+                                }
+                                else
+                                {
+                                    throw new XamlParseException($"Unknown property '{reference.Name}' in x:Array!", ni);
+                                }
+                            }
+                        }
+                        else if (child is IXamlAstValueNode valueNode)
+                        {
+                            elements.Add(valueNode);
+                        }
+                        else
+                        {
+                            context.ParseError("Invalid child node on x:Array!", child);
+                        }
+                    }
+
+                    if (type is null)
+                    {
+                        throw new XamlParseException("Required Type property on x:Array not found!", ni);
+                    }
+
+                    return new XamlArrayExtensionNode(ni, type, elements);
                 }
             }
 

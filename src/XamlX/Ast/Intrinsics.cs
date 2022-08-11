@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Runtime.Serialization;
 using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
@@ -134,6 +134,46 @@ namespace XamlX.Ast
         }
         
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveReturnType(), false);
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlArrayExtensionNode : XamlAstNode, IXamlAstValueNode
+    {
+        private IXamlAstValueNode _elementType;
+        private XamlAstClrTypeReference _type;
+
+        public XamlArrayExtensionNode(
+            XamlAstObjectNode lineInfo,
+            IXamlAstValueNode elementType,
+            IList<IXamlAstValueNode> elements)
+            : base(lineInfo)
+        {
+            _elementType = elementType;
+
+            Elements = elements;
+        }
+
+        public IXamlAstTypeReference Type =>
+            _type ?? throw new XamlParseException("Could not resolve x:Array Type for an unknown reason! Try using x:Type to specify the array element type.", this);
+
+        public IList<IXamlAstValueNode> Elements { get; }
+
+        public override void VisitChildren(Visitor visitor)
+        {
+            _elementType = (IXamlAstValueNode)_elementType.Visit(visitor);
+
+            if (_elementType is XamlTypeExtensionNode n && n.Value is XamlAstClrTypeReference clr)
+            {
+                _type = new XamlAstClrTypeReference(this, clr.Type.MakeArrayType(1), false);
+            }
+
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                Elements[i] = (IXamlAstValueNode)Elements[i].Visit(visitor);
+            }
+        }
     }
 
 #if !XAMLX_INTERNAL
