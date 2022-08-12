@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Xml;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -18,6 +17,7 @@ namespace XamlX.Emit
         public IFileSource File { get; }
         public List<object> Emitters { get; }
 
+        private readonly List<Action> _afterEmitCallbacks = new();
         private IXamlAstNode _currentNode;
 
         public TransformerConfiguration Configuration { get; }
@@ -216,6 +216,17 @@ namespace XamlX.Emit
 
             foundEmitter = false;
             return res;
+        }
+
+        public void AddAfterEmitCallbacks(Action callback)
+            => _afterEmitCallbacks.Add(callback);
+
+        public void ExecuteAfterEmitCallbacks()
+        {
+            foreach (var callback in _afterEmitCallbacks)
+                callback();
+
+            _afterEmitCallbacks.Clear();
         }
     }
 

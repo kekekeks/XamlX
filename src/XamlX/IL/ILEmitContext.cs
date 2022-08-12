@@ -97,7 +97,7 @@ namespace XamlX.IL
         public override void LoadLocalValue(XamlAstCompilerLocalNode node, IXamlILEmitter codeGen)
         {
             if (_locals.TryGetValue(node, out var local))
-                codeGen.Emit(OpCodes.Ldloc, local);
+                codeGen.Ldloc(local);
             else
                 throw new XamlLoadException("Attempt to read uninitialized local variable", node);
         }

@@ -225,7 +225,7 @@ namespace XamlParserTests
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        [""] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -233,7 +233,7 @@ namespace XamlParserTests
                                 ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
                             }
                         },
-                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr1"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -241,7 +241,7 @@ namespace XamlParserTests
                                 ClrAssemblyName = "netstandard"
                             }
                         },
-                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr2"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -272,21 +272,21 @@ namespace XamlParserTests
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        [""] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "XamlParserTests"
                             }
                         },
-                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr1"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "System.Collections.Generic"
                             }
                         },
-                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr2"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {

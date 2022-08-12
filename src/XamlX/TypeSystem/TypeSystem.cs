@@ -449,6 +449,9 @@ namespace XamlX.TypeSystem
             return null;
         }
 
+        public static bool AcceptsNull(this IXamlType type) 
+            => !type.IsValueType || type.IsNullable();
+
         public static bool IsNullable(this IXamlType type)
         {
             var def = type.GenericTypeDefinition;

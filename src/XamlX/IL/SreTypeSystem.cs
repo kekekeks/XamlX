@@ -321,7 +321,11 @@ namespace XamlX.IL
                 _system = system;
             }
 
-            public bool Equals(IXamlMethod other) => ((SreMethod) other)?.Method.Equals(Method) == true;
+            public bool Equals(IXamlMethod other) 
+                => other is SreMethod typedOther && Method == typedOther.Method;
+
+            public override int GetHashCode() 
+                => Method.GetHashCode();
 
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
@@ -411,7 +415,8 @@ namespace XamlX.IL
             }
 
             public override string ToString() => Field.DeclaringType?.FullName + " " + Field.Name;
-            public bool Equals(IXamlField other) => ((SreField) other)?.Field.Equals(Field) == true;
+            public bool Equals(IXamlField other) => other is SreField typedOther && typedOther.Field == Field;
+            public override int GetHashCode() => Field.GetHashCode();
         }
 
         public IXamlILEmitter CreateCodeGen(MethodBuilder mb)
@@ -467,6 +472,18 @@ namespace XamlX.IL
             }
 
             public IXamlILEmitter Emit(OpCode code, long arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, sbyte arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, byte arg)
             {
                 _ilg.Emit(code, arg);
                 return this;
@@ -542,9 +559,11 @@ namespace XamlX.IL
                 }
             }
             
-            class SreLocal : IXamlLocal
+            class SreLocal : IXamlILLocal
             {
                 public LocalBuilder Local { get; }
+
+                public int Index => Local.LocalIndex;
 
                 public SreLocal(LocalBuilder local)
                 {

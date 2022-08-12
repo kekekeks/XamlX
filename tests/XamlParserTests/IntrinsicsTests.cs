@@ -21,6 +21,15 @@ namespace XamlParserTests
         public const double DoubleConstant = 3;
     }
 
+    public class IntrinsicsListTestsClass
+    {
+        internal int AddInt32CallCount;
+        internal int AddObjectCallCount;
+
+        public void Add(int value) => ++AddInt32CallCount;
+        public void Add(object value) => ++AddObjectCallCount;
+    }
+
     public enum IntrinsicsTestsEnum : long
     {
         Foo = 100500
@@ -45,6 +54,19 @@ namespace XamlParserTests
 <IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <IntrinsicsTestsClass.IntProperty><x:Null/></IntrinsicsTestsClass.IntProperty>
 </IntrinsicsTestsClass>"));
+        }
+
+        [Fact]
+        public void Null_Extension_Should_Disregard_Value_Type_Overloads()
+        {
+            var res = (IntrinsicsListTestsClass) CompileAndRun($@"
+<IntrinsicsListTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <x:Null />
+    <x:Null />
+</IntrinsicsListTestsClass>");
+
+            Assert.Equal(0, res.AddInt32CallCount);
+            Assert.Equal(2, res.AddObjectCallCount);
         }
 
         [Theory,

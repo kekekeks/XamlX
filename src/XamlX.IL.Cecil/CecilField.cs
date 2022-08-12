@@ -19,7 +19,9 @@ namespace XamlX.TypeSystem
                 Field = new FieldReference(def.Name, def.FieldType, declaringType);
             }
 
-            public bool Equals(IXamlField other) => other is CecilField cf && cf.Field == Field;
+            public bool Equals(IXamlField other) => other is CecilField cf && cf.Field.FullName == Field.FullName;
+
+            public override int GetHashCode() => Field.FullName.GetHashCode();
 
             public string Name => Field.Name;
             private IXamlType _type;
