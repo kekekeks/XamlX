@@ -53,6 +53,8 @@ namespace XamlX.TypeSystem
             public string Name => Reference.Name;
             public string FullName => Reference.FullName;
             public string Namespace => Reference.Namespace;
+            public bool IsPublic => Definition.IsPublic;
+            public bool IsNestedPrivate => Definition.IsNestedPrivate;
             public IXamlAssembly Assembly => _assembly;
             protected IReadOnlyList<IXamlMethod> _methods;
 
@@ -167,6 +169,14 @@ namespace XamlX.TypeSystem
                 ? null
                 : _baseType ?? (_baseType = TypeSystem.Resolve(
                       Definition.BaseType.TransformGeneric(Reference)));
+
+            private IXamlType _declaringType;
+
+            public IXamlType DeclaringType =>
+                Definition.DeclaringType == null
+                    ? null
+                    : _declaringType ?? (_declaringType = TypeSystem.Resolve(
+                        Definition.DeclaringType.TransformGeneric(Reference)));
             
             public bool IsValueType => Definition.IsValueType;
             public bool IsEnum => Definition.IsEnum;

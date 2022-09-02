@@ -36,6 +36,8 @@ namespace XamlX.Ast
     class XamlAstClrProperty : XamlAstNode, IXamlAstPropertyReference
     {
         public string Name { get; set; }
+        public bool IsPublic { get; set; }
+        public bool IsPrivate { get; set; }
         public IXamlMethod Getter { get; set; }
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
@@ -50,7 +52,10 @@ namespace XamlX.Ast
             if (property.Setter != null)
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
-            DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
+            var accessor = property.Getter ?? property.Setter;
+            DeclaringType = accessor?.DeclaringType;
+            IsPrivate = accessor?.IsPrivate == true;
+            IsPublic = accessor?.IsPublic == true;
             var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
             if (typeConverterAttributes != null)
             {
@@ -73,6 +78,8 @@ namespace XamlX.Ast
             Name = name;
             DeclaringType = declaringType;
             Getter = getter;
+            IsPublic = getter?.IsPublic == true;
+            IsPrivate = getter?.IsPrivate == true;
             if (setters != null)
                 Setters.AddRange(setters);
         }
@@ -587,6 +594,7 @@ namespace XamlX.Ast
         public IXamlType ReturnType => _method.ReturnType;
         public IXamlType DeclaringType => _method.DeclaringType;
         public bool IsPublic => true;
+        public bool IsPrivate => false;
         public bool IsStatic => true;
         public IReadOnlyList<IXamlType> Parameters { get; }
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
@@ -714,7 +722,10 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(), so);
+            var subType = context.DeclaringType.DefineSubType(
+                so,
+                "XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
+                XamlVisibility.Private);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
@@ -722,8 +733,7 @@ namespace XamlX.Ast
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, XamlVisibility.Private),
-                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
+                declaringType: subType,
                 file: context.File,
                 emitters: context.Emitters));
 
