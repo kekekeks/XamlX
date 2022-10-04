@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
-      <Compile Include="..\Benchmarks\BenchmarksXamlXConfiguration.cs"/>
+      <Compile Include="..\Benchmarks\BenchmarksXamlXConfiguration.cs" />
     </ItemGroup>
 
 </Project>
