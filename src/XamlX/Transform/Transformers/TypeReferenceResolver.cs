@@ -15,9 +15,9 @@ namespace XamlX.Transform.Transformers
             public Dictionary<(string, string, bool), IXamlType> CacheDictionary =
                 new Dictionary<(string, string, bool), IXamlType>();
         }
-        
+
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
-            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments,
+            string xmlns, string name, bool isMarkupExtension, IReadOnlyCollection<IXamlAstTypeReference> typeArguments,
             IXamlLineInfo lineInfo,
             bool strict)
         {
@@ -42,17 +42,17 @@ namespace XamlX.Transform.Transformers
         }
 
         static XamlAstClrTypeReference ResolveTypeCore(AstTransformationContext context,
-            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
+            string xmlns, string name, bool isMarkupExtension, IReadOnlyCollection<IXamlAstTypeReference> typeArguments, IXamlLineInfo lineInfo,
             bool strict)
         {
             if (typeArguments == null)
-                typeArguments = new List<XamlAstXmlTypeReference>();
+                typeArguments = new List<IXamlAstTypeReference>();
             var targs = typeArguments
-                .Select(ta =>
-                    ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo, strict)
-                        ?.Type)
+                .Select(ta => ta is XamlAstXmlTypeReference xmlTr
+                    ? ResolveType(context, xmlTr.XmlNamespace, xmlTr.Name, false, xmlTr.GenericArguments, lineInfo, strict)?.Type
+                    : ta.GetClrType())
                 .ToList();
-            
+
             IXamlType Attempt(Func<string, IXamlType> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
@@ -61,9 +61,9 @@ namespace XamlX.Transform.Transformers
                 else
                     return cb(xname + suffix) ?? cb(xname + "Extension" + suffix);
             }
-            
+
             IXamlType found = null;
-            
+
             // Try to resolve from system
             if (xmlns == XamlNamespaces.Xaml2006)
                 found = context.Configuration.TypeSystem.FindType("System." + name);
@@ -104,7 +104,7 @@ namespace XamlX.Transform.Transformers
                 found = found?.MakeGenericType(targs);
             if (found != null)
                 return new XamlAstClrTypeReference(lineInfo, found,
-                    isMarkupExtension || found.Name.EndsWith("Extension")); 
+                    isMarkupExtension || found.Name.EndsWith("Extension"));
             if (strict)
                 throw new XamlParseException(
                     $"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
@@ -125,7 +125,7 @@ namespace XamlX.Transform.Transformers
                 return null;
             }
 
-            return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo, strict);
+            return ResolveType(context, xmlns, name, isMarkupExtension, new List<IXamlAstTypeReference>(), lineInfo, strict);
         }
 
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
