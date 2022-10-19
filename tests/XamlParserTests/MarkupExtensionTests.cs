@@ -33,6 +33,35 @@ namespace XamlParserTests
         }
     }
 
+    // Shouldn't be conflicted with actual generic types with the same name.
+    public class GenericTestExtension
+    {
+        public object Returned { get; set; }
+        public object ProvideValue()
+        {
+            return Returned;
+        }
+    }
+
+    public class GenericTestExtension<TType>
+    {
+        public TType Returned { get; set; }
+        public object ProvideValue()
+        {
+            return Returned;
+        }
+    }
+
+    public class GenericTestExtension<TType1, TType2>
+    {
+        public TType1 Returned1 { get; set; }
+        public TType2 Returned2 { get; set; }
+        public object ProvideValue()
+        {
+            return (Returned1, Returned2);
+        }
+    }
+
     class DictionaryServiceProvider : Dictionary<Type, object>, IServiceProvider
     {
         public IServiceProvider Parent { get; set; }
@@ -65,11 +94,11 @@ namespace XamlParserTests
     {
         public string Value { get; set; }
     }
-    
-    
-  
+
+
+
     public class MarkupExtensionTests : CompilerTestBase
-    {       
+    {
         [Fact]
         public void Object_Should_Be_Casted_To_String()
         {
@@ -77,12 +106,12 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' StringProperty='{ObjectTestExtension Returned=test}'/>");
             Assert.Equal("test", res.StringProperty);
         }
-        
+
         IServiceProvider CreateValueProvider(object value)=>new DictionaryServiceProvider
         {
             [typeof(ExtensionValueHolder)] = new ExtensionValueHolder() {Value = value}
         };
-        
+
         [Fact]
         public void Object_Should_Be_Casted_To_Value_Type()
         {
@@ -91,7 +120,7 @@ namespace XamlParserTests
     IntProperty='{ServiceProviderValue}'/>", CreateValueProvider(123));
             Assert.Equal(123, res.IntProperty);
         }
-        
+
         [Fact]
         public void Object_Should_Be_Casted_To_Nullable_Value_Type()
         {
@@ -111,7 +140,7 @@ namespace XamlParserTests
 </MarkupExtensionTestsClass>", CreateValueProvider(123));
             Assert.Equal(new[] {123, 123}, res.IntList);
         }
-        
+
         [Fact]
         public void Extensions_Should_Be_Able_To_Populate_Lists()
         {
@@ -142,7 +171,7 @@ namespace XamlParserTests
     NullableIntProperty='{ServiceProviderIntValue}'/>", CreateValueProvider(123));
             Assert.Equal(123, res.NullableIntProperty);
         }
-        
+
         [Fact]
         public void Non_Boxed_Value_Type_Should_Be_Convertable_To_Object()
         {
@@ -160,7 +189,7 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' 
     IntProperty='{ServiceProviderValue}'/>", CreateValueProvider("test")));
         }
-        
+
         [Fact]
         public void Value_Type_To_Reference_Type_Should_Trigger_Compile_Error()
         {
@@ -168,7 +197,7 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' 
     StringProperty='{ServiceProviderIntValue}'/>"));
         }
-        
+
         [Fact]
         public void Mismatched_Value_Type_To_Value_Type_Should_Trigger_Compile_Error()
         {
@@ -176,7 +205,7 @@ namespace XamlParserTests
 <MarkupExtensionTestsClass xmlns='test' 
     DoubleProperty='{ServiceProviderIntValue}'/>"));
         }
-        
+
         [Fact]
         public void Mismatched_Reference_Type_To_Reference_Type_Should_Trigger_InvalidCastException()
         {
@@ -185,6 +214,68 @@ namespace XamlParserTests
                 (MarkupExtensionTestsClass) CompileAndRun(@"
 <MarkupExtensionTestsClass xmlns='test' 
     StringProperty='{ServiceProviderValue}'/>", CreateValueProvider(val)));
+        }
+
+        [Fact]
+        public void Same_Name_Extension_Should_Work_Without_Generics()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' ObjectProperty='{GenericTestExtension Returned=test}'/>");
+            Assert.Equal("test", res.ObjectProperty);
+        }
+
+        [Fact]
+        public void Same_Name_Extension_Should_Work_Without_Generics_XML_Syntax()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <MarkupExtensionTestsClass.ObjectProperty>
+        <GenericTestExtension Returned='test' />
+    </MarkupExtensionTestsClass.ObjectProperty>
+</MarkupExtensionTestsClass>");
+            Assert.Equal("test", res.ObjectProperty);
+        }
+
+        [Fact]
+        public void Resolve_Single_Generic_Type_Argument()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    IntProperty='{GenericTestExtension Returned=5, x:TypeArguments=x:Int32}'/>");
+            Assert.Equal(5, res.IntProperty);
+        }
+
+        [Fact]
+        public void Resolve_Single_Generic_Type_Argument_XML_Syntax()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <MarkupExtensionTestsClass.IntProperty>
+        <GenericTestExtension Returned='5' x:TypeArguments='x:Int32' />
+    </MarkupExtensionTestsClass.IntProperty>
+</MarkupExtensionTestsClass>");
+            Assert.Equal(5, res.IntProperty);
+        }
+
+        [Fact]
+        public void Resolve_Double_Generic_Type_Argument()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    ObjectProperty='{GenericTestExtension Returned1=5, Returned2=0.4, x:TypeArguments=""x:Int32,x:Single""}'/>");
+            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty);
+        }
+
+        [Fact]
+        public void Resolve_Double_Generic_Type_Argument_XML_Syntax()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <MarkupExtensionTestsClass.ObjectProperty>
+        <GenericTestExtension Returned1='5' Returned2='0.4' x:TypeArguments='x:Int32,x:Single' />
+    </MarkupExtensionTestsClass.ObjectProperty>
+</MarkupExtensionTestsClass>");
+            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty);
         }
     }
 }

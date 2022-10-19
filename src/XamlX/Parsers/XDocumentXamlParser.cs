@@ -35,14 +35,14 @@ namespace XamlX.Parsers
                 DtdProcessing = DtdProcessing.Ignore
             });
             xr = new CompatibleXmlReader(xr, compatibilityMappings ?? new Dictionary<string, string>());
-            
+
             var root = XDocument.Load(xr, LoadOptions.SetLineInfo).Root;
 
             var doc = new XamlDocument
             {
                 Root = new ParserContext(root).Parse()
             };
-            
+
             foreach(var attr in root.Attributes())
                 if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
                     (attr.Name.NamespaceName == "" && attr.Name.LocalName == "xmlns"))
@@ -68,31 +68,36 @@ namespace XamlX.Parsers
             XamlAstXmlTypeReference GetTypeReference(XElement el) =>
                 new XamlAstXmlTypeReference(el.AsLi(), el.Name.NamespaceName, el.Name.LocalName);
 
-
             static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, XElement xel)
-                => ParseTypeName(info, typeName,
-                    ns => string.IsNullOrWhiteSpace(ns)
-                        ? xel.GetDefaultNamespace().NamespaceName
-                        : xel.GetNamespaceOfPrefix(ns)?.NamespaceName ?? "");
-            
-            static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, Func<string, string> prefixResolver)
+            {
+                var (xmlns, name) = ParsePairWithXmlns(info, typeName, xel);
+                return new XamlAstXmlTypeReference(info, xmlns, name);
+            }
+
+            static (string xmlns, string name) ParsePairWithXmlns(IXamlLineInfo info, string typeName, XElement xel)
             {
                 var pair = typeName.Trim().Split(new[] {':'}, 2);
                 string xmlns, name;
                 if (pair.Length == 1)
                 {
-                    xmlns = prefixResolver("");
+                    xmlns = PrefixResolver("", xel);
                     name = pair[0];
                 }
                 else
                 {
-                    xmlns = prefixResolver(pair[0]);
+                    xmlns = PrefixResolver(pair[0], xel);
                     if (xmlns == null)
                         throw new XamlParseException($"Namespace '{pair[0]}' is not recognized", info);
                     name = pair[1];
                 }
-                return new XamlAstXmlTypeReference(info, xmlns, name);
+
+                return (xmlns, name);
             }
+
+            static string PrefixResolver(string ns, XElement xel)
+                => string.IsNullOrWhiteSpace(ns)
+                    ? xel.GetDefaultNamespace().NamespaceName
+                    : xel.GetNamespaceOfPrefix(ns)?.NamespaceName ?? "";
 
             static List<XamlAstXmlTypeReference> ParseTypeArguments(string args, XElement xel, IXamlLineInfo info)
             {
@@ -126,8 +131,29 @@ namespace XamlX.Parsers
                         try
                         {
 
-                            return SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
+                            var extensionObject = SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
                                 t => ParseTypeName(info, t, xel));
+
+                            if (extensionObject is XamlAstObjectNode { Type: XamlAstXmlTypeReference xmlType } astObject)
+                            {
+                                foreach (var prop in astObject.Children)
+                                {
+                                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode
+                                        && ParsePairWithXmlns(info, propName.Name, xel) is (XamlNamespaces.Xaml2006, "TypeArguments"))
+                                    {
+                                        if (valueNode.Values.Single() is not XamlAstTextNode text)
+                                            throw new XamlParseException(
+                                                "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
+                                                info);
+
+                                        xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, info));
+                                        astObject.Children.Remove(prop);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            return extensionObject;
                         }
                         catch (MeScannerParseException parseEx)
                         {
@@ -270,7 +296,7 @@ namespace XamlX.Parsers
             public int Line { get; set; }
             public int Position { get; set; }
         }
-        
+
         public static IXamlLineInfo AsLi(this IXmlLineInfo info)
         {
             if (!info.HasLineInfo())
