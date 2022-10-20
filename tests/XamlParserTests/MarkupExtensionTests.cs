@@ -217,6 +217,17 @@ namespace XamlParserTests
         }
 
         [Fact]
+        public void Markup_Extension_With_Directive_Should_Compile()
+        {
+            // Compiler throws an error if there is undefined directive.
+            // This way we can check if this directive was even parsed.
+            var ex = Assert.Throws<XamlLoadException>(() => CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    StringProperty='{ObjectTestExtension x:Dir=RTL}'/>"));
+            Assert.Contains("XamlX.Ast.XamlAstXmlDirective", ex.Message);
+        }
+
+        [Fact]
         public void Same_Name_Extension_Should_Work_Without_Generics()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"

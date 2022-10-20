@@ -70,28 +70,30 @@ namespace XamlX.Parsers
 
             static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, XElement xel)
             {
-                var (xmlns, name) = ParsePairWithXmlns(info, typeName, xel);
-                return new XamlAstXmlTypeReference(info, xmlns, name);
+                var (_, xmlnsVal, name) = ParsePairWithXmlns(info, typeName, xel);
+                return new XamlAstXmlTypeReference(info, xmlnsVal, name);
             }
 
-            static (string xmlns, string name) ParsePairWithXmlns(IXamlLineInfo info, string typeName, XElement xel)
+            static (string xmlnsKey, string xmlnsVal, string name) ParsePairWithXmlns(IXamlLineInfo info, string typeName, XElement xel)
             {
                 var pair = typeName.Trim().Split(new[] {':'}, 2);
-                string xmlns, name;
+                string xmlnsKey, xmlnsVal, name;
                 if (pair.Length == 1)
                 {
-                    xmlns = PrefixResolver("", xel);
+                    xmlnsKey = "";
+                    xmlnsVal = PrefixResolver("", xel);
                     name = pair[0];
                 }
                 else
                 {
-                    xmlns = PrefixResolver(pair[0], xel);
-                    if (xmlns == null)
+                    xmlnsKey = pair[0];
+                    xmlnsVal = PrefixResolver(pair[0], xel);
+                    if (xmlnsVal == null)
                         throw new XamlParseException($"Namespace '{pair[0]}' is not recognized", info);
                     name = pair[1];
                 }
 
-                return (xmlns, name);
+                return (xmlnsKey, xmlnsVal, name);
             }
 
             static string PrefixResolver(string ns, XElement xel)
@@ -136,19 +138,26 @@ namespace XamlX.Parsers
 
                             if (extensionObject is XamlAstObjectNode { Type: XamlAstXmlTypeReference xmlType } astObject)
                             {
-                                foreach (var prop in astObject.Children)
+                                foreach (var prop in astObject.Children.ToArray())
                                 {
-                                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode
-                                        && ParsePairWithXmlns(info, propName.Name, xel) is (XamlNamespaces.Xaml2006, "TypeArguments"))
+                                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode)
                                     {
-                                        if (valueNode.Values.Single() is not XamlAstTextNode text)
-                                            throw new XamlParseException(
-                                                "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
-                                                info);
+                                        var (xmlnsKey, xmlnsVal, name) = ParsePairWithXmlns(info, propName.Name, xel);
+                                        if ((xmlnsVal, name) is (XamlNamespaces.Xaml2006, "TypeArguments"))
+                                        {
+                                            if (valueNode.Values.Single() is not XamlAstTextNode text)
+                                                throw new XamlParseException(
+                                                    "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
+                                                    info);
 
-                                        xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, info));
-                                        astObject.Children.Remove(prop);
-                                        break;
+                                            xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, info));
+                                            astObject.Children.Remove(prop);
+                                        }
+                                        else if (xmlnsKey != "" && !name.Contains('.'))
+                                        {
+                                            astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
+                                            astObject.Children.Remove(prop);
+                                        }
                                     }
                                 }
                             }
