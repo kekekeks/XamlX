@@ -136,30 +136,9 @@ namespace XamlX.Parsers
                             var extensionObject = SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
                                 t => ParseTypeName(info, t, xel));
 
-                            if (extensionObject is XamlAstObjectNode { Type: XamlAstXmlTypeReference xmlType } astObject)
+                            if (extensionObject is XamlAstObjectNode astObject)
                             {
-                                foreach (var prop in astObject.Children.ToArray())
-                                {
-                                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode)
-                                    {
-                                        var (xmlnsKey, xmlnsVal, name) = ParsePairWithXmlns(info, propName.Name, xel);
-                                        if ((xmlnsVal, name) is (XamlNamespaces.Xaml2006, "TypeArguments"))
-                                        {
-                                            if (valueNode.Values.Single() is not XamlAstTextNode text)
-                                                throw new XamlParseException(
-                                                    "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
-                                                    info);
-
-                                            xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, info));
-                                            astObject.Children.Remove(prop);
-                                        }
-                                        else if (xmlnsKey != "" && !name.Contains('.'))
-                                        {
-                                            astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
-                                            astObject.Children.Remove(prop);
-                                        }
-                                    }
-                                }
+                                TransformMarkupExtensionNodeProperties(astObject, xel);
                             }
 
                             return extensionObject;
@@ -173,6 +152,39 @@ namespace XamlX.Parsers
 
                 // Do not apply XAML whitespace normalization to attribute values
                 return new XamlAstTextNode(info, ext, true);
+            }
+
+
+            static void TransformMarkupExtensionNodeProperties(XamlAstObjectNode astObject, XElement xel)
+            {
+                var xmlType = (XamlAstXmlTypeReference)astObject.Type;
+
+                foreach (var prop in astObject.Children.ToArray())
+                {
+                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode)
+                    {
+                        var (xmlnsKey, xmlnsVal, name) = ParsePairWithXmlns(prop, propName.Name, xel);
+                        if ((xmlnsVal, name) is (XamlNamespaces.Xaml2006, "TypeArguments"))
+                        {
+                            if (valueNode.Values.Single() is not XamlAstTextNode text)
+                                throw new XamlParseException(
+                                    "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
+                                    prop);
+
+                            xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, prop));
+                            astObject.Children.Remove(prop);
+                        }
+                        else if (xmlnsKey != "" && !name.Contains('.'))
+                        {
+                            astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
+                            astObject.Children.Remove(prop);
+                        }
+                        else if (valueNode.Values.FirstOrDefault() is XamlAstObjectNode childAstObject)
+                        {
+                            TransformMarkupExtensionNodeProperties(childAstObject, xel);
+                        }
+                    }
+                }
             }
 
             XamlAstObjectNode ParseNewInstance(XElement el, bool root, XmlSpace spaceMode)

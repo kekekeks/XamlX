@@ -288,5 +288,14 @@ namespace XamlParserTests
 </MarkupExtensionTestsClass>");
             Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty);
         }
+
+        [Fact]
+        public void Resolve_Single_Generic_Type_Argument_With_Nested_Extension()
+        {
+            var res = (MarkupExtensionTestsClass) CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    StringProperty='{GenericTestExtension Returned={GenericTestExtension Returned=test, x:TypeArguments=x:String}, x:TypeArguments=x:Object}'/>");
+            Assert.Equal("test", res.StringProperty);
+        }
     }
 }
