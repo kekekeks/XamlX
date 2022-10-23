@@ -214,7 +214,7 @@ namespace XamlX.Transform
             {
                 if (type.IsEnum)
                 {
-                    if (TypeSystemHelpers.TryGetEnumValueNode(type, tn.Text, tn, out var enumConstantNode))
+                    if (TypeSystemHelpers.TryGetEnumValueNode(type, tn.Text, tn, false, out var enumConstantNode))
                     {
                         rv = enumConstantNode;
                         return true;
