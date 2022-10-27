@@ -174,7 +174,7 @@ namespace XamlX.Parsers
                             xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, prop));
                             astObject.Children.Remove(prop);
                         }
-                        else if (xmlnsKey != "" && !name.Contains('.'))
+                        else if (xmlnsKey != "" && !name.Contains("."))
                         {
                             astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
                             astObject.Children.Remove(prop);
