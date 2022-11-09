@@ -29,6 +29,8 @@ namespace XamlX.TypeSystem
             {
                 if (value is TypeReference tr)
                     return TypeSystem.GetTypeFor(tr);
+                if (value is CustomAttributeArgument attr)
+                    return attr.Value;
                 return value;
             }
 
