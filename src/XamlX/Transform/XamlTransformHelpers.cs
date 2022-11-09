@@ -177,7 +177,32 @@ namespace XamlX.Transform
             return null;
         }
 
-        
+        public static IXamlType GetCommonBaseClass(this IXamlType[] types)
+        {
+            if (types is null)
+                throw new ArgumentNullException(nameof(types));
+            if (types.Length == 0)
+                throw new ArgumentException("Input types array must not be empty", nameof(types));
+
+            var ret = types[0];
+
+            for (var i = 1; i < types.Length; ++i)
+            {
+                if (types[i].IsAssignableFrom(ret))
+                {
+                    ret = types[i];
+                }
+                else
+                {
+                    // This will always terminate when ret == typeof(object)
+                    while (!ret.IsAssignableFrom(types[i]))
+                        ret = ret.BaseType;
+                }
+            }
+
+            return ret;
+        }
+
         static IXamlAstValueNode CreateInvariantCulture(TransformerConfiguration cfg, IXamlLineInfo lineInfo) =>
             new XamlStaticOrTargetedReturnMethodCallNode(lineInfo,
                 cfg.WellKnownTypes.CultureInfo.Methods.First(x =>
