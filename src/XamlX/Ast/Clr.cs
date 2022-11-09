@@ -508,7 +508,7 @@ namespace XamlX.Ast
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
         public void Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
-            codeGen.EmitCall(_method, swallowResult);
+            codeGen.EmitCall(_method, context, swallowResult);
         }
     }
 
