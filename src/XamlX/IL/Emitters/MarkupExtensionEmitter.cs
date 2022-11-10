@@ -47,7 +47,7 @@ namespace XamlX.IL.Emitters
                     .Stfld(context.RuntimeContext.PropertyTargetProperty);
             }
 
-            ilgen.EmitCall(me.ProvideValue);
+            ilgen.EmitCall(me.ProvideValue, context);
 
             if (needProvideValueTarget)
             {

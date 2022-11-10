@@ -14,7 +14,7 @@ namespace XamlX
         {
         }
 
-        public XamlParseException(string message, IXamlLineInfo lineInfo) : this(message, lineInfo.Line, lineInfo.Position)
+        public XamlParseException(string message, IXamlLineInfo lineInfo) : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0)
         {
             
         }

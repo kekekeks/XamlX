@@ -263,6 +263,14 @@ namespace XamlX.Emit
     {
         void EmitCall(TBackendEmitter emitter);
     }
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlCustomEmitMethodWithContext<TBackendEmitter, TEmitResult> : IXamlMethod
+        where TEmitResult : IXamlEmitResult
+    {
+        void EmitCall(XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter);
+    }
 
 #if !XAMLX_INTERNAL
     public

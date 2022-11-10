@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
 using XamlX.Emit;
@@ -17,6 +18,22 @@ namespace XamlX.IL
         {
             if (method is IXamlCustomEmitMethod<IXamlILEmitter> custom)
                 custom.EmitCall(emitter);
+            if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult>)
+                throw new InvalidOperationException("Use EmitCall overload extension with a context parameter");
+            else
+                emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+
+            if (swallowResult && !(method.ReturnType.Namespace == "System" && method.ReturnType.Name == "Void"))
+                emitter.Pop();
+            return emitter;
+        }
+
+        public static IXamlILEmitter EmitCall(this IXamlILEmitter emitter, IXamlMethod method, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, bool swallowResult = false)
+        {
+            if (method is IXamlCustomEmitMethod<IXamlILEmitter> custom)
+                custom.EmitCall(emitter);
+            if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult> customWithContext)
+                customWithContext.EmitCall(context, emitter);
             else
                 emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
 
@@ -204,5 +221,33 @@ namespace XamlX.IL
 
         public static IXamlILEmitter Add(this IXamlILEmitter emitter) => emitter.Emit(OpCodes.Add);
 
+        public static IXamlILEmitter EmitDefault(this IXamlILEmitter emitter, IXamlType type)
+        {
+            if (!type.IsValueType)
+            {
+                return emitter.Ldnull();
+            }
+
+            return type.FullName switch
+            {
+                "System.Boolean" or "System.Char" or "System.Int32" or "System.UInt32"
+                    or "System.Byte" or "System.SByte" or "System.Int16" or "System.UInt16"
+                    or "System.IntPtr" or "System.UIntPtr" => emitter.Emit(OpCodes.Ldc_I4_0),
+                "System.Int64" or "System.UInt64" => emitter.Emit(OpCodes.Ldc_I8, 0L),
+                "System.Single" => emitter.Emit(OpCodes.Ldc_R4, 0F),
+                "System.Double" => emitter.Emit(OpCodes.Ldc_R8, 0D),
+                "System.Decimal" => emitter.Ldsfld(type.Fields.First(f => f.Name == "Zero")),
+                _ => EmitNewStruct(emitter, type)
+            };
+
+            static IXamlILEmitter EmitNewStruct(IXamlILEmitter emitter, IXamlType type)
+            {
+                var loc = emitter.DefineLocal(type);
+                emitter.Ldloca(loc);
+                emitter.Emit(OpCodes.Initobj, type);
+                emitter.Ldloc(loc);
+                return emitter;
+            }
+        }
     }
 }
