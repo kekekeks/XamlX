@@ -97,6 +97,7 @@ namespace XamlX.TypeSystem
 
         public TypeReference GetTypeReference(IXamlType t) => ((ITypeReference)t).Reference;
         public MethodReference GetMethodReference(IXamlMethod t) => ((CecilMethod)t).IlReference;
+        public MethodReference GetMethodReference(IXamlConstructor t) => ((CecilConstructor)t).IlReference;
 
         CecilAssembly FindAsm(AssemblyDefinition d)
         {
