@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using XamlX;
-using XamlX.Parsers;
 using Xunit;
 
 namespace XamlParserTests.Impl

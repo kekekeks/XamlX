@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29411.108
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33027.239
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}"
 	ProjectSection(SolutionItems) = preProject
@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CecilNetstandardTests", "te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenchmarksCompiler", "src\BenchmarksCompiler\BenchmarksCompiler.csproj", "{0DC5F69A-C150-4590-90D7-303B9654011C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Parser.GuiLabs", "XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj", "{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Parser.GuiLabs", "src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj", "{BD6DE68C-382D-4E85-A6C1-FA08B9A596CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
