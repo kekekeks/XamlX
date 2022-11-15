@@ -49,12 +49,17 @@ namespace XamlX.TypeSystem
 
                 {
                     var sre = (SreOpCode) sreField.GetValue(null);
-                    var cecilField = typeof(OpCodes).GetField(sreField.Name);
-                    if(cecilField == null)
+
+                    var cecil = sreField.Name switch
+                    {
+                        nameof(SreOpCodes.Tailcall) => OpCodes.Tail,
+                        string name => (OpCode?)typeof(OpCodes).GetField(name)?.GetValue(null),
+                        _ => null
+                    };
+                    if(cecil == null)
                         continue;
-                    var cecil = (OpCode)cecilField.GetValue(null);
-                    Dic[sre] = cecil;
-                }       
+                    Dic[sre] = cecil.Value;
+                }
             }
             
             
