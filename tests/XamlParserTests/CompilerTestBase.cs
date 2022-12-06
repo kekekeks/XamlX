@@ -65,7 +65,7 @@ namespace XamlParserTests
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
-        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
+        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml, bool generateBuildMethod)
         {
             var parsed = XDocumentXamlParser.Parse(xaml);
             var compiler = new XamlILCompiler(
@@ -76,7 +76,7 @@ namespace XamlParserTests
                 EnableIlVerification = true
             };
             compiler.Transform(parsed);
-            compiler.Compile(parsed, builder, context, "Populate", "Build",
+            compiler.Compile(parsed, builder, context, "Populate", generateBuildMethod ? "Build" : null,
                 "XamlNamespaceInfo",
                 "http://example.com/", null);
             return parsed;
@@ -96,7 +96,7 @@ namespace XamlParserTests
             
         }
         
-        protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
+        protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml, bool generateBuildMethod = true)
         {
             #if !NETCOREAPP && !NETSTANDARD
             var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
@@ -120,7 +120,7 @@ namespace XamlParserTests
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
 
-            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml);
+            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml, generateBuildMethod);
 
             var created = t.CreateTypeInfo();
             #if !NETCOREAPP && !NETSTANDARD
@@ -138,9 +138,10 @@ namespace XamlParserTests
             GetCallbacks(Type created)
         {
             var isp = Expression.Parameter(typeof(IServiceProvider));
-            var createCb = Expression.Lambda<Func<IServiceProvider, object>>(
-                Expression.Convert(Expression.Call(
-                    created.GetMethod("Build"), isp), typeof(object)), isp).Compile();
+            var createCb = created.GetMethod("Build") is {} buildMethod
+                ? Expression.Lambda<Func<IServiceProvider, object>>(
+                    Expression.Convert(Expression.Call(buildMethod, isp), typeof(object)), isp).Compile()
+                : null;
             
             var epar = Expression.Parameter(typeof(object));
             var populate = created.GetMethod("Populate");
