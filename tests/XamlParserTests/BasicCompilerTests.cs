@@ -56,6 +56,19 @@ namespace XamlParserTests
         public string Prop { get; set; }
     }
     
+    public class ObjectWithPrivateCtor
+    {
+        private ObjectWithPrivateCtor(string param)
+        {
+            Arg = param;
+        }
+
+        public static ObjectWithPrivateCtor Factory(string param) => new(param);
+        
+        public string Arg { get; set; }
+        public string Prop { get; set; }
+    }
+    
     public class BasicCompilerTests : CompilerTestBase
     {
         [Theory,
@@ -108,7 +121,7 @@ namespace XamlParserTests
         }
         
         [Fact]
-        public void Compiler_Should_Populate_Xaml_Without_ObjectWithoutMatchingCtor()
+        public void Compiler_Should_Populate_Xaml_Without_MatchingCtor()
         {
             var comp = Compile(@"
 <ObjectWithoutMatchingCtor xmlns='test' Prop='321' />", generateBuildMethod: false);
@@ -121,10 +134,30 @@ namespace XamlParserTests
         }
 
         [Fact]
-        public void Compiler_Should_Fail_To_Build_Xaml_Without_ObjectWithoutMatchingCtor()
+        public void Compiler_Should_Fail_To_Build_Xaml_Without_MatchingCtor()
         {
             Assert.Throws<InvalidOperationException>(() => Compile(@"
 <ObjectWithoutMatchingCtor xmlns='test' Prop='321' />"));
+        }
+        
+        [Fact]
+        public void Compiler_Should_Populate_Xaml_Without_Public_Ctor()
+        {
+            var comp = Compile(@"
+<ObjectWithPrivateCtor xmlns='test' Prop='321' />", generateBuildMethod: false);
+
+            var res = ObjectWithPrivateCtor.Factory("123");
+            comp.populate(null, res);
+            
+            Assert.Equal("123", res.Arg);
+            Assert.Equal("321", res.Prop);
+        }
+
+        [Fact]
+        public void Compiler_Should_Fail_To_Build_Xaml_Without_Public_Ctor()
+        {
+            Assert.Throws<InvalidOperationException>(() => Compile(@"
+<ObjectWithPrivateCtor xmlns='test' Prop='321' />"));
         }
     }
 }
