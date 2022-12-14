@@ -54,7 +54,7 @@ namespace XamlX.IL.Emitters
                 {
                     for (var i = 0; i < an.Values.Count - 1; ++i)
                         context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
-                    context.Emit(dynamicValue, codeGen, setter.Parameters.Last());
+                    context.Emit(dynamicValue, codeGen, setter.Parameters[setter.Parameters.Count - 1]);
                     context.Emit(setter, codeGen);
                 }
             }
@@ -87,7 +87,7 @@ namespace XamlX.IL.Emitters
             for (int index = 0; index < setters.Count;)
             {
                 var setter = setters[index];
-                var type = setter.Parameters.Last();
+                var type = setter.Parameters[setter.Parameters.Count - 1];
 
                 // the value is directly assignable by downcast and the setter allows null: it will always match
                 if (type.IsAssignableFrom(valueType) && setter.BinderParameters.AllowRuntimeNull)
@@ -108,7 +108,7 @@ namespace XamlX.IL.Emitters
         }
 
         private static bool IsAssignableToWithNullability(IXamlPropertySetter from, IXamlPropertySetter to)
-            => to.Parameters.Last().IsAssignableFrom(from.Parameters.Last())
+            => to.Parameters[to.Parameters.Count - 1].IsAssignableFrom(from.Parameters[from.Parameters.Count - 1])
                && (to.BinderParameters.AllowRuntimeNull || !from.BinderParameters.AllowRuntimeNull);
 
         private static IXamlMethod GetOrCreateDynamicSetterMethod(
@@ -166,14 +166,14 @@ namespace XamlX.IL.Emitters
             for (int i = 0; i < valueTypes.Count; ++i)
                 codeGen.Ldarg(i + 1);
 
-            var dynamicValueType = valueTypes.Last();
+            var dynamicValueType = valueTypes[valueTypes.Count - 1];
             IXamlPropertySetter firstSetterAllowingNull = null;
             IXamlLabel next = null;
 
             void EmitSetterAfterChecks(IXamlPropertySetter setter, IXamlType typeOnStack)
             {
                 // Convert is needed for T to T? and null to T?, wil be a no-op in other cases
-                ILEmitHelpers.EmitConvert(context, codeGen, lineInfo, typeOnStack, setter.Parameters.Last());
+                ILEmitHelpers.EmitConvert(context, codeGen, lineInfo, typeOnStack, setter.Parameters[setter.Parameters.Count - 1]);
                 context.Emit(setter, codeGen);
                 codeGen.Ret();
             }
@@ -189,7 +189,7 @@ namespace XamlX.IL.Emitters
                     next = null;
                 }
 
-                var parameterType = setter.Parameters.Last();
+                var parameterType = setter.Parameters[setter.Parameters.Count - 1];
                 IXamlType typeOnStack = dynamicValueType;
 
                 // Only do dynamic checks if we know that the value is not assignable by downcast
