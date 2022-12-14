@@ -200,7 +200,7 @@ namespace XamlX.IL
             {
                 baseUriField = builder.DefineField(systemUri, "_baseUri", false, false);
                 builder.AddInterfaceImplementation(mappings.UriContextProvider);
-                var getter = builder.DefineMethod(systemUri, new IXamlType[0], "get_BaseUri", true, false, true);
+                var getter = builder.DefineMethod(systemUri, Array.Empty<IXamlType>(), "get_BaseUri", true, false, true);
                 var setter = builder.DefineMethod(typeSystem.GetType("System.Void"), new[] {systemUri},
                     "set_BaseUri", true, false, true);
 
@@ -417,7 +417,7 @@ namespace XamlX.IL
                     .Ret();
             }
             
-            var pop = builder.DefineMethod(@void, new IXamlType[0], XamlRuntimeContextDefintion.PopParentMethodName, true, false, false)
+            var pop = builder.DefineMethod(@void, Array.Empty<IXamlType>(), XamlRuntimeContextDefintion.PopParentMethodName, true, false, false)
                 .Generator;
 
             var idx = pop.DefineLocal(ts.GetType("System.Int32"));
@@ -449,7 +449,7 @@ namespace XamlX.IL
         {
             var prefix = type.Namespace + "." + type.Name + ".";
             var originalGetter = type.FindMethod(m => m.Name == "get_" + name);
-            var gen = builder.DefineMethod(originalGetter.ReturnType, new IXamlType[0],
+            var gen = builder.DefineMethod(originalGetter.ReturnType, Array.Empty<IXamlType>(),
                 prefix + "get_" + name, false, false,
                 true, originalGetter);
             builder.DefineProperty(originalGetter.ReturnType,prefix+ name, null, gen);
@@ -550,7 +550,7 @@ namespace XamlX.IL
                 .Emit(OpCodes.Stfld, parentProvider)
                 .Emit(OpCodes.Ret);
             
-            var currentGetter = enumeratorBuilder.DefineMethod(so, new IXamlType[0],
+            var currentGetter = enumeratorBuilder.DefineMethod(so, Array.Empty<IXamlType>(),
                 "get_Current", true, false, true);
             enumeratorBuilder.DefineProperty(so, "Current", null, currentGetter);
             currentGetter.Generator
@@ -558,14 +558,14 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ldfld, current)
                 .Emit(OpCodes.Ret);
 
-            enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), new IXamlType[0],
+            enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), Array.Empty<IXamlType>(),
                     enumeratorObjectType.FullName+".Reset", false, false,
                     true, enumeratorObjectType.FindMethod(m => m.Name == "Reset")).Generator
                 .Emit(OpCodes.Newobj,
                     typeSystem.FindType("System.NotSupportedException").FindConstructor(new List<IXamlType>()))
                 .Emit(OpCodes.Throw);
 
-            var disposeGen = enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), new IXamlType[0], 
+            var disposeGen = enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), Array.Empty<IXamlType>(), 
                 "System.IDisposable.Dispose", false, false, true,
                 typeSystem.GetType("System.IDisposable").FindMethod(m => m.Name == "Dispose")).Generator;
             var disposeRet = disposeGen.DefineLabel();
@@ -580,7 +580,7 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ret);
 
             var boolType = typeSystem.GetType("System.Boolean");
-            var moveNext = enumeratorBuilder.DefineMethod(boolType, new IXamlType[0],
+            var moveNext = enumeratorBuilder.DefineMethod(boolType, Array.Empty<IXamlType>(),
                 enumeratorObjectType.FullName+".MoveNext", false,
                 false, true,
                 enumeratorObjectType.FindMethod(m => m.Name == "MoveNext")).Generator;
@@ -655,7 +655,7 @@ namespace XamlX.IL
                 .Ldarg_0().Ldc_I4(stateEof).Stfld(state)
                 .Ldc_I4(0).Ret();
                 
-            var createEnumerator = enumerableBuilder.DefineMethod(enumeratorObjectType, new IXamlType[0], "GetEnumerator", true, false,
+            var createEnumerator = enumerableBuilder.DefineMethod(enumeratorObjectType, Array.Empty<IXamlType>(), "GetEnumerator", true, false,
                     true);
             createEnumerator.Generator
                 .LdThisFld(enumerableParentList)
@@ -663,7 +663,7 @@ namespace XamlX.IL
                 .Emit(OpCodes.Newobj, enumeratorCtor)
                 .Emit(OpCodes.Ret);
 
-            enumerableBuilder.DefineMethod(enumeratorType, new IXamlType[0],
+            enumerableBuilder.DefineMethod(enumeratorType, Array.Empty<IXamlType>(),
                     "System.Collections.IEnumerable.GetEnumerator", false, false, true,
                     typeSystem.GetType("System.Collections.IEnumerable").FindMethod(m => m.Name == "GetEnumerator"))
                 .Generator

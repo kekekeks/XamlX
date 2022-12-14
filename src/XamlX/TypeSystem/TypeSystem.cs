@@ -228,19 +228,19 @@ namespace XamlX.TypeSystem
         public string Namespace { get; } = "";
         public string FullName => Name;
         public IXamlAssembly Assembly { get; } = null;
-        public IReadOnlyList<IXamlProperty> Properties { get; } = new IXamlProperty[0];
-        public IReadOnlyList<IXamlEventInfo> Events { get; } = new IXamlEventInfo[0];
-        public IReadOnlyList<IXamlField> Fields { get; } = new List<IXamlField>();
-        public IReadOnlyList<IXamlMethod> Methods { get; } = new IXamlMethod[0];
-        public IReadOnlyList<IXamlConstructor> Constructors { get; } = new IXamlConstructor[0];
-        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = new IXamlCustomAttribute[0];
-        public IReadOnlyList<IXamlType> GenericArguments { get; } = new IXamlType[0];
+        public IReadOnlyList<IXamlProperty> Properties { get; } = Array.Empty<IXamlProperty>();
+        public IReadOnlyList<IXamlEventInfo> Events { get; } = Array.Empty<IXamlEventInfo>();
+        public IReadOnlyList<IXamlField> Fields { get; } = Array.Empty<IXamlField>();
+        public IReadOnlyList<IXamlMethod> Methods { get; } = Array.Empty<IXamlMethod>();
+        public IReadOnlyList<IXamlConstructor> Constructors { get; } = Array.Empty<IXamlConstructor>();
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = Array.Empty<IXamlCustomAttribute>();
+        public IReadOnlyList<IXamlType> GenericArguments { get; } = Array.Empty<IXamlType>();
         public IXamlType MakeArrayType(int dimensions) => throw new NullReferenceException();
 
         public IXamlType BaseType { get; }
         public bool IsValueType { get; } = false;
         public bool IsEnum { get; } = false;
-        public IReadOnlyList<IXamlType> Interfaces { get; } = new IXamlType[0];
+        public IReadOnlyList<IXamlType> Interfaces { get; } = Array.Empty<IXamlType>();
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
         public IReadOnlyList<IXamlType> GenericParameters { get; } = null;

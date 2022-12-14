@@ -213,7 +213,7 @@ namespace XamlX.IL
                     if (_genericArguments != null)
                         return _genericArguments;
                     if (GenericTypeDefinition == null)
-                        return _genericArguments = new IXamlType[0];
+                        return _genericArguments = Array.Empty<IXamlType>();
                     return _genericArguments = Type.GetGenericArguments().Select(System.ResolveType).ToList();
                 }
             }
@@ -645,7 +645,7 @@ namespace XamlX.IL
 
             public IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter)
             {
-                var p = _tb.DefineProperty(name, PropertyAttributes.None, ((SreType) propertyType).Type, new Type[0]);
+                var p = _tb.DefineProperty(name, PropertyAttributes.None, ((SreType) propertyType).Type, Type.EmptyTypes);
                 if (setter != null)
                     p.SetSetMethod(((SreMethodBuilder) setter).MethodBuilder);
                 if (getter != null)
