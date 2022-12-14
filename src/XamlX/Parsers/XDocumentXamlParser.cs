@@ -45,9 +45,9 @@ namespace XamlX.Parsers
 
             foreach(var attr in root.Attributes())
                 if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
-                    (attr.Name.NamespaceName == "" && attr.Name.LocalName == "xmlns"))
+                    (string.IsNullOrEmpty(attr.Name.NamespaceName) && attr.Name.LocalName == "xmlns"))
                 {
-                    var name = attr.Name.NamespaceName == "" ? "" : attr.Name.LocalName;
+                    var name = string.IsNullOrEmpty(attr.Name.NamespaceName) ? "" : attr.Name.LocalName;
                     doc.NamespaceAliases[name] = attr.Value;
                 }
 
@@ -174,7 +174,7 @@ namespace XamlX.Parsers
                             xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, xel, prop));
                             astObject.Children.Remove(prop);
                         }
-                        else if (xmlnsKey != "" && !name.Contains("."))
+                        else if (!string.IsNullOrEmpty(xmlnsKey) && !name.Contains("."))
                         {
                             astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
                             astObject.Children.Remove(prop);
@@ -202,7 +202,7 @@ namespace XamlX.Parsers
                 foreach (var attr in el.Attributes())
                 {
                     if (attr.Name.NamespaceName == "http://www.w3.org/2000/xmlns/" ||
-                        (attr.Name.NamespaceName == "" && attr.Name.LocalName == "xmlns"))
+                        (string.IsNullOrEmpty(attr.Name.NamespaceName) && attr.Name.LocalName == "xmlns"))
                     {
                         if (!root)
                             throw ParseError(attr,
@@ -217,7 +217,7 @@ namespace XamlX.Parsers
                              attr.Name.LocalName == "TypeArguments")
                         type.GenericArguments = ParseTypeArguments(attr.Value, el, attr.AsLi());
                     // Parse as a directive
-                    else if (attr.Name.NamespaceName != "" && !attr.Name.LocalName.Contains("."))
+                    else if (!string.IsNullOrEmpty(attr.Name.NamespaceName) && !attr.Name.LocalName.Contains("."))
                         i.Children.Add(new XamlAstXmlDirective(el.AsLi(),
                             attr.Name.NamespaceName, attr.Name.LocalName, new[]
                             {
