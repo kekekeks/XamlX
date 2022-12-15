@@ -50,6 +50,11 @@ namespace XamlX.Parsers
                 {
                     namespaceAliases[""] = attr.Value;
                 }
+
+                if (attr.prefix == "xml")
+                {
+                    namespaceAliases["xml"] = "http://www.w3.org/XML/1998/namespace";
+                }
             }
 
             foreach (var attr in attributes)
@@ -169,10 +174,18 @@ namespace XamlX.Parsers
                 return new XamlAstTextNode(info, ext);
             }
 
-            XamlAstObjectNode ParseNewInstance(IXmlElement newEl, bool root)
+            XamlAstObjectNode ParseNewInstance(IXmlElement newEl, bool root, XmlSpace spaceMode)
             {
                 XamlAstXmlTypeReference type;
                 XamlAstObjectNode i;
+
+                /*
+                var declaredMode = newEl.GetDeclaredWhitespaceMode();
+                if (declaredMode != XmlSpace.None)
+                {
+                    spaceMode = declaredMode;
+                }
+                */
 
                 (string _, string elementName) = XmlNamespaces.GetPrefixFromName(newEl.Name);
 
@@ -205,7 +218,7 @@ namespace XamlX.Parsers
                                 attrName == "TypeArguments")
                         type.GenericArguments = ParseTypeArguments(attribute.Value, newEl, attribute.AsLi(_text));
                     // Parse as a directive
-                    else if (attrPrefix != "" && !attrName.Contains("."))
+                    else if (attrPrefix != "" && !attrName.Contains('.'))
                         i.Children.Add(new XamlAstXmlDirective(newEl.AsLi(_text),
                             attrNs, attrName, new[]
                             {
@@ -218,7 +231,7 @@ namespace XamlX.Parsers
                         var pname = attrName;
                         var ptype = i.Type;
 
-                        if (pname.Contains("."))
+                        if (pname.Contains('.'))
                         {
                             var parts = pname.Split(new[] { '.' }, 2);
                             pname = parts[1];
@@ -251,12 +264,12 @@ namespace XamlX.Parsers
                                 new XamlAstXmlTypeReference(newEl.AsLi(_text), nodeNs,
                                     pair[0]), pair[1], type
                             ),
-                            ParseValueNodeChildren(newNode)
+                            ParseValueNodeChildren(newNode, spaceMode)
                         ));
                     }
                     else
                     {
-                        i.Children.Add(ParseNewInstance(newNode, false));
+                        i.Children.Add(ParseNewInstance(newNode, false, spaceMode));
                     }
 
                 }
@@ -269,7 +282,7 @@ namespace XamlX.Parsers
                 return i;
             }
 
-            List<IXamlAstValueNode> ParseValueNodeChildren(IXmlElement newParent)
+            List<IXamlAstValueNode> ParseValueNodeChildren(IXmlElement newParent, XmlSpace spaceMode)
             {
                 var lst = new List<IXamlAstValueNode>();
 
@@ -281,7 +294,7 @@ namespace XamlX.Parsers
                 {
                     foreach (var newNode in newParent.Elements)
                     {
-                        lst.Add(ParseNewInstance(newNode, false));
+                        lst.Add(ParseNewInstance(newNode, false, spaceMode));
                     }
                 }
                 return lst;
@@ -313,7 +326,7 @@ namespace XamlX.Parsers
             Exception ParseError(IXamlLineInfo line, string message) =>
                 new XamlParseException(message, line.Line, line.Position);
 
-            public XamlAstObjectNode Parse() => (XamlAstObjectNode)ParseNewInstance(_newRoot, true);
+            public XamlAstObjectNode Parse() => (XamlAstObjectNode)ParseNewInstance(_newRoot, true, XmlSpace.Default);
         }
     }
 
