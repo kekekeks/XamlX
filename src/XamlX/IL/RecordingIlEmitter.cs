@@ -197,7 +197,7 @@ namespace XamlX.IL
             {
                 var i = Instructions[c];
                 sb.AppendFormat("{0000}", c);
-                sb.Append(':').Append(' ');
+                sb.Append(": ");
                 sb.Append(i.OpCode);
                 if (i.Operand != null)
                 {
