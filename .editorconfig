@@ -1,8 +1,7 @@
 ﻿[*.cs]
 
-# CA1823: Avoid unused private fields
-dotnet_diagnostic.CA1823.severity = warning
-
+# CS0162: Remove unreachable code
+dotnet_diagnostic.CS0162.severity = error
 
 # CA1826: Do not use Enumerable methods on indexable collections
 dotnet_diagnostic.CA1826.severity = warning
