@@ -336,7 +336,7 @@ namespace XamlX.IL
                 systemString);
             ctor.Generator
                 .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Call, so.Constructors.First())
+                .Emit(OpCodes.Call, so.Constructors[0])
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, _parentServiceProviderField)
@@ -506,7 +506,7 @@ namespace XamlX.IL
             var enumerableCtor = enumerableBuilder.DefineConstructor(false, enumerableParentList.FieldType, enumerableParentProvider.FieldType);
             enumerableCtor.Generator
                 .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Call, so.Constructors.First())
+                .Emit(OpCodes.Call, so.Constructors[0])
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, enumerableParentList)
@@ -541,7 +541,7 @@ namespace XamlX.IL
             var enumeratorCtor = enumeratorBuilder.DefineConstructor(false, parentList.FieldType, parentProvider.FieldType);
                 enumeratorCtor.Generator
                 .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Call, so.Constructors.First())
+                .Emit(OpCodes.Call, so.Constructors[0])
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, parentList)
