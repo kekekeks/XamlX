@@ -272,14 +272,23 @@ namespace XamlX.IL
             {
                 Type = type;
                 _data = data;
-                object ConvertAttributeValue(object v) => v is Type t ? system.ResolveType(t) : v;
+                object ConvertAttributeValue(object value)
+                {
+                    if (value is Type t)
+                        return system.ResolveType(t);
+                    if (value is CustomAttributeTypedArgument attr)
+                        return attr.Value;
+                    if (value is IEnumerable<CustomAttributeTypedArgument> array)
+                        return array.Select(a => ConvertAttributeValue(a)).ToArray();
+                    return value;
+                }
                 Parameters = data.ConstructorArguments.Select(p =>
                     ConvertAttributeValue(p.Value)).ToList();
                 Properties = data.NamedArguments?.ToDictionary(x => x.MemberName,
                                  x => ConvertAttributeValue(x.TypedValue.Value)) ??
                              new Dictionary<string, object>();
             }
-            
+
             public bool Equals(IXamlCustomAttribute other)
             {
                 return ((SreCustomAttribute) other)?._data.Equals(_data) == true;
