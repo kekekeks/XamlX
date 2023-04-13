@@ -35,19 +35,22 @@ namespace XamlX.Ast
     {
         public IXamlAstPropertyReference Property { get; set; }
         public List<IXamlAstValueNode> Values { get; set; }
+        public bool IsAttributeSyntax { get; }
 
         public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
-            IXamlAstPropertyReference property, IXamlAstValueNode value) : base(lineInfo)
+            IXamlAstPropertyReference property, IXamlAstValueNode value, bool isAttributeSyntax) : base(lineInfo)
         {
             Property = property;
             Values = new List<IXamlAstValueNode> {value};
+            IsAttributeSyntax = isAttributeSyntax;
         }
         
         public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
-            IXamlAstPropertyReference property, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
+            IXamlAstPropertyReference property, IEnumerable<IXamlAstValueNode> values, bool isAttributeSyntax) : base(lineInfo)
         {
             Property = property;
             Values = values.ToList();
+            IsAttributeSyntax = isAttributeSyntax;
         }
 
         public override void VisitChildren(Visitor visitor)
