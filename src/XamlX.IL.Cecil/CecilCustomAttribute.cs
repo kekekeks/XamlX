@@ -31,6 +31,8 @@ namespace XamlX.TypeSystem
                     return TypeSystem.GetTypeFor(tr);
                 if (value is CustomAttributeArgument attr)
                     return attr.Value;
+                if (value is IEnumerable<CustomAttributeArgument> array)
+                    return array.Select(a => ConvertValue(a)).ToArray();
                 return value;
             }
 
