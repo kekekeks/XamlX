@@ -41,7 +41,8 @@ namespace XamlX.Transform.Transformers
                 {
                     AllowMultiple = true,
                     AllowXNull = allowNull,
-                    AllowRuntimeNull = allowNull
+                    AllowRuntimeNull = allowNull,
+                    AllowAttributeSyntax = false,
                 };
             }
 

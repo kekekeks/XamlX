@@ -159,6 +159,7 @@ namespace XamlX.Ast
         public bool AllowMultiple { get; set; }
         public bool AllowXNull { get; set; } = true;
         public bool AllowRuntimeNull { get; set; } = true;
+        public bool AllowAttributeSyntax { get; set; } = true;
 
         public bool Equals(PropertySetterBinderParameters other)
         {

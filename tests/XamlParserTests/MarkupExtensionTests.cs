@@ -15,7 +15,8 @@ namespace XamlParserTests
         public object ObjectProperty { get; set; }
         [Content]
         public List<int> IntList { get; } = new List<int>();
-        public List<int> IntList2 { get; } = new List<int>();
+        public List<int> IntList2 { get; set; } = new List<int>();
+        public List<int> ReadOnlyIntList { get; } = new List<int>();
     }
 
     public class MarkupExtensionContentDictionaryClass
@@ -90,6 +91,12 @@ namespace XamlParserTests
             (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
     }
 
+    public class ServiceProviderIntListExtension
+    {
+        public List<int> ProvideValue(IServiceProvider sp) =>
+            new() { (int)((ExtensionValueHolder)sp.GetService(typeof(ExtensionValueHolder))).Value };
+    }
+
     public class CustomConvertedType
     {
         public string Value { get; set; }
@@ -142,12 +149,28 @@ namespace XamlParserTests
         }
 
         [Fact]
-        public void Extensions_Should_Be_Able_To_Populate_Lists()
+        public void Extensions_Should_Be_Able_To_Assign_Lists()
         {
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
-<MarkupExtensionTestsClass xmlns='test' IntList2='{ServiceProviderValue}'>
+<MarkupExtensionTestsClass xmlns='test' IntList2='{ServiceProviderIntList}'>
 </MarkupExtensionTestsClass>", CreateValueProvider(123));
             Assert.Equal(new[] {123}, res.IntList2);
+        }
+
+        [Fact]
+        public void Extensions_Which_Dont_Return_Collections_Should_Not_Be_Able_To_Assign_Lists()
+        {
+            Assert.Throws<InvalidCastException>(() => CompileAndRun(@"
+<MarkupExtensionTestsClass xmlns='test' IntList2='{ServiceProviderValue}'>
+</MarkupExtensionTestsClass>", CreateValueProvider(123)));
+        }
+
+        [Fact]
+        public void Extensions_Should_Not_Be_Able_To_Assign_To_ReadOnly_Lists()
+        {
+            Assert.Throws<XamlLoadException>(() => Compile(@"
+<MarkupExtensionTestsClass xmlns='test' ReadOnlyIntList='{ServiceProviderIntList}'>
+</MarkupExtensionTestsClass>"));
         }
 
         [Fact]
