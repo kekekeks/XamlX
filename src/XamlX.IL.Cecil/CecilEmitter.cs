@@ -53,6 +53,8 @@ namespace XamlX.TypeSystem
                     var cecil = sreField.Name switch
                     {
                         nameof(SreOpCodes.Tailcall) => OpCodes.Tail,
+                        nameof(SreOpCodes.Stelem) => OpCodes.Stelem_Any,
+                        nameof(SreOpCodes.Ldelem) => OpCodes.Ldelem_Any,
                         string name => (OpCode?)typeof(OpCodes).GetField(name)?.GetValue(null),
                         _ => null
                     };
