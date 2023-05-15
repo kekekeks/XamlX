@@ -475,6 +475,22 @@ namespace XamlX.TypeSystem
                 foreach (var i in type.BaseType.GetAllInterfaces())
                     yield return i;
         }
+        
+        public static IEnumerable<IXamlCustomAttribute> GetAllCustomAttributes(this IXamlType type)
+        {
+            foreach (var i in type.CustomAttributes)
+                yield return i;
+            if(type.BaseType!=null)
+                foreach (var i in type.BaseType.GetAllCustomAttributes())
+                {
+                    var usageAttribute = i.Type.CustomAttributes.FirstOrDefault(a => a.Type.FullName == "System.AttributeUsageAttribute");
+                    if (usageAttribute is null
+                        || (usageAttribute.Properties.TryGetValue("Inherited", out var boolean) && boolean is true))
+                    {
+                        yield return i;
+                    }
+                }
+        }
 
         public static IEnumerable<IXamlProperty> GetAllProperties(this IXamlType t)
         {
