@@ -65,7 +65,8 @@ namespace XamlX.TypeSystem
                     ThrowIfSymbolsAreNotMatching = false,
                     SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null,
                     ApplyWindowsRuntimeProjections = false,
-                    MetadataImporterProvider = new CecilMetadataImporterProvider(this)
+                    MetadataImporterProvider = new CecilMetadataImporterProvider(this),
+                    ReflectionImporterProvider = new CecilReflectionImporterProvider()
                 });
 
                 var wrapped = RegisterAssembly(asm);
