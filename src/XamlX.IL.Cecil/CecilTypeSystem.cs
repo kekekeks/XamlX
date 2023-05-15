@@ -30,8 +30,9 @@ namespace XamlX.TypeSystem
                 asm.Assembly.Dispose();
         }
 
-        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name)?.Assembly;
-        CecilAssembly ResolveWrapped(AssemblyNameReference name)
+        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name, true)?.Assembly;
+        public AssemblyNameReference CoerceReference(AssemblyNameReference name) => ResolveWrapped(name, false)?.Assembly?.Name ?? name;
+        private CecilAssembly ResolveWrapped(AssemblyNameReference name, bool throwOnNotFound)
         {
             if (_assemblyCache.TryGetValue(name.FullName, out var rv))
                 return rv;
@@ -41,7 +42,7 @@ namespace XamlX.TypeSystem
             foreach (var asm in _asms)
                 if (asm.Assembly.Name.Name == name.Name)
                     return _assemblyCache[name.FullName] = asm;
-            throw new AssemblyResolutionException(name);
+            return throwOnNotFound ? throw new AssemblyResolutionException(name) : null;
         }
 
         public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters) => Resolve(name);
@@ -63,7 +64,8 @@ namespace XamlX.TypeSystem
                     MetadataResolver = _resolver,
                     ThrowIfSymbolsAreNotMatching = false,
                     SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null,
-                    ApplyWindowsRuntimeProjections = false
+                    ApplyWindowsRuntimeProjections = false,
+                    MetadataImporterProvider = new CecilMetadataImporterProvider(this)
                 });
 
                 var wrapped = RegisterAssembly(asm);
