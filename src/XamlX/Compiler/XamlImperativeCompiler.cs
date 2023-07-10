@@ -35,12 +35,12 @@ namespace XamlX.Compiler
         /// </summary>
         public IXamlMethodBuilder<TBackendEmitter> DefinePopulateMethod(IXamlTypeBuilder<TBackendEmitter> typeBuilder,
             XamlDocument doc,
-            string name, bool isPublic)
+            string name, XamlVisibility visibility)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
             return typeBuilder.DefineMethod(_configuration.WellKnownTypes.Void,
                 new[] { _configuration.TypeMappings.ServiceProvider, rootGrp.Type.GetClrType() },
-                name, isPublic, true, false);
+                name, visibility, true, false);
         }
 
         /// <summary>
@@ -48,11 +48,11 @@ namespace XamlX.Compiler
         /// </summary>
         public IXamlMethodBuilder<TBackendEmitter> DefineBuildMethod(IXamlTypeBuilder<TBackendEmitter> typeBuilder,
             XamlDocument doc,
-            string name, bool isPublic)
+            string name, XamlVisibility visibility)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
             return typeBuilder.DefineMethod(rootGrp.Type.GetClrType(),
-                new[] { _configuration.TypeMappings.ServiceProvider }, name, isPublic, true, false);
+                new[] { _configuration.TypeMappings.ServiceProvider }, name, visibility, true, false);
         }
 
         public void Compile(XamlDocument doc, IXamlTypeBuilder<TBackendEmitter> typeBuilder, IXamlType contextType,
@@ -61,16 +61,16 @@ namespace XamlX.Compiler
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
             Compile(doc, contextType,
-                DefinePopulateMethod(typeBuilder, doc, populateMethodName, true),
+                DefinePopulateMethod(typeBuilder, doc, populateMethodName, XamlVisibility.Public),
                 createMethodName == null ?
                     null :
-                    DefineBuildMethod(typeBuilder, doc, createMethodName, true),
+                    DefineBuildMethod(typeBuilder, doc, createMethodName, XamlVisibility.Public),
                 _configuration.TypeMappings.XmlNamespaceInfoProvider == null ?
                     null :
                     typeBuilder.DefineSubType(_configuration.WellKnownTypes.Object,
-                        namespaceInfoClassName, false),
-                (name, bt) => typeBuilder.DefineSubType(bt, name, false),
-                (s, returnType, parameters) => typeBuilder.DefineDelegateSubType(s, false, returnType, parameters),
+                        namespaceInfoClassName, XamlVisibility.Private),
+                (name, bt) => typeBuilder.DefineSubType(bt, name, XamlVisibility.Private),
+                (s, returnType, parameters) => typeBuilder.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
                 baseUri, fileSource);
         }
 

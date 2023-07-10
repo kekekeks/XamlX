@@ -613,11 +613,22 @@ namespace XamlX.IL
                 _tb = tb;
             }
             
-            public IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic)
+            public IXamlField DefineField(IXamlType type, string name, XamlVisibility visibility, bool isStatic)
             {
-                var f = _tb.DefineField(name, ((SreType) type).Type,
-                    (isPublic ? FieldAttributes.Public : FieldAttributes.Private)
-                    | (isStatic ? FieldAttributes.Static : default(FieldAttributes)));
+                var attrs = default(FieldAttributes);
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => FieldAttributes.Public,
+                    XamlVisibility.Assembly => FieldAttributes.Assembly,
+                    XamlVisibility.Private => FieldAttributes.Private,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
+                if (isStatic)
+                    attrs |= FieldAttributes.Static;
+
+                var f = _tb.DefineField(name, ((SreType) type).Type, attrs);
                 return new SreField(_system, f);
             }
 
@@ -647,17 +658,29 @@ namespace XamlX.IL
             }
             
             public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
-                bool isPublic, bool isStatic,
+                XamlVisibility visibility, bool isStatic,
                 bool isInterfaceImpl, IXamlMethod overrideMethod)
             {
+                var attrs = default(MethodAttributes);
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => MethodAttributes.Public,
+                    XamlVisibility.Assembly => MethodAttributes.Assembly,
+                    XamlVisibility.Private => MethodAttributes.Private,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
+                if (isStatic)
+                    attrs |= MethodAttributes.Static;
+
+                if (isInterfaceImpl)
+                    attrs |= MethodAttributes.NewSlot | MethodAttributes.Virtual;
+
                 var ret = ((SreType) returnType).Type;
                 var largs = (IReadOnlyList<IXamlType>)(args?.ToList()) ?? Array.Empty<IXamlType>();
                 var argTypes = largs.Cast<SreType>().Select(t => t.Type);
-                var m = _tb.DefineMethod(name, 
-                    (isPublic ? MethodAttributes.Public : MethodAttributes.Private)
-                    |(isStatic ? MethodAttributes.Static : default(MethodAttributes))
-                    |(isInterfaceImpl ? MethodAttributes.Virtual|MethodAttributes.NewSlot : default(MethodAttributes))
-                    , ret, argTypes.ToArray());
+                var m = _tb.DefineMethod(name, attrs, ret, argTypes.ToArray());
                 if (overrideMethod != null)
                     _tb.DefineMethodOverride(m, ((SreMethod) overrideMethod).Method);
 
@@ -699,14 +722,18 @@ namespace XamlX.IL
             public IXamlType CreateType() => new SreType(_system, null, _tb.CreateTypeInfo());
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.GeneratedTypes)]
-            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, XamlVisibility visibility)
             {
                 var attrs = TypeAttributes.Class;
-                if (isPublic)
-                    attrs |= TypeAttributes.NestedPublic;
-                else
-                    attrs |= TypeAttributes.NestedPrivate;
-                
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => TypeAttributes.NestedPublic,
+                    XamlVisibility.Assembly => TypeAttributes.NestedAssembly,
+                    XamlVisibility.Private => TypeAttributes.NestedPrivate,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
                 var builder  = _tb.DefineNestedType(name, attrs,
                     ((SreType) baseType).Type);
                 
@@ -716,13 +743,18 @@ namespace XamlX.IL
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.GeneratedTypes)]
             [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = TrimmingMessages.GeneratedTypes)]
             [UnconditionalSuppressMessage("Trimming", "IL2111", Justification = TrimmingMessages.GeneratedTypes)]
-            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
+                IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
             {
                 var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
-                if (isPublic)
-                    attrs |= TypeAttributes.NestedPublic;
-                else
-                    attrs |= TypeAttributes.NestedPrivate;
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => TypeAttributes.NestedPublic,
+                    XamlVisibility.Assembly => TypeAttributes.NestedAssembly,
+                    XamlVisibility.Private => TypeAttributes.NestedPrivate,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
 
                 var builder = _tb.DefineNestedType(name, attrs, typeof(MulticastDelegate));
 
