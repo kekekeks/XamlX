@@ -228,7 +228,7 @@ namespace XamlX.Parsers
 
                         i.Children.Add(new XamlAstXamlPropertyValueNode(newEl.AsLi(_text),
                             new XamlAstNamePropertyReference(newEl.AsLi(_text), ptype, pname, type),
-                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text))));
+                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text)), false));
                     }
                 }
 
@@ -251,7 +251,8 @@ namespace XamlX.Parsers
                                 new XamlAstXmlTypeReference(newEl.AsLi(_text), nodeNs,
                                     pair[0]), pair[1], type
                             ),
-                            ParseValueNodeChildren(newNode)
+                            ParseValueNodeChildren(newNode),
+                            false
                         ));
                     }
                     else
