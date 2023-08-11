@@ -16,7 +16,7 @@ namespace XamlX.IL
         public RuntimeContext(IXamlType definition, IXamlType constructedType,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
             string baseUri, List<IXamlField> staticProviders)
-            : base(definition, constructedType, mappings,
+            : base(definition, constructedType, baseUri, mappings,
             (context, codegen) =>
             {
                 if (staticProviders?.Count > 0)
@@ -378,7 +378,10 @@ namespace XamlX.IL
             Constructor = ctor;
             CreateCallbacks.Add(() => { parentBuilder.CreateType(); });
             
-            EmitPushPopParent(builder, typeSystem);
+            if (ParentListField != null)
+            {
+                EmitPushPopParent(builder, typeSystem);
+            }
             
             CreateAllTypes();
             ContextType = builder.CreateType();
@@ -555,14 +558,16 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ldfld, current)
                 .Emit(OpCodes.Ret);
 
-            enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), new IXamlType[0], "Reset", true, false,
-                    true).Generator
+            enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), new IXamlType[0],
+                    enumeratorObjectType.FullName+".Reset", false, false,
+                    true, enumeratorObjectType.FindMethod(m => m.Name == "Reset")).Generator
                 .Emit(OpCodes.Newobj,
                     typeSystem.FindType("System.NotSupportedException").FindConstructor(new List<IXamlType>()))
                 .Emit(OpCodes.Throw);
-            
+
             var disposeGen = enumeratorBuilder.DefineMethod(typeSystem.FindType("System.Void"), new IXamlType[0], 
-                "Dispose", true, false, true ).Generator;
+                "System.IDisposable.Dispose", false, false, true,
+                typeSystem.GetType("System.IDisposable").FindMethod(m => m.Name == "Dispose")).Generator;
             var disposeRet = disposeGen.DefineLabel();
             disposeGen
                 .Emit(OpCodes.Ldarg_0)
@@ -576,8 +581,9 @@ namespace XamlX.IL
 
             var boolType = typeSystem.GetType("System.Boolean");
             var moveNext = enumeratorBuilder.DefineMethod(boolType, new IXamlType[0],
-                "MoveNext", true,
-                false, true).Generator;
+                enumeratorObjectType.FullName+".MoveNext", false,
+                false, true,
+                enumeratorObjectType.FindMethod(m => m.Name == "MoveNext")).Generator;
 
             
             const int stateInit = 0;

@@ -1,9 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Emit;
-using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
@@ -33,114 +32,288 @@ namespace XamlX.IL.Emitters
                 throw new XamlLoadException("No setters found for property assignment", an);
             return lst;
         }
-        
+
         public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
-            if (!(node is XamlPropertyAssignmentNode an))
+            if (node is not XamlPropertyAssignmentNode an)
                 return null;
 
-            var setters = ValidateAndGetSetters(an);
-            for (var c = 0; c < an.Values.Count - 1; c++)
-            {
-                context.Emit(an.Values[c], codeGen, an.Values[c].Type.GetClrType());
-            }
+            var dynamicValue = an.Values.Last();
+            var dynamicValueType = dynamicValue.Type.GetClrType();
 
-            var value = an.Values.Last();
-            
-            var isValueType = value.Type.GetClrType().IsValueType;
-            // If there is only one available setter or if value is a value type, always use the first one
-            if (setters.Count == 1 || isValueType)
+            var setters = ValidateAndGetSetters(an);
+            RemoveRedundantSetters(dynamicValueType, setters);
+
+            if (setters.Count == 1)
             {
-                var setter = an.PossibleSetters.First();
-                context.Emit(value, codeGen, setter.Parameters.Last());
-                context.Emit(setter, codeGen);
+                var setter = setters[0];
+
+                if (setter is IXamlILOptimizedEmitablePropertySetter optimizedSetter)
+                    optimizedSetter.EmitWithArguments(context, codeGen, an.Values);
+                else
+                {
+                    for (var i = 0; i < an.Values.Count - 1; ++i)
+                        context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
+                    context.Emit(dynamicValue, codeGen, setter.Parameters.Last());
+                    context.Emit(setter, codeGen);
+                }
             }
             else
             {
-                var checkedTypes = new List<IXamlType>();
-                IXamlLabel exit = codeGen.DefineLabel();
-                IXamlLabel next = null;
-                var hadJumps = false;
-                context.Emit(value, codeGen, value.Type.GetClrType());
-                
-                foreach (var setter in setters)
+                var valueTypes = an.Values.Select(x => x.Type.GetClrType()).ToArray();
+                var method = GetOrCreateDynamicSetterMethod(an.Property.DeclaringType, valueTypes, setters, dynamicValue, context);
+
+                for (var i = 0; i < an.Values.Count - 1; ++i)
+                    context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
+                context.Emit(dynamicValue, codeGen, dynamicValueType);
+                codeGen.EmitCall(method);
+            }
+
+            return XamlILNodeEmitResult.Void(1);
+        }
+
+        private static void RemoveRedundantSetters(IXamlType valueType, List<IXamlPropertySetter> setters)
+        {
+            if (setters.Count == 1)
+                return;
+
+            // If the value is a value type, always use the first one
+            if (valueType.IsValueType)
+            {
+                setters.RemoveRange(1, setters.Count - 1);
+                return;
+            }
+
+            for (int index = 0; index < setters.Count;)
+            {
+                var setter = setters[index];
+                var type = setter.Parameters.Last();
+
+                // the value is directly assignable by downcast and the setter allows null: it will always match
+                if (type.IsAssignableFrom(valueType) && setter.BinderParameters.AllowRuntimeNull)
                 {
-                    var type = setter.Parameters.Last();
-                    
-                    // We have already checked this type or its base type
-                    if (checkedTypes.Any(ch => ch.IsAssignableFrom(type)))
-                        continue;
-
-                    if (next != null)
-                    {
-                        codeGen.MarkLabel(next);
-                        next = null;
-                    }
-
-                    IXamlLabel Next() => next ?? (next = codeGen.DefineLabel());
-
-                    var checkNext = false;
-                    if (setter.BinderParameters.AllowRuntimeNull)
-                        checkedTypes.Add(type);
-                    else
-                    {
-                        // Check for null; Also don't add this type to the list of checked ones because of the null check
-                        codeGen
-                            .Dup()
-                            .Brfalse(Next());
-                        checkNext = true;
-                    }
-
-                    // Only do dynamic checks if we know that type is not assignable by downcast 
-                    if (!type.IsAssignableFrom(value.Type.GetClrType()))
-                    {
-                        codeGen
-                            .Dup()
-                            .Isinst(type)
-                            .Brfalse(Next());
-                        checkNext = true;
-                    }
-
-                    if (checkNext)
-                        hadJumps = true;
-                    
-                    ILEmitHelpers.EmitConvert(context, codeGen, value, value.Type.GetClrType(), type);
-                    context.Emit(setter, codeGen);
-                    if (hadJumps)
-                    {
-                        codeGen.Br(exit);
-                    }
-
-                    if(!checkNext)
-                        break;
+                    setters.RemoveRange(index + 1, setters.Count - index - 1);
+                    return;
                 }
+
+                // we have already found a previous setter that matches the value's type or its base type
+                if (setters.Take(index).Any(previous => IsAssignableToWithNullability(setter, previous)))
+                {
+                    setters.RemoveAt(index);
+                    continue;
+                }
+
+                ++index;
+            }
+        }
+
+        private static bool IsAssignableToWithNullability(IXamlPropertySetter from, IXamlPropertySetter to)
+            => to.Parameters.Last().IsAssignableFrom(from.Parameters.Last())
+               && (to.BinderParameters.AllowRuntimeNull || !from.BinderParameters.AllowRuntimeNull);
+
+        private static IXamlMethod GetOrCreateDynamicSetterMethod(
+            IXamlType parentType,
+            IReadOnlyList<IXamlType> valueTypes,
+            IReadOnlyList<IXamlPropertySetter> setters,
+            IXamlLineInfo lineInfo,
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context)
+        {
+            if (!context.TryGetItem(out DynamicSettersCache cache))
+            {
+                var settersType = context.CreateSubType(
+                    "DynamicSetters_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
+                    context.Configuration.WellKnownTypes.Object);
+                cache = new DynamicSettersCache(settersType);
+                context.SetItem(cache);
+                context.AddAfterEmitCallbacks(() => settersType.CreateType());
+            }
+
+            var cacheKey = new SettersCacheKey(parentType, valueTypes, setters);
+
+            if (!cache.MethodByCacheKey.TryGetValue(cacheKey, out var method))
+            {
+                method = cache.SettersType.DefineMethod(
+                    context.Configuration.WellKnownTypes.Void,
+                    new[] { parentType }.Concat(valueTypes),
+                    "DynamicSetter_" + (cache.MethodByCacheKey.Count + 1),
+                    true, true, false);
+
+                var newContext = new ILEmitContext(
+                    method.Generator, context.Configuration, context.EmitMappings, context.RuntimeContext,
+                    null,
+                    (s, type) => cache.SettersType.DefineSubType(type, s, false),
+                    (s, returnType, parameters) => cache.SettersType.DefineDelegateSubType(s, false, returnType, parameters),
+                    context.File,
+                    context.Emitters);
+
+                EmitDynamicSetterMethod(valueTypes, setters, lineInfo, newContext);
+
+                cache.MethodByCacheKey[cacheKey] = method;
+            }
+
+            return method;
+        }
+
+        private static void EmitDynamicSetterMethod(
+            IReadOnlyList<IXamlType> valueTypes,
+            IReadOnlyList<IXamlPropertySetter> setters,
+            IXamlLineInfo lineInfo,
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context)
+        {
+            var codeGen = context.Emitter;
+
+            codeGen.Ldarg_0();
+            for (int i = 0; i < valueTypes.Count; ++i)
+                codeGen.Ldarg(i + 1);
+
+            var dynamicValueType = valueTypes.Last();
+            IXamlPropertySetter firstSetterAllowingNull = null;
+            IXamlLabel next = null;
+
+            void EmitSetterAfterChecks(IXamlPropertySetter setter, IXamlType typeOnStack)
+            {
+                // Convert is needed for T to T? and null to T?, wil be a no-op in other cases
+                ILEmitHelpers.EmitConvert(context, codeGen, lineInfo, typeOnStack, setter.Parameters.Last());
+                context.Emit(setter, codeGen);
+                codeGen.Ret();
+            }
+
+            foreach (var setter in setters)
+            {
+                if (setter.BinderParameters.AllowRuntimeNull)
+                    firstSetterAllowingNull ??= setter;
 
                 if (next != null)
                 {
                     codeGen.MarkLabel(next);
+                    next = null;
+                }
 
-                    if (setters.Any(x => !x.BinderParameters.AllowRuntimeNull))
-                    {
-                        next = codeGen.DefineLabel();
-                        codeGen
-                            .Dup()
-                            .Brtrue(next)
-                            .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
-                                .FindConstructor())
-                            .Throw();
-                        codeGen.MarkLabel(next);
-                    }
+                var parameterType = setter.Parameters.Last();
+                IXamlType typeOnStack = dynamicValueType;
+
+                // Only do dynamic checks if we know that the value is not assignable by downcast
+                if (!parameterType.IsAssignableFrom(dynamicValueType))
+                {
+                    // for Nullable<T>, check if the value is a T, null is handled later
+                    var checkedType = parameterType.IsNullable() ? parameterType.GenericArguments[0] : parameterType;
+
+                    next = codeGen.DefineLabel();
 
                     codeGen
-                        .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
+                        .Dup()
+                        .Isinst(checkedType)
+                        .Brfalse(next);
+
+                    if (checkedType.IsValueType)
+                        codeGen.Unbox_Any(checkedType);
+
+                    typeOnStack = checkedType;
+                }
+                else if (!setter.BinderParameters.AllowRuntimeNull)
+                {
+                    next = codeGen.DefineLabel();
+
+                    codeGen
+                        .Dup()
+                        .Brfalse(next);
+                }
+
+                EmitSetterAfterChecks(setter, typeOnStack);
+
+                if (next == null)
+                    break;
+            }
+
+            if (next != null)
+            {
+                codeGen.MarkLabel(next);
+
+                // the value didn't match any type, but it may be null: either emit a setter allowing null, or throw
+                next = codeGen.DefineLabel();
+                codeGen
+                    .Dup()
+                    .Brtrue(next);
+
+                if (firstSetterAllowingNull != null)
+                    EmitSetterAfterChecks(firstSetterAllowingNull, XamlPseudoType.Null);
+                else
+                {
+                    codeGen
+                        .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
                             .FindConstructor())
                         .Throw();
                 }
 
-                codeGen.MarkLabel(exit);
+                codeGen.MarkLabel(next);
+
+                codeGen
+                    .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
+                        .FindConstructor())
+                    .Throw();
+            }
+        }
+
+        private readonly struct SettersCacheKey : IEquatable<SettersCacheKey>
+        {
+            public IXamlType ParentType { get; }
+            public IReadOnlyList<IXamlType> ValueTypes { get; }
+            public IReadOnlyList<IXamlPropertySetter> Setters { get; }
+
+            private static int GetListHashCode<T>(IReadOnlyList<T> list)
+            {
+                int hashCode = list.Count;
+                for (var i = 0; i < list.Count; ++i)
+                    hashCode = (hashCode * 397) ^ list[i].GetHashCode();
+                return hashCode;
             }
 
-            return XamlILNodeEmitResult.Void(1);
+            private static bool AreListEqual<T>(IReadOnlyList<T> x, IReadOnlyList<T> y)
+            {
+                if (x.Count != y.Count)
+                    return false;
+
+                for (var i = 0; i < x.Count; ++i)
+                {
+                    if (!EqualityComparer<T>.Default.Equals(x[i], y[i]))
+                        return false;
+                }
+
+                return true;
+            }
+
+            public bool Equals(SettersCacheKey other)
+                => ParentType == other.ParentType
+                   && AreListEqual(ValueTypes, other.ValueTypes)
+                   && AreListEqual(Setters, other.Setters);
+
+            public override bool Equals(object obj)
+                => obj is SettersCacheKey other && Equals(other);
+
+            public override int GetHashCode()
+            {
+                var hashCode = ParentType.GetHashCode();
+                hashCode = (hashCode * 397) ^ GetListHashCode(ValueTypes);
+                hashCode = (hashCode * 397) ^ GetListHashCode(Setters);
+                return hashCode;
+            }
+
+            public SettersCacheKey(IXamlType parentType, IReadOnlyList<IXamlType> valueTypes, IReadOnlyList<IXamlPropertySetter> setters)
+            {
+                ParentType = parentType;
+                ValueTypes = valueTypes;
+                Setters = setters;
+            }
+        }
+
+        private sealed class DynamicSettersCache
+        {
+            public IXamlTypeBuilder<IXamlILEmitter> SettersType { get; }
+
+            public Dictionary<SettersCacheKey, IXamlMethodBuilder<IXamlILEmitter>> MethodByCacheKey { get; } = new();
+
+            public DynamicSettersCache(IXamlTypeBuilder<IXamlILEmitter> settersType)
+                => SettersType = settersType;
         }
     }
 }

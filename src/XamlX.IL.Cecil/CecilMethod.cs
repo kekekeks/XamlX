@@ -102,6 +102,9 @@ namespace XamlX.TypeSystem
                 && DeclaringType.Equals(cm.DeclaringType)
                 && Reference.FullName == cm.Reference.FullName;
 
+            public override int GetHashCode() 
+                => (DeclaringType.GetHashCode() * 397) ^ Reference.FullName.GetHashCode();
+
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
                 GenericInstanceMethod instantiation = new GenericInstanceMethod(Reference);

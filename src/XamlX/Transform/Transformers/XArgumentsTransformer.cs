@@ -22,6 +22,9 @@ namespace XamlX.Transform.Transformers
                     return node;
                 ni.Arguments = argDirectives[0].Children.OfType<IXamlAstValueNode>().ToList();
                 ni.Children.Remove(argDirectives[0]);
+
+                // This is needed to remove whitespace-only nodes between actual object elements or text nodes
+                WhitespaceNormalization.RemoveWhitespaceNodes(ni.Arguments);
             }
             return node;
         }

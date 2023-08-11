@@ -7,6 +7,10 @@ using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
+    /// <summary>
+    /// Converts from AST node <see cref="XamlAstXamlPropertyValueNode"/> to <see cref="XamlPropertyAssignmentNode"/>
+    /// for code generation.
+    /// </summary>
 #if !XAMLX_INTERNAL
     public
 #endif
@@ -18,6 +22,7 @@ namespace XamlX.Transform.Transformers
             {
                 var property = valueNode.Property.GetClrProperty();
                 var assignments = new List<XamlPropertyAssignmentNode>();
+
                 foreach (var v in valueNode.Values)
                 {
                     var keyNode = FindAndRemoveKey(v);
@@ -73,6 +78,9 @@ namespace XamlX.Transform.Transformers
                         {
                             bool CanAssign(IXamlAstValueNode value, IXamlType type)
                             {
+                                if (!setter.BinderParameters.AllowAttributeSyntax && valueNode.IsAttributeSyntax)
+                                    return false;
+
                                 // Don't allow x:Null
                                 if (!setter.BinderParameters.AllowXNull
                                     && XamlPseudoType.Null.Equals(value.Type.GetClrType()))

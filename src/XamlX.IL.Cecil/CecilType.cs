@@ -112,10 +112,9 @@ namespace XamlX.TypeSystem
             }
             bool IsAssignableFromCore(IXamlType type)
             {
-                if (!type.IsValueType
-                    && type == XamlPseudoType.Null)
-                    return true;
-                
+                if (type == XamlPseudoType.Null)
+                    return !IsValueType || GenericTypeDefinition?.FullName == "System.Nullable`1";
+
                 if (type.IsValueType 
                     && GenericTypeDefinition?.FullName == "System.Nullable`1"
                     && GenericArguments[0].Equals(type))

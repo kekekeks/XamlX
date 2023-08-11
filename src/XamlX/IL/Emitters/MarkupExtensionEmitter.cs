@@ -36,7 +36,7 @@ namespace XamlX.IL.Emitters
             
             if (me.ProvideValue.Parameters.Count > 0)
                 ilgen
-                    .Emit(OpCodes.Ldloc, context.ContextLocal);
+                    .Ldloc(context.ContextLocal);
 
             if (needProvideValueTarget)
             {
@@ -47,7 +47,7 @@ namespace XamlX.IL.Emitters
                     .Stfld(context.RuntimeContext.PropertyTargetProperty);
             }
 
-            ilgen.EmitCall(me.ProvideValue);
+            ilgen.EmitCall(me.ProvideValue, context);
 
             if (needProvideValueTarget)
             {

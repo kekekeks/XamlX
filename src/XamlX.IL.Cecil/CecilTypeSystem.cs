@@ -30,8 +30,9 @@ namespace XamlX.TypeSystem
                 asm.Assembly.Dispose();
         }
 
-        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name)?.Assembly;
-        CecilAssembly ResolveWrapped(AssemblyNameReference name)
+        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name, true)?.Assembly;
+        public AssemblyNameReference CoerceReference(AssemblyNameReference name) => ResolveWrapped(name, false)?.Assembly?.Name ?? name;
+        private CecilAssembly ResolveWrapped(AssemblyNameReference name, bool throwOnNotFound)
         {
             if (_assemblyCache.TryGetValue(name.FullName, out var rv))
                 return rv;
@@ -41,7 +42,7 @@ namespace XamlX.TypeSystem
             foreach (var asm in _asms)
                 if (asm.Assembly.Name.Name == name.Name)
                     return _assemblyCache[name.FullName] = asm;
-            throw new AssemblyResolutionException(name);
+            return throwOnNotFound ? throw new AssemblyResolutionException(name) : null;
         }
 
         public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters) => Resolve(name);
@@ -62,7 +63,10 @@ namespace XamlX.TypeSystem
                     AssemblyResolver = this,
                     MetadataResolver = _resolver,
                     ThrowIfSymbolsAreNotMatching = false,
-                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null
+                    SymbolReaderProvider = isTarget ? new DefaultSymbolReaderProvider(false) : null,
+                    ApplyWindowsRuntimeProjections = false,
+                    MetadataImporterProvider = new CecilMetadataImporterProvider(this),
+                    ReflectionImporterProvider = new CecilReflectionImporterProvider()
                 });
 
                 var wrapped = RegisterAssembly(asm);
@@ -76,7 +80,7 @@ namespace XamlX.TypeSystem
 
         public IXamlAssembly TargetAssembly { get; private set; }
         public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
-        public IReadOnlyList<IXamlAssembly> Assemblies => _asms.AsReadOnly();
+        public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
         public IXamlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
         public IXamlType FindType(string name)
@@ -96,11 +100,28 @@ namespace XamlX.TypeSystem
 
         public TypeReference GetTypeReference(IXamlType t) => ((ITypeReference)t).Reference;
         public MethodReference GetMethodReference(IXamlMethod t) => ((CecilMethod)t).IlReference;
+        public MethodReference GetMethodReference(IXamlConstructor t) => ((CecilConstructor)t).IlReference;
 
         CecilAssembly FindAsm(AssemblyDefinition d)
         {
             _assemblyDic.TryGetValue(d, out var asm);
             return asm;
+        }
+
+        static string GetTypeReferenceKey(TypeReference reference)
+        {
+            if (reference is GenericParameter gp)
+            {
+                if (gp.Owner is TypeReference tr)
+                    return tr.FullName + "|GenericParameter|" + reference.FullName;
+                else if (gp.Owner is MethodReference mr)
+                    return GetTypeReferenceKey(mr.DeclaringType) + mr.FullName + "|GenericParameter|" +
+                           reference.FullName;
+                else 
+                    throw new ArgumentException("Unable to get key for " + gp.Owner.GetType().FullName);
+            }
+
+            return reference.FullName;
         }
         
         IXamlType Resolve(TypeReference reference)
@@ -124,9 +145,8 @@ namespace XamlX.TypeSystem
                 }
                 else
                 {
-                    var key = reference.FullName;
-                    if (reference is GenericParameter gp)
-                        key = ((TypeReference)gp.Owner).FullName + "|GenericParameter|" + key;
+                    var key = GetTypeReferenceKey(reference);
+
                     if (!_unresolvedTypeCache.TryGetValue(key, out rv))
                         _unresolvedTypeCache[key] =
                             rv = new UnresolvedCecilType(reference);

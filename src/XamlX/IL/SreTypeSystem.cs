@@ -15,7 +15,7 @@ namespace XamlX.IL
     class SreTypeSystem : IXamlTypeSystem
     {
         private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
-        public IReadOnlyList<IXamlAssembly> Assemblies => _assemblies;
+        public IEnumerable<IXamlAssembly> Assemblies => EnumerateList(_assemblies);
         
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
 
@@ -80,6 +80,12 @@ namespace XamlX.IL
             }
 
             return null;
+        }
+
+        private static IEnumerable<T> EnumerateList<T>(IList<T> list)
+        {
+            for (var c = 0; c < list.Count; c++)
+                yield return list[c];
         }
 
         class SreAssembly : IXamlAssembly
@@ -266,13 +272,23 @@ namespace XamlX.IL
             {
                 Type = type;
                 _data = data;
+                object ConvertAttributeValue(object value)
+                {
+                    if (value is Type t)
+                        return system.ResolveType(t);
+                    if (value is CustomAttributeTypedArgument attr)
+                        return attr.Value;
+                    if (value is IEnumerable<CustomAttributeTypedArgument> array)
+                        return array.Select(a => ConvertAttributeValue(a)).ToArray();
+                    return value;
+                }
                 Parameters = data.ConstructorArguments.Select(p =>
-                    p.Value is Type t ? system.ResolveType(t) : p.Value
-                ).ToList();
-                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName, x => x.TypedValue.Value) ??
+                    ConvertAttributeValue(p.Value)).ToList();
+                Properties = data.NamedArguments?.ToDictionary(x => x.MemberName,
+                                 x => ConvertAttributeValue(x.TypedValue.Value)) ??
                              new Dictionary<string, object>();
             }
-            
+
             public bool Equals(IXamlCustomAttribute other)
             {
                 return ((SreCustomAttribute) other)?._data.Equals(_data) == true;
@@ -314,7 +330,11 @@ namespace XamlX.IL
                 _system = system;
             }
 
-            public bool Equals(IXamlMethod other) => ((SreMethod) other)?.Method.Equals(Method) == true;
+            public bool Equals(IXamlMethod other) 
+                => other is SreMethod typedOther && Method == typedOther.Method;
+
+            public override int GetHashCode() 
+                => Method.GetHashCode();
 
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
@@ -404,7 +424,8 @@ namespace XamlX.IL
             }
 
             public override string ToString() => Field.DeclaringType?.FullName + " " + Field.Name;
-            public bool Equals(IXamlField other) => ((SreField) other)?.Field.Equals(Field) == true;
+            public bool Equals(IXamlField other) => other is SreField typedOther && typedOther.Field == Field;
+            public override int GetHashCode() => Field.GetHashCode();
         }
 
         public IXamlILEmitter CreateCodeGen(MethodBuilder mb)
@@ -460,6 +481,18 @@ namespace XamlX.IL
             }
 
             public IXamlILEmitter Emit(OpCode code, long arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, sbyte arg)
+            {
+                _ilg.Emit(code, arg);
+                return this;
+            }
+            
+            public IXamlILEmitter Emit(OpCode code, byte arg)
             {
                 _ilg.Emit(code, arg);
                 return this;
@@ -535,9 +568,11 @@ namespace XamlX.IL
                 }
             }
             
-            class SreLocal : IXamlLocal
+            class SreLocal : IXamlILLocal
             {
                 public LocalBuilder Local { get; }
+
+                public int Index => Local.LocalIndex;
 
                 public SreLocal(LocalBuilder local)
                 {
@@ -652,6 +687,28 @@ namespace XamlX.IL
                 var builder  = _tb.DefineNestedType(name, attrs,
                     ((SreType) baseType).Type);
                 
+                return new SreTypeBuilder(_system, builder);
+            }
+
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            {
+                var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
+                if (isPublic)
+                    attrs |= TypeAttributes.NestedPublic;
+                else
+                    attrs |= TypeAttributes.NestedPrivate;
+
+                var builder = _tb.DefineNestedType(name, attrs, typeof(MulticastDelegate));
+
+                builder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig, CallingConventions.Standard, new[] { typeof(object), typeof(IntPtr) })
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
+                builder.DefineMethod("Invoke",
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                    ((SreType)returnType).Type,
+                    parameterTypes.Select(p => ((SreType)p).Type).ToArray())
+                    .SetImplementationFlags(MethodImplAttributes.Managed | MethodImplAttributes.Runtime);
+
                 return new SreTypeBuilder(_system, builder);
             }
 

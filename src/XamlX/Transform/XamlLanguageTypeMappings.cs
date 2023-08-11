@@ -18,9 +18,24 @@ namespace XamlX.Transform
                 TypeConverterAttributes.Add(tconv);
         }
 
+        public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem, bool useDefault)
+        {
+            if (useDefault)
+            {
+                ServiceProvider = typeSystem.GetType("System.IServiceProvider");
+                TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
+                SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
+                var tconv = typeSystem.GetType("System.ComponentModel.TypeConverterAttribute");
+                if (tconv != null)
+                    TypeConverterAttributes.Add(tconv);
+            }
+        }
+
         public List<IXamlType> XmlnsAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> UsableDuringInitializationAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> ContentAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> WhitespaceSignificantCollectionAttributes { get; set; } = new List<IXamlType>();
+        public List<IXamlType> TrimSurroundingWhitespaceAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> TypeConverterAttributes { get; set; } = new List<IXamlType>();
         public IXamlType ServiceProvider { get; set; }
         public IXamlType TypeDescriptorContext { get; set; }
@@ -30,7 +45,9 @@ namespace XamlX.Transform
         public IXamlType ParentStackProvider { get; set; }
         public IXamlType XmlNamespaceInfoProvider { get; set; }
         public IXamlType UriContextProvider { get; set; }
-        
+        public IXamlType IAddChild { get; set; }
+        public IXamlType IAddChildOfT { get; set; }
+
         public IXamlCustomAttributeResolver CustomAttributeResolver { get; set; }
         
         /// <summary>
@@ -43,6 +60,8 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
+        public IXamlType DeferredContentExecutorCustomizationDefaultTypeParameter { get; set; }
+        public List<string> DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames { get; set; } = new List<string>();
         public string RootObjectProviderIntermediateRootPropertyName { get; set; }
     }
 

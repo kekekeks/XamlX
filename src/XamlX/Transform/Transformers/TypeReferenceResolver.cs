@@ -78,11 +78,20 @@ namespace XamlX.Transform.Transformers
                         foreach (var resolvedNs in resolvedNamespaces)
                         {
                             var rname = resolvedNs.ClrNamespace + "." + formedName;
-                            IXamlType subRes;
+                            IXamlType subRes = null;
                             if (resolvedNs.Assembly != null)
                                 subRes = resolvedNs.Assembly.FindType(rname);
-                            else
+                            else if (resolvedNs.AssemblyName != null)
                                 subRes = context.Configuration.TypeSystem.FindType(rname, resolvedNs.AssemblyName);
+                            else
+                            {
+                                foreach (var assembly in context.Configuration.TypeSystem.Assemblies)
+                                {
+                                    subRes = assembly.FindType(rname);
+                                    if (subRes != null)
+                                        break;
+                                }
+                            }
                             if (subRes != null)
                                 return subRes;
                         }

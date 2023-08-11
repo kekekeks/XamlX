@@ -44,7 +44,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         if (scanner.Token != MeTokenType.EqualSign)
                             throw new MeScannerParseException("Unexpected token " + scanner.Token);
                         var propValue = Read();
-                        rv.Children.Add(new XamlAstXamlPropertyValueNode(li, prop, propValue));
+                        rv.Children.Add(new XamlAstXamlPropertyValueNode(li, prop, propValue, true));
                     }
                     else if (scanner.Token == MeTokenType.String || scanner.Token == MeTokenType.QuotedMarkupExtension
                                                                  || scanner.Token == MeTokenType.Open)
@@ -75,7 +75,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             {
                 
                 if (scanner.Token == MeTokenType.String)
-                    return new XamlAstTextNode(li, scanner.TokenText);
+                    return new XamlAstTextNode(li, scanner.TokenText, true);
                 if (scanner.Token == MeTokenType.Open)
                     return ReadExtension();
                 if (scanner.Token == MeTokenType.QuotedMarkupExtension)

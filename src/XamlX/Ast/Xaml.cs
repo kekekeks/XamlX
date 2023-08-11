@@ -35,19 +35,22 @@ namespace XamlX.Ast
     {
         public IXamlAstPropertyReference Property { get; set; }
         public List<IXamlAstValueNode> Values { get; set; }
+        public bool IsAttributeSyntax { get; }
 
         public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
-            IXamlAstPropertyReference property, IXamlAstValueNode value) : base(lineInfo)
+            IXamlAstPropertyReference property, IXamlAstValueNode value, bool isAttributeSyntax) : base(lineInfo)
         {
             Property = property;
             Values = new List<IXamlAstValueNode> {value};
+            IsAttributeSyntax = isAttributeSyntax;
         }
         
         public XamlAstXamlPropertyValueNode(IXamlLineInfo lineInfo,
-            IXamlAstPropertyReference property, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
+            IXamlAstPropertyReference property, IEnumerable<IXamlAstValueNode> values, bool isAttributeSyntax) : base(lineInfo)
         {
             Property = property;
             Values = values.ToList();
+            IsAttributeSyntax = isAttributeSyntax;
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -88,9 +91,16 @@ namespace XamlX.Ast
     {
         public string Text { get; set; }
 
-        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, IXamlType type = null) : base(lineInfo)
+        /// <summary>
+        /// Indicates whether this value was created from an XML node where xml:space="preserve" was in effect.
+        /// </summary>
+        public bool PreserveWhitespace { get; }
+
+        /// <param name="preserveWhitespace">True if XAML whitespace normalization should NOT be applied to this text value (i.e. xml:space="preserve" or attribute values).</param>
+        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, bool preserveWhitespace = false, IXamlType type = null) : base(lineInfo)
         {
             Text = text;
+            PreserveWhitespace = preserveWhitespace;
             if (type != null)
                 Type = new XamlAstClrTypeReference(lineInfo, type, false);
             else

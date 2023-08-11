@@ -32,7 +32,7 @@ namespace XamlParserTests
         
         
         protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(
-            string xaml)
+            string xaml, bool generateBuildMethod = true)
         {
             var ts = (CecilTypeSystem) (_typeSystem);
             var asm = ts.CreateAndRegisterAssembly("TestAsm", new Version(1, 0),
@@ -51,7 +51,7 @@ namespace XamlParserTests
 
 
             var tb = ts.CreateTypeBuilder(def);
-            Compile(tb, contextTypeDef, xaml);
+            Compile(tb, contextTypeDef, xaml, generateBuildMethod);
             
             var ms = new MemoryStream();
             asm.Write(ms);

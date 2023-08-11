@@ -79,7 +79,7 @@ namespace XamlX.Ast
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Select(x => new XamlDirectCallPropertySetter(x)))
+            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x)))
         {
 
         }
@@ -87,15 +87,36 @@ namespace XamlX.Ast
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
-    class XamlDirectCallPropertySetter : IXamlPropertySetter, IXamlEmitablePropertySetter<IXamlILEmitter>
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlILOptimizedEmitablePropertySetter : IXamlEmitablePropertySetter<IXamlILEmitter>
+    {
+        void EmitWithArguments(
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlILEmitter emitter,
+            IReadOnlyList<IXamlAstValueNode> arguments);
+    }
+
+    class XamlDirectCallPropertySetter : IXamlILOptimizedEmitablePropertySetter, IEquatable<XamlDirectCallPropertySetter>
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
         public IReadOnlyList<IXamlType> Parameters { get; }
-        public void Emit(IXamlILEmitter codegen)
+        
+        public void Emit(IXamlILEmitter emitter)
+            => emitter.EmitCall(_method, true);
+
+        public void EmitWithArguments(
+            XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlILEmitter emitter,
+            IReadOnlyList<IXamlAstValueNode> arguments)
         {
-            codegen.EmitCall(_method, true);
+            for (var i = 0; i < arguments.Count; ++i)
+                context.Emit(arguments[i], emitter, Parameters[i]);
+
+            emitter.EmitCall(_method, true);
         }
 
         public XamlDirectCallPropertySetter(IXamlMethod method)
@@ -103,17 +124,65 @@ namespace XamlX.Ast
             _method = method;
             Parameters = method.ParametersWithThis().Skip(1).ToList();
             TargetType = method.ThisOrFirstParameter();
+
+            bool allowNull = Parameters.Last().AcceptsNull();
+            BinderParameters = new PropertySetterBinderParameters
+            {
+                AllowMultiple = false,
+                AllowXNull = allowNull,
+                AllowRuntimeNull = allowNull
+            };
         }
+
+        public bool Equals(XamlDirectCallPropertySetter other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+
+            return _method.Equals(other._method) && BinderParameters.Equals(other.BinderParameters);
+        }
+
+        public override bool Equals(object obj)
+            => Equals(obj as XamlDirectCallPropertySetter);
+
+        public override int GetHashCode() 
+            => (_method.GetHashCode() * 397) ^ BinderParameters.GetHashCode();
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class PropertySetterBinderParameters
+    class PropertySetterBinderParameters : IEquatable<PropertySetterBinderParameters>
     {
         public bool AllowMultiple { get; set; }
         public bool AllowXNull { get; set; } = true;
         public bool AllowRuntimeNull { get; set; } = true;
+        public bool AllowAttributeSyntax { get; set; } = true;
+
+        public bool Equals(PropertySetterBinderParameters other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+            
+            return AllowMultiple == other.AllowMultiple 
+                   && AllowXNull == other.AllowXNull
+                   && AllowRuntimeNull == other.AllowRuntimeNull;
+        }
+
+        public override bool Equals(object obj) 
+            => Equals(obj as PropertySetterBinderParameters);
+
+        public override int GetHashCode()
+        {
+            int hashCode = AllowMultiple.GetHashCode();
+            hashCode = (hashCode * 397) ^ AllowXNull.GetHashCode();
+            hashCode = (hashCode * 397) ^ AllowRuntimeNull.GetHashCode();
+            return hashCode;
+        }
     }
     
 #if !XAMLX_INTERNAL
@@ -440,7 +509,7 @@ namespace XamlX.Ast
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
         public void Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
-            codeGen.EmitCall(_method, swallowResult);
+            codeGen.EmitCall(_method, context, swallowResult);
         }
     }
 
@@ -573,12 +642,15 @@ namespace XamlX.Ast
 #endif
     class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        private readonly IXamlType _deferredContentCustomizationTypeParameter;
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
-        public XamlDeferredContentNode(IXamlAstValueNode value, 
+        public XamlDeferredContentNode(IXamlAstValueNode value,
+            IXamlType deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
+            _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
             var funcType = config.TypeSystem.GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
@@ -634,13 +706,15 @@ namespace XamlX.Ast
 
             context.Emit(Value, context.Emitter, context.Configuration.WellKnownTypes.Object);
             il.Ret();
+
+            context.ExecuteAfterEmitCallbacks();
         }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + context.GetNextUniqueContextId(), so);
+            var subType = context.CreateSubType("XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(), so);
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
@@ -648,7 +722,9 @@ namespace XamlX.Ast
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, false), file: context.File,
+                createSubType: (s, type) => subType.DefineSubType(type, s, false),
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters),
+                file: context.File,
                 emitters: context.Emitters));
 
             var funcType = Type.GetClrType();
@@ -657,13 +733,18 @@ namespace XamlX.Ast
                 .Ldftn(buildMethod)
                 .Newobj(funcType.Constructors.FirstOrDefault(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
-            
+
             // Allow to save values from the parent context, pass own service provider, etc, etc
             if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
             {
+
+                var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
+                if (_deferredContentCustomizationTypeParameter != null)
+                    customization =
+                        customization.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
                 codeGen
                     .Ldloc(context.ContextLocal)
-                    .EmitCall(context.Configuration.TypeMappings.DeferredContentExecutorCustomization);
+                    .EmitCall(customization);
             }
             
             subType.CreateType();

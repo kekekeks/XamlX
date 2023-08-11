@@ -35,6 +35,14 @@ namespace XamlParserTests
                     {
                         typeSystem.GetType("XamlParserTests.ContentAttribute")
                     },
+                    WhitespaceSignificantCollectionAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.WhitespaceSignificantCollectionAttribute")
+                    },
+                    TrimSurroundingWhitespaceAttributes =
+                    {
+                        typeSystem.GetType("XamlParserTests.TrimSurroundingWhitespaceAttribute")
+                    },
                     UsableDuringInitializationAttributes =
                     {
                         typeSystem.GetType("XamlParserTests.UsableDuringInitializationAttribute")
@@ -47,16 +55,18 @@ namespace XamlParserTests
                     UriContextProvider = typeSystem.GetType("XamlParserTests.ITestUriContext"),
                     ProvideValueTarget = typeSystem.GetType("XamlParserTests.ITestProvideValueTarget"),
                     ParentStackProvider = typeSystem.GetType("XamlX.Runtime.IXamlParentStackProviderV1"),
-                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1")
+                    XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1"),
+                    IAddChild = typeSystem.GetType("XamlParserTests.IAddChild"),
+                    IAddChildOfT = typeSystem.GetType("XamlParserTests.IAddChild`1")
                 }
-            );
+            ); ;
         }
 
         protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);
 
         protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
             => Compile(xaml).create(prov);
-        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml)
+        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml, bool generateBuildMethod)
         {
             var parsed = XamlParser.Parse(xaml);
             var compiler = new XamlILCompiler(
@@ -67,7 +77,7 @@ namespace XamlParserTests
                 EnableIlVerification = true
             };
             compiler.Transform(parsed);
-            compiler.Compile(parsed, builder, context, "Populate", "Build",
+            compiler.Compile(parsed, builder, context, "Populate", generateBuildMethod ? "Build" : null,
                 "XamlNamespaceInfo",
                 "http://example.com/", null);
             return parsed;
@@ -75,12 +85,19 @@ namespace XamlParserTests
         static object s_asmLock = new object();
         
 #if !CECIL
-        public CompilerTestBase() : this(new SreTypeSystem())
+        private static SreTypeSystem CreateTypeSystem()
+        {
+            // Force XamlX.Runtime to be loaded, or else it won't be included in the type system
+            Assembly.Load("XamlX.Runtime");
+            return new SreTypeSystem();
+        }
+
+        public CompilerTestBase() : this(CreateTypeSystem())
         {
             
         }
         
-        protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml)
+        protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml, bool generateBuildMethod = true)
         {
             #if !NETCOREAPP && !NETSTANDARD
             var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
@@ -104,7 +121,7 @@ namespace XamlParserTests
             
             var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
 
-            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml);
+            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml, generateBuildMethod);
 
             var created = t.CreateTypeInfo();
             #if !NETCOREAPP && !NETSTANDARD
@@ -122,9 +139,10 @@ namespace XamlParserTests
             GetCallbacks(Type created)
         {
             var isp = Expression.Parameter(typeof(IServiceProvider));
-            var createCb = Expression.Lambda<Func<IServiceProvider, object>>(
-                Expression.Convert(Expression.Call(
-                    created.GetMethod("Build"), isp), typeof(object)), isp).Compile();
+            var createCb = created.GetMethod("Build") is {} buildMethod
+                ? Expression.Lambda<Func<IServiceProvider, object>>(
+                    Expression.Convert(Expression.Call(buildMethod, isp), typeof(object)), isp).Compile()
+                : null;
             
             var epar = Expression.Parameter(typeof(object));
             var populate = created.GetMethod("Populate");

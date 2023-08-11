@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Xml;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -18,6 +17,7 @@ namespace XamlX.Emit
         public IFileSource File { get; }
         public List<object> Emitters { get; }
 
+        private readonly List<Action> _afterEmitCallbacks = new();
         private IXamlAstNode _currentNode;
 
         public TransformerConfiguration Configuration { get; }
@@ -25,13 +25,16 @@ namespace XamlX.Emit
         public XamlRuntimeContext<TBackendEmitter, TEmitResult> RuntimeContext { get; }
         public IXamlLocal ContextLocal { get; }
         public Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> CreateSubType { get; }
+        public Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> DefineDelegateSubType { get; }
         public TBackendEmitter Emitter { get; }
 
         public XamlEmitContext(TBackendEmitter emitter, TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType, IFileSource file,
+            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
+            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> defineDelegateSubType,
+            IFileSource file,
             IEnumerable<object> emitters)
         {
             File = file;
@@ -41,6 +44,7 @@ namespace XamlX.Emit
             RuntimeContext = runtimeContext;
             ContextLocal = contextLocal;
             CreateSubType = createSubType;
+            DefineDelegateSubType = defineDelegateSubType;
             EmitMappings = emitMappings;
         }
 
@@ -213,6 +217,17 @@ namespace XamlX.Emit
             foundEmitter = false;
             return res;
         }
+
+        public void AddAfterEmitCallbacks(Action callback)
+            => _afterEmitCallbacks.Add(callback);
+
+        public void ExecuteAfterEmitCallbacks()
+        {
+            foreach (var callback in _afterEmitCallbacks)
+                callback();
+
+            _afterEmitCallbacks.Clear();
+        }
     }
 
 #if !XAMLX_INTERNAL
@@ -247,6 +262,14 @@ namespace XamlX.Emit
     interface IXamlCustomEmitMethod<TBackendEmitter> : IXamlMethod
     {
         void EmitCall(TBackendEmitter emitter);
+    }
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlCustomEmitMethodWithContext<TBackendEmitter, TEmitResult> : IXamlMethod
+        where TEmitResult : IXamlEmitResult
+    {
+        void EmitCall(XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter emitter);
     }
 
 #if !XAMLX_INTERNAL

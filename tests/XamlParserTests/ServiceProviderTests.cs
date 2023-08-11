@@ -225,7 +225,7 @@ namespace XamlParserTests
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        [""] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -233,7 +233,7 @@ namespace XamlParserTests
                                 ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
                             }
                         },
-                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr1"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -241,12 +241,56 @@ namespace XamlParserTests
                                 ClrAssemblyName = "netstandard"
                             }
                         },
-                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr2"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "Dummy",
                                 ClrAssemblyName = "XamlParserTests"
+                            }
+                        }
+                    });
+                
+                return "Value";
+            }, null);
+        }
+        
+        [Fact]
+        public void Namespace_Info_Should_Be_Preserved_With_Using_Syntax()
+        {
+            CompileAndRun(@"
+<ServiceProviderTestsClass 
+    xmlns='using:XamlParserTests'
+    xmlns:clr1='using:System.Collections.Generic'
+    xmlns:clr2='using:Dummy'
+    Property='{Callback}'/>", sp =>
+            {
+                var nsList = sp.GetService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                // Direct calls without struct diff because of EntryPointNotFoundException issue before
+                Assert.True(nsList.TryGetValue("clr1", out var xlst));
+                Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
+                Helpers.StructDiff(nsList,
+                    new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
+                    {
+                        [""] = new[]
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "XamlParserTests"
+                            }
+                        },
+                        ["clr1"] = new[]
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "System.Collections.Generic"
+                            }
+                        },
+                        ["clr2"] = new[]
+                        {
+                            new XamlXmlNamespaceInfoV1
+                            {
+                                ClrNamespace = "Dummy"
                             }
                         }
                     });
