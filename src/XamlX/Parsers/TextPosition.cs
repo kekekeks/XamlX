@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using XamlX.Ast;
+﻿using XamlX.Ast;
 
 namespace XamlX.Parsers
 {
@@ -18,25 +15,6 @@ namespace XamlX.Parsers
         public int Character { get; set; }
 
         int IXamlLineInfo.Position { get => Character; set => Character = value; }
-    }
-
-    public static class TextPosition
-    {
-        public static int PositionToOffset(Position position, string data)
-        {
-            return PositionToOffset(position.Line, position.Character, data);
-        }
-
-        public static int PositionToOffset(int line, int character, string data)
-        {
-            int position = 0;
-            for (int i = 0; i < line; i++)
-            {
-                position = FindNextLine(data, position);
-            }
-            position += character;
-            return position;
-        }
 
         public static Position OffsetToPosition(int offset, string data)
         {
@@ -77,83 +55,6 @@ namespace XamlX.Parsers
             }
 
             return new Position(line, character);
-        }
-
-        public static Position AddPosition(Position start, string text)
-        {
-            int foundCharacters = start.Character;
-            int foundLines = 0;
-
-            void NextLine()
-            {
-                foundLines++;
-                foundCharacters = 0;
-            }
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '\r')
-                {
-                    bool hasRn = text.Length > i + 1 && text[i] == '\n';
-                    if (hasRn)
-                    {
-                        i++;
-                    }
-                    NextLine();
-                    continue;
-                }
-                else if (text[i] == '\n')
-                {
-                    NextLine();
-                    continue;
-                }
-                else
-                {
-                    foundCharacters++;
-                }
-            }
-
-            return new Position(start.Line + foundLines, foundCharacters);
-        }
-
-        private static int FindNextLine(string data, int position)
-        {
-            while (position < data.Length)
-            {
-                if (data[position] == '\n')
-                {
-                    position++;
-                    return position;
-                }
-                else if (data[position] == '\r')
-                {
-                    bool foundRN = false;
-                    if (data.Length > position + 1)
-                    {
-                        if (data[position + 1] == '\n')
-                        {
-                            foundRN = true;
-                        }
-                    }
-
-                    if (foundRN)
-                    {
-                        position += 2;
-                        return position;
-                    }
-                    else
-                    {
-                        position += 1;
-                        return position;
-                    }
-                }
-                else
-                {
-                    position += 1;
-                }
-            }
-
-            return position;
         }
     }
 }

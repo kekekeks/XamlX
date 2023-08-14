@@ -322,11 +322,11 @@ namespace XamlX.Parsers
     {
         public static IXamlLineInfo AsLi(this SyntaxNode info, string data)
         {
-            return TextPosition.OffsetToPosition((info).SpanStart + 1, data);
+            return Position.OffsetToPosition((info).SpanStart + 1, data);
         }
         public static IXamlLineInfo AsLi(this IXmlElement info, string data)
         {
-            return TextPosition.OffsetToPosition(((XmlNodeSyntax)info).SpanStart + 1, data);
+            return Position.OffsetToPosition(((XmlNodeSyntax)info).SpanStart + 1, data);
         }
     }
 }
