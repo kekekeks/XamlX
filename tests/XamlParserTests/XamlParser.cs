@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XamlX.Ast;
 using XamlX.Parsers;
 
@@ -9,11 +8,11 @@ namespace XamlX
     {
         public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
         {
-            #if GUILABS
+#if GUILABS
             return GuiLabsXamlParser.Parse(s, compatibilityMappings);
-            #else
+#else
             return XDocumentXamlParser.Parse(s, compatibilityMappings);
-            #endif
+#endif
         }
     }
 }
