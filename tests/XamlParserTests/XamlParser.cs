@@ -7,16 +7,13 @@ namespace XamlX
 {
     public static class XamlParser
     {
-        public static bool UseXDocumentParser { get; set; } = false;
-
         public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
         {
-            if (UseXDocumentParser)
-            {
-                return XDocumentXamlParser.Parse(s, compatibilityMappings);
-            }
-
+            #if GUILABS
             return GuiLabsXamlParser.Parse(s, compatibilityMappings);
+            #else
+            return XDocumentXamlParser.Parse(s, compatibilityMappings);
+            #endif
         }
     }
 }
