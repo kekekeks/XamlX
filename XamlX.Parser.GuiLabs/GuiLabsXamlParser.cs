@@ -124,7 +124,7 @@ namespace XamlX.Parsers
                 return new XamlAstXmlTypeReference(info, xmlns, name);
             }
 
-            List<XamlAstXmlTypeReference> ParseTypeArguments(string args, IXmlElement xel, IXamlLineInfo info)
+            List<XamlAstXmlTypeReference> ParseTypeArguments(string args , IXamlLineInfo info)
             {
                 try
                 {
@@ -155,8 +155,16 @@ namespace XamlX.Parsers
                     {
                         try
                         {
-                            return SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
+
+                            var extensionObject = SystemXamlMarkupExtensionParser.SystemXamlMarkupExtensionParser.Parse(info, ext,
                                 t => ParseTypeName(info, t));
+
+                            if (extensionObject is XamlAstObjectNode astObject)
+                            {
+                                TransformMarkupExtensionNodeProperties(astObject, info);
+                            }
+
+                            return extensionObject;
                         }
                         catch (MeScannerParseException parseEx)
                         {
@@ -165,8 +173,40 @@ namespace XamlX.Parsers
                     }
                 }
 
-                ext = UnescapeXml(ext, false);
-                return new XamlAstTextNode(info, ext);
+                // Do not apply XAML whitespace normalization to attribute values
+                return new XamlAstTextNode(info, ext, true);
+            }
+
+            void TransformMarkupExtensionNodeProperties(XamlAstObjectNode astObject, IXamlLineInfo xel)
+            {
+                var xmlType = (XamlAstXmlTypeReference)astObject.Type;
+
+                foreach (var prop in astObject.Children.ToArray())
+                {
+                    if (prop is XamlAstXamlPropertyValueNode { Property: XamlAstNamePropertyReference propName } valueNode)
+                    {
+                        var (xmlnsVal, xmlnsKey, name) = _ns.GetNsFromName(propName.Name);
+                        if ((xmlnsVal, name) is (XamlNamespaces.Xaml2006, "TypeArguments"))
+                        {
+                            if (valueNode.Values.Single() is not XamlAstTextNode text)
+                                throw new XamlParseException(
+                                    "Unable to resolve TypeArguments. String node with one or multiple type arguments is expected.",
+                                    prop);
+
+                            xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, prop));
+                            astObject.Children.Remove(prop);
+                        }
+                        else if (xmlnsKey != "" && !name.Contains("."))
+                        {
+                            astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
+                            astObject.Children.Remove(prop);
+                        }
+                        else if (valueNode.Values.FirstOrDefault() is XamlAstObjectNode childAstObject)
+                        {
+                            TransformMarkupExtensionNodeProperties(childAstObject, xel);
+                        }
+                    }
+                }
             }
 
             XamlAstObjectNode ParseNewInstance(IXmlElement newEl, bool root)
@@ -203,7 +243,7 @@ namespace XamlX.Parsers
                     // Parse type arguments
                     else if (attrNs == XamlNamespaces.Xaml2006 &&
                                 attrName == "TypeArguments")
-                        type.GenericArguments = ParseTypeArguments(attribute.Value, newEl, attribute.AsLi(_text));
+                        type.GenericArguments = ParseTypeArguments(attribute.Value, attribute.AsLi(_text));
                     // Parse as a directive
                     else if (attrPrefix != "" && !attrName.Contains("."))
                         i.Children.Add(new XamlAstXmlDirective(newEl.AsLi(_text),
