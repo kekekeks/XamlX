@@ -13,7 +13,7 @@ namespace XamlParserTests
     }
     
     
-    public abstract class DictionaryTests : CompilerTestBase
+    public class DictionaryTests : CompilerTestBase
     {
         [Fact]
         public void Compiler_Should_Be_Able_To_Populate_Dictionary_Content()

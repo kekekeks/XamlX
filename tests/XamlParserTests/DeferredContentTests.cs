@@ -14,7 +14,7 @@ namespace XamlParserTests
         public object ObjectProperty { get; set; }
     }
     
-    public abstract class DeferredContentTests : CompilerTestBase
+    public class DeferredContentTests : CompilerTestBase
     {
         DeferredContentTestsClass CompileAndRun(string xaml, CallbackExtensionCallback cb)
             => (DeferredContentTestsClass)Compile(xaml).create(new DictionaryServiceProvider

@@ -39,7 +39,7 @@ namespace XamlParserTests
         public List<ServiceProviderTestsClass> Children { get; } = new List<ServiceProviderTestsClass>(); 
     }
     
-    public abstract class ServiceProviderTests : CompilerTestBase
+    public class ServiceProviderTests : CompilerTestBase
     {
         void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
             => Compile(xaml).create(new DictionaryServiceProvider

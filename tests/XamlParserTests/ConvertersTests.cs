@@ -72,7 +72,7 @@ namespace XamlParserTests
         }
     }
     
-    public abstract class ConvertersTests : CompilerTestBase
+    public class ConvertersTests : CompilerTestBase
     {
 
         public class TestConverter : TypeConverter
