@@ -209,10 +209,15 @@ namespace XamlX.Parsers
                 }
             }
 
-            XamlAstObjectNode ParseNewInstance(IXmlElement newEl, bool root)
+            XamlAstObjectNode ParseNewInstance(IXmlElement newEl, bool root, XmlSpace spaceMode)
             {
                 XamlAstXmlTypeReference type;
                 XamlAstObjectNode i;
+                var declaredMode = newEl.GetDeclaredWhitespaceMode();
+                if (declaredMode != XmlSpace.None)
+                {
+                    spaceMode = declaredMode;
+                }
 
                 (string _, string elementName) = XmlNamespaces.GetPrefixFromName(newEl.Name);
 
@@ -236,7 +241,7 @@ namespace XamlX.Parsers
                             throw ParseError(attribute.AsLi(_text),
                                 "xmlns declarations are only allowed on the root element to preserve memory");
                     }
-                    else if (attrNs.StartsWith("http://www.w3.org"))
+                    else if (attrPrefix== "xml" || attrNs.StartsWith("http://www.w3.org"))
                     {
                         // Silently ignore all xml-parser related attributes
                     }
@@ -291,18 +296,18 @@ namespace XamlX.Parsers
                                 new XamlAstXmlTypeReference(newEl.AsLi(_text), nodeNs,
                                     pair[0]), pair[1], type
                             ),
-                            ParseValueNodeChildren(newNode),
+                            ParseValueNodeChildren(newNode, spaceMode),
                             false
                         ));
                     }
                     else
                     {
-                        i.Children.Add(ParseNewInstance(newNode, false));
+                        i.Children.Add(ParseNewInstance(newNode, false, spaceMode));
                     }
 
                 }
 
-                if (TryParseText(newEl, out var textNode))
+                if (TryParseText(newEl, out var textNode, spaceMode))
                 {
                     i.Children.Add(textNode);
                 }
@@ -310,11 +315,11 @@ namespace XamlX.Parsers
                 return i;
             }
 
-            List<IXamlAstValueNode> ParseValueNodeChildren(IXmlElement newParent)
+            List<IXamlAstValueNode> ParseValueNodeChildren(IXmlElement newParent, XmlSpace spaceMode)
             {
                 var lst = new List<IXamlAstValueNode>();
 
-                if (TryParseText(newParent, out var node))
+                if (TryParseText(newParent, out var node, spaceMode))
                 {
                     lst.Add(node);
                 }
@@ -322,23 +327,26 @@ namespace XamlX.Parsers
                 {
                     foreach (var newNode in newParent.Elements)
                     {
-                        lst.Add(ParseNewInstance(newNode, false));
+                        lst.Add(ParseNewInstance(newNode, false, spaceMode));
                     }
                 }
                 return lst;
             }
 
-            public bool TryParseText(IXmlElement element, out IXamlAstValueNode node)
+            public bool TryParseText(IXmlElement element, out IXamlAstValueNode node, XmlSpace spaceMode)
             {
                 if (element != null && element.AsSyntaxElement.Content.Count == 1 && element.AsSyntaxElement.Content[0] is XmlTextSyntax textContent)
                 {
+                    var preserveWhitespace = spaceMode == XmlSpace.Preserve;
                     string text = UnescapeXml(textContent.Value);
-                    node = new XamlAstTextNode(textContent.AsLi(_text), text.Trim());
+                    node = new XamlAstTextNode(textContent.AsLi(_text), text, preserveWhitespace);
                     return true;
                 }
                 node = null;
                 return false;
             }
+
+
 
             private string UnescapeXml(string input, bool preserveNewlines = true)
             {
@@ -354,7 +362,7 @@ namespace XamlX.Parsers
             Exception ParseError(IXamlLineInfo line, string message) =>
                 new XamlParseException(message, line.Line, line.Position);
 
-            public XamlAstObjectNode Parse() => (XamlAstObjectNode)ParseNewInstance(_newRoot, true);
+            public XamlAstObjectNode Parse() => (XamlAstObjectNode)ParseNewInstance(_newRoot, true, XmlSpace.Default);
         }
     }
 
@@ -367,6 +375,33 @@ namespace XamlX.Parsers
         public static IXamlLineInfo AsLi(this IXmlElement info, string data)
         {
             return Position.OffsetToPosition(((XmlNodeSyntax)info).SpanStart + 1, data);
+        }
+
+        // Get the xml:space mode declared on the node - if it's an element, None otherwise.
+        public static XmlSpace GetDeclaredWhitespaceMode(this IXmlElement node)
+        {
+            if (node is XmlElementSyntax element)
+            {
+                var declaredMode = element.GetAttribute("space", "xml");
+                if (declaredMode == null)
+                {
+                    return XmlSpace.None;
+                }
+
+                switch (declaredMode.Value)
+                {
+                    case "default":
+                        return XmlSpace.Default;
+                    case "preserve":
+                        return XmlSpace.Preserve;
+                    default:
+                        return XmlSpace.None;
+                }
+            }
+            else
+            {
+                return XmlSpace.None;
+            }
         }
     }
 }
