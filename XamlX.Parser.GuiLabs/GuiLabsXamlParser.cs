@@ -173,9 +173,7 @@ namespace XamlX.Parsers
                     }
                 }
 
-                // Do not apply XAML whitespace normalization to attribute values
-                // TODO: need to unescape &#10;&#9; like values
-                return new XamlAstTextNode(info, ext, true);
+                return new XamlAstTextNode(info, UnescapeXml(ext), true);
             }
 
             void TransformMarkupExtensionNodeProperties(XamlAstObjectNode astObject, IXamlLineInfo xel)
@@ -422,7 +420,7 @@ namespace XamlX.Parsers
                         lst.Add(new XamlAstTextNode(textSyntax.AsLi(_text), text, preserveWhitespace));
                     }
                 }
-                if ((newParent as XmlElementSyntax)?.EndTag is SyntaxNode { HasLeadingTrivia: true } endTagSyntax
+                if (newParent is XmlElementSyntax { EndTag: SyntaxNode { HasLeadingTrivia: true } endTagSyntax }
                     && TryParseText(endTagSyntax, endTagSyntax.GetLeadingTrivia(), out var endTagLeadingTrivia,
                         spaceMode))
                 {
@@ -445,21 +443,15 @@ namespace XamlX.Parsers
                 return false;
             }
 
-            private string UnescapeXml(string input, bool preserveNewlines = true)
+            private string UnescapeXml(string input)
             {
-                if (!preserveNewlines)
-                {
-                    input = input.Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " ");
-                }
-
-                return XElement.Parse("<a>" + input + "</a>").Value;
-
+                return XElement.Parse("<a>" + input + "</a>", LoadOptions.PreserveWhitespace).Value;
             }
 
             Exception ParseError(IXamlLineInfo line, string message) =>
                 new XamlParseException(message, line.Line, line.Position);
 
-            public XamlAstObjectNode Parse() => (XamlAstObjectNode)ParseNewInstance(_newRoot, true, XmlSpace.Default);
+            public XamlAstObjectNode Parse() => ParseNewInstance(_newRoot, true, XmlSpace.Default);
         }
     }
 
