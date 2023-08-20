@@ -1,3 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly:InternalsVisibleTo("XamlX.Parser.GuiLabs")]
+#if !XAMLX_INTERNAL
+[assembly: InternalsVisibleTo("XamlX.Parser.GuiLabs")]
+#endif
