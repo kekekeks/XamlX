@@ -55,7 +55,7 @@ namespace XamlParserTests
         [Fact]
         public void Compiler_Should_Fail_To_Build_Xaml_When_Multiple_ContentAttributes_Defined()
         {
-            Assert.Throws<XamlTypeSystemException>(() => Compile(@"
+            Assert.Throws<XamlParseException>(() => Compile(@"
 <SimpleClassWithTwoContentAttributes xmlns='test'>123</SimpleClassWithTwoContentAttributes>"));
         }
 
