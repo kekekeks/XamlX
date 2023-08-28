@@ -74,10 +74,6 @@ namespace XamlX.Transform
             if (_contentPropertyCache.TryGetValue(type.Id, out var found))
                 return found;
 
-            // Check the base type first, we'll need to throw on duplicate Content property later
-            if (type.BaseType != null)
-                found = FindContentProperty(type.BaseType);
-
             foreach (var contentAttributeOnType in GetCustomAttribute(type, TypeMappings.ContentAttributes))
             {
                 if (contentAttributeOnType.Properties.Count == 0)
@@ -94,7 +90,7 @@ namespace XamlX.Transform
 
                     if (found != null && !contentProperty.Equals(found))
                         throw new XamlTypeSystemException(
-                            "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
+                            "Content attribute is declared on multiple properties of " + type.GetFqn());
                     found = contentProperty;
                 }
             }
@@ -105,10 +101,14 @@ namespace XamlX.Transform
                 {
                     if (found != null && !p.Equals(found))
                         throw new XamlTypeSystemException(
-                            "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
+                            "Content attribute is declared on multiple properties of " + type.GetFqn());
                     found = p;
                 }
             }
+
+            // Fall back to a Content attribute found on a base type
+            if ((found == null) && (type.BaseType != null))
+                found = FindContentProperty(type.BaseType);
 
             return _contentPropertyCache[type.Id] = found;
         }
