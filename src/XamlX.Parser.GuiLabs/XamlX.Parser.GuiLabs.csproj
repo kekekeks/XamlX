@@ -10,4 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\XamlX\XamlX.csproj" />
   </ItemGroup>
+
+  <Import Project="../../props/TrimmingEnable.props" />
 </Project>
