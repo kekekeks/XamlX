@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if GUILABS
+using System;
 using System.Collections.Generic;
 using System.Text;
 using XamlX.Parsers;
@@ -32,3 +33,4 @@ namespace XamlParserTests
         }
     }
 }
+#endif
