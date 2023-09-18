@@ -8,6 +8,6 @@
     <PackageReference Include="GuiLabs.Language.Xml" Version="1.2.60" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\XamlX\XamlX.csproj" />
+    <ProjectReference Include="..\XamlX\XamlX.csproj" />
   </ItemGroup>
 </Project>
