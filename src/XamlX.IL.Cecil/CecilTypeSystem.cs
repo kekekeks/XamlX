@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using Mono.Cecil;
@@ -83,6 +84,7 @@ namespace XamlX.TypeSystem
         public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
         public IXamlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
+        [UnconditionalSuppressMessage("Trimming", "IL2092", Justification = TrimmingMessages.Cecil)]
         public IXamlType FindType(string name)
         {
             foreach (var asm in _asms)
@@ -94,6 +96,7 @@ namespace XamlX.TypeSystem
             return null;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2092", Justification = TrimmingMessages.Cecil)]
         public IXamlType FindType(string name, string assembly) 
             => FindAssembly(assembly)?.FindType(name);
 

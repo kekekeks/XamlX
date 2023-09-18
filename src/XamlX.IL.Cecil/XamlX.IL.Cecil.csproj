@@ -12,4 +12,5 @@
       <PackageReference Include="Mono.Cecil" Version="0.10.3" />
     </ItemGroup>
 
+    <Import Project="../../props/TrimmingEnable.props" />
 </Project>
