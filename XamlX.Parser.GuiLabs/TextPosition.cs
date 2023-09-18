@@ -2,7 +2,10 @@
 
 namespace XamlX.Parsers
 {
-    public class Position : IXamlLineInfo
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class Position : IXamlLineInfo
     {
         public Position(int line, int character)
         {
