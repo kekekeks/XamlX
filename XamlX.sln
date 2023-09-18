@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 		LICENSE = LICENSE
 		README.md = README.md
+		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Parser.GuiLabs", "src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj", "{379CA566-4E8B-4776-8D08-796C4B3584A5}"
