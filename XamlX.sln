@@ -32,6 +32,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuilabsParserTests", "tests\GuilabsParserTests\GuilabsParserTests.csproj", "{1F04876C-AD13-43D3-A948-C9AC47B23BB9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5EA90585-646C-4EB8-9C89-185C55561ABD}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		azure-pipelines.yml = azure-pipelines.yml
+		Directory.Build.props = Directory.Build.props
+		LICENSE = LICENSE
+		README.md = README.md
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XamlX.Parser.GuiLabs", "src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj", "{379CA566-4E8B-4776-8D08-796C4B3584A5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{98A75267-53CD-452F-A1EA-7F3F995DFF91}"
+	ProjectSection(SolutionItems) = preProject
+		props\TrimmingEnable.props = props\TrimmingEnable.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +85,14 @@ Global
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DC5F69A-C150-4590-90D7-303B9654011C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F04876C-AD13-43D3-A948-C9AC47B23BB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F04876C-AD13-43D3-A948-C9AC47B23BB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F04876C-AD13-43D3-A948-C9AC47B23BB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F04876C-AD13-43D3-A948-C9AC47B23BB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{379CA566-4E8B-4776-8D08-796C4B3584A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{379CA566-4E8B-4776-8D08-796C4B3584A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{379CA566-4E8B-4776-8D08-796C4B3584A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{379CA566-4E8B-4776-8D08-796C4B3584A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -78,6 +105,9 @@ Global
 		{20135939-0E5C-4906-9097-67F13945D042} = {55203DEB-3DB3-4907-8275-7FBE48185148}
 		{E7E2584A-1406-4B7A-9ADA-430C1FC9AEAE} = {55203DEB-3DB3-4907-8275-7FBE48185148}
 		{0DC5F69A-C150-4590-90D7-303B9654011C} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{1F04876C-AD13-43D3-A948-C9AC47B23BB9} = {55203DEB-3DB3-4907-8275-7FBE48185148}
+		{379CA566-4E8B-4776-8D08-796C4B3584A5} = {4191DEF4-DBC9-4185-A1A6-11E80A7A9B34}
+		{98A75267-53CD-452F-A1EA-7F3F995DFF91} = {5EA90585-646C-4EB8-9C89-185C55561ABD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B701ADE9-89EA-4C9D-BB51-0AA4E8E07217}

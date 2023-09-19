@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
     <PropertyGroup>
-        <TargetFrameworks>netcoreapp2.1;net47;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net6.0;net47;netstandard2.0</TargetFrameworks>
         <DefineConstants>CECIL;USE_NETSTANDARD_BUILD;$(DefineConstants)</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
@@ -10,5 +10,6 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
+        <ProjectReference Include="..\..\src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
     </ItemGroup>
 </Project>

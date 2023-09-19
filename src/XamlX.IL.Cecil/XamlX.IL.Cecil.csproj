@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     </PropertyGroup>
 
   <PropertyGroup>
@@ -13,7 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Mono.Cecil" Version="0.10.3" />
+      <PackageReference Include="Mono.Cecil" Version="0.11.5" />
     </ItemGroup>
 
+    <Import Project="../../props/TrimmingEnable.props" />
 </Project>

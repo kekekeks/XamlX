@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
@@ -132,8 +133,8 @@ namespace XamlX.TypeSystem
     {
         IEnumerable<IXamlAssembly> Assemblies { get; }
         IXamlAssembly FindAssembly(string substring);
-        IXamlType FindType(string name);
-        IXamlType FindType(string name, string assembly);
+        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name);
+        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string assembly);
     }
     
 #if !XAMLX_INTERNAL
@@ -305,7 +306,7 @@ namespace XamlX.TypeSystem
             return name;
         }
         
-        public static IXamlType GetType(this IXamlTypeSystem sys, string type)
+        public static IXamlType GetType(this IXamlTypeSystem sys, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string type)
         {
             var f = sys.FindType(type);
             if (f == null)
