@@ -21,12 +21,19 @@ namespace XamlX.TypeSystem
             TypeReference GetReference(IXamlType type) =>
                 Definition.Module.ImportReference(((ITypeReference) type).Reference);
             
-            public IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic)
+            public IXamlField DefineField(IXamlType type, string name, XamlVisibility visibility, bool isStatic)
             {
                 var r = GetReference(type);
                 var attrs = default(FieldAttributes);
-                if (isPublic)
-                    attrs |= FieldAttributes.Public;
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => FieldAttributes.Public,
+                    XamlVisibility.Assembly => FieldAttributes.Assembly,
+                    XamlVisibility.Private => FieldAttributes.Private,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
                 if (isStatic)
                     attrs |= FieldAttributes.Static;
 
@@ -43,12 +50,19 @@ namespace XamlX.TypeSystem
                 _interfaces = null;
             }
 
-            public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
-                bool isInterfaceImpl, IXamlMethod overrideMethod = null)
+            public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
+                XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod overrideMethod = null)
             {
                 var attrs = default(MethodAttributes);
-                if (isPublic)
-                    attrs |= MethodAttributes.Public;
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => MethodAttributes.Public,
+                    XamlVisibility.Assembly => MethodAttributes.Assembly,
+                    XamlVisibility.Private => MethodAttributes.Private,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
                 if (isStatic)
                     attrs |= MethodAttributes.Static;
 
@@ -105,22 +119,36 @@ namespace XamlX.TypeSystem
 
             public IXamlType CreateType() => this;
 
-            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineSubType(IXamlType baseType, string name, XamlVisibility visibility)
             {
-                var td = new TypeDefinition("", name,
-                    isPublic ? TypeAttributes.NestedPublic : TypeAttributes.NestedPrivate, GetReference(baseType));
+                var attrs = TypeAttributes.Class;
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => TypeAttributes.NestedPublic,
+                    XamlVisibility.Assembly => TypeAttributes.NestedAssembly,
+                    XamlVisibility.Private => TypeAttributes.NestedPrivate,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
+
+                var td = new TypeDefinition("", name, attrs, GetReference(baseType));
 
                 Definition.NestedTypes.Add(td);
                 return new CecilTypeBuilder(TypeSystem, (CecilAssembly) Assembly, td);
             }
 
-            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
+            public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
+                IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
             {
                 var attrs = TypeAttributes.Class | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoLayout;
-                if (isPublic)
-                    attrs |= TypeAttributes.NestedPublic;
-                else
-                    attrs |= TypeAttributes.NestedPrivate;
+
+                attrs |= visibility switch
+                {
+                    XamlVisibility.Public => TypeAttributes.NestedPublic,
+                    XamlVisibility.Assembly => TypeAttributes.NestedAssembly,
+                    XamlVisibility.Private => TypeAttributes.NestedPrivate,
+                    _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
+                };
 
                 var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.FindType("System.MulticastDelegate")));
 
@@ -139,7 +167,7 @@ namespace XamlX.TypeSystem
                 foreach (var param in parameterTypes)
                 {
                     invoke.Parameters.Add(new ParameterDefinition(GetReference(param)));
-                };
+                }
 
                 return new CecilTypeBuilder(TypeSystem, (CecilAssembly)Assembly, builder);
             }

@@ -22,8 +22,8 @@ namespace XamlX.IL
             var nsInfoType = roDictionaryType.GenericArguments[1].GenericArguments[0];
 
             typeBuilder.AddInterfaceImplementation(nsInfoProviderType);
-            var namespacesField = typeBuilder.DefineField(roDictionaryType, "_xmlNamespaces", false, false);
-            var singletonField = typeBuilder.DefineField(nsInfoProviderType, "Singleton", true, true);
+            var namespacesField = typeBuilder.DefineField(roDictionaryType, "_xmlNamespaces", XamlVisibility.Private, false);
+            var singletonField = typeBuilder.DefineField(nsInfoProviderType, "Singleton", XamlVisibility.Public, true);
 
             IXamlMethod EmitCreateNamespaceInfoMethod()
             {
@@ -32,7 +32,7 @@ namespace XamlX.IL
                     nsInfoType,
                     new[] { configuration.WellKnownTypes.String, configuration.WellKnownTypes.String },
                     "CreateNamespaceInfo",
-                    false, true, false);
+                    XamlVisibility.Private, true, false);
 
                 // return new XamlXmlNamespaceInfoV1() { ClrNamespace = arg0, ClrAssemblyName = arg1 }
                 method.Generator
@@ -57,7 +57,7 @@ namespace XamlX.IL
                     roDictionaryType,
                     null,
                     "CreateNamespaces",
-                    false, true, false);
+                    XamlVisibility.Private, true, false);
 
                 var roListType = configuration.TypeSystem.FindType("System.Collections.Generic.IReadOnlyList`1")
                     .MakeGenericType(nsInfoType);
@@ -128,7 +128,7 @@ namespace XamlX.IL
                     roDictionaryType,
                     null,
                     getNamespacesInterfaceMethod.Name,
-                    true, false, true);
+                    XamlVisibility.Public, false, true);
 
                 var hasValueLabel = method.Generator.DefineLabel();
 
