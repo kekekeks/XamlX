@@ -195,7 +195,7 @@ namespace XamlX.Parsers
                             xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, prop));
                             astObject.Children.Remove(prop);
                         }
-                        else if (!string.IsNullOrEmpty(xmlnsKey) && !name.Contains("."))
+                        else if (!string.IsNullOrEmpty(xmlnsKey) && !name.Contains('.'))
                         {
                             astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
                             astObject.Children.Remove(prop);
@@ -220,7 +220,7 @@ namespace XamlX.Parsers
 
                 (string _, string elementName) = XmlNamespaces.GetPrefixFromName(newEl.Name);
 
-                if (elementName.Contains("."))
+                if (elementName.Contains('.'))
                     throw ParseError(newEl.AsLi(_text), "Dots aren't allowed in type names");
                 type = GetTypeReference(newEl);
                 i = new XamlAstObjectNode(newEl.AsLi(_text), type);
@@ -249,7 +249,7 @@ namespace XamlX.Parsers
                                 attrName == "TypeArguments")
                         type.GenericArguments = ParseTypeArguments(attribute.Value, attribute.AsLi(_text));
                     // Parse as a directive
-                    else if (!string.IsNullOrEmpty(attrPrefix) && !attrName.Contains("."))
+                    else if (!string.IsNullOrEmpty(attrPrefix) && !attrName.Contains('.'))
                         i.Children.Add(new XamlAstXmlDirective(newEl.AsLi(_text),
                             attrNs, attrName, new[]
                             {
@@ -262,7 +262,7 @@ namespace XamlX.Parsers
                         var pname = attrName;
                         var ptype = i.Type;
 
-                        if (pname.Contains("."))
+                        if (pname.Contains('.'))
                         {
                             var parts = pname.Split(new[] { '.' }, 2);
                             pname = parts[1];
@@ -292,7 +292,7 @@ namespace XamlX.Parsers
 
                         if (!_ns.IsIgnorable(nodeNs))
                         {
-                            if (nodeName.Contains("."))
+                            if (nodeName.Contains('.'))
                             {
                                 if (newNode.Attributes.Any())
                                     throw ParseError(newNode.AsLi(_text),

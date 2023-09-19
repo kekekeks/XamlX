@@ -26,7 +26,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
         public XamlAstNamePropertyReference ResolvePropertyName(string pname)
         {
-            if (pname.Contains("."))
+            if (pname.Contains('.'))
             {
                 var parts = pname.Split(new[] { '.' }, 2);
                 var decraringType = _typeResolver(parts[0]);

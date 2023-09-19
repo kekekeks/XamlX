@@ -254,7 +254,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 value = value.Substring(2);
             } 
             
-            if (!value.Contains("\\"))
+            if (!value.Contains('\\'))
             {
                 return value;
             }
