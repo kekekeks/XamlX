@@ -15,4 +15,7 @@ internal static class TrimmingMessages
         "This code references generated types that cannot be trimmed.";
 
     public const string Cecil = "Cecil is not getting trimmed.";
+    
+    public const string DynamicXamlReference =
+        "x:Class directive type and XAML dependencies are referenced dynamically and might be trimmed.";
 }

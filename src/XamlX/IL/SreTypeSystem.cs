@@ -10,6 +10,7 @@ using XamlX.TypeSystem;
 #if !XAMLX_NO_SRE
 namespace XamlX.IL
 {
+    [RequiresUnreferencedCode(XamlX.TrimmingMessages.DynamicXamlReference)]
 #if !XAMLX_INTERNAL
     public
 #endif
