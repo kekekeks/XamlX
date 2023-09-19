@@ -46,7 +46,7 @@ namespace XamlX.Parsers
                     namespaceAliases[attr.name] = attr.Value;
                 }
 
-                if (attr.prefix == "" && attr.name == "xmlns")
+                if (string.IsNullOrEmpty(attr.prefix) && attr.name == "xmlns")
                 {
                     namespaceAliases[""] = attr.Value;
                 }
@@ -195,7 +195,7 @@ namespace XamlX.Parsers
                             xmlType.GenericArguments.AddRange(ParseTypeArguments(text.Text, prop));
                             astObject.Children.Remove(prop);
                         }
-                        else if (xmlnsKey != "" && !name.Contains("."))
+                        else if (!string.IsNullOrEmpty(xmlnsKey) && !name.Contains("."))
                         {
                             astObject.Children.Add(new XamlAstXmlDirective(prop, xmlnsVal, name, valueNode.Values));
                             astObject.Children.Remove(prop);
@@ -233,7 +233,7 @@ namespace XamlX.Parsers
                         continue;
                     }
                     if (attrNs == "http://www.w3.org/2000/xmlns/" || attrPrefix == "xmlns" ||
-                        (attrPrefix == "" && attrName == "xmlns"))
+                        (string.IsNullOrEmpty(attrPrefix) && attrName == "xmlns"))
                     {
 
                         if (!root)
@@ -249,7 +249,7 @@ namespace XamlX.Parsers
                                 attrName == "TypeArguments")
                         type.GenericArguments = ParseTypeArguments(attribute.Value, attribute.AsLi(_text));
                     // Parse as a directive
-                    else if (attrPrefix != "" && !attrName.Contains("."))
+                    else if (!string.IsNullOrEmpty(attrPrefix) && !attrName.Contains("."))
                         i.Children.Add(new XamlAstXmlDirective(newEl.AsLi(_text),
                             attrNs, attrName, new[]
                             {
@@ -266,7 +266,7 @@ namespace XamlX.Parsers
                         {
                             var parts = pname.Split(new[] { '.' }, 2);
                             pname = parts[1];
-                            var ns = attrPrefix == "" ? _ns.DefaultNamespace : attrNs;
+                            var ns = string.IsNullOrEmpty(attrPrefix) ? _ns.DefaultNamespace : attrNs;
                             ptype = new XamlAstXmlTypeReference(newEl.AsLi(_text), ns, parts[0]);
                         }
 
