@@ -718,12 +718,12 @@ namespace XamlX.Ast
             var buildMethod = subType.DefineMethod(so, new[]
             {
                 isp
-            }, "Build", true, true, false);
+            }, "Build", XamlVisibility.Public, true, false);
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, false),
-                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, false, returnType, parameters),
+                createSubType: (s, type) => subType.DefineSubType(type, s, XamlVisibility.Private),
+                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
                 file: context.File,
                 emitters: context.Emitters));
 

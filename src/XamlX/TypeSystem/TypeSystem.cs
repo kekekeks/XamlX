@@ -165,19 +165,30 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
+    enum XamlVisibility
+    {
+        Public,
+        Assembly,
+        Private
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
     interface IXamlTypeBuilder<TBackendEmitter> : IXamlType
     {
-        IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic);
+        IXamlField DefineField(IXamlType type, string name, XamlVisibility visibility, bool isStatic);
         void AddInterfaceImplementation(IXamlType type);
 
-        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
-            bool isInterfaceImpl, IXamlMethod overrideMethod = null);
+        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
+            XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod overrideMethod = null);
 
         IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
         IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
-        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
-        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
+        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, XamlVisibility visibility);
+        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
+            IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 

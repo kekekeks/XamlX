@@ -136,13 +136,13 @@ namespace XamlX.IL.Emitters
                     context.Configuration.WellKnownTypes.Void,
                     new[] { parentType }.Concat(valueTypes),
                     "DynamicSetter_" + (cache.MethodByCacheKey.Count + 1),
-                    true, true, false);
+                    XamlVisibility.Public, true, false);
 
                 var newContext = new ILEmitContext(
                     method.Generator, context.Configuration, context.EmitMappings, context.RuntimeContext,
                     null,
-                    (s, type) => cache.SettersType.DefineSubType(type, s, false),
-                    (s, returnType, parameters) => cache.SettersType.DefineDelegateSubType(s, false, returnType, parameters),
+                    (s, type) => cache.SettersType.DefineSubType(type, s, XamlVisibility.Private),
+                    (s, returnType, parameters) => cache.SettersType.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
                     context.File,
                     context.Emitters);
 

@@ -1,6 +1,6 @@
 # This file is the top-most EditorConfig file
 root = true
-﻿[*.cs]
+[*.cs]
 
 # CS0162: Remove unreachable code
 dotnet_diagnostic.CS0162.severity = error
