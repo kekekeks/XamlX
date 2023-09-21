@@ -127,7 +127,9 @@ namespace XamlX.IL
             [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
             public void Init()
             {
-                var types = Assembly.GetExportedTypes().Select(t => _system.ResolveType(t)).ToList();
+                var types = Assembly.GetTypes()
+                    .Where(t => t.IsPublic || t.IsInternal())
+                    .Select(t => _system.ResolveType(t)).ToList();
                 Types = types;
                 _typeDic = types.ToDictionary(t => t.Type.FullName);
             }
