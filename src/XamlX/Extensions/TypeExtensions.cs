@@ -5,7 +5,7 @@
 /// </summary>
 internal static class TypeExtensions
 {
-    public static bool IsInternal(this Type t) => !t.IsVisible
+    public static bool IsTopLevelInternal(this Type t) => !t.IsVisible
             && !t.IsPublic
             && t.IsNotPublic
             && !t.IsNested
@@ -15,32 +15,4 @@ internal static class TypeExtensions
             && !t.IsNestedAssembly
             && !t.IsNestedFamORAssem
             && !t.IsNestedFamANDAssem;
-
-    // only nested types can be declared "protected"
-    public static bool IsProtected(this Type t) => !t.IsVisible
-            && !t.IsPublic
-            && !t.IsNotPublic
-            && t.IsNested
-            && !t.IsNestedPublic
-            && t.IsNestedFamily
-            && !t.IsNestedPrivate
-            && !t.IsNestedAssembly
-            && !t.IsNestedFamORAssem
-            && !t.IsNestedFamANDAssem;
-
-    // only nested types can be declared "private"
-    public static bool IsPrivate(Type t)
-    {
-        return
-            !t.IsVisible
-            && !t.IsPublic
-            && !t.IsNotPublic
-            && t.IsNested
-            && !t.IsNestedPublic
-            && !t.IsNestedFamily
-            && t.IsNestedPrivate
-            && !t.IsNestedAssembly
-            && !t.IsNestedFamORAssem
-            && !t.IsNestedFamANDAssem;
-    }
 }
