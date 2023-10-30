@@ -1,5 +1,4 @@
 using System.Linq;
-using Mono.Cecil;
 using XamlX.TypeSystem;
 using Xunit;
 
@@ -22,6 +21,7 @@ namespace XamlParserTests
     public class CecilTestType
     {
         public GenericType<string> GenericStringField;
+        public string[] ArrayElementType;
     }
     
     public class CecilTests : CompilerTestBase
@@ -48,7 +48,15 @@ namespace XamlParserTests
             Assert.Equal("System.String", p.Getter.ReturnType.FullName);
             Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
 
+        }
 
+        [Fact]
+        public void ArrayElementType_Is_Correctly_Handled()
+        {
+            var wut = Configuration.TypeSystem.GetType("XamlParserTests.CecilTestType");
+            var af = wut.Fields.First(x => x.Name == nameof(CecilTestType.ArrayElementType));
+            Assert.True(af.FieldType?.IsArray);
+            Assert.Equal("System.String", af.FieldType.ArrayElementType?.FullName);
         }
 
         [Fact]
