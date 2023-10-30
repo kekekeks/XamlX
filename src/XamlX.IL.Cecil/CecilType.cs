@@ -157,7 +157,7 @@ namespace XamlX.TypeSystem
 
             public IXamlType ArrayElementType =>
                 _arrayType ?? (_arrayType =
-                    IsArray ? TypeSystem.Resolve(Definition) : null);
+                    IsArray ? TypeSystem.Resolve(Reference.GetElementType()) : null);
 
             public IXamlType MakeArrayType(int dimensions) => TypeSystem.Resolve(Reference.MakeArrayType(dimensions));
 
