@@ -17,10 +17,6 @@ class XamlDiagnosticsHandler
     internal XamlDiagnosticSeverity ReportDiagnostic(XamlDiagnostic diagnostic)
     {
         var severity = HandleDiagnostic?.Invoke(diagnostic) ?? diagnostic.Severity;
-        if (severity > diagnostic.Severity)
-        {
-            diagnostic = diagnostic with { Severity = severity };
-        }
-        return diagnostic.Severity;
+        return severity > diagnostic.MinSeverity ? severity : diagnostic.MinSeverity;
     }
 }

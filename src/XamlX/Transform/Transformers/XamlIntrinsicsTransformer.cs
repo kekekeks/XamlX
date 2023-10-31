@@ -82,10 +82,10 @@ namespace XamlX.Transform.Transformers
 
                     var tmpair = typeAndMember.Split(new[] {'.'}, 2);
                     if (tmpair.Length != 2)
-                        return context.ReportTransformError($"Unable to parse {tmpair} as 'type.member'", textNode, ni);
+                        throw new XamlTransformException($"Unable to parse {typeAndMember} as 'type.member'", textNode);
                     
                     if (!context.NamespaceAliases.TryGetValue(ns, out var resolvedNs))
-                        return context.ReportTransformError($"Unable to resolve namespace {ns}", textNode, node);
+                        throw new XamlTransformException($"Unable to resolve namespace {ns}", textNode);
                     
                     return new XamlStaticExtensionNode(ni,
                         new XamlAstXmlTypeReference(ni, resolvedNs, tmpair[0], xml.GenericArguments),

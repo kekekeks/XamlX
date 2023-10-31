@@ -64,7 +64,7 @@ namespace XamlX.Transform
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
-            DiagnosticsHandler = diagnosticsHandler;
+            DiagnosticsHandler = diagnosticsHandler ?? new XamlDiagnosticsHandler();
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 

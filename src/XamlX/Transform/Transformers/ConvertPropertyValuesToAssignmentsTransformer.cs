@@ -118,7 +118,8 @@ namespace XamlX.Transform.Transformers
                             return new XamlPropertyAssignmentNode(v, property, matchedSetters, arguments);
 
                         // Current node was already skipped due an error, and it always will have unknown type, so ignore it.
-                        if (v.Type?.GetClrType() == XamlPseudoType.Unknown)
+                        if (property.DeclaringType == XamlPseudoType.Unknown
+                            || v.Type?.GetClrType() == XamlPseudoType.Unknown)
                             return null;
 
                         throw new XamlLoadException(

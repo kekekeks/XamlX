@@ -104,8 +104,7 @@ namespace XamlX.Transform.Transformers
                 return new XamlAstClrTypeReference(lineInfo, found,
                     isMarkupExtension || found.Name.EndsWith("Extension"));
 
-            return context.ReportError<XamlAstClrTypeReference>(
-                XamlXDiagnosticCode.TypeSystemError, $"Unable to resolve type {name} from namespace {xmlns}", lineInfo, null);
+            throw new XamlTransformException($"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
         }
 
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
@@ -116,7 +115,7 @@ namespace XamlX.Transform.Transformers
             var (shortNs, name) = pair.Length == 1 ? ("", pair[0]) : (pair[0], pair[1]);
             if (!context.NamespaceAliases.TryGetValue(shortNs, out var xmlns))
             {
-                return context.ReportTransformError<XamlAstClrTypeReference>($"Unable to resolve type namespace alias {shortNs}", lineInfo, null);
+                throw new XamlTransformException($"Unable to resolve type namespace alias {shortNs}", lineInfo);
             }
 
             return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo);

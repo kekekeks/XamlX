@@ -22,8 +22,8 @@ namespace XamlX.Transform
             XamlDocument xamlDocument)
         {
             Configuration = configuration;
-            NamespaceAliases = xamlDocument.NamespaceAliases;
-            Document = xamlDocument.Document;
+            NamespaceAliases = xamlDocument?.NamespaceAliases ?? new();
+            Document = xamlDocument?.Document ?? "";
         }
 
 #if NET6_0_OR_GREATER
@@ -67,7 +67,7 @@ namespace XamlX.Transform
                     if (outputNode is null)
                     {
                         throw new InvalidOperationException(
-                            $"Visitor \"{GetVisitorInfo}\" returned null IXamlAstNode.");
+                            $"Visitor \"{GetVisitorInfo()}\" returned null IXamlAstNode.");
                     }
                     return outputNode;
                 }
@@ -83,8 +83,8 @@ namespace XamlX.Transform
                     }
                     else
                     {
-                        throw new XamlParseException(
-                            $"Internal compiler error while transforming node \"{node.GetType().Name}\n" + e.Message, node, e)
+                        throw new XamlTransformException(
+                            $"Internal compiler error while transforming node \"{node.GetType().Name}\n" + e.Message, node, innerException: e)
                         {
                             Document = _context.Document
                         };
