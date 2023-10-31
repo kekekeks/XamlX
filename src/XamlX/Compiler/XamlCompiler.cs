@@ -46,6 +46,7 @@ namespace XamlX.Compiler
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ApplyWhitespaceNormalization(),
+                    new StaticIntrinsicsPostProcessTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()
                 };
