@@ -222,6 +222,7 @@ namespace XamlX.Transform
         public IXamlType CultureInfo { get; }
         public IXamlType IFormatProvider { get; }
         public IXamlType Delegate { get; }
+        public IXamlType ObsoleteAttribute { get; }
 
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
         {
@@ -239,6 +240,7 @@ namespace XamlX.Transform
             IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
             NullableT = typeSystem.GetType("System.Nullable`1");
             Delegate = typeSystem.GetType("System.Delegate");
+            ObsoleteAttribute = typeSystem.GetType("System.ObsoleteAttribute");
         }
     }
 }

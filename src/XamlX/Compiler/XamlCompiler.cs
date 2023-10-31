@@ -46,6 +46,8 @@ namespace XamlX.Compiler
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ApplyWhitespaceNormalization(),
+                    // Should happen before we split on clr and xaml assignments
+                    new ObsoleteWarningsTransformer(),
                     new StaticIntrinsicsPostProcessTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()
