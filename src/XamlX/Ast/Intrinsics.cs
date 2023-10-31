@@ -175,12 +175,18 @@ namespace XamlX.Ast
 #endif
     class XamlRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        private IXamlAstTypeReference _type;
+
         public XamlRootObjectNode(XamlAstObjectNode root) : base(root)
         {
-            Type = root.Type;
+            Type = root.Type ?? throw new InvalidOperationException("XamlRootObjectNode.Type cannot be null.");
         }
 
-        public IXamlAstTypeReference Type { get; set; }
+        public IXamlAstTypeReference Type
+        {
+            get => _type;
+            set => _type = value ?? throw new InvalidOperationException("XamlAstObjectNode.Type cannot be null.");
+        }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {

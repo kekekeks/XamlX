@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.TypeSystem;
@@ -65,12 +66,18 @@ namespace XamlX.Ast
 #endif
     class XamlAstObjectNode : XamlAstNode, IXamlAstValueNode
     {
+        private IXamlAstTypeReference _type;
+
         public XamlAstObjectNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
         {
             Type = type;
         }
 
-        public IXamlAstTypeReference Type { get; set; }
+        public IXamlAstTypeReference Type
+        {
+            get => _type;
+            set => _type = value ?? throw new InvalidOperationException("XamlAstObjectNode.Type cannot be null.");
+        }
         public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
         public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
 
