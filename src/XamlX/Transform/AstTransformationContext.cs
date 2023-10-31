@@ -1,73 +1,116 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Xml;
 using XamlX.Ast;
-using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
 #if !XAMLX_INTERNAL
     public
 #endif
-    class AstTransformationContext : XamlContextBase
+        class AstTransformationContext : XamlContextBase
     {
-        public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();      
+        public virtual string Document { get; }
+        public Dictionary<string, string> NamespaceAliases { get; set; }
         public TransformerConfiguration Configuration { get; }
         public IXamlAstValueNode RootObject { get; set; }
-        public bool StrictMode { get; }
 
-        public IXamlAstNode Error(IXamlAstNode node, Exception e)
-        {
-            if (StrictMode)
-                throw e;
-            return node;
-        }
-
-        public IXamlAstNode ParseError(string message, IXamlAstNode node) =>
-            Error(node, new XamlParseException(message, node));
-        
-        public IXamlAstNode ParseError(string message, IXamlAstNode offender, IXamlAstNode ret) =>
-            Error(ret, new XamlParseException(message, offender));
-
-        public AstTransformationContext(TransformerConfiguration configuration,
-            Dictionary<string, string> namespaceAliases, bool strictMode = true)
+        public AstTransformationContext(
+            TransformerConfiguration configuration,
+            XamlDocument xamlDocument)
         {
             Configuration = configuration;
-            NamespaceAliases = namespaceAliases;
-            StrictMode = strictMode;
+            NamespaceAliases = xamlDocument.NamespaceAliases;
+            Document = xamlDocument.Document;
         }
 
-        class Visitor : IXamlAstVisitor
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+        public XamlDiagnosticSeverity ReportDiagnostic(XamlDiagnostic diagnostic, bool throwOnFatal = true)
+        {
+            if (diagnostic.Document is null)
+            {
+                diagnostic = diagnostic with { Document = Document };
+            }
+            
+            var severity = Configuration.DiagnosticsHandler.ReportDiagnostic(diagnostic);
+            if (throwOnFatal && severity >= XamlDiagnosticSeverity.Fatal)
+            {
+                throw diagnostic.ToException();
+            }
+            return severity;
+        }
+
+        protected abstract class ContextXamlAstVisitor : IXamlAstVisitor
         {
             private readonly AstTransformationContext _context;
-            private readonly IXamlAstTransformer _transformer;
 
-            public Visitor(AstTransformationContext context, IXamlAstTransformer transformer)
+            public ContextXamlAstVisitor(AstTransformationContext context)
             {
                 _context = context;
-                _transformer = transformer;
             }
+
+            public abstract string GetVisitorInfo();
+            public abstract IXamlAstNode VisitCore(AstTransformationContext context, IXamlAstNode node); 
             
             public IXamlAstNode Visit(IXamlAstNode node)
             {
-                #if Xaml_DEBUG
-                return _transformer.Transform(_context, node);
-                #else
+#if Xaml_DEBUG
+                return VisitCore(_context, node);
+#else
                 try
                 {
-                    return _transformer.Transform(_context, node);
+                    var outputNode = VisitCore(_context, node);
+                    if (outputNode is null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Visitor \"{GetVisitorInfo}\" returned null IXamlAstNode.");
+                    }
+                    return outputNode;
                 }
-                catch (Exception e) when (!(e is XmlException))
+                catch (Exception e)
                 {
-                    throw new XamlParseException(
-                        "Internal compiler error while transforming node " + node + ":\n" + e, node);
+                    if (_context.OnUnhandledTransformError(e))
+                    {
+                        return new SkipXamlValueWithManipulationNode(node);
+                    }
+                    else if (e is XmlException || e is XamlTypeSystemException)
+                    {
+                        throw;
+                    }
+                    else
+                    {
+                        throw new XamlParseException(
+                            $"Internal compiler error while transforming node \"{node.GetType().Name}\n" + e.Message, node, e)
+                        {
+                            Document = _context.Document
+                        };
+                    }
                 }
-                #endif
+#endif
             }
 
             public void Push(IXamlAstNode node) => _context.PushParent(node);
 
             public void Pop() => _context.PopParent();
+        }
+        
+        class Visitor : ContextXamlAstVisitor
+        {
+            private readonly IXamlAstTransformer _transformer;
+
+            public Visitor(AstTransformationContext context, IXamlAstTransformer transformer) : base(context)
+            {
+                _transformer = transformer;
+            }
+
+            public override string GetVisitorInfo() => $"Visitor:{_transformer.GetType().Name}";
+
+            public override IXamlAstNode VisitCore(AstTransformationContext context, IXamlAstNode node) =>
+                _transformer.Transform(context, node);
         }
         
         public IXamlAstNode Visit(IXamlAstNode root, IXamlAstTransformer transformer)
@@ -79,6 +122,12 @@ namespace XamlX.Transform
         public void VisitChildren(IXamlAstNode root, IXamlAstTransformer transformer)
         {
             root.VisitChildren(new Visitor(this, transformer));
+        }
+
+        protected bool OnUnhandledTransformError(Exception exception)
+        {
+            var severity = ReportDiagnostic(exception.ToDiagnostic(this), false);
+            return severity < XamlDiagnosticSeverity.Fatal;
         }
     }
 }

@@ -56,12 +56,11 @@ namespace XamlX.Compiler
             }
         }
 
-        public AstTransformationContext CreateTransformationContext(XamlDocument doc, bool strict)
-            => new AstTransformationContext(_configuration, doc.NamespaceAliases, strict);
-        
-        public void Transform(XamlDocument doc, bool strict = true)
+        public AstTransformationContext CreateTransformationContext(XamlDocument doc) => new(_configuration, doc);
+
+        public void Transform(XamlDocument doc)
         {
-            var ctx = CreateTransformationContext(doc, strict);
+            var ctx = CreateTransformationContext(doc);
 
             var root = doc.Root;
             ctx.RootObject = new XamlRootObjectNode((XamlAstObjectNode)root);
