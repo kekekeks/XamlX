@@ -21,16 +21,19 @@ static class ContextDiagnosticExtensions
     public static IXamlAstNode ReportDiagnostic(
         this AstTransformationContext context,
         XamlXDiagnosticCode diagnosticCode,
-        XamlDiagnosticSeverity minSeverity,
+        XamlDiagnosticSeverity severity,
         string title,
         IXamlAstNode offender,
-        string? description = null)
+        string? description = null,
+        XamlDiagnosticSeverity minSeverity = XamlDiagnosticSeverity.None)
     {
         var code = context.Configuration.DiagnosticsHandler.CodeMappings(diagnosticCode);
-        var diagnostic = new XamlDiagnostic(code, minSeverity, title, offender?.Line, offender?.Position)
+        var diagnostic = new XamlDiagnostic(code, severity, title, offender?.Line, offender?.Position)
         {
             Description = description,
-            XamlXCode = diagnosticCode
+            XamlXCode = diagnosticCode,
+            Document = context.Document,
+            MinSeverity = minSeverity
         };
         context.ReportDiagnostic(diagnostic);
         return offender;
@@ -51,7 +54,9 @@ static class ContextDiagnosticExtensions
         var diagnostic = new XamlDiagnostic(code, XamlDiagnosticSeverity.Error, title, offender?.Line,
             offender?.Position)
         {
-            XamlXCode = diagnosticCode
+            XamlXCode = diagnosticCode,
+            Document = context.Document,
+            MinSeverity = XamlDiagnosticSeverity.Error
         };
         context.ReportDiagnostic(diagnostic, throwOnFatal: true);
         return ret;
@@ -59,11 +64,12 @@ static class ContextDiagnosticExtensions
 
     public static XamlDiagnostic ToDiagnostic(this Exception exception, AstTransformationContext context, string? document = null)
     {
-        var code = context.Configuration.DiagnosticsHandler.CodeMappings(ToDiagnosticId(exception));
+        var code = (exception as XamlParseException)?.DiagnosticCode ??
+                   context.Configuration.DiagnosticsHandler.CodeMappings(ToDiagnosticId(exception));
         return exception.ToDiagnostic(code, document);
     }
     
-    public static XamlDiagnostic ToDiagnostic(this Exception exception, string code, string? document = null)
+    private static XamlDiagnostic ToDiagnostic(this Exception exception, string code, string? document = null)
     {
         var lineInfo = exception as XmlException;
         return new XamlDiagnostic(
@@ -73,11 +79,12 @@ static class ContextDiagnosticExtensions
         {
             Description = exception.ToString(),
             Document = (exception as XamlParseException)?.Document ?? document,
+            MinSeverity = XamlDiagnosticSeverity.Error,
             InnerException = exception
         };
     }
     
-    public static XamlXDiagnosticCode ToDiagnosticId(this Exception exception)
+    private static XamlXDiagnosticCode ToDiagnosticId(this Exception exception)
     {
         return exception switch
         {
@@ -96,12 +103,12 @@ static class ContextDiagnosticExtensions
         return diagnostic.XamlXCode switch
         {
             XamlXDiagnosticCode.TransformError =>
-                new XamlTransformException(diagnostic.Title, diagnostic, diagnostic.InnerException) { Document = diagnostic.Document },
+                new XamlTransformException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
             XamlXDiagnosticCode.EmitError =>
-                new XamlLoadException(diagnostic.Title, diagnostic, diagnostic.InnerException) { Document = diagnostic.Document },
+                new XamlLoadException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
             XamlXDiagnosticCode.TypeSystemError =>
                 new XamlTypeSystemException(diagnostic.Title, diagnostic.InnerException),
-            _ => new XamlParseException(diagnostic.Title, diagnostic, diagnostic.InnerException) { Document = diagnostic.Document },
+            _ => new XamlParseException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
         };
     }
 

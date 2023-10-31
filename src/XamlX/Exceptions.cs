@@ -11,17 +11,19 @@ namespace XamlX
 #endif
     class XamlParseException : XmlException
     {
-        public XamlParseException(string message, int line, int position, Exception? innerException = null)
+        public XamlParseException(string message, int line, int position, string? diagnosticCode = null, Exception? innerException = null)
             : base(message, innerException, line, position)
         {
+            DiagnosticCode = diagnosticCode;
         }
 
-        public XamlParseException(string message, IXamlLineInfo lineInfo, Exception? innerException = null)
-            : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, innerException)
+        public XamlParseException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+            : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, diagnosticCode, innerException)
         {
 
         }
         
+        public string? DiagnosticCode { get; }
         public string? Document { get; init; }
     }
 
@@ -30,8 +32,8 @@ namespace XamlX
 #endif
     class XamlTransformException : XamlParseException
     {
-        public XamlTransformException(string message, IXamlLineInfo lineInfo, Exception? innerException = null)
-            : base(message, lineInfo, innerException)
+        public XamlTransformException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+            : base(message, lineInfo, diagnosticCode, innerException)
         {
 
         }
@@ -42,8 +44,8 @@ namespace XamlX
 #endif
     class XamlLoadException : XamlParseException
     {
-        public XamlLoadException(string message, IXamlLineInfo lineInfo, Exception? innerException = null)
-            : base(message, lineInfo, innerException)
+        public XamlLoadException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+            : base(message, lineInfo, diagnosticCode, innerException)
         {
         }
     }

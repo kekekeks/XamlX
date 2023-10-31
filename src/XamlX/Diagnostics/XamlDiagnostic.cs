@@ -11,20 +11,17 @@ public
 #endif
     record XamlDiagnostic(
         string Code,
-        XamlDiagnosticSeverity MinSeverity, XamlDiagnosticSeverity Severity,
+        XamlDiagnosticSeverity Severity,
         string Title,
         int? LineNumber, int? LinePosition) : IXamlLineInfo
 {
-    public XamlDiagnostic(string code, XamlDiagnosticSeverity severity, string title, int? lineNumber, int? linePosition)
-        : this(code, severity, severity, title, lineNumber, linePosition)
-    {
-    }
-
     public XamlDiagnostic(string code, XamlDiagnosticSeverity severity, string title, IXamlLineInfo lineInfo)
         : this(code, severity, title, lineInfo.Line, lineInfo.Position)
     {
     }
 
+    public XamlDiagnosticSeverity MinSeverity { get; init; }
+    
     public string? Description { get; init; }
 
     public string? Document { get; init; }
