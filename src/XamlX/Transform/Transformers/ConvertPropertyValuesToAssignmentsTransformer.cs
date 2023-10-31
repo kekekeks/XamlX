@@ -25,7 +25,7 @@ namespace XamlX.Transform.Transformers
 
                 foreach (var v in valueNode.Values)
                 {
-                    var keyNode = FindAndRemoveKey(v);
+                    var keyNode = FindAndRemoveKey(context, v);
                     var arguments = new List<IXamlAstValueNode>();
 
                     if (keyNode != null)
@@ -117,6 +117,10 @@ namespace XamlX.Transform.Transformers
                         if (matchedSetters.Count > 0)
                             return new XamlPropertyAssignmentNode(v, property, matchedSetters, arguments);
 
+                        // Current node was already skipped due an error, and it always will have unknown type, so ignore it.
+                        if (v.Type?.GetClrType() == XamlPseudoType.Unknown)
+                            return null;
+
                         throw new XamlLoadException(
                             $"Unable to find suitable setter or adder for property {property.Name} of type {property.DeclaringType.GetFqn()} for argument {v.Type.GetClrType().GetFqn()}"
                             + (keyNode != null ? $" and x:Key of type {keyNode.Type.GetClrType()}" : null)
@@ -126,7 +130,10 @@ namespace XamlX.Transform.Transformers
                             , v);
                     }
 
-                    assignments.Add(CreateAssignment());
+                    if (CreateAssignment() is { } assignment)
+                        assignments.Add(assignment);
+                    else
+                        return new XamlManipulationGroupNode(valueNode, assignments);
                 }
 
                 if (assignments.Count == 1)
@@ -158,7 +165,7 @@ namespace XamlX.Transform.Transformers
             return node;
         }
 
-        static IXamlAstValueNode FindAndRemoveKey(IXamlAstValueNode value)
+        static IXamlAstValueNode FindAndRemoveKey(AstTransformationContext context, IXamlAstValueNode value)
         {
             IXamlAstValueNode keyNode = null;
             
@@ -169,9 +176,9 @@ namespace XamlX.Transform.Transformers
             {
                 var directive = (XamlAstXmlDirective) d;
                 if (directive.Values.Count != 1)
-                    throw new XamlParseException("Invalid number of arguments for x:Key directive",
-                        directive);
-                keyNode = directive.Values[0];
+                    context.ReportTransformError("Invalid number of arguments for x:Key directive", directive);
+
+                keyNode = directive.Values.FirstOrDefault();
             }
 
                
@@ -209,7 +216,7 @@ namespace XamlX.Transform.Transformers
             }
             else if (value is XamlMarkupExtensionNode mext)
             {
-                return FindAndRemoveKey(mext.Value);
+                return FindAndRemoveKey(context, mext.Value);
             }
 
             return keyNode;
