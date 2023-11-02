@@ -56,8 +56,7 @@ static class ContextDiagnosticExtensions
 
     public static XamlDiagnostic ToDiagnostic(this Exception exception, AstTransformationContext context, string? document = null)
     {
-        var code = (exception as XamlParseException)?.DiagnosticCode ??
-                   context.Configuration.DiagnosticsHandler.CodeMappings(exception);
+        var code = context.Configuration.DiagnosticsHandler.CodeMappings(exception);
         return exception.ToDiagnostic(code, document);
     }
     
@@ -81,7 +80,7 @@ static class ContextDiagnosticExtensions
         if (diagnostic.InnerException is XmlException or XamlTypeSystemException)
             return diagnostic.InnerException;
 
-        return new XamlParseException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document };
+        return new XamlParseException(diagnostic.Title, diagnostic, diagnostic.InnerException) { Document = diagnostic.Document };
     }
 
     public static void ThrowExceptionIfAnyError(this IEnumerable<XamlDiagnostic> diagnostics)
