@@ -187,21 +187,21 @@ namespace XamlX.Ast
         {
             if (r is XamlAstClrTypeReference clr)
                 return clr.Type;
-            throw new XamlParseException($"Unable to convert {r} to CLR type", r);
+            throw new XamlTransformException($"Unable to convert {r} to CLR type", r);
         }
         
         public static XamlAstClrTypeReference GetClrTypeReference(this IXamlAstTypeReference r)
         {
             if (r is XamlAstClrTypeReference clr)
                 return clr;
-            throw new XamlParseException($"Unable to convert {r} to CLR type", r);
+            throw new XamlTransformException($"Unable to convert {r} to CLR type", r);
         }
         
         public static XamlAstClrProperty GetClrProperty(this IXamlAstPropertyReference r)
         {
             if (r is XamlAstClrProperty clr)
                 return clr;
-            throw new XamlParseException($"Unable to convert {r} to CLR property", r);
+            throw new XamlTransformException($"Unable to convert {r} to CLR property", r);
         }
     }
 }

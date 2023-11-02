@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml;
 using XamlX.Ast;
@@ -18,12 +19,15 @@ public
 #endif
 static class ContextDiagnosticExtensions
 {
-    public static IXamlAstNode ReportDiagnostic(
+#if NET6_0_OR_GREATER
+    [return: NotNullIfNotNull(nameof(offender))]
+#endif
+    public static IXamlAstNode? ReportDiagnostic(
         this AstTransformationContext context,
         XamlXDiagnosticCode diagnosticCode,
         XamlDiagnosticSeverity severity,
         string title,
-        IXamlAstNode offender,
+        IXamlAstNode? offender,
         string? description = null,
         XamlDiagnosticSeverity minSeverity = XamlDiagnosticSeverity.None)
     {
