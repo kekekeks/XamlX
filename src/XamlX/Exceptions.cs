@@ -17,7 +17,7 @@ namespace XamlX
             DiagnosticCode = diagnosticCode;
         }
 
-        public XamlParseException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+        public XamlParseException(string message, IXamlLineInfo? lineInfo, string? diagnosticCode = null, Exception? innerException = null)
             : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, diagnosticCode, innerException)
         {
 
@@ -32,7 +32,7 @@ namespace XamlX
 #endif
     class XamlTransformException : XamlParseException
     {
-        public XamlTransformException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+        public XamlTransformException(string message, IXamlLineInfo? lineInfo, string? diagnosticCode = null, Exception? innerException = null)
             : base(message, lineInfo, diagnosticCode, innerException)
         {
 
@@ -44,7 +44,7 @@ namespace XamlX
 #endif
     class XamlLoadException : XamlParseException
     {
-        public XamlLoadException(string message, IXamlLineInfo lineInfo, string? diagnosticCode = null, Exception? innerException = null)
+        public XamlLoadException(string message, IXamlLineInfo? lineInfo, string? diagnosticCode = null, Exception? innerException = null)
             : base(message, lineInfo, diagnosticCode, innerException)
         {
         }

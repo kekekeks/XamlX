@@ -28,8 +28,6 @@ public
 
     public Exception? InnerException { get; init; }
 
-    public XamlXDiagnosticCode? XamlXCode { get; init; }
-
     int IXamlLineInfo.Line { get => LineNumber ?? 0; set { } }
     int IXamlLineInfo.Position { get => LinePosition ?? 0; set { } }
 }

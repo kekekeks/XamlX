@@ -9,8 +9,7 @@ namespace XamlX.Transform;
 #endif
 class XamlDiagnosticsHandler
 {
-    public Func<XamlXDiagnosticCode, string> CodeMappings { get; init; } =
-        code => FormattableString.Invariant($"XMLX{(int)code:0000}"); 
+    public Func<object, string> CodeMappings { get; init; } = code => code.ToString();
 
     public Func<XamlDiagnostic, XamlDiagnosticSeverity>? HandleDiagnostic { get; init; }
 

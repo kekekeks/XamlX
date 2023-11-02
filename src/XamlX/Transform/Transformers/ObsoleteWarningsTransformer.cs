@@ -57,8 +57,9 @@ public
             var description = attribute.Parameters.FirstOrDefault() as string;
             var isError = attribute.Parameters.Skip(1).FirstOrDefault() as bool? ?? false;
 
+            var code = context.Configuration.DiagnosticsHandler.CodeMappings(XamlXWellKnownDiagnosticCodes.Obsolete);
             context.ReportDiagnostic(
-                XamlXDiagnosticCode.Obsolete,
+                code,
                 isError ? XamlDiagnosticSeverity.Error : XamlDiagnosticSeverity.Warning,
                 title, node,
                 description);

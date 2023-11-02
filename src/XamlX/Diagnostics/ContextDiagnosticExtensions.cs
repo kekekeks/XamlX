@@ -24,18 +24,16 @@ static class ContextDiagnosticExtensions
 #endif
     public static IXamlAstNode? ReportDiagnostic(
         this AstTransformationContext context,
-        XamlXDiagnosticCode diagnosticCode,
+        string diagnosticCode,
         XamlDiagnosticSeverity severity,
         string title,
         IXamlAstNode? offender,
         string? description = null,
         XamlDiagnosticSeverity minSeverity = XamlDiagnosticSeverity.None)
     {
-        var code = context.Configuration.DiagnosticsHandler.CodeMappings(diagnosticCode);
-        var diagnostic = new XamlDiagnostic(code, severity, title, offender?.Line, offender?.Position)
+        var diagnostic = new XamlDiagnostic(diagnosticCode, severity, title, offender?.Line, offender?.Position)
         {
             Description = description,
-            XamlXCode = diagnosticCode,
             Document = context.Document,
             MinSeverity = minSeverity
         };
@@ -47,21 +45,11 @@ static class ContextDiagnosticExtensions
         ReportTransformError(context, title, offender, offender);
 
     public static TReturn ReportTransformError<TReturn>(this AstTransformationContext context, string title, IXamlLineInfo? offender, TReturn ret) =>
-        ReportError(context, XamlXDiagnosticCode.TransformError, title, offender, ret);
+        ReportError(context, new XamlTransformException(title, offender), ret);
 
-    public static IXamlAstNode ReportError(this AstTransformationContext context, XamlXDiagnosticCode diagnosticCode, string title, IXamlAstNode node) =>
-        ReportError(context, diagnosticCode, title, node, node);
-
-    public static TReturn ReportError<TReturn>(this AstTransformationContext context, XamlXDiagnosticCode diagnosticCode, string title, IXamlLineInfo? offender, TReturn ret)
+    public static TReturn ReportError<TReturn>(this AstTransformationContext context, Exception exception, TReturn ret)
     {
-        var code = context.Configuration.DiagnosticsHandler.CodeMappings(diagnosticCode);
-        var diagnostic = new XamlDiagnostic(code, XamlDiagnosticSeverity.Error, title, offender?.Line,
-            offender?.Position)
-        {
-            XamlXCode = diagnosticCode,
-            Document = context.Document,
-            MinSeverity = XamlDiagnosticSeverity.Error
-        };
+        var diagnostic = exception.ToDiagnostic(context);
         context.ReportDiagnostic(diagnostic, throwOnFatal: true);
         return ret;
     }
@@ -69,7 +57,7 @@ static class ContextDiagnosticExtensions
     public static XamlDiagnostic ToDiagnostic(this Exception exception, AstTransformationContext context, string? document = null)
     {
         var code = (exception as XamlParseException)?.DiagnosticCode ??
-                   context.Configuration.DiagnosticsHandler.CodeMappings(ToDiagnosticId(exception));
+                   context.Configuration.DiagnosticsHandler.CodeMappings(exception);
         return exception.ToDiagnostic(code, document);
     }
     
@@ -87,33 +75,13 @@ static class ContextDiagnosticExtensions
             InnerException = exception
         };
     }
-    
-    private static XamlXDiagnosticCode ToDiagnosticId(this Exception exception)
-    {
-        return exception switch
-        {
-            XamlTransformException => XamlXDiagnosticCode.TransformError,
-            XamlLoadException => XamlXDiagnosticCode.EmitError,
-            XamlTypeSystemException => XamlXDiagnosticCode.TypeSystemError,
-            _ => XamlXDiagnosticCode.ParseError
-        };
-    }
 
     public static Exception ToException(this XamlDiagnostic diagnostic)
     {
         if (diagnostic.InnerException is XmlException or XamlTypeSystemException)
             return diagnostic.InnerException;
 
-        return diagnostic.XamlXCode switch
-        {
-            XamlXDiagnosticCode.TransformError =>
-                new XamlTransformException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
-            XamlXDiagnosticCode.EmitError =>
-                new XamlLoadException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
-            XamlXDiagnosticCode.TypeSystemError =>
-                new XamlTypeSystemException(diagnostic.Title, diagnostic.InnerException),
-            _ => new XamlParseException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document },
-        };
+        return new XamlParseException(diagnostic.Title, diagnostic, diagnostic.Code, diagnostic.InnerException) { Document = diagnostic.Document };
     }
 
     public static void ThrowExceptionIfAnyError(this IEnumerable<XamlDiagnostic> diagnostics)
