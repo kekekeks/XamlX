@@ -15,8 +15,8 @@ public
         string Title,
         int? LineNumber, int? LinePosition) : IXamlLineInfo
 {
-    public XamlDiagnostic(string code, XamlDiagnosticSeverity severity, string title, IXamlLineInfo lineInfo)
-        : this(code, severity, title, lineInfo.Line, lineInfo.Position)
+    public XamlDiagnostic(string code, XamlDiagnosticSeverity severity, string title, IXamlLineInfo? lineInfo = null)
+        : this(code, severity, title, lineInfo?.Line, lineInfo?.Position)
     {
     }
 
