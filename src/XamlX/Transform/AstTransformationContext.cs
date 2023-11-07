@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Xml;
 using XamlX.Ast;
+using XamlX.TypeSystem;
 
 namespace XamlX.Transform
 {
@@ -81,14 +82,16 @@ namespace XamlX.Transform
                     
                     if (_context.OnUnhandledTransformError(reportException))
                     {
-                        return new SkipXamlValueWithManipulationNode(node);
+                        return node is IXamlAstTypeReference
+                            ? new XamlAstClrTypeReference(node, XamlPseudoType.Unknown, false)
+                            : new SkipXamlValueWithManipulationNode(node);
                     }
                     else
                     {
 #if DEBUG
                         throw;
 #else 
-                        throw reportException
+                        throw reportException;
 #endif
                     }
                 }
