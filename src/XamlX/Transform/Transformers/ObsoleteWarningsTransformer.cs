@@ -54,15 +54,17 @@ public
         void ReportObsolete(string member, IXamlCustomAttribute attribute)
         {
             var title = $"'{member}' is obsolete";
-            var description = attribute.Parameters.FirstOrDefault() as string;
+            if (attribute.Parameters.FirstOrDefault() is {} description)
+            {
+                title += ": " + description;
+            }
             var isError = attribute.Parameters.Skip(1).FirstOrDefault() as bool? ?? false;
 
             var code = context.Configuration.DiagnosticsHandler.CodeMappings(XamlXWellKnownDiagnosticCodes.Obsolete);
             context.ReportDiagnostic(
                 code,
                 isError ? XamlDiagnosticSeverity.Error : XamlDiagnosticSeverity.Warning,
-                title, node,
-                description);
+                title, node);
         }
     }
 }
