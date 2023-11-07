@@ -23,7 +23,7 @@ namespace XamlX.Transform
         {
             Configuration = configuration;
             NamespaceAliases = xamlDocument?.NamespaceAliases ?? new();
-            Document = xamlDocument?.Document ?? "";
+            Document = xamlDocument?.Document;
         }
 
 #if NET6_0_OR_GREATER
@@ -31,7 +31,7 @@ namespace XamlX.Transform
 #endif
         public XamlDiagnosticSeverity ReportDiagnostic(XamlDiagnostic diagnostic, bool throwOnFatal = true)
         {
-            if (diagnostic.Document is null)
+            if (string.IsNullOrWhiteSpace(diagnostic.Document))
             {
                 diagnostic = diagnostic with { Document = Document };
             }
