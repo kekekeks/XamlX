@@ -54,13 +54,13 @@ static class ContextDiagnosticExtensions
         return ret;
     }
 
-    public static XamlDiagnostic ToDiagnostic(this Exception exception, AstTransformationContext context, string? document = null)
+    public static XamlDiagnostic ToDiagnostic(this Exception exception, AstTransformationContext context)
     {
         var code = context.Configuration.DiagnosticsHandler.CodeMappings(exception);
-        return exception.ToDiagnostic(code, document);
+        return exception.ToDiagnostic(code);
     }
     
-    private static XamlDiagnostic ToDiagnostic(this Exception exception, string code, string? document = null)
+    private static XamlDiagnostic ToDiagnostic(this Exception exception, string code)
     {
         var lineInfo = exception as XmlException;
         return new XamlDiagnostic(
@@ -68,8 +68,10 @@ static class ContextDiagnosticExtensions
             exception.Message,
             lineInfo?.LineNumber, lineInfo?.LinePosition)
         {
+#if DEBUG // hide compiled StackTraces in Release
             Description = exception.ToString(),
-            Document = (exception as XamlParseException)?.Document ?? document,
+#endif
+            Document = (exception as XamlParseException)?.Document,
             MinSeverity = XamlDiagnosticSeverity.Error,
             InnerException = exception
         };

@@ -58,9 +58,6 @@ namespace XamlX.Transform
             
             public IXamlAstNode Visit(IXamlAstNode node)
             {
-#if Xaml_DEBUG
-                return VisitCore(_context, node);
-#else
                 try
                 {
                     var outputNode = VisitCore(_context, node);
@@ -73,24 +70,32 @@ namespace XamlX.Transform
                 }
                 catch (Exception e)
                 {
-                    if (_context.OnUnhandledTransformError(e))
-                    {
-                        return new SkipXamlValueWithManipulationNode(node);
-                    }
-                    else if (e is XmlException || e is XamlTypeSystemException)
-                    {
-                        throw;
-                    }
-                    else
-                    {
-                        throw new XamlTransformException(
-                            $"Internal compiler error while transforming node \"{node.GetType().Name}\n" + e.Message, node, innerException: e)
+                    var reportException = e is XmlException
+                        ? e
+                        : new XamlTransformException(
+#if DEBUG
+                            $"Internal compiler error while transforming node \"{node.GetType().Name}:" + e.Message,
+#else
+                            $"Internal compiler error:" + e.Message,
+#endif
+                            node, innerException: e)
                         {
                             Document = _context.Document
                         };
+                    
+                    if (_context.OnUnhandledTransformError(reportException))
+                    {
+                        return new SkipXamlValueWithManipulationNode(node);
+                    }
+                    else
+                    {
+#if DEBUG
+                        throw;
+#else 
+                        throw reportException
+#endif
                     }
                 }
-#endif
             }
 
             public void Push(IXamlAstNode node) => _context.PushParent(node);
