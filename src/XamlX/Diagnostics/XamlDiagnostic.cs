@@ -21,12 +21,10 @@ public
     }
 
     public XamlDiagnosticSeverity MinSeverity { get; init; }
-    
-    public string? Description { get; init; }
 
     public string? Document { get; init; }
 
-    public Exception? InnerException { get; init; }
+    internal Exception? InnerException { get; init; }
 
     int IXamlLineInfo.Line { get => LineNumber ?? 0; set { } }
     int IXamlLineInfo.Position { get => LinePosition ?? 0; set { } }

@@ -11,6 +11,8 @@ class XamlDiagnosticsHandler
 {
     public Func<object, string> CodeMappings { get; init; } = code => code.ToString();
 
+    public Func<Exception, string> ExceptionFormatter { get; init; } = ex => ex.Message;
+
     public Func<XamlDiagnostic, XamlDiagnosticSeverity>? HandleDiagnostic { get; init; }
 
     internal XamlDiagnosticSeverity ReportDiagnostic(XamlDiagnostic diagnostic)
