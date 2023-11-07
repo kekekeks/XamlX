@@ -29,8 +29,8 @@ public class StandardWarningsTests : CompilerTestBase
 </StandardWarningsTestsClass>");
 
         var obsoletes = Diagnostics.ToArray();
-        Assert.Contains(obsoletes, d => d.Description == "StandardWarningsTestsClass is obsolete" && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Warning });
-        Assert.Contains(obsoletes, d => d.Description == "ObjectProperty is obsolete" && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Warning });
-        Assert.Contains(obsoletes, d => d.Description == "StaticProp is obsolete" && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Error });
+        Assert.Contains(obsoletes, d => d.Title.Contains("StandardWarningsTestsClass is obsolete") && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Warning });
+        Assert.Contains(obsoletes, d => d.Title.Contains("ObjectProperty is obsolete") && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Warning });
+        Assert.Contains(obsoletes, d => d.Title.Contains("StaticProp is obsolete") && d is { Code: "Obsolete", Severity: XamlDiagnosticSeverity.Error });
     }
 }
