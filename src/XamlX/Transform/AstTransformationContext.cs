@@ -53,7 +53,7 @@ namespace XamlX.Transform
                 _context = context;
             }
 
-            public abstract string GetVisitorInfo();
+            public abstract string GetTransformerInfo();
             public abstract IXamlAstNode VisitCore(AstTransformationContext context, IXamlAstNode node); 
             
             public IXamlAstNode Visit(IXamlAstNode node)
@@ -64,7 +64,7 @@ namespace XamlX.Transform
                     if (outputNode is null)
                     {
                         throw new InvalidOperationException(
-                            $"Visitor \"{GetVisitorInfo()}\" returned null IXamlAstNode.");
+                            $"\"{GetTransformerInfo()}\" returned null IXamlAstNode.");
                     }
                     return outputNode;
                 }
@@ -73,11 +73,7 @@ namespace XamlX.Transform
                     var reportException = e is XmlException
                         ? e
                         : new XamlTransformException(
-#if DEBUG
-                            $"Internal compiler error while transforming node \"{node.GetType().Name}:" + e.Message,
-#else
-                            $"Internal compiler error:" + e.Message,
-#endif
+                            $"Internal compiler error: {e.Message} ({GetTransformerInfo()})",
                             node, innerException: e)
                         {
                             Document = _context.Document
@@ -112,7 +108,7 @@ namespace XamlX.Transform
                 _transformer = transformer;
             }
 
-            public override string GetVisitorInfo() => $"Visitor:{_transformer.GetType().Name}";
+            public override string GetTransformerInfo() => _transformer.GetType().Name;
 
             public override IXamlAstNode VisitCore(AstTransformationContext context, IXamlAstNode node) =>
                 _transformer.Transform(context, node);
