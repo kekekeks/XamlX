@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
     <RootNamespace>XamlX</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="GuiLabs.Language.Xml" Version="1.2.60" />
+    <PackageReference Include="GuiLabs.Language.Xml" Version="1.2.67" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XamlX\XamlX.csproj" />
