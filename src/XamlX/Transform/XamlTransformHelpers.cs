@@ -140,9 +140,9 @@ namespace XamlX.Transform
             if (provideValue == null)
             {
                 if (node.Type.IsMarkupExtension)
-                    throw new XamlParseException(
-                        $"{node.Type.GetClrType().GetFqn()} was resolved as markup extension, but doesn't have a matching ProvideValue/ProvideTypedValue method",
-                        node.Type);
+                    context.ReportTransformError(
+                        $"{nodeType.GetFqn()} was resolved as markup extension, but doesn't have a matching ProvideValue/ProvideTypedValue method",
+                        node);
                 
                 return false;
             }

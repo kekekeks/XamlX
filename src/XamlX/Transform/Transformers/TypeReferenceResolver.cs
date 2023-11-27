@@ -18,8 +18,7 @@ namespace XamlX.Transform.Transformers
         
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
             string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments,
-            IXamlLineInfo lineInfo,
-            bool strict)
+            IXamlLineInfo lineInfo)
         {
             if (typeArguments == null || typeArguments.Count == 0)
             {
@@ -32,24 +31,23 @@ namespace XamlX.Transform.Transformers
                     return new XamlAstClrTypeReference(lineInfo, type, isMarkupExtension);
                 }
 
-                var res = ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo, strict);
+                var res = ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo);
                 cache.CacheDictionary[cacheKey] = res?.Type;
                 return res;
 
             }
             else
-                return ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo, strict);
+                return ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo);
         }
 
         static XamlAstClrTypeReference ResolveTypeCore(AstTransformationContext context,
-            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo,
-            bool strict)
+            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo)
         {
             if (typeArguments == null)
                 typeArguments = new List<XamlAstXmlTypeReference>();
             var targs = typeArguments
                 .Select(ta =>
-                    ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo, strict)
+                    ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo)
                         ?.Type)
                 .ToList();
             
@@ -104,11 +102,9 @@ namespace XamlX.Transform.Transformers
                 found = found?.MakeGenericType(targs);
             if (found != null)
                 return new XamlAstClrTypeReference(lineInfo, found,
-                    isMarkupExtension || found.Name.EndsWith("Extension")); 
-            if (strict)
-                throw new XamlParseException(
-                    $"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
-            return null;
+                    isMarkupExtension || found.Name.EndsWith("Extension"));
+
+            throw new XamlTransformException($"Unable to resolve type {name} from namespace {xmlns}", lineInfo);
         }
 
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
@@ -119,20 +115,17 @@ namespace XamlX.Transform.Transformers
             var (shortNs, name) = pair.Length == 1 ? ("", pair[0]) : (pair[0], pair[1]);
             if (!context.NamespaceAliases.TryGetValue(shortNs, out var xmlns))
             {
-                if (strict)
-                    throw new XamlParseException(
-                        $"Unable to resolve type namespace alias {shortNs}", lineInfo);
-                return null;
+                throw new XamlTransformException($"Unable to resolve type namespace alias {shortNs}", lineInfo);
             }
 
-            return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo, strict);
+            return ResolveType(context, xmlns, name, isMarkupExtension, new List<XamlAstXmlTypeReference>(), lineInfo);
         }
 
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstXmlTypeReference xmlref)
             {
-                var resolved = ResolveType(context, xmlref, context.StrictMode);
+                var resolved = ResolveType(context, xmlref);
                 if (resolved == null)
                     return node;
                 return resolved;
@@ -142,10 +135,10 @@ namespace XamlX.Transform.Transformers
         }
 
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
-            XamlAstXmlTypeReference xmlref, bool strict)
+            XamlAstXmlTypeReference xmlref)
         {
             return ResolveType(context, xmlref.XmlNamespace, xmlref.Name, xmlref.IsMarkupExtension,
-                xmlref.GenericArguments, xmlref, strict);
+                xmlref.GenericArguments, xmlref);
 
         }
     }
