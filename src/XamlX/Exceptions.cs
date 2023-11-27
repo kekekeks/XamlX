@@ -2,6 +2,8 @@ using System;
 using System.Xml;
 using XamlX.Ast;
 
+#nullable enable
+
 namespace XamlX
 {
 #if !XAMLX_INTERNAL
@@ -9,15 +11,18 @@ namespace XamlX
 #endif
     class XamlParseException : XmlException
     {
-        public XamlParseException(string message, int line, int position) : base(
-            message, null, line, position)
+        public XamlParseException(string message, int line, int position, Exception? innerException = null)
+            : base(message, innerException, line, position)
         {
         }
 
-        public XamlParseException(string message, IXamlLineInfo lineInfo) : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0)
+        public XamlParseException(string message, IXamlLineInfo? lineInfo, Exception? innerException = null)
+            : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, innerException)
         {
-            
+
         }
+
+        public string? Document { get; init; }
     }
 
 #if !XAMLX_INTERNAL
@@ -25,7 +30,8 @@ namespace XamlX
 #endif
     class XamlTransformException : XamlParseException
     {
-        public XamlTransformException(string message, IXamlLineInfo lineInfo) : base(message, lineInfo)
+        public XamlTransformException(string message, IXamlLineInfo? lineInfo, Exception? innerException = null)
+            : base(message, lineInfo, innerException)
         {
 
         }
@@ -36,7 +42,8 @@ namespace XamlX
 #endif
     class XamlLoadException : XamlParseException
     {
-        public XamlLoadException(string message, IXamlLineInfo lineInfo) : base(message, lineInfo)
+        public XamlLoadException(string message, IXamlLineInfo? lineInfo, Exception? innerException = null)
+            : base(message, lineInfo, innerException)
         {
         }
     }
@@ -47,9 +54,10 @@ namespace XamlX
 #endif
     class XamlTypeSystemException : Exception
     {
-        public XamlTypeSystemException(string message) : base(message)
+        public XamlTypeSystemException(string message, Exception? innerException = null)
+            : base(message, innerException)
         {
-            
+
         }
     }
 }

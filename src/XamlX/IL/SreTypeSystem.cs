@@ -55,7 +55,7 @@ namespace XamlX.IL
             return n;
         }
 
-        SreType? ResolveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? t)
+        SreType ResolveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type t)
         {
             if (t is null)
                 return null;
@@ -127,7 +127,9 @@ namespace XamlX.IL
             [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
             public void Init()
             {
-                var types = Assembly.GetExportedTypes().Select(t => _system.ResolveType(t)).ToList();
+                var types = Assembly.GetTypes()
+                    .Where(t => t.IsPublic || t.IsTopLevelInternal())
+                    .Select(t => _system.ResolveType(t)).ToList();
                 Types = types;
                 _typeDic = types.ToDictionary(t => t.Type.FullName);
             }
@@ -718,7 +720,8 @@ namespace XamlX.IL
                     args.Cast<SreType>().Select(t => t.Type).ToArray());
                 return new SreConstructorBuilder(_system, ctor);
             }
-            
+
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.GeneratedTypes)]
             public IXamlType CreateType() => new SreType(_system, null, _tb.CreateTypeInfo());
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.GeneratedTypes)]

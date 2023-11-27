@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.TypeSystem;
@@ -65,12 +66,18 @@ namespace XamlX.Ast
 #endif
     class XamlAstObjectNode : XamlAstNode, IXamlAstValueNode
     {
+        private IXamlAstTypeReference _type;
+
         public XamlAstObjectNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
         {
             Type = type;
         }
 
-        public IXamlAstTypeReference Type { get; set; }
+        public IXamlAstTypeReference Type
+        {
+            get => _type;
+            set => _type = value ?? throw new InvalidOperationException("XamlAstObjectNode.Type cannot be null.");
+        }
         public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
         public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
 
@@ -96,7 +103,14 @@ namespace XamlX.Ast
         /// </summary>
         public bool PreserveWhitespace { get; }
 
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="XamlAstTextNode"/>.
+        /// </summary>
+        /// <param name="lineInfo">The line information for the node.</param>
+        /// <param name="text">The node text.</param>
         /// <param name="preserveWhitespace">True if XAML whitespace normalization should NOT be applied to this text value (i.e. xml:space="preserve" or attribute values).</param>
+        /// <param name="type">The type of the node.</param>
         public XamlAstTextNode(IXamlLineInfo lineInfo, string text, bool preserveWhitespace = false, IXamlType type = null) : base(lineInfo)
         {
             Text = text;
