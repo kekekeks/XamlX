@@ -12,7 +12,8 @@ namespace XamlX.Ast
     interface IXamlLineInfo
     {
         int Line { get; set; }
-        int Position { get; set; }   
+        int Position { get; set; }
+        string XPath { get; set; }
     }
 
 #if !XAMLX_INTERNAL
@@ -79,11 +80,13 @@ namespace XamlX.Ast
     {
         public int Line { get; set; }
         public int Position { get; set; }
+        public string XPath { get; set; }
 
         public XamlAstNode(IXamlLineInfo lineInfo)
         {
             Line = lineInfo.Line;
             Position = lineInfo.Position;
+            XPath = lineInfo.XPath;
         }
         
         public virtual void VisitChildren(Visitor visitor)

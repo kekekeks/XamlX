@@ -28,4 +28,5 @@ public
 
     int IXamlLineInfo.Line { get => LineNumber ?? 0; set { } }
     int IXamlLineInfo.Position { get => LinePosition ?? 0; set { } }
+    string IXamlLineInfo.XPath { get => ""; set { } }
 }
