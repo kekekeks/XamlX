@@ -13,7 +13,7 @@ namespace XamlX.Ast
     {
         int Line { get; set; }
         int Position { get; set; }
-        string XPath { get; set; }
+        int Offset { get; set; }
     }
 
 #if !XAMLX_INTERNAL
@@ -80,13 +80,13 @@ namespace XamlX.Ast
     {
         public int Line { get; set; }
         public int Position { get; set; }
-        public string XPath { get; set; }
+        public int Offset { get; set; }
 
         public XamlAstNode(IXamlLineInfo lineInfo)
         {
             Line = lineInfo.Line;
             Position = lineInfo.Position;
-            XPath = lineInfo.XPath;
+            Offset = lineInfo.Offset;
         }
         
         public virtual void VisitChildren(Visitor visitor)

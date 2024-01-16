@@ -310,15 +310,15 @@ namespace XamlX.Parsers
     {
         class WrappedLineInfo : IXamlLineInfo
         {
-            public WrappedLineInfo(IXmlLineInfo info, string xpath = null)
+            public WrappedLineInfo(IXmlLineInfo info, int offset = -1)
             {
                 Line = info.LineNumber;
                 Position = info.LinePosition;
-                XPath = xpath;
+                Offset = offset;
             }
             public int Line { get; set; }
             public int Position { get; set; }
-            public string XPath { get; set; }
+            public int Offset { get; set; }
         }
 
         public static IXamlLineInfo AsLi(this IXmlLineInfo info)
@@ -326,53 +326,7 @@ namespace XamlX.Parsers
             if (!info.HasLineInfo())
                 throw new InvalidOperationException("XElement doesn't have line info");
 
-            if (info is XElement el)
-                return new WrappedLineInfo(el, el.GetAbsoluteXPath());
-            else
-                return new WrappedLineInfo(info);
-        }
-
-        private static string GetAbsoluteXPath(this XElement element)
-        {
-            ArgumentNullException.ThrowIfNull(element, "element");
-
-            static int IndexPosition(XElement element)
-            {
-                ArgumentNullException.ThrowIfNull(element, "element");
-
-                if (element.Parent == null)
-                    return -1;
-
-                var i = 1; // Indexes for nodes start at 1, not 0
-
-                foreach (var sibling in element.Parent.Elements(element.Name))
-                {
-                    if (sibling == element)
-                        return i;
-                    i++;
-                }
-
-                throw new InvalidOperationException("Element has been removed from its parent.");
-            }
-
-            static string RelativeXPath(XElement e)
-            {
-                var index = IndexPosition(e);
-                var ns = e.Name.Namespace;
-                var nsPrefix = ns is not null ? e.GetPrefixOfNamespace(ns) ?? "__xmlns" : string.Empty;
-                var name = $"{nsPrefix}:{e.Name.LocalName}";
-
-                // If the element is the root, no index is required
-                return (index == -1) ? "/" + name : string.Format
-                (
-                    "/{0}[{1}]",
-                    name,
-                    index.ToString()
-                );
-            }
-
-            var ancestors = from e in element.Ancestors() select RelativeXPath(e);
-            return string.Concat(ancestors.Reverse().ToArray()) + RelativeXPath(element);
+            return new WrappedLineInfo(info);
         }
 
         private static readonly XName SpaceAttributeName = XName.Get("space", XNamespace.Xml.NamespaceName);

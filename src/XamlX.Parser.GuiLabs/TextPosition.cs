@@ -7,15 +7,18 @@ namespace XamlX.Parsers
 #endif
     class Position : IXamlLineInfo
     {
-        public Position(int line, int character)
+        public Position(int line, int character, int offset)
         {
             Line = line;
             Character = character;
+            Offset = offset;
         }
 
         public int Line { get; set; }
 
         public int Character { get; set; }
+
+        public int Offset { get; set; }
 
         int IXamlLineInfo.Position { get => Character; set => Character = value; }
 
@@ -57,7 +60,7 @@ namespace XamlX.Parsers
                 }
             }
 
-            return new Position(line, character);
+            return new Position(line, character, offset);
         }
     }
 }
