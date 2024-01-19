@@ -22,13 +22,13 @@ namespace XamlX.Transform.Transformers
                 return node;
 
             if (pa.Values.Count != 1)
-                throw new XamlParseException("Property with deferred content can have only one value", node);
+                throw new XamlTransformException("Property with deferred content can have only one value", node);
             var contentNode = pa.Values[0];
 
             if (!
                 (contentNode is XamlValueWithManipulationNode manipulation
                  && manipulation.Manipulation is XamlObjectInitializationNode))
-                throw new XamlParseException(
+                throw new XamlTransformException(
                     "Unable to find the object initialization node inside deferred content, " +
                     "this shouldn't happen in default Xaml configuration, probably some AST transformer have broken the structure",
                     node);

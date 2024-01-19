@@ -8,6 +8,7 @@ namespace XamlX.Ast
     class XamlDocument
     {
         public IXamlAstNode Root { get; set; }
+        public string Document { get; set; }
         public Dictionary<string, string> NamespaceAliases { get; set; } = new Dictionary<string, string>();
     }
 }

@@ -18,7 +18,7 @@ namespace XamlX.IL
         {
             if (method is IXamlCustomEmitMethod<IXamlILEmitter> custom)
                 custom.EmitCall(emitter);
-            if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult>)
+            else if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult>)
                 throw new InvalidOperationException("Use EmitCall overload extension with a context parameter");
             else
                 emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
@@ -32,7 +32,7 @@ namespace XamlX.IL
         {
             if (method is IXamlCustomEmitMethod<IXamlILEmitter> custom)
                 custom.EmitCall(emitter);
-            if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult> customWithContext)
+            else if (method is IXamlCustomEmitMethodWithContext<IXamlILEmitter, XamlILNodeEmitResult> customWithContext)
                 customWithContext.EmitCall(context, emitter);
             else
                 emitter.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);

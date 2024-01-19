@@ -45,6 +45,7 @@ namespace XamlX.Transform
         public XamlXmlnsMappings XmlnsMappings { get; }
         public XamlTypeWellKnownTypes WellKnownTypes { get; }
         public XamlValueConverter CustomValueConverter { get; }
+        public XamlDiagnosticsHandler DiagnosticsHandler { get; }
         public IXamlIdentifierGenerator IdentifierGenerator { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
@@ -54,7 +55,8 @@ namespace XamlX.Transform
         public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
             XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
             XamlValueConverter customValueConverter = null,
-            IXamlIdentifierGenerator identifierGenerator = null)
+            IXamlIdentifierGenerator identifierGenerator = null,
+            XamlDiagnosticsHandler diagnosticsHandler = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
@@ -62,6 +64,7 @@ namespace XamlX.Transform
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
+            DiagnosticsHandler = diagnosticsHandler ?? new XamlDiagnosticsHandler();
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
@@ -219,6 +222,7 @@ namespace XamlX.Transform
         public IXamlType CultureInfo { get; }
         public IXamlType IFormatProvider { get; }
         public IXamlType Delegate { get; }
+        public IXamlType ObsoleteAttribute { get; }
 
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
         {
@@ -236,6 +240,7 @@ namespace XamlX.Transform
             IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
             NullableT = typeSystem.GetType("System.Nullable`1");
             Delegate = typeSystem.GetType("System.Delegate");
+            ObsoleteAttribute = typeSystem.GetType("System.ObsoleteAttribute");
         }
     }
 }

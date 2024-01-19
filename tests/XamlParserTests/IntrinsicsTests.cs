@@ -108,6 +108,25 @@ namespace XamlParserTests
         }
 
         [Fact]
+        public void Static_Extension_Reports_Errors()
+        {
+            var exception = Assert.Throws<AggregateException>(() => CompileAndRun($@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:scg='clr-namespace:System.Collections.Generic'
+>
+    <IntrinsicsTestsClass.ObjectProperty><x:Static Member='IntrinsicsTestsClass.StaticPropDoesntExist1'/></IntrinsicsTestsClass.ObjectProperty>
+    <IntrinsicsTestsClass.BoolProperty><x:Static Member='IntrinsicsTestsClass.StaticPropDoesntExist2'/></IntrinsicsTestsClass.BoolProperty>
+</IntrinsicsTestsClass>"));
+            
+            Assert.Equal(2, exception.InnerExceptions.Count);
+            Assert.Collection(exception.InnerExceptions,
+                ex1 => Assert.Contains("StaticPropDoesntExist1", ex1.Message),
+                ex2 => Assert.Contains("StaticPropDoesntExist2", ex2.Message));
+        }
+        
+        [Fact]
         public void Static_Extension_Resolves_Enum_Values()
         {
             Static_Extension_Resolves_Values(IntrinsicsTestsEnum.Foo, "IntrinsicsTestsEnum.Foo");

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using XamlX.Runtime;
@@ -136,6 +137,7 @@ namespace XamlParserTests
             }, null);
         }
 
+        [SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Not a theory, used in XAML tests")]
         public static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
         {
             

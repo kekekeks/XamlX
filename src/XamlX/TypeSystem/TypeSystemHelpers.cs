@@ -142,14 +142,21 @@ namespace XamlX.TypeSystem
                 return null;
             }
 
-            var r = Parse();
-            if (r != null)
+            try
             {
-                rv = new XamlConstantNode(info, type, r);
-                return true;
-            }
+                var r = Parse();
+                if (r != null)
+                {
+                    rv = new XamlConstantNode(info, type, r);
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
+            catch (FormatException ex)
+            {
+                throw new XamlParseException(ex.Message, info, ex);
+            }
         }
     }
 }

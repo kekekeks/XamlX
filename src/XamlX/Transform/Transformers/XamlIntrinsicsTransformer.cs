@@ -27,12 +27,12 @@ namespace XamlX.Transform.Transformers
                         value = pnode.Values[0];
 
                     if(value == null)
-                        return (XamlAstTextNode) context.ParseError(
+                        throw new XamlTransformException(
                             $"{extension} extension should take exactly one constructor parameter without any content OR {name} property",
                             node);
 
                     if (!(value is XamlAstTextNode textNode))
-                        return (XamlAstTextNode) context.ParseError("x:Type parameter should be a text node", value, node);
+                        throw new XamlTransformException("x:Type parameter should be a text node", node);
                     return textNode;
                 }
 
@@ -55,7 +55,7 @@ namespace XamlX.Transform.Transformers
                         pair = new[] {"", pair[0]};
 
                     if (!context.NamespaceAliases.TryGetValue(pair[0].Trim(), out var resolvedNs))
-                        return context.ParseError($"Unable to resolve namespace {pair[0]}", textNode, node);
+                        return context.ReportTransformError($"Unable to resolve namespace {pair[0]}", textNode, node);
 
                     return new XamlTypeExtensionNode(node,
                         new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1], xml.GenericArguments),
@@ -82,10 +82,10 @@ namespace XamlX.Transform.Transformers
 
                     var tmpair = typeAndMember.Split(new[] {'.'}, 2);
                     if (tmpair.Length != 2)
-                        return context.ParseError($"Unable to parse {tmpair} as 'type.member'", textNode, ni);
+                        throw new XamlTransformException($"Unable to parse {typeAndMember} as 'type.member'", textNode);
                     
                     if (!context.NamespaceAliases.TryGetValue(ns, out var resolvedNs))
-                        return context.ParseError($"Unable to resolve namespace {ns}", textNode, node);
+                        throw new XamlTransformException($"Unable to resolve namespace {ns}", textNode);
                     
                     return new XamlStaticExtensionNode(ni,
                         new XamlAstXmlTypeReference(ni, resolvedNs, tmpair[0], xml.GenericArguments),

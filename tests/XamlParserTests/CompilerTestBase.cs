@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,6 +20,7 @@ namespace XamlParserTests
     {
         private readonly IXamlTypeSystem _typeSystem;
         public TransformerConfiguration Configuration { get; }
+        public List<XamlDiagnostic> Diagnostics { get; } = new();
 
         private CompilerTestBase(IXamlTypeSystem typeSystem)
         {
@@ -58,8 +61,16 @@ namespace XamlParserTests
                     XmlNamespaceInfoProvider = typeSystem.GetType("XamlX.Runtime.IXamlXmlNamespaceInfoProviderV1"),
                     IAddChild = typeSystem.GetType("XamlParserTests.IAddChild"),
                     IAddChildOfT = typeSystem.GetType("XamlParserTests.IAddChild`1")
+                },
+                diagnosticsHandler: new XamlDiagnosticsHandler
+                {
+                    HandleDiagnostic = diagnostic =>
+                    {
+                        Diagnostics.Add(diagnostic);
+                        return diagnostic.Severity;
+                    }
                 }
-            ); ;
+            );
         }
 
         protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);
@@ -77,12 +88,28 @@ namespace XamlParserTests
                 EnableIlVerification = true
             };
             compiler.Transform(parsed);
+            Diagnostics.ThrowExceptionIfAnyError();
+
             compiler.Compile(parsed, builder, context, "Populate", generateBuildMethod ? "Build" : null,
                 "XamlNamespaceInfo",
                 "http://example.com/", null);
             return parsed;
         }
         static object s_asmLock = new object();
+
+        public XamlDocument Transform(string xaml)
+        {
+            var parsed = XamlParser.Parse(xaml);
+            var compiler = new XamlILCompiler(
+                Configuration,
+                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                true)
+            {
+                EnableIlVerification = true
+            };
+            compiler.Transform(parsed);
+            return parsed;
+        }
         
 #if !CECIL
         private static SreTypeSystem CreateTypeSystem()

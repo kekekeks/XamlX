@@ -46,7 +46,7 @@ namespace XamlX.Transform.Transformers
                                         continue;
                                     }
 
-                                    throw new XamlParseException(
+                                    throw new XamlTransformException(
                                         $"No Content property or any Add methods found for type {ni.Type.GetClrType().GetFqn()}",
                                         child);
                                 }
