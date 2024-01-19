@@ -28,5 +28,6 @@ public
 
     int IXamlLineInfo.Line { get => LineNumber ?? 0; set { } }
     int IXamlLineInfo.Position { get => LinePosition ?? 0; set { } }
-    int IXamlLineInfo.Offset { get => -1; set { } }
+    int IXamlLineInfo.SpanStart { get => -1; set { } }
+    int IXamlLineInfo.SpanEnd { get => -1; set { } }
 }

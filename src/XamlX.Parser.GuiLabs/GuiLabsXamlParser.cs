@@ -459,11 +459,12 @@ namespace XamlX.Parsers
     {
         public static IXamlLineInfo AsLi(this SyntaxNode info, string data)
         {
-            return Position.OffsetToPosition((info).SpanStart + 1, data);
+            return Position.SpanToPosition(info.SpanStart, info.Span.End, data);
         }
         public static IXamlLineInfo AsLi(this IXmlElement info, string data)
         {
-            return Position.OffsetToPosition(((XmlNodeSyntax)info).SpanStart + 1, data);
+            var syntax = (XmlNodeSyntax)info;
+            return Position.SpanToPosition(syntax.SpanStart, syntax.Span.End, data);
         }
 
         // Get the xml:space mode declared on the node - if it's an element, None otherwise.

@@ -13,7 +13,8 @@ namespace XamlX.Ast
     {
         int Line { get; set; }
         int Position { get; set; }
-        int Offset { get; set; }
+        int SpanStart { get; set; }
+        int SpanEnd { get; set; }
     }
 
 #if !XAMLX_INTERNAL
@@ -80,13 +81,15 @@ namespace XamlX.Ast
     {
         public int Line { get; set; }
         public int Position { get; set; }
-        public int Offset { get; set; }
+        public int SpanStart { get; set; }
+        public int SpanEnd { get; set; }
 
         public XamlAstNode(IXamlLineInfo lineInfo)
         {
             Line = lineInfo.Line;
             Position = lineInfo.Position;
-            Offset = lineInfo.Offset;
+            SpanStart = lineInfo.SpanStart;
+            SpanEnd = lineInfo.SpanEnd;
         }
         
         public virtual void VisitChildren(Visitor visitor)

@@ -310,15 +310,17 @@ namespace XamlX.Parsers
     {
         class WrappedLineInfo : IXamlLineInfo
         {
-            public WrappedLineInfo(IXmlLineInfo info, int offset = -1)
+            public WrappedLineInfo(IXmlLineInfo info, int spanStart, int spanEnd)
             {
                 Line = info.LineNumber;
                 Position = info.LinePosition;
-                Offset = offset;
+                SpanStart = spanStart;
+                SpanEnd = spanEnd;
             }
             public int Line { get; set; }
             public int Position { get; set; }
-            public int Offset { get; set; }
+            public int SpanStart { get; set; }
+            public int SpanEnd { get; set; }
         }
 
         public static IXamlLineInfo AsLi(this IXmlLineInfo info)
@@ -326,7 +328,7 @@ namespace XamlX.Parsers
             if (!info.HasLineInfo())
                 throw new InvalidOperationException("XElement doesn't have line info");
 
-            return new WrappedLineInfo(info);
+            return new WrappedLineInfo(info, -1, -1);
         }
 
         private static readonly XName SpaceAttributeName = XName.Get("space", XNamespace.Xml.NamespaceName);
