@@ -7,6 +7,7 @@ using System.Xml;
 using System.Xml.Linq;
 using XamlX.Ast;
 using XamlX.Parsers.SystemXamlMarkupExtensionParser;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace XamlX.Parsers
 {
@@ -26,12 +27,19 @@ namespace XamlX.Parsers
             string data = reader.ReadToEnd();
             var buffer = new StringBuffer(data);
             var parsed = Parser.Parse(buffer);
+            return CreateXamlDocument(parsed, data, compatibilityMappings);
+        }
 
+        public static XamlDocument CreateXamlDocument(
+            XmlDocumentSyntax document,
+            string xaml,
+            Dictionary<string, string> compatibilityMappings = null)
+        {
             Dictionary<string, string> namespaceAliases = new Dictionary<string, string>();
             HashSet<string> ignorableNamespaces = new HashSet<string>();
             const string ignorableNs = "http://schemas.openxmlformats.org/markup-compatibility/2006";
             ignorableNamespaces.Add(ignorableNs);
-            var attributes = parsed.Root.Attributes
+            var attributes = document.Root.Attributes
                 .Select(n =>
                 {
                     var pn = XmlNamespaces.GetPrefixFromName(n.Key);
@@ -72,13 +80,12 @@ namespace XamlX.Parsers
             XmlNamespaces ns = new XmlNamespaces(namespaceAliases, ignorableNamespaces, compatibilityMappings);
             var doc = new XamlDocument
             {
-                Root = new ParserContext(parsed.Root, data, ns).Parse(),
+                Root = new ParserContext(document.Root, xaml, ns).Parse(),
                 NamespaceAliases = namespaceAliases
             };
 
             return doc;
         }
-
 
         class ParserContext
         {
