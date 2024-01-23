@@ -257,7 +257,7 @@ namespace XamlX.Parsers
                         type.GenericArguments = ParseTypeArguments(attribute.Value, attribute.AsLi(_text));
                     // Parse as a directive
                     else if (attrPrefix != "" && !attrName.Contains("."))
-                        i.Children.Add(new XamlAstXmlDirective(newEl.AsLi(_text),
+                        i.Children.Add(new XamlAstXmlDirective(attribute.AsLi(_text),
                             attrNs, attrName, new[]
                             {
                             ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text))
@@ -274,7 +274,7 @@ namespace XamlX.Parsers
                             var parts = pname.Split(new[] { '.' }, 2);
                             pname = parts[1];
                             var ns = attrPrefix == "" ? _ns.DefaultNamespace : attrNs;
-                            ptype = new XamlAstXmlTypeReference(newEl.AsLi(_text), ns, parts[0]);
+                            ptype = new XamlAstXmlTypeReference(attribute.AsLi(_text), ns, parts[0]);
                         }
 
                         i.Children.Add(new XamlAstXamlPropertyValueNode(attribute.AsLi(_text),
@@ -305,11 +305,11 @@ namespace XamlX.Parsers
                                     throw ParseError(newNode.AsLi(_text),
                                         "Attributes aren't allowed on element properties");
                                 var pair = nodeName.Split(new[] { '.' }, 2);
-                                i.Children.Add(new XamlAstXamlPropertyValueNode(newEl.AsLi(_text),
+                                i.Children.Add(new XamlAstXamlPropertyValueNode(newNode.AsLi(_text),
                                     new XamlAstNamePropertyReference
                                     (
-                                        newEl.AsLi(_text),
-                                        new XamlAstXmlTypeReference(newEl.AsLi(_text), nodeNs,
+                                        newNode.AsLi(_text),
+                                        new XamlAstXmlTypeReference(newNode.AsLi(_text), nodeNs,
                                             pair[0]), pair[1], type
                                     ),
                                     ParseValueNodeChildren(newNode, spaceMode),
