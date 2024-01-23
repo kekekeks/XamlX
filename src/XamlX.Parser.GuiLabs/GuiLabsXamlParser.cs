@@ -17,23 +17,24 @@ namespace XamlX.Parsers
     class GuiLabsXamlParser
     {
 
-        public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null, bool isDesignMode = false)
         {
-            return Parse(new StringReader(s), compatibilityMappings);
+            return Parse(new StringReader(s), compatibilityMappings, isDesignMode);
         }
 
-        public static XamlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null, bool isDesignMode = false)
         {
             string data = reader.ReadToEnd();
             var buffer = new StringBuffer(data);
             var parsed = Parser.Parse(buffer);
-            return CreateXamlDocument(parsed, data, compatibilityMappings);
+            return CreateXamlDocument(parsed, data, compatibilityMappings, isDesignMode);
         }
 
         public static XamlDocument CreateXamlDocument(
             XmlDocumentSyntax document,
             string xaml,
-            Dictionary<string, string> compatibilityMappings = null)
+            Dictionary<string, string> compatibilityMappings = null,
+            bool isDesignMode = false)
         {
             Dictionary<string, string> namespaceAliases = new Dictionary<string, string>();
             HashSet<string> ignorableNamespaces = new HashSet<string>();
@@ -60,13 +61,16 @@ namespace XamlX.Parsers
                 }
             }
 
-            foreach (var attr in attributes)
+            if (!isDesignMode)
             {
-                if (attr.name == "Ignorable" && namespaceAliases.TryGetValue(attr.prefix, out var transformedNs) && transformedNs == ignorableNs)
+                foreach (var attr in attributes)
                 {
-                    foreach (var ignorable in attr.Value.Split(' '))
+                    if (attr.name == "Ignorable" && namespaceAliases.TryGetValue(attr.prefix, out var transformedNs) && transformedNs == ignorableNs)
                     {
-                        ignorableNamespaces.Add(namespaceAliases[ignorable]);
+                        foreach (var ignorable in attr.Value.Split(' '))
+                        {
+                            ignorableNamespaces.Add(namespaceAliases[ignorable]);
+                        }
                     }
                 }
             }
