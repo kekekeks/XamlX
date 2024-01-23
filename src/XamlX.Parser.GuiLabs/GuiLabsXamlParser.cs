@@ -277,8 +277,8 @@ namespace XamlX.Parsers
                             ptype = new XamlAstXmlTypeReference(newEl.AsLi(_text), ns, parts[0]);
                         }
 
-                        i.Children.Add(new XamlAstXamlPropertyValueNode(newEl.AsLi(_text),
-                            new XamlAstNamePropertyReference(newEl.AsLi(_text), ptype, pname, type),
+                        i.Children.Add(new XamlAstXamlPropertyValueNode(attribute.AsLi(_text),
+                            new XamlAstNamePropertyReference(attribute.AsLi(_text), ptype, pname, type),
                             ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text)), true));
                     }
                 }
