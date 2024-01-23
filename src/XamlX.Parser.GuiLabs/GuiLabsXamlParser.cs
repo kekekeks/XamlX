@@ -260,7 +260,7 @@ namespace XamlX.Parsers
                         i.Children.Add(new XamlAstXmlDirective(attribute.AsLi(_text),
                             attrNs, attrName, new[]
                             {
-                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text))
+                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.ValueNode.AsLi(_text))
                             }
                         ));
                     // Parse as a property
@@ -279,7 +279,7 @@ namespace XamlX.Parsers
 
                         i.Children.Add(new XamlAstXamlPropertyValueNode(attribute.AsLi(_text),
                             new XamlAstNamePropertyReference(attribute.AsLi(_text), ptype, pname, type),
-                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.AsLi(_text)), true));
+                            ParseTextValueOrMarkupExtension(attribute.Value, attribute.ValueNode.AsLi(_text)), true));
                     }
                 }
 
