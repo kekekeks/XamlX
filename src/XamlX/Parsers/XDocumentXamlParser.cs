@@ -310,25 +310,26 @@ namespace XamlX.Parsers
     {
         class WrappedLineInfo : IXamlLineInfo
         {
-            public WrappedLineInfo(IXmlLineInfo info, int spanStart, int spanEnd)
+            public WrappedLineInfo(XObject o)
             {
+                var info = (IXmlLineInfo)o;
                 Line = info.LineNumber;
                 Position = info.LinePosition;
-                SpanStart = spanStart;
-                SpanEnd = spanEnd;
+                XmlNode = info;
             }
             public int Line { get; set; }
             public int Position { get; set; }
-            public int SpanStart { get; set; }
-            public int SpanEnd { get; set; }
+            public int SpanStart => -1;
+            public int SpanEnd => -1;
+            public object XmlNode { get; }
         }
 
-        public static IXamlLineInfo AsLi(this IXmlLineInfo info)
+        public static IXamlLineInfo AsLi(this XObject node)
         {
-            if (!info.HasLineInfo())
+            if (!((IXmlLineInfo)node).HasLineInfo())
                 throw new InvalidOperationException("XElement doesn't have line info");
 
-            return new WrappedLineInfo(info, -1, -1);
+            return new WrappedLineInfo(node);
         }
 
         private static readonly XName SpaceAttributeName = XName.Get("space", XNamespace.Xml.NamespaceName);

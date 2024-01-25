@@ -1,39 +1,40 @@
-﻿using XamlX.Ast;
+﻿using Microsoft.Language.Xml;
+using XamlX.Ast;
 
 namespace XamlX.Parsers
 {
 #if !XAMLX_INTERNAL
     public
 #endif
-    class Position : IXamlLineInfo
+    class TextPosition : IXamlLineInfo
     {
-        public Position(int line, int character, int spanStart, int spanEnd)
+        private readonly SyntaxNode _node;
+
+        public TextPosition(IXmlElement element, string xml)
+            : this((SyntaxNode)element, xml)
         {
-            Line = line;
-            Character = character;
-            SpanStart = spanStart;
-            SpanEnd = spanEnd;
+        }
+
+        public TextPosition(SyntaxNode node, string xml)
+        {
+            _node = node;
+            (Line, Position) = GetLineAndPosition(_node.Span.Start, xml);
         }
 
         public int Line { get; set; }
+        public int Position { get; set; }
+        public int SpanStart => _node.Span.Start;
+        public int SpanEnd => _node.Span.End;
+        public object XmlNode => _node;
 
-        public int Character { get; set; }
-
-        public int SpanStart { get; set; }
-
-        public int SpanEnd { get; set; }
-
-        int IXamlLineInfo.Position { get => Character; set => Character = value; }
-
-        public static Position SpanToPosition(int start, int end, string data)
+        private static (int line, int position) GetLineAndPosition(int offset, string xml)
         {
-            int character = 0;
-            int line = 0;
-            var offset = start + 1;
+            var character = 0;
+            var line = 0;
 
-            if (offset != 0 && data.Length < offset)
+            if (offset != 0 && xml.Length < offset)
             {
-                offset = data.Length - 1;
+                offset = xml.Length - 1;
             }
 
             void NewLine()
@@ -42,16 +43,16 @@ namespace XamlX.Parsers
                 character = 0;
             }
 
-            int i = 0;
+            var i = 0;
             for (; i < offset; i++)
             {
-                if (data[i] == '\n')
+                if (xml[i] == '\n')
                 {
                     NewLine();
                 }
-                else if (data[i] == '\r')
+                else if (xml[i] == '\r')
                 {
-                    bool hasRn = i + 1 < data.Length && data[i + 1] == '\n';
+                    bool hasRn = i + 1 < xml.Length && xml[i + 1] == '\n';
                     if (hasRn)
                     {
                         i++;
@@ -64,7 +65,7 @@ namespace XamlX.Parsers
                 }
             }
 
-            return new Position(line, character, start, end);
+            return (line, character);
         }
     }
 }

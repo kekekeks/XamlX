@@ -13,8 +13,9 @@ namespace XamlX.Ast
     {
         int Line { get; set; }
         int Position { get; set; }
-        int SpanStart { get; set; }
-        int SpanEnd { get; set; }
+        int SpanStart { get; }
+        int SpanEnd { get; }
+        object XmlNode { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -83,6 +84,7 @@ namespace XamlX.Ast
         public int Position { get; set; }
         public int SpanStart { get; set; }
         public int SpanEnd { get; set; }
+        public object XmlNode { get; set; }
 
         public XamlAstNode(IXamlLineInfo lineInfo)
         {
@@ -90,6 +92,7 @@ namespace XamlX.Ast
             Position = lineInfo.Position;
             SpanStart = lineInfo.SpanStart;
             SpanEnd = lineInfo.SpanEnd;
+            XmlNode = lineInfo.XmlNode;
         }
         
         public virtual void VisitChildren(Visitor visitor)

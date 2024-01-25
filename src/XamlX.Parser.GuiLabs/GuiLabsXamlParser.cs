@@ -470,12 +470,11 @@ namespace XamlX.Parsers
     {
         public static IXamlLineInfo AsLi(this SyntaxNode info, string data)
         {
-            return Position.SpanToPosition(info.SpanStart, info.Span.End, data);
+            return new TextPosition(info, data);
         }
         public static IXamlLineInfo AsLi(this IXmlElement info, string data)
         {
-            var syntax = (XmlNodeSyntax)info;
-            return Position.SpanToPosition(syntax.SpanStart, syntax.Span.End, data);
+            return new TextPosition(info, data);
         }
 
         // Get the xml:space mode declared on the node - if it's an element, None otherwise.
