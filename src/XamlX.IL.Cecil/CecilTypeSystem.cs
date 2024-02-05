@@ -25,6 +25,9 @@ namespace XamlX.TypeSystem
         
         private CustomMetadataResolver _resolver;
         private CecilTypeCache _typeCache;
+        private readonly TypeDefinition _compilerGeneratedAttribute;
+        private readonly MethodDefinition _compilerGeneratedAttributeConstructor;
+
         public void Dispose()
         {
             foreach (var asm in _asms)
@@ -76,7 +79,10 @@ namespace XamlX.TypeSystem
                     TargetAssembly = wrapped;
                     TargetAssemblyDefinition = asm;
                 }
-            }    
+            }
+
+            _compilerGeneratedAttribute = GetTypeReference(FindType("System.Runtime.CompilerServices.CompilerGeneratedAttribute")).Resolve();
+            _compilerGeneratedAttributeConstructor = _compilerGeneratedAttribute.GetConstructors().Single();
         }
 
         public IXamlAssembly TargetAssembly { get; private set; }
@@ -192,10 +198,39 @@ namespace XamlX.TypeSystem
             TypeReference Reference { get; }
         }
 
-        public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeDefinition def)
+        public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeDefinition def, bool compilerGeneratedType = true)
         {
+            if (compilerGeneratedType)
+            {
+                AddCompilerGeneratedAttribute(def);
+            }
+
             return new CecilTypeBuilder(this, FindAsm(def.Module.Assembly), def);
         }
+
+        public void AddCompilerGeneratedAttribute(MemberReference member)
+        {
+            if (member is not ICustomAttributeProvider { CustomAttributes: { } attributes } )
+            {
+                throw new ArgumentException($"Member '{member}' does not support custom attributes", nameof(member));
+            }
+
+            if (member is not TypeDefinition && member.DeclaringType.Resolve().CustomAttributes.Any(IsCompilerGeneratedAttribute))
+            {
+                return; // declaring type is already decorated
+            }
+
+            if (!attributes.Any(IsCompilerGeneratedAttribute))
+            {
+                if (member.Module == null)
+                {
+                    throw new ArgumentException("Member has not yet been added to a module.", nameof(member));
+                }
+                attributes.Add(new(member.Module.Assembly.MainModule.ImportReference(_compilerGeneratedAttributeConstructor)));
+            }
+        }
+
+        private bool IsCompilerGeneratedAttribute(CustomAttribute attribute) => attribute.AttributeType.Resolve() == _compilerGeneratedAttribute;
 
         public AssemblyDefinition GetAssembly(IXamlAssembly asm)
             => ((CecilAssembly) asm).Assembly;
