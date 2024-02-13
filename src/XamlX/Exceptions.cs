@@ -11,18 +11,28 @@ namespace XamlX
 #endif
     class XamlParseException : XmlException
     {
-        public XamlParseException(string message, int line, int position, Exception? innerException = null)
+        public XamlParseException(
+            string message,
+            int line,
+            int position,
+            int spanStart,
+            int spanEnd,
+            Exception? innerException = null)
             : base(message, innerException, line, position)
         {
+            SpanStart = spanStart;
+            SpanEnd = spanEnd;
         }
 
         public XamlParseException(string message, IXamlLineInfo? lineInfo, Exception? innerException = null)
-            : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, innerException)
+            : this(message, lineInfo?.Line ?? 0, lineInfo?.Position ?? 0, lineInfo?.SpanStart ?? -1, lineInfo?.SpanEnd ?? -1, innerException)
         {
 
         }
 
         public string? Document { get; init; }
+        public int SpanStart { get; }
+        public int SpanEnd { get; }
     }
 
 #if !XAMLX_INTERNAL

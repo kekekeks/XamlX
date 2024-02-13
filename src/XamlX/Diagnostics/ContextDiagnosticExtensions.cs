@@ -30,7 +30,7 @@ static class ContextDiagnosticExtensions
         IXamlAstNode? offender,
         XamlDiagnosticSeverity minSeverity = XamlDiagnosticSeverity.None)
     {
-        var diagnostic = new XamlDiagnostic(diagnosticCode, severity, title, offender?.Line, offender?.Position)
+        var diagnostic = new XamlDiagnostic(diagnosticCode, severity, title, offender)
         {
             Document = context.Document,
             MinSeverity = minSeverity
@@ -56,12 +56,12 @@ static class ContextDiagnosticExtensions
     {
         var code = context.Configuration.DiagnosticsHandler.CodeMappings(exception);
         var title = context.Configuration.DiagnosticsHandler.ExceptionFormatter(exception);
-        var lineInfo = exception as XmlException;
+        var lineInfo = exception as XamlParseException;
 
         return new XamlDiagnostic(
             code, XamlDiagnosticSeverity.Error,
             title,
-            lineInfo?.LineNumber, lineInfo?.LinePosition)
+            lineInfo?.LineNumber, lineInfo?.LinePosition, lineInfo?.SpanStart, lineInfo?.SpanEnd)
         {
             Document = (exception as XamlParseException)?.Document,
             MinSeverity = XamlDiagnosticSeverity.Error,

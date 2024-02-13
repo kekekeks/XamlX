@@ -460,7 +460,7 @@ namespace XamlX.Parsers
             }
 
             Exception ParseError(IXamlLineInfo line, string message) =>
-                new XamlParseException(message, line.Line, line.Position);
+                new XamlParseException(message, line);
 
             public XamlAstObjectNode Parse() => ParseNewInstance(_newRoot, true, XmlSpace.Default);
         }

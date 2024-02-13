@@ -13,10 +13,13 @@ public
         string Code,
         XamlDiagnosticSeverity Severity,
         string Title,
-        int? LineNumber, int? LinePosition) : IXamlLineInfo
+        int? LineNumber,
+        int? LinePosition,
+        int? SpanStart,
+        int? SpanEnd) : IXamlLineInfo
 {
     public XamlDiagnostic(string code, XamlDiagnosticSeverity severity, string title, IXamlLineInfo? lineInfo = null)
-        : this(code, severity, title, lineInfo?.Line, lineInfo?.Position)
+        : this(code, severity, title, lineInfo?.Line, lineInfo?.Position, lineInfo?.SpanStart, lineInfo?.SpanEnd)
     {
     }
 
@@ -28,7 +31,7 @@ public
 
     int IXamlLineInfo.Line { get => LineNumber ?? 0; set { } }
     int IXamlLineInfo.Position { get => LinePosition ?? 0; set { } }
-    int IXamlLineInfo.SpanStart => -1;
-    int IXamlLineInfo.SpanEnd => -1;
+    int IXamlLineInfo.SpanStart => SpanStart ?? -1;
+    int IXamlLineInfo.SpanEnd => SpanEnd ?? -1;
     object? IXamlLineInfo.XmlNode => null;
 }

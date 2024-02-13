@@ -34,7 +34,7 @@ namespace XamlX.Transform
                     }
                     else
                         throw new XamlParseException(
-                            $"Unexpected parameters for {xmlnsType.GetFqn()} declared on assembly {asm.Name}", 0, 0);
+                            $"Unexpected parameters for {xmlnsType.GetFqn()} declared on assembly {asm.Name}", 0, 0, -1, -1);
                         
                     break;
                 }
