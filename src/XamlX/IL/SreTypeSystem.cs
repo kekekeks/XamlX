@@ -313,12 +313,32 @@ namespace XamlX.IL
             public Dictionary<string, object> Properties { get; }
         }
 
+        [DebuggerDisplay("{_parameterInfo}")]
+        class SreXamlParameterInfo : IXamlParameterInfo
+        {
+            private readonly SreTypeSystem _system;
+            private readonly ParameterInfo _parameterInfo;
+
+            public SreXamlParameterInfo(SreTypeSystem system, ParameterInfo parameterInfo)
+            {
+                _system = system;
+                _parameterInfo = parameterInfo;
+            }
+
+            public string Name => _parameterInfo.Name;
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
+            public IXamlType ParameterType => _system.ResolveType(_parameterInfo.ParameterType);
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _parameterInfo.GetCustomAttributesData()
+                .Select(a => new SreCustomAttribute(_system, a, _system.ResolveType(a.AttributeType))).ToList();
+        }
+        
         [DebuggerDisplay("{_method}")]
         class SreMethodBase : SreMemberInfo
         {
             private readonly MethodBase _method;
+            private IReadOnlyList<IXamlParameterInfo> _parameters;
 
-            protected IReadOnlyList<IXamlType> _parameters;
             public SreMethodBase(SreTypeSystem system, MethodBase method) : base(system, method)
             {
                 _method = method;
@@ -326,11 +346,14 @@ namespace XamlX.IL
             public bool IsPublic => _method.IsPublic;
             public bool IsStatic => _method.IsStatic;
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
-            public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= _method.GetParameters()
-                    .Select(p => System.ResolveType(p.ParameterType)).ToList();
+            protected virtual IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters ??=
+                _method.GetParameters().Select(p => new SreXamlParameterInfo(System, p)).ToArray();
 
+            public IReadOnlyList<IXamlType> Parameters =>
+                SreParameters.Select(p => p.ParameterType).ToList();
+
+            public IXamlParameterInfo GetParameterInfo(int index) => SreParameters[index];
+            
             public override string ToString() => _method.DeclaringType?.FullName + " " + _method;
         }
         
@@ -641,6 +664,7 @@ namespace XamlX.IL
 
             class SreMethodBuilder : SreMethod, IXamlMethodBuilder<IXamlILEmitter>
             {
+                private readonly IReadOnlyList<IXamlParameterInfo> _parameters;
                 public MethodBuilder MethodBuilder { get; }
 
                 public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder,
@@ -648,8 +672,10 @@ namespace XamlX.IL
                 {
                     MethodBuilder = methodBuilder;
                     Generator = new IlGen(system, methodBuilder.GetILGenerator());
-                    _parameters = parameters;
+                    _parameters = parameters.Select((p, i) => new AnonymousParameterInfo(p, i)).ToArray();
                 }
+
+                protected override IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters;
 
                 public IXamlILEmitter Generator { get; }
 
