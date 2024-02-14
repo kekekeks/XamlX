@@ -30,7 +30,7 @@ namespace XamlX.Parsers
         private static (int line, int position) GetLineAndPosition(int offset, string xml)
         {
             var character = 0;
-            var line = 0;
+            var line = 1;
 
             if (offset != 0 && xml.Length < offset)
             {
