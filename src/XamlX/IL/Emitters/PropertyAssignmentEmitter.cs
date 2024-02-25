@@ -177,7 +177,7 @@ namespace XamlX.IL.Emitters
 
             void EmitSetterAfterChecks(IXamlPropertySetter setter, IXamlType typeOnStack)
             {
-                // Convert is needed for T to T? and null to T?, wil be a no-op in other cases
+                // Convert is needed for T to T? and null to T?, will be a no-op in other cases
                 ILEmitHelpers.EmitConvert(context, codeGen, lineInfo, typeOnStack, setter.Parameters.Last());
                 context.Emit(setter, codeGen);
                 codeGen.Ret();

@@ -30,7 +30,7 @@ namespace XamlX.IL.Emitters
             XamlAstClrProperty property,
             XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context)
             => _sharedContainer is null || property.IsPrivate || IsTypeEffectivelyPrivate(property.DeclaringType)
-                ? new DefaultXamlDynamicSetterContainer(context.DeclaringType, XamlVisibility.Private)
+                ? GetOrCreatePrivateContainer(context)
                 : _sharedContainer;
 
         private static bool IsTypeEffectivelyPrivate(IXamlType xamlType)
@@ -42,6 +42,18 @@ namespace XamlX.IL.Emitters
             }
 
             return false;
+        }
+
+        private static DefaultXamlDynamicSetterContainer GetOrCreatePrivateContainer(
+            XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context)
+        {
+            if (!context.TryGetItem<DefaultXamlDynamicSetterContainer>(out var container))
+            {
+                container = new DefaultXamlDynamicSetterContainer(context.DeclaringType, XamlVisibility.Private);
+                context.SetItem(container);
+            }
+
+            return container;
         }
     }
 
