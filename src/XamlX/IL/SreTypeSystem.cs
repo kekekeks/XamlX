@@ -334,6 +334,7 @@ namespace XamlX.IL
             }
             public bool IsPublic => _method.IsPublic;
             public bool IsPrivate => _method.IsPrivate;
+            public bool IsFamily => _method.IsFamily;
             public bool IsStatic => _method.IsStatic;
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]

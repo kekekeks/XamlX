@@ -48,6 +48,7 @@ namespace XamlX.TypeSystem
     {
         bool IsPublic { get; }
         bool IsPrivate { get; }
+        bool IsFamily { get; }
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }

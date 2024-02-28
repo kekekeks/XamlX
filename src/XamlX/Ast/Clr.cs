@@ -38,6 +38,7 @@ namespace XamlX.Ast
         public string Name { get; set; }
         public bool IsPublic { get; set; }
         public bool IsPrivate { get; set; }
+        public bool IsFamily { get; set; }
         public IXamlMethod Getter { get; set; }
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
@@ -56,6 +57,7 @@ namespace XamlX.Ast
             DeclaringType = accessor?.DeclaringType;
             IsPrivate = accessor?.IsPrivate == true;
             IsPublic = accessor?.IsPublic == true;
+            IsFamily = accessor?.IsFamily == true;
             var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
             if (typeConverterAttributes != null)
             {
@@ -80,6 +82,7 @@ namespace XamlX.Ast
             Getter = getter;
             IsPublic = getter?.IsPublic == true;
             IsPrivate = getter?.IsPrivate == true;
+            IsFamily = getter?.IsFamily == true;
             if (setters != null)
                 Setters.AddRange(setters);
         }
@@ -595,6 +598,7 @@ namespace XamlX.Ast
         public IXamlType DeclaringType => _method.DeclaringType;
         public bool IsPublic => true;
         public bool IsPrivate => false;
+        public bool IsFamily => false;
         public bool IsStatic => true;
         public IReadOnlyList<IXamlType> Parameters { get; }
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;

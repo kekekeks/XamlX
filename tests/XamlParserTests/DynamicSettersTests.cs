@@ -61,6 +61,28 @@ namespace XamlParserTests
         public SpecialHandler<string> SpecialHandler { get; } = new();
     }
 
+    public class ProtectedDynamicSettersClass : ISpecialHandling<int, string>
+    {
+        private int _value;
+
+        internal bool IsValueSet;
+
+        protected int Value
+        {
+            get => _value;
+            set
+            {
+                _value = value;
+                IsValueSet = true;
+            }
+        }
+
+        int ISpecialHandling<int, string>.Value
+            => Value;
+
+        public SpecialHandler<string> SpecialHandler { get; } = new();
+    }
+
     public class SpecialHandler<T>
     {
         internal bool Called;
@@ -363,7 +385,7 @@ namespace XamlParserTests
         }
 
         [Fact]
-        public void Public_Dynamic_Setter_Should_Be_Shared_Between_Types()
+        public void Dynamic_Setter_For_Public_Property_Should_Be_Shared()
         {
             var sharedSetters = _compiler.CreateTypeBuilder("PublicSharedSetters", true);
 
@@ -391,8 +413,10 @@ namespace XamlParserTests
 
 #if CECIL
 
-        [Fact]
-        public void Private_Dynamic_Setter_Should_Be_Private()
+        [Theory]
+        [InlineData(nameof(PrivateDynamicSettersClass))]
+        [InlineData(nameof(ProtectedDynamicSettersClass))]
+        public void Dynamic_Setter_For_Non_Public_Property_Should_Be_Private(string className)
         {
             var typeSystem = (CecilTypeSystem)Configuration.TypeSystem;
 
@@ -406,19 +430,19 @@ namespace XamlParserTests
             _compiler.IlCompiler.DynamicSetterContainerProvider =
                 new DefaultXamlDynamicSetterContainerProvider(sharedSetters.XamlTypeBuilder);
 
-            var rootTypeDefinition = assemblyDefinition.MainModule.GetType("XamlParserTests.PrivateDynamicSettersClass");
+            var rootTypeDefinition = assemblyDefinition.MainModule.GetType($"XamlParserTests.{className}");
             Assert.NotNull(rootTypeDefinition);
 
             var rootTypeBuilder = new RuntimeTypeBuilder(
                 typeSystem.CreateTypeBuilder(rootTypeDefinition),
                 () => _compiler.GetRuntimeType(rootTypeDefinition.FullName));
 
-            var (create, _) = _compiler.Compile(@"
-<PrivateDynamicSettersClass 
+            var (create, _) = _compiler.Compile($@"
+<{className} 
     xmlns='clr-namespace:XamlParserTests'
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
     xmlns:sys='clr-namespace:System;assembly=netstandard'
-    Value='{DynamicProvider ProvidedValue=String}' />
+    Value='{{DynamicProvider ProvidedValue=String}}' />
 ", parsedTypeBuilder: rootTypeBuilder);
 
             var result = create(null);
@@ -429,7 +453,7 @@ namespace XamlParserTests
 
             var dynamicSetterMethod = result.GetType()
                 .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
-                .FirstOrDefault(m => m.ToString() == "Void <>XamlDynamicSetter_1(XamlParserTests.PrivateDynamicSettersClass, System.Object)");
+                .FirstOrDefault(m => m.ToString() == $"Void <>XamlDynamicSetter_1(XamlParserTests.{className}, System.Object)");
 
             Assert.NotNull(dynamicSetterMethod);
             Assert.True(dynamicSetterMethod.IsPrivate);

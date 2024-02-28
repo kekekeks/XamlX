@@ -60,6 +60,7 @@ namespace XamlX.TypeSystem
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
             public bool IsPrivate => Definition.IsPrivate;
+            public bool IsFamily => Definition.IsFamily;
             public bool IsStatic => Definition.IsStatic;
 
             private IXamlType _returnType;

@@ -29,7 +29,7 @@ namespace XamlX.IL.Emitters
         public IXamlDynamicSetterContainer ProvideDynamicSetterContainer(
             XamlAstClrProperty property,
             XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context)
-            => _sharedContainer is null || property.IsPrivate || IsTypeEffectivelyPrivate(property.DeclaringType)
+            => _sharedContainer is null || (property.IsPrivate || property.IsFamily) || IsTypeEffectivelyPrivate(property.DeclaringType)
                 ? GetOrCreatePrivateContainer(context)
                 : _sharedContainer;
 
