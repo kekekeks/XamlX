@@ -164,6 +164,8 @@ namespace XamlX.IL
             private IReadOnlyList<IXamlType> _genericParameters;
             private IReadOnlyList<IXamlType> _interfaces;
             private IReadOnlyList<IXamlEventInfo> _events;
+            private IXamlType _baseType;
+            private IXamlType _declaringType;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] public Type Type { get; }
 
             public SreType(SreTypeSystem system, SreAssembly asm, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type): base(system, type)
@@ -178,6 +180,8 @@ namespace XamlX.IL
 
             public string FullName => Type.FullName;
             public string Namespace => Type.Namespace;
+            public bool IsPublic => Type.IsPublic;
+            public bool IsNestedPrivate => Type.IsNestedPrivate;
             public IXamlAssembly Assembly { get; }
 
             public IReadOnlyList<IXamlProperty> Properties =>
@@ -266,7 +270,12 @@ namespace XamlX.IL
             public IXamlType MakeArrayType(int dimensions) => System.ResolveType(
                 dimensions == 1 ? Type.MakeArrayType() : Type.MakeArrayType(dimensions));
 
-            public IXamlType BaseType => Type.BaseType == null ? null : System.ResolveType(Type.BaseType);
+            public IXamlType BaseType =>
+                _baseType ??= Type.BaseType is { } baseType ? System.ResolveType(baseType) : null;
+
+            public IXamlType DeclaringType =>
+                _declaringType ??= Type.DeclaringType is { } declaringType ? System.ResolveType(declaringType) : null;
+
             public bool IsValueType => Type.IsValueType;
             public bool IsEnum => Type.IsEnum;
 
@@ -344,6 +353,8 @@ namespace XamlX.IL
                 _method = method;
             }
             public bool IsPublic => _method.IsPublic;
+            public bool IsPrivate => _method.IsPrivate;
+            public bool IsFamily => _method.IsFamily;
             public bool IsStatic => _method.IsStatic;
 
             protected virtual IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters ??=

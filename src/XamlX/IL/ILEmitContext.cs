@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using System.Xml;
 using XamlX.Ast;
 using XamlX.Emit;
+using XamlX.IL.Emitters;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -17,16 +18,16 @@ namespace XamlX.IL
     {
         public bool EnableIlVerification { get; }
 
-        public ILEmitContext(IXamlILEmitter emitter, TransformerConfiguration configuration,
+        public ILEmitContext(
+            IXamlILEmitter emitter,
+            TransformerConfiguration configuration,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> defineDelegateSubType,
+            IXamlTypeBuilder<IXamlILEmitter> declaringType,
             IFileSource file,
             IEnumerable<object> emitters)
-            : base(emitter, configuration, emitMappings, runtimeContext,
-                contextLocal, createSubType, defineDelegateSubType, file, emitters)
+            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, declaringType, file, emitters)
         {
             EnableIlVerification = configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification;
         }
@@ -108,6 +109,14 @@ namespace XamlX.IL
 #endif
     class ILEmitContextSettings
     {
+        private IXamlDynamicSetterContainerProvider _dynamicSetterContainerProvider;
+
         public bool EnableILVerification { get; set; }
+
+        public IXamlDynamicSetterContainerProvider DynamicSetterContainerProvider
+        {
+            get => _dynamicSetterContainerProvider ??= new DefaultXamlDynamicSetterContainerProvider(null);
+            set => _dynamicSetterContainerProvider = value;
+        }
     }
 }

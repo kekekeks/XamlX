@@ -76,33 +76,34 @@ namespace XamlX.TypeSystem
             
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
+            public bool IsPrivate => Definition.IsPrivate;
+            public bool IsFamily => Definition.IsFamily;
             public bool IsStatic => Definition.IsStatic;
 
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>
-                _returnType ?? (_returnType = TypeSystem.Resolve(Reference.ReturnType));
+                _returnType ??= TypeSystem.Resolve(Reference.ReturnType);
 
             private IXamlType _declaringType;
 
             public IXamlType DeclaringType =>
-                _declaringType = _declaringType ?? (_declaringType = TypeSystem.Resolve(_declaringTypeReference));
+                _declaringType ??= TypeSystem.Resolve(_declaringTypeReference);
 
             private IReadOnlyList<IXamlType> _parameters;
 
             public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ?? (_parameters =
-                    Reference.Parameters.Select(p => new CecilParameterInfo(TypeSystem, p).ParameterType).ToList());
+                _parameters ??= Reference.Parameters.Select(p => new CecilParameterInfo(TypeSystem, p).ParameterType).ToList();
             
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
+
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList();
 
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ?? (_generator = new CecilEmitter(TypeSystem, Definition));
+                _generator ??= new CecilEmitter(TypeSystem, Definition);
 
             public IXamlParameterInfo GetParameterInfo(int index) => new CecilParameterInfo(TypeSystem, Reference.Parameters[index]);
         }

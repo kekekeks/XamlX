@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using XamlX.Ast;
+using XamlX.IL;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 
@@ -22,11 +23,10 @@ namespace XamlX.Emit
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
             IXamlLocal contextLocal,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> defineDelegateSubType,
+            IXamlTypeBuilder<TBackendEmitter> declaringType,
             IFileSource file,
             IEnumerable<object> emitters)
-            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, createSubType, defineDelegateSubType, file, emitters)
+            : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, declaringType, file, emitters)
         {
         }
 
