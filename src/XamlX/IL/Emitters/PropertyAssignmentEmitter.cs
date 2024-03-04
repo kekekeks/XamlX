@@ -61,7 +61,7 @@ namespace XamlX.IL.Emitters
             else
             {
                 var valueTypes = an.Values.Select(x => x.Type.GetClrType()).ToArray();
-                var method = GetOrCreateDynamicSetterMethod(an.Property.DeclaringType, valueTypes, setters, dynamicValue, context);
+                var method = GetOrCreateDynamicSetterMethod(an.Property, valueTypes, setters, dynamicValue, context);
 
                 for (var i = 0; i < an.Values.Count - 1; ++i)
                     context.Emit(an.Values[i], codeGen, an.Values[i].Type.GetClrType());
@@ -112,43 +112,48 @@ namespace XamlX.IL.Emitters
                && (to.BinderParameters.AllowRuntimeNull || !from.BinderParameters.AllowRuntimeNull);
 
         private static IXamlMethod GetOrCreateDynamicSetterMethod(
-            IXamlType parentType,
+            XamlAstClrProperty property,
             IReadOnlyList<IXamlType> valueTypes,
             IReadOnlyList<IXamlPropertySetter> setters,
             IXamlLineInfo lineInfo,
             XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
-            if (!context.TryGetItem(out DynamicSettersCache cache))
+            var containerProvider = context.Configuration.GetOrCreateExtra<ILEmitContextSettings>().DynamicSetterContainerProvider;
+            var container = containerProvider.ProvideDynamicSetterContainer(property, context);
+            var typeBuilder = container.TypeBuilder;
+
+            var typeCache = context.Configuration.GetOrCreateExtra<DynamicSettersTypeCache>();
+            if (!typeCache.MethodCacheByType.TryGetValue(typeBuilder, out var methodCache))
             {
-                var settersType = context.CreateSubType(
-                    "DynamicSetters_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
-                    context.Configuration.WellKnownTypes.Object);
-                cache = new DynamicSettersCache(settersType);
-                context.SetItem(cache);
-                context.AddAfterEmitCallbacks(() => settersType.CreateType());
+                methodCache = new DynamicSettersMethodCache();
+                typeCache.MethodCacheByType[typeBuilder] = methodCache;
             }
 
-            var cacheKey = new SettersCacheKey(parentType, valueTypes, setters);
+            var cacheKey = new SettersCacheKey(property.DeclaringType, valueTypes, setters);
 
-            if (!cache.MethodByCacheKey.TryGetValue(cacheKey, out var method))
+            if (!methodCache.MethodByCacheKey.TryGetValue(cacheKey, out var method))
             {
-                method = cache.SettersType.DefineMethod(
+                method = typeBuilder.DefineMethod(
                     context.Configuration.WellKnownTypes.Void,
-                    new[] { parentType }.Concat(valueTypes),
-                    "DynamicSetter_" + (cache.MethodByCacheKey.Count + 1),
-                    XamlVisibility.Public, true, false);
+                    new[] { property.DeclaringType }.Concat(valueTypes),
+                    container.GetDynamicSetterMethodName(methodCache.MethodByCacheKey.Count),
+                    container.GeneratedMethodsVisibility,
+                    true,
+                    false);
 
                 var newContext = new ILEmitContext(
-                    method.Generator, context.Configuration, context.EmitMappings, context.RuntimeContext,
+                    method.Generator,
+                    context.Configuration,
+                    context.EmitMappings,
+                    context.RuntimeContext,
                     null,
-                    (s, type) => cache.SettersType.DefineSubType(type, s, XamlVisibility.Private),
-                    (s, returnType, parameters) => cache.SettersType.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
+                    typeBuilder,
                     context.File,
                     context.Emitters);
 
                 EmitDynamicSetterMethod(valueTypes, setters, lineInfo, newContext);
 
-                cache.MethodByCacheKey[cacheKey] = method;
+                methodCache.MethodByCacheKey[cacheKey] = method;
             }
 
             return method;
@@ -306,14 +311,14 @@ namespace XamlX.IL.Emitters
             }
         }
 
-        private sealed class DynamicSettersCache
+        private sealed class DynamicSettersTypeCache
         {
-            public IXamlTypeBuilder<IXamlILEmitter> SettersType { get; }
+            public Dictionary<IXamlTypeBuilder<IXamlILEmitter>, DynamicSettersMethodCache> MethodCacheByType { get; } = new();
+        }
 
+        private sealed class DynamicSettersMethodCache
+        {
             public Dictionary<SettersCacheKey, IXamlMethodBuilder<IXamlILEmitter>> MethodByCacheKey { get; } = new();
-
-            public DynamicSettersCache(IXamlTypeBuilder<IXamlILEmitter> settersType)
-                => SettersType = settersType;
         }
     }
 }

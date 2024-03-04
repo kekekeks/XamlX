@@ -9,7 +9,7 @@ namespace XamlX.Transform;
 #endif
 class XamlDiagnosticsHandler
 {
-    public Func<object, string> CodeMappings { get; init; } = code => code.ToString();
+    public Func<object, string> CodeMappings { get; init; } = code => code.ToString() ?? string.Empty;
 
     public Func<Exception, string> ExceptionFormatter { get; init; } = ex => ex.Message;
 

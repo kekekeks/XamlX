@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection.Emit;
-using XamlX.Ast;
 
 namespace XamlX.TypeSystem
 {
@@ -17,6 +14,8 @@ namespace XamlX.TypeSystem
         string Name { get; }
         string Namespace { get; }
         string FullName { get; }
+        bool IsPublic { get; }
+        bool IsNestedPrivate { get; }
         IXamlAssembly Assembly { get; }
         IReadOnlyList<IXamlProperty> Properties { get; }
         IReadOnlyList<IXamlEventInfo> Events { get; }
@@ -32,6 +31,7 @@ namespace XamlX.TypeSystem
         IXamlType ArrayElementType { get; }
         IXamlType MakeArrayType(int dimensions);
         IXamlType BaseType { get; }
+        IXamlType DeclaringType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlType> Interfaces { get; }
@@ -47,6 +47,8 @@ namespace XamlX.TypeSystem
     interface IXamlMethod : IEquatable<IXamlMethod>, IXamlMember
     {
         bool IsPublic { get; }
+        bool IsPrivate { get; }
+        bool IsFamily { get; }
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
@@ -237,36 +239,36 @@ namespace XamlX.TypeSystem
 
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
-        public string Namespace { get; } = "";
+        public string Namespace => "";
         public string FullName => Name;
-        public IXamlAssembly Assembly { get; } = null;
-        public IReadOnlyList<IXamlProperty> Properties { get; } = Array.Empty<IXamlProperty>();
-        public IReadOnlyList<IXamlEventInfo> Events { get; } = Array.Empty<IXamlEventInfo>();
-        public IReadOnlyList<IXamlField> Fields { get; } = Array.Empty<IXamlField>();
-        public IReadOnlyList<IXamlMethod> Methods { get; } = Array.Empty<IXamlMethod>();
-        public IReadOnlyList<IXamlConstructor> Constructors { get; } = Array.Empty<IXamlConstructor>();
-        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = Array.Empty<IXamlCustomAttribute>();
-        public IReadOnlyList<IXamlType> GenericArguments { get; } = Array.Empty<IXamlType>();
+        public bool IsPublic => true;
+        public bool IsNestedPrivate => false;
+        public IXamlAssembly Assembly => null;
+        public IReadOnlyList<IXamlProperty> Properties => Array.Empty<IXamlProperty>();
+        public IReadOnlyList<IXamlEventInfo> Events => Array.Empty<IXamlEventInfo>();
+        public IReadOnlyList<IXamlField> Fields => Array.Empty<IXamlField>();
+        public IReadOnlyList<IXamlMethod> Methods => Array.Empty<IXamlMethod>();
+        public IReadOnlyList<IXamlConstructor> Constructors => Array.Empty<IXamlConstructor>();
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => Array.Empty<IXamlCustomAttribute>();
+        public IReadOnlyList<IXamlType> GenericArguments => Array.Empty<IXamlType>();
         public IXamlType MakeArrayType(int dimensions) => throw new NullReferenceException();
 
-        public IXamlType BaseType { get; }
-        public bool IsValueType { get; } = false;
-        public bool IsEnum { get; } = false;
-        public IReadOnlyList<IXamlType> Interfaces { get; } = Array.Empty<IXamlType>();
+        public IXamlType BaseType => null;
+        public IXamlType DeclaringType => null;
+        public bool IsValueType => false;
+        public bool IsEnum => false;
+        public IReadOnlyList<IXamlType> Interfaces => Array.Empty<IXamlType>();
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
-        public IReadOnlyList<IXamlType> GenericParameters { get; } = null;
+        public IReadOnlyList<IXamlType> GenericParameters => null;
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
 
-        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
-        {
-            throw new NotSupportedException();
-        }
+        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments) => throw new NotSupportedException();
 
         public IXamlType GenericTypeDefinition => null;
-        public bool IsArray { get; }
-        public IXamlType ArrayElementType { get; }
+        public bool IsArray => false;
+        public IXamlType ArrayElementType => null;
         public static XamlPseudoType Null { get; } = new XamlPseudoType("{x:Null}");
         public static XamlPseudoType Unknown { get; } = new XamlPseudoType("{Unknown type}");
 
