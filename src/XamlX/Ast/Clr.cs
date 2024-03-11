@@ -674,47 +674,14 @@ namespace XamlX.Ast
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
 
-        void CompileBuilder(ILEmitContext context)
+        void CompileBuilder(ILEmitContext context, XamlClosureInfo xamlClosure)
         {
             var il = context.Emitter;
             // Initialize the context
             il
-                .Ldarg_0();
-            context.RuntimeContext.Factory(il);    
-            il.Stloc(context.ContextLocal);
-
-            // It might be better to save this in a closure
-            if (context.Configuration.TypeMappings.RootObjectProvider != null)
-            {
-                // Attempt to get the root object from parent service provider
-                var noRoot = il.DefineLabel();
-                using (var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object))
-                    il
-                        // if(arg == null) goto noRoot;
-                        .Ldarg_0()
-                        .Brfalse(noRoot)
-                        // var loc = arg.GetService(typeof(IRootObjectProvider))
-                        .Ldarg_0()
-                        .Ldtype(context.Configuration.TypeMappings.RootObjectProvider)
-                        .EmitCall(context.Configuration.TypeMappings.ServiceProvider
-                            .FindMethod(m => m.Name == "GetService"))
-                        .Stloc(loc.Local)
-                        // if(loc == null) goto noRoot;
-                        .Ldloc(loc.Local)
-                        .Brfalse(noRoot)
-                        // loc = ((IRootObjectProvider)loc).RootObject
-                        .Ldloc(loc.Local)
-                        .Castclass(context.Configuration.TypeMappings.RootObjectProvider)
-                        .EmitCall(context.Configuration.TypeMappings.RootObjectProvider
-                            .FindMethod(m => m.Name == "get_RootObject"))
-                        .Stloc(loc.Local)
-                        // contextLocal.RootObject = loc;
-                        .Ldloc(context.ContextLocal)
-                        .Ldloc(loc.Local)
-                        .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
-                        .Stfld(context.RuntimeContext.RootObjectField)
-                        .MarkLabel(noRoot);
-            }
+                .Ldarg_0()
+                .EmitCall(xamlClosure.CreateRuntimeContextMethod)
+                .Stloc(context.ContextLocal);
 
             context.Emit(Value, context.Emitter, context.Configuration.WellKnownTypes.Object);
             il.Ret();
@@ -739,16 +706,17 @@ namespace XamlX.Ast
                 context.SetItem(closureInfo);
             }
 
+            var number = ++closureInfo.BuildMethodCount;
             var buildMethod = closureInfo.Type.DefineMethod(so, new[]
             {
                 isp
-            }, $"Build_{closureInfo.Type.Methods.Count + 1}", XamlVisibility.Public, true, false);
+            }, $"Build_{number}", XamlVisibility.Public, true, false);
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
                 declaringType: closureInfo.Type,
                 file: context.File,
-                emitters: context.Emitters));
+                emitters: context.Emitters), closureInfo);
 
             var funcType = Type.GetClrType();
             codeGen
@@ -777,24 +745,88 @@ namespace XamlX.Ast
 
         private sealed class XamlClosureInfo
         {
-            private readonly XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> _context;
+            private readonly XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> _parentContext;
             private IXamlMethod? _createRuntimeContextMethod;
 
             public IXamlTypeBuilder<IXamlILEmitter> Type { get; }
 
             public IXamlMethod CreateRuntimeContextMethod
-                => _createRuntimeContextMethod ??= BuildCreateAndInitRuntimeContextMethod();
+                => _createRuntimeContextMethod ??= BuildCreateRuntimeContextMethod();
+
+            public int BuildMethodCount { get; set; }
 
             public XamlClosureInfo(
                 IXamlTypeBuilder<IXamlILEmitter> type,
-                XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context)
+                XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> parentContext)
             {
                 Type = type;
-                _context = context;
+                _parentContext = parentContext;
             }
 
-            private IXamlMethod BuildCreateAndInitRuntimeContextMethod()
-                => throw new NotImplementedException();
+            private IXamlMethod BuildCreateRuntimeContextMethod()
+            {
+                var method = Type.DefineMethod(
+                    _parentContext.RuntimeContext.ContextType,
+                    new[] { _parentContext.Configuration.TypeMappings.ServiceProvider },
+                    "CreateContext",
+                    XamlVisibility.Public,
+                    true,
+                    false);
+
+                var context = new ILEmitContext(
+                    method.Generator,
+                    _parentContext.Configuration,
+                    _parentContext.EmitMappings,
+                    _parentContext.RuntimeContext,
+                    method.Generator.DefineLocal(_parentContext.RuntimeContext.ContextType),
+                    Type,
+                    _parentContext.File,
+                    _parentContext.Emitters);
+
+                var il = context.Emitter;
+
+                // context = new Context(arg0, ...)
+                il.Ldarg_0();
+                context.RuntimeContext.Factory(il);
+
+                if (context.Configuration.TypeMappings.RootObjectProvider is { } rootObjectProviderType)
+                {
+                    // Attempt to get the root object from parent service provider
+                    var noRoot = il.DefineLabel();
+                    using var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object);
+                    il
+                        .Stloc(context.ContextLocal)
+                        // if(arg == null) goto noRoot;
+                        .Ldarg_0()
+                        .Brfalse(noRoot)
+                        // var loc = arg.GetService(typeof(IRootObjectProvider))
+                        .Ldarg_0()
+                        .Ldtype(rootObjectProviderType)
+                        .EmitCall(context.Configuration.TypeMappings.ServiceProvider
+                            .FindMethod(m => m.Name == "GetService"))
+                        .Stloc(loc.Local)
+                        // if(loc == null) goto noRoot;
+                        .Ldloc(loc.Local)
+                        .Brfalse(noRoot)
+                        // loc = ((IRootObjectProvider)loc).RootObject
+                        .Ldloc(loc.Local)
+                        .Castclass(rootObjectProviderType)
+                        .EmitCall(rootObjectProviderType
+                            .FindMethod(m => m.Name == "get_RootObject"))
+                        .Stloc(loc.Local)
+                        // contextLocal.RootObject = loc;
+                        .Ldloc(context.ContextLocal)
+                        .Ldloc(loc.Local)
+                        .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
+                        .Stfld(context.RuntimeContext.RootObjectField)
+                        .MarkLabel(noRoot)
+                        .Ldloc(context.ContextLocal);
+                }
+
+                il.Ret();
+
+                return method;
+            }
         }
 
 #nullable restore
