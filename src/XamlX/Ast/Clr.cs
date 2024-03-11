@@ -706,17 +706,29 @@ namespace XamlX.Ast
                 context.SetItem(closureInfo);
             }
 
-            var number = ++closureInfo.BuildMethodCount;
-            var buildMethod = closureInfo.Type.DefineMethod(so, new[]
-            {
-                isp
-            }, $"Build_{number}", XamlVisibility.Public, true, false);
-            CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
-                context.EmitMappings, runtimeContext: context.RuntimeContext,
-                contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                declaringType: closureInfo.Type,
-                file: context.File,
-                emitters: context.Emitters), closureInfo);
+            var counter = ++closureInfo.BuildMethodCounter;
+
+            var buildMethod = closureInfo.Type.DefineMethod(
+                so,
+                new[] { isp },
+                $"Build_{counter}",
+                XamlVisibility.Public,
+                true,
+                false);
+
+            var subContext = new ILEmitContext(
+                buildMethod.Generator,
+                context.Configuration,
+                context.EmitMappings,
+                context.RuntimeContext,
+                buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
+                closureInfo.Type,
+                context.File,
+                context.Emitters);
+
+            subContext.SetItem(closureInfo);
+
+            CompileBuilder(subContext, closureInfo);
 
             var funcType = Type.GetClrType();
             codeGen
@@ -753,7 +765,7 @@ namespace XamlX.Ast
             public IXamlMethod CreateRuntimeContextMethod
                 => _createRuntimeContextMethod ??= BuildCreateRuntimeContextMethod();
 
-            public int BuildMethodCount { get; set; }
+            public int BuildMethodCounter { get; set; }
 
             public XamlClosureInfo(
                 IXamlTypeBuilder<IXamlILEmitter> type,
