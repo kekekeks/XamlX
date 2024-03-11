@@ -726,18 +726,27 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.DeclaringType.DefineSubType(
-                so,
-                "XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
-                XamlVisibility.Private);
-            var buildMethod = subType.DefineMethod(so, new[]
+
+            if (!context.TryGetItem(out XamlClosureInfo closureInfo))
+            {
+                var closureType = context.DeclaringType.DefineSubType(
+                    so,
+                    "XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
+                    XamlVisibility.Private);
+
+                closureInfo = new XamlClosureInfo(closureType, context);
+                context.AddAfterEmitCallbacks(() => closureType.CreateType());
+                context.SetItem(closureInfo);
+            }
+
+            var buildMethod = closureInfo.Type.DefineMethod(so, new[]
             {
                 isp
-            }, "Build", XamlVisibility.Public, true, false);
+            }, $"Build_{closureInfo.Type.Methods.Count + 1}", XamlVisibility.Public, true, false);
             CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
                 context.EmitMappings, runtimeContext: context.RuntimeContext,
                 contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                declaringType: subType,
+                declaringType: closureInfo.Type,
                 file: context.File,
                 emitters: context.Emitters));
 
@@ -760,10 +769,35 @@ namespace XamlX.Ast
                     .Ldloc(context.ContextLocal)
                     .EmitCall(customization);
             }
-            
-            subType.CreateType();
+
             return XamlILNodeEmitResult.Type(0, funcType);
         }
+
+#nullable enable
+
+        private sealed class XamlClosureInfo
+        {
+            private readonly XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> _context;
+            private IXamlMethod? _createRuntimeContextMethod;
+
+            public IXamlTypeBuilder<IXamlILEmitter> Type { get; }
+
+            public IXamlMethod CreateRuntimeContextMethod
+                => _createRuntimeContextMethod ??= BuildCreateAndInitRuntimeContextMethod();
+
+            public XamlClosureInfo(
+                IXamlTypeBuilder<IXamlILEmitter> type,
+                XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context)
+            {
+                Type = type;
+                _context = context;
+            }
+
+            private IXamlMethod BuildCreateAndInitRuntimeContextMethod()
+                => throw new NotImplementedException();
+        }
+
+#nullable restore
     }
 #if !XAMLX_INTERNAL
     public
