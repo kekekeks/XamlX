@@ -174,6 +174,8 @@ namespace XamlX.TypeSystem
                 return TypeResolveContext.Resolve(Definition.GetEnumUnderlyingType());
             }
 
+            public bool IsFunctionPointer => Definition.IsFunctionPointer;
+
             public bool Equals(IXamlType other)
             {
                 if (!(other is CecilType o))

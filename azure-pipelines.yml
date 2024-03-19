@@ -9,9 +9,9 @@ jobs:
           version: 2.1.818
 
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 6.0.100'
+        displayName: 'Use .NET Core SDK 8.0.203'
         inputs:
-          version: 6.0.100
+          version: 8.0.203
 
       - task: CmdLine@2
         displayName: 'Run Tests'
@@ -41,9 +41,9 @@ jobs:
           version: 2.1.818
 
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 6.0.100'
+        displayName: 'Use .NET Core SDK 8.0.203'
         inputs:
-          version: 6.0.100
+          version: 8.0.203
 
       - task: CmdLine@2
         displayName: 'Run Tests'

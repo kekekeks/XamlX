@@ -4,7 +4,6 @@ using Xunit;
 
 namespace XamlParserTests
 {
-
     public class DeferredContentTestsClass
     {
         [Content, DeferredContent]
@@ -12,6 +11,14 @@ namespace XamlParserTests
         
         
         public object ObjectProperty { get; set; }
+    }
+
+    public class DeferredValue
+    {
+        public Func<IServiceProvider, object> OriginalFactory { get; }
+
+        public DeferredValue(Func<IServiceProvider, object> originalFactory)
+            => OriginalFactory = originalFactory;
     }
     
     public class DeferredContentTests : CompilerTestBase
@@ -46,7 +53,8 @@ namespace XamlParserTests
             public object RootObject { get; set; }
         }
         
-        public static Func<IServiceProvider, object> Customizer(Func<IServiceProvider, object> builder,
+        public static Func<IServiceProvider, object> DelegateCustomizer(
+            Func<IServiceProvider, object> builder,
             IServiceProvider parentServices)
         {
             var parentRoot = parentServices.GetService<ITestRootObjectProvider>().RootObject;
@@ -59,15 +67,33 @@ namespace XamlParserTests
                 Parent = sp
             });
         }
-        
-        
+
+        public static unsafe Func<IServiceProvider, object> FunctionPointerCustomizer(
+            delegate*<IServiceProvider, object> builder,
+            IServiceProvider parentServices)
+        {
+            var parentRoot = parentServices.GetService<ITestRootObjectProvider>().RootObject;
+            var cb = parentServices.GetService<CallbackExtensionCallback>();
+
+            return sp => builder(new DictionaryServiceProvider
+            {
+                [typeof(ITestRootObjectProvider)] = new ConstantRootObjectProvider {RootObject = parentRoot},
+                [typeof(CallbackExtensionCallback)] = cb,
+                Parent = sp
+            });
+        }
+
+        public static DeferredValue CustomizerWithChangedReturnType(
+            Func<IServiceProvider, object> builder,
+            IServiceProvider parentServices)
+            => new(builder);
+
         [Fact]
         public void DeferredContent_Delegate_Should_Be_Transformed_When_Configured()
         {
             Configuration.TypeMappings.DeferredContentExecutorCustomization =
                 Configuration.TypeSystem.FindType(typeof(DeferredContentTests).FullName)
-                    .FindMethod(m => m.Name == "Customizer");
-
+                    .FindMethod(m => m.Name == nameof(DelegateCustomizer));
 
             var res = CompileAndRun(@"
 <DeferredContentTestsClass xmlns='test'>
@@ -77,7 +103,41 @@ namespace XamlParserTests
 
             var generated = (DeferredContentTestsClass)((Func<IServiceProvider, object>)res.DeferredContent)(null);
             Assert.Same(res, generated.ObjectProperty);
+        }
 
+        [Fact]
+        public void DeferredContent_Pointer_Should_Be_Transformed_When_Configured()
+        {
+            Configuration.TypeMappings.DeferredContentExecutorCustomization =
+                Configuration.TypeSystem.FindType(typeof(DeferredContentTests).FullName)
+                    .FindMethod(m => m.Name == nameof(FunctionPointerCustomizer));
+
+            var res = CompileAndRun(@"
+<DeferredContentTestsClass xmlns='test'>
+    <DeferredContentTestsClass ObjectProperty='{Callback}'/>
+</DeferredContentTestsClass>",
+                sp => sp.GetService<ITestRootObjectProvider>().RootObject);
+
+            var generated = (DeferredContentTestsClass)((Func<IServiceProvider, object>)res.DeferredContent)(null);
+            Assert.Same(res, generated.ObjectProperty);
+        }
+
+        [Fact]
+        public void DeferredContent_Delegate_Should_Be_Transformed_With_Changed_Return_Type_When_Configured()
+        {
+            Configuration.TypeMappings.DeferredContentExecutorCustomization =
+                Configuration.TypeSystem.FindType(typeof(DeferredContentTests).FullName)
+                    .FindMethod(m => m.Name == nameof(CustomizerWithChangedReturnType));
+
+            var res = CompileAndRun(@"
+<DeferredContentTestsClass xmlns='test'>
+    <DeferredContentTestsClass ObjectProperty='abc'/>
+</DeferredContentTestsClass>",
+                sp => sp.GetService<ITestRootObjectProvider>().RootObject);
+
+            var deferredValue = Assert.IsType<DeferredValue>(res.DeferredContent);
+            var content = Assert.IsType<DeferredContentTestsClass>(deferredValue.OriginalFactory(null));
+            Assert.Equal("abc", content.ObjectProperty);
         }
     }
 }
