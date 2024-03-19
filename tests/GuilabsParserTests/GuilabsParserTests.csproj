@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net47</TargetFrameworks>
+        <TargetFrameworks>net6.0;net8.0;net47</TargetFrameworks>
         <DefineConstants>GUILABS;$(DefineConstants)</DefineConstants>
     </PropertyGroup>
     <ItemGroup>

@@ -194,8 +194,8 @@ namespace XamlX.TypeSystem
                     return null;
                 return TypeSystem.Resolve(Definition.GetEnumUnderlyingType());
             }
-            
-            
+
+            public bool IsFunctionPointer => Definition.IsFunctionPointer;
         }
     }
 }

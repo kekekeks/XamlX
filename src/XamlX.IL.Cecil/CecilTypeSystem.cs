@@ -146,6 +146,10 @@ namespace XamlX.TypeSystem
                 {
                     rv = _typeCache.Get(reference);
                 }
+                else if (reference is FunctionPointerType functionPointerType)
+                {
+                    rv = new CecilFunctionPointerType(functionPointerType);
+                }
                 else
                 {
                     var key = GetTypeReferenceKey(reference);

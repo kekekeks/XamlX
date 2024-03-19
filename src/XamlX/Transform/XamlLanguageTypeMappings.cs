@@ -56,7 +56,14 @@ namespace XamlX.Transform
         /// </summary>
         public IXamlMethod InnerServiceProviderFactoryMethod { get; set; }
         /// <summary>
-        /// static Func&lt;IServiceProvider, object&gt; DeferredTransformationFactory(Func&lt;IServiceProvider, object&gt; builder, IServiceProvider provider);
+        /// Expected signature:
+        /// <code>
+        /// static *any-non-void* DeferredTransformationFactory(Func&lt;IServiceProvider, object&gt; builder, IServiceProvider provider);
+        /// </code>
+        /// Or:
+        /// <code>
+        /// static *any-non-void* DeferredTransformationFactory(delegate*&lt;IServiceProvider, object&gt;, IServiceProvider provider);
+        /// </code>
         /// </summary>
         public IXamlMethod DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
