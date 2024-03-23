@@ -151,7 +151,25 @@ namespace XamlX.Transform
         }
 
         public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
-            IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode rv)
+            IXamlAstValueNode node, IXamlType xamlType, out IXamlAstValueNode rv)
+        {
+            return TryGetCorrectlyTypedValue(context, node, null, xamlType, out rv);
+        }
+
+        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
+            IXamlAstValueNode node, IXamlProperty property, out IXamlAstValueNode rv)
+        {
+            return TryGetCorrectlyTypedValue(context, node, property.CustomAttributes, property.PropertyType, out rv);
+        }
+
+        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
+            IXamlAstValueNode node, IXamlParameterInfo parameterInfo, out IXamlAstValueNode rv)
+        {
+            return TryGetCorrectlyTypedValue(context, node, parameterInfo.CustomAttributes, parameterInfo.ParameterType, out rv);
+        }
+        
+        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
+            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type, out IXamlAstValueNode rv)
         {
             if (type.IsAssignableFrom(node.Type.GetClrType()))
             {
@@ -159,7 +177,7 @@ namespace XamlX.Transform
                 return true;
             }
 
-            return TryConvertValue(context, node, type, null, out rv);
+            return TryConvertValue(context, node, customAttributes, type, null, out rv);
         }
 
         public static IXamlType TryGetTypeConverterFromCustomAttribute(TransformerConfiguration cfg,
@@ -209,8 +227,8 @@ namespace XamlX.Transform
                     x.IsPublic && x.IsStatic && x.Name == "get_InvariantCulture"), null);
 
         public static bool TryConvertValue(AstTransformationContext context,
-                IXamlAstValueNode node, IXamlType type, XamlAstClrProperty propertyContext,
-                out IXamlAstValueNode rv)
+                IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type,
+                XamlAstClrProperty propertyContext, out IXamlAstValueNode rv)
         {    
             rv = null;
             var cfg = context.Configuration;
@@ -219,16 +237,17 @@ namespace XamlX.Transform
                 type = type.GenericArguments[0];
 
             var nodeType = node.Type.GetClrType();
-            
+
             // Try with property-defined converter first
             if (propertyContext?.TypeConverters.TryGetValue(type, out var propertyConverterType) == true)
             {
                 rv = ConvertWithConverter(node, propertyConverterType, cfg, type);
                 return true;
             }
-            
+
             // Ask the hosting platform to apply its custom conversions
-            if (cfg.CustomValueConverter?.Invoke(context, node, type, out rv) == true)
+            var attrs = customAttributes?.Any() == true ? customAttributes : propertyContext?.CustomAttributes;
+            if (cfg.CustomValueConverter?.Invoke(context, node, attrs, type, out rv) == true)
                 return true;
 
             // Implicit type converters

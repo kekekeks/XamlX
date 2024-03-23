@@ -51,7 +51,8 @@ namespace XamlX.Transform.Transformers
             public PropertySetterBinderParameters BinderParameters { get; }
             
             public IReadOnlyList<IXamlType> Parameters { get; }
-            
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _adder.CustomAttributes;
+
             public void Emit(IXamlILEmitter emitter)
             {
                 var locals = new Stack<XamlLocalsPool.PooledLocal>();
