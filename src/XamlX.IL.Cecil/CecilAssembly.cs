@@ -32,13 +32,36 @@ namespace XamlX.TypeSystem
             {
                 if (_typeCache.TryGetValue(fullName, out var rv))
                     return rv;
-                var lastDot = fullName.LastIndexOf(".", StringComparison.Ordinal);
                 var asmRef = new AssemblyNameReference(Assembly.Name.Name, Assembly.Name.Version);
-                var tref = (lastDot == -1)
-                    ? new TypeReference(null, fullName, Assembly.MainModule, asmRef)
-                    : new TypeReference(fullName.Substring(0, lastDot),
-                        fullName.Substring(lastDot + 1), Assembly.MainModule, asmRef);
-                var resolved = tref.Resolve();
+                var lastDot = fullName.LastIndexOf('.');
+                var ns = string.Empty;
+
+                if (lastDot != -1)
+                {
+                    ns = fullName.Substring(0, lastDot);
+                    fullName = fullName.Substring(lastDot + 1);
+                }
+
+                TypeReference tref = null;
+                var plus = fullName.IndexOf('+');
+
+                while (true)
+                {
+                    var typeName = plus != -1 ? fullName.Substring(0, plus) : fullName;
+                    var t = new TypeReference(ns, typeName, Assembly.MainModule, asmRef);
+
+                    t.DeclaringType = tref;
+                    tref = t;
+
+                    if (plus == -1)
+                        break;
+
+                    ns = null;
+                    fullName = fullName.Substring(plus + 1);
+                    plus = fullName.IndexOf('+');
+                }
+
+                var resolved = tref?.Resolve();
                 if (resolved != null)
                     return _typeCache[fullName] = TypeSystem.GetTypeFor(resolved);
 
