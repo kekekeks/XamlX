@@ -20,50 +20,54 @@ namespace XamlX.Transform.Transformers
         {
             if (node is XamlAstObjectNode ni)
             {
+                var contentProperty = context.Configuration.FindContentProperty(ni.Type.GetClrType());
                 XamlAstXamlPropertyValueNode propertyNode = null;
 
-                for (var c = ni.Children.Count - 1; c >= 0; c--)
+                if (ni.Children.OfType<IXamlAstValueNode>().Any())
                 {
-                    var child = ni.Children[c];
-                    if (child is IXamlAstValueNode valueNode)
+                    if (contentProperty is null)
                     {
-                        if (propertyNode == null)
+                        var adders = XamlTransformHelpers.FindPossibleAdders(context, ni.Type.GetClrType());
+                        if (adders.Count is 0)
                         {
-                            var contentProperty = context.Configuration.FindContentProperty(ni.Type.GetClrType());
-                            if (contentProperty != null)
-                                propertyNode = new XamlAstXamlPropertyValueNode(ni,
-                                    new XamlAstClrProperty(ni, contentProperty, context.Configuration),
-                                    Array.Empty<IXamlAstValueNode>(), false);
-                            else
+                            WhitespaceNormalization.RemoveWhitespaceNodes(ni.Children);
+                            var firstValueChild = ni.Children.OfType<IXamlAstValueNode>().FirstOrDefault();
+                            if (firstValueChild is not null)
                             {
-                                var adders = XamlTransformHelpers.FindPossibleAdders(context, ni.Type.GetClrType());
-                                if (adders.Count == 0)
-                                {
-                                    // If there's no content property, strip all whitespace-only nodes and continue
-                                    WhitespaceNormalization.RemoveWhitespaceNodes(ni.Children);
-                                    if (!ni.Children.Contains(child))
-                                    {
-                                        continue;
-                                    }
-
-                                    throw new XamlTransformException(
-                                        $"No Content property or any Add methods found for type {ni.Type.GetClrType().GetFqn()}",
-                                        child);
-                                }
-
-                                propertyNode = new XamlAstXamlPropertyValueNode(ni, new XamlAstClrProperty(ni,
-                                        "Content", ni.Type.GetClrType(), null,
-                                        adders.Select(a => new XamlDirectCallPropertySetter(a)
-                                        {
-                                            BinderParameters = {AllowMultiple = true}
-                                        })),
-                                    Array.Empty<IXamlAstValueNode>(),
-                                    false);
+                                throw new XamlTransformException(
+                                    $"No Content property or any Add methods found for type {ni.Type.GetClrType().GetFqn()}",
+                                    firstValueChild);
                             }
                         }
-                        // We are going in reverse order, so insert at the beginning
-                        propertyNode.Values.Insert(0, valueNode);
-                        ni.Children.RemoveAt(c);
+                        else
+                        {
+                            propertyNode = new XamlAstXamlPropertyValueNode(ni, new XamlAstClrProperty(ni,
+                                "Content",
+                                ni.Type.GetClrType(),
+                                null,
+                                adders.Select(a => new XamlDirectCallPropertySetter(a)
+                                {
+                                    BinderParameters = { AllowMultiple = true }
+                                })),
+                                Array.Empty<IXamlAstValueNode>(),
+                                false);
+                        }
+                    }
+                    else
+                    {
+                        propertyNode = new XamlAstXamlPropertyValueNode(ni,
+                            new XamlAstClrProperty(ni, contentProperty, context.Configuration),
+                            Array.Empty<IXamlAstValueNode>(), false);
+                    }
+
+                    for (var c = ni.Children.Count - 1; c >= 0; c--)
+                    {
+                        var child = ni.Children[c];
+                        if (child is IXamlAstValueNode valueNode)
+                        {
+                            propertyNode.Values.Insert(0, valueNode);
+                            ni.Children.RemoveAt(c);
+                        }
                     }
                 }
 

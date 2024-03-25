@@ -8,7 +8,6 @@
         <Compile Include="..\XamlParserTests\*.cs" Exclude="..\XamlParserTests\*.Sre.cs" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
       <ProjectReference Include="..\..\src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
     </ItemGroup>
 </Project>

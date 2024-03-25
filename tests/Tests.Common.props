@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
         <ProjectReference Include="..\..\src\XamlX.Runtime\XamlX.Runtime.csproj" />
         <ProjectReference Include="..\..\src\XamlX\XamlX.csproj" />
     </ItemGroup>
