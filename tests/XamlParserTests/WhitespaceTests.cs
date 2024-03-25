@@ -198,6 +198,7 @@ namespace XamlParserTests
         // even though the schema does not allow the attribute to be set on the property-setter itself,
         // it's value is inherited from the parent.
         [Trait("Category", "PropertySetters")]
+        [Fact]
         public void XmlSpacePreserveAffectsPropertySetterElement()
         {
             // Whitespace normalization is applied normally
@@ -442,7 +443,7 @@ namespace XamlParserTests
         private T ReadXaml<T>(string xaml) where T : class
         {
             var result = CompileAndRun(xaml);
-            if (!(result is T))
+            if (result is not T)
             {
                 throw new Exception($"Wanted: {typeof(T)}, got: {result}");
             }
@@ -480,7 +481,7 @@ namespace XamlParserTests
     public class WhitespaceOptInControl
     {
         [Content]
-        public WhitespaceOptInCollection Content { get; } = new WhitespaceOptInCollection();
+        public WhitespaceOptInCollection Content { get; } = new ();
     }
 
     [WhitespaceSignificantCollection]
@@ -491,7 +492,7 @@ namespace XamlParserTests
     public class ControlWithInlines
     {
         [Content]
-        public InlineCollection Inlines { get; set; } = new InlineCollection(); //The setter here is important because it causes whitespace removal
+        public InlineCollection Inlines { get; set; } = new(); //The setter here is important because it causes whitespace removal
     }
 
     public class Inline
@@ -507,7 +508,7 @@ namespace XamlParserTests
     public class InlineWithInlines : Inline
     {
         [Content]
-        public InlineCollection Inlines { get; set; } = new InlineCollection(); //The setter here is important because it causes whitespace removal
+        public InlineCollection Inlines { get; set; } = new(); //The setter here is important because it causes whitespace removal
     }
 
     [WhitespaceSignificantCollection]
