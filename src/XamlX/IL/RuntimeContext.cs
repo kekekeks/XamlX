@@ -44,21 +44,26 @@ namespace XamlX.IL
 
         }
     }
-    
-    
+
 #if !XAMLX_INTERNAL
     public
 #endif
-    class XamlILContextDefinition
+    interface IXamlILContextDefinition<TBackendEmitter>
     {
-        private readonly IXamlField ParentListField;
-        private readonly IXamlField _parentServiceProviderField;
-        private readonly IXamlField _innerServiceProviderField;
-        private readonly IXamlField PropertyTargetObject;
-        private readonly IXamlField PropertyTargetProperty;
+        public IXamlTypeBuilder<TBackendEmitter> TypeBuilder { get; }
+        public IXamlConstructorBuilder<TBackendEmitter> ConstructorBuilder { get; }
+        public IXamlField ParentListField { get; }
+        public IXamlField ParentServiceProviderField { get; }
+        public IXamlField InnerServiceProviderField { get; }
+        public IXamlField TargetObjectField { get; }
+        public IXamlField TargetPropertyField { get; }
+    }
 
-        private IXamlConstructor Constructor { get; set; }
-
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class XamlILContextDefinition : IXamlILContextDefinition<IXamlILEmitter>
+    {
         public static IXamlType GenerateContextClass(IXamlTypeBuilder<IXamlILEmitter> builder,
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
@@ -67,11 +72,18 @@ namespace XamlX.IL
 
         }
 
-        public List<Action> CreateCallbacks = new List<Action>();
+        public IXamlTypeBuilder<IXamlILEmitter> TypeBuilder { get; }
+        public IXamlConstructorBuilder<IXamlILEmitter> ConstructorBuilder { get; }
+        public IXamlField ParentListField { get; }
+        public IXamlField ParentServiceProviderField { get; }
+        public IXamlField InnerServiceProviderField { get; }
+        public IXamlField TargetObjectField { get; }
+        public IXamlField TargetPropertyField { get; }
+        public IXamlType ContextType { get; }
+        public List<Action> CreateCallbacks { get; } = new();
 
         public const int BaseUriArg = 0;
         public const int StaticProvidersArg = 1;
-        public IXamlType ContextType;
         
         private XamlILContextDefinition(IXamlTypeBuilder<IXamlILEmitter> parentBuilder,
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
@@ -79,6 +91,7 @@ namespace XamlX.IL
         {
             var so = typeSystem.GetType("System.Object");
             var builder = parentBuilder.DefineSubType(so, "Context", XamlVisibility.Public);
+            TypeBuilder = builder;
             
             builder.DefineGenericParameters(new[]
             {
@@ -90,9 +103,9 @@ namespace XamlX.IL
             });
             var rootObjectField = builder.DefineField(builder.GenericParameters[0], "RootObject", XamlVisibility.Public, false);
             var intermediateRootObjectField = builder.DefineField(so, XamlRuntimeContextDefintion.IntermediateRootObjectFieldName, XamlVisibility.Public, false);
-            _parentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", XamlVisibility.Private, false);
+            ParentServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_sp", XamlVisibility.Private, false);
             if (mappings.InnerServiceProviderFactoryMethod != null)
-                _innerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", XamlVisibility.Private, false);
+                InnerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", XamlVisibility.Private, false);
 
             var staticProvidersField = builder.DefineField(typeSystem.GetType("System.Object").MakeArrayType(1),
                 "_staticProviders", XamlVisibility.Private, false);
@@ -124,10 +137,10 @@ namespace XamlX.IL
                     .Ret()
                     // if(_sp == null) goto fail;
                     .MarkLabel(tryParent)
-                    .LdThisFld(_parentServiceProviderField)
+                    .LdThisFld(ParentServiceProviderField)
                     .Brfalse(fail)
                     // parentProv =  (IRootObjectProvider)_sp.GetService(typeof(IRootObjectProvider));
-                    .LdThisFld(_parentServiceProviderField)
+                    .LdThisFld(ParentServiceProviderField)
                     .Ldtype(mappings.RootObjectProvider)
                     .EmitCall(getServiceInterfaceMethod)
                     .Castclass(mappings.RootObjectProvider)
@@ -175,7 +188,7 @@ namespace XamlX.IL
                     .Emit(OpCodes.Stfld, ParentListField)
                     .Emit(OpCodes.Ldarg_0)
                     .LdThisFld(ParentListField)
-                    .LdThisFld(_parentServiceProviderField)
+                    .LdThisFld(ParentServiceProviderField)
                     .Emit(OpCodes.Newobj, enumerator.ctor)
                     .Emit(OpCodes.Stfld, parentStackEnumerableField));
                 ownServices.Add(mappings.ParentStackProvider);
@@ -186,12 +199,12 @@ namespace XamlX.IL
             if (mappings.ProvideValueTarget != null)
             {
                 builder.AddInterfaceImplementation(mappings.ProvideValueTarget);
-                PropertyTargetObject = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetObjectName, XamlVisibility.Public, false);
-                PropertyTargetProperty = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetPropertyName, XamlVisibility.Public, false);
+                TargetObjectField = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetObjectName, XamlVisibility.Public, false);
+                TargetPropertyField = builder.DefineField(so, XamlRuntimeContextDefintion.ProvideTargetPropertyName, XamlVisibility.Public, false);
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetObject")
-                    .Generator.LdThisFld(PropertyTargetObject).Ret();
+                    .Generator.LdThisFld(TargetObjectField).Ret();
                 ImplementInterfacePropertyGetter(builder, mappings.ProvideValueTarget, "TargetProperty")
-                    .Generator.LdThisFld(PropertyTargetProperty).Ret();
+                    .Generator.LdThisFld(TargetPropertyField).Ret();
                 ownServices.Add(mappings.ProvideValueTarget);
             }
 
@@ -227,16 +240,16 @@ namespace XamlX.IL
             ownServices = ownServices.Where(s => s != null).ToList();
 
 
-            if (_innerServiceProviderField != null)
+            if (InnerServiceProviderField != null)
             {
                 var next = getServiceMethod.Generator.DefineLabel();
                 var innerResult = getServiceMethod.Generator.DefineLocal(so);
                 getServiceMethod.Generator
                     //if(_inner == null) goto next;
-                    .LdThisFld(_innerServiceProviderField)
+                    .LdThisFld(InnerServiceProviderField)
                     .Brfalse(next)
                     // var innerRes = _inner.GetService(type);
-                    .LdThisFld(_innerServiceProviderField)
+                    .LdThisFld(InnerServiceProviderField)
                     .Ldarg(1)
                     .EmitCall(getServiceInterfaceMethod)
                     .Stloc(innerResult)
@@ -320,9 +333,9 @@ namespace XamlX.IL
 
             var noParentProvider = getServiceMethod.Generator.DefineLabel();
             getServiceMethod.Generator
-                .LdThisFld(_parentServiceProviderField)
+                .LdThisFld(ParentServiceProviderField)
                 .Brfalse(noParentProvider)
-                .LdThisFld(_parentServiceProviderField)
+                .LdThisFld(ParentServiceProviderField)
                 .Ldarg(1)
                 .EmitCall(getServiceInterfaceMethod)
                 .Emit(OpCodes.Ret)
@@ -334,12 +347,14 @@ namespace XamlX.IL
                 mappings.ServiceProvider,
                 staticProvidersField.FieldType,
                 systemString);
+            ConstructorBuilder = ctor;
+
             ctor.Generator
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Call, so.Constructors[0])
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, _parentServiceProviderField)
+                .Emit(OpCodes.Stfld, ParentServiceProviderField)
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldarg_2)
                 .Emit(OpCodes.Stfld, staticProvidersField);
@@ -362,20 +377,19 @@ namespace XamlX.IL
             foreach (var feature in ctorCallbacks)
                 feature(ctor.Generator);
 
-            emitMappings.ContextTypeBuilderCallback?.Invoke(builder, ctor.Generator);
+            emitMappings.ContextTypeBuilderCallback?.Invoke(this);
             
             // We are calling this last to ensure that our own services are ready
-            if (_innerServiceProviderField != null)
+            if (InnerServiceProviderField != null)
                 ctor.Generator
                     // _innerSp = InnerServiceProviderFactory(this)
                     .Ldarg_0()
                     .Ldarg_0()
                     .EmitCall(mappings.InnerServiceProviderFactoryMethod)
-                    .Stfld(_innerServiceProviderField);
+                    .Stfld(InnerServiceProviderField);
                     
             ctor.Generator.Emit(OpCodes.Ret);
 
-            Constructor = ctor;
             CreateCallbacks.Add(() => { parentBuilder.CreateType(); });
             
             if (ParentListField != null)
@@ -409,11 +423,11 @@ namespace XamlX.IL
                 .EmitCall(objectListType.FindMethod("Add", @void,
                     false, so));
 
-            if (PropertyTargetObject != null)
+            if (TargetObjectField != null)
             {
                 pushParentGenerator.Ldarg_0()
                     .Ldarg(1)
-                    .Stfld(PropertyTargetObject)
+                    .Stfld(TargetObjectField)
                     .Ret();
             }
             
@@ -427,14 +441,14 @@ namespace XamlX.IL
                 .EmitCall(objectListType.FindMethod(m => m.Name == "get_Count"))
                 .Ldc_I4(1).Emit(OpCodes.Sub).Stloc(idx);
                 // this.PropertyTargetObject = _parents[idx];
-            if (PropertyTargetObject != null)
+            if (TargetObjectField != null)
             {
                 pop
                     .Ldarg_0()
                     .LdThisFld(ParentListField)
                     .Ldloc(idx)
                     .EmitCall(objectListType.FindMethod(m => m.Name == "get_Item"))
-                    .Stfld(PropertyTargetObject);
+                    .Stfld(TargetObjectField);
             }
                 // _parents.RemoveAt(idx);
             pop
