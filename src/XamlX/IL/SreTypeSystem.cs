@@ -284,6 +284,14 @@ namespace XamlX.IL
             {
                 return System.ResolveType(Enum.GetUnderlyingType(Type));
             }
+
+            public bool IsFunctionPointer
+#if NET8_0_OR_GREATER
+                => Type.IsFunctionPointer;
+#else
+                => false; // represented as IntPtr before .NET 8
+#endif
+
             public override string ToString() => Type.ToString();
         }
 

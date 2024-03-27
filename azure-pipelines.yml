@@ -4,14 +4,15 @@ jobs:
       vmImage: 'ubuntu-20.04'
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 2.1.818'
+        displayName: 'Use .NET SDK 8.0.203'
         inputs:
-          version: 2.1.818
+          version: 8.0.203
 
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 6.0.100'
+        displayName: 'Use .NET Runtime 6.0'
         inputs:
-          version: 6.0.100
+          packageType: runtime
+          version: 6.0.x
 
       - task: CmdLine@2
         displayName: 'Run Tests'
@@ -20,8 +21,9 @@ jobs:
             mono --version
             dotnet --info
             dotnet build
-            dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net47 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
@@ -36,14 +38,15 @@ jobs:
       SolutionDir: '$(Build.SourcesDirectory)'
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 2.1.818'
+        displayName: 'Use .NET SDK 8.0.203'
         inputs:
-          version: 2.1.818
-
+          version: 8.0.203
+          
       - task: UseDotNet@2
-        displayName: 'Use .NET Core SDK 6.0.100'
+        displayName: 'Use .NET Runtime 6.0'
         inputs:
-          version: 6.0.100
+          packageType: runtime
+          version: 6.0.x
 
       - task: CmdLine@2
         displayName: 'Run Tests'
@@ -51,8 +54,9 @@ jobs:
           script: |
             dotnet --info
             dotnet build
-            dotnet test -f netcoreapp2.1 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net47 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
+            dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2
         inputs:
