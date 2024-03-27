@@ -1,1 +1,6 @@
-{ "appDomain": "denied" }
+{
+  "$schema": "https://xunit.net/schema/current/xunit.runner.schema.json",
+  "shadowCopy": false,
+  "parallelizeTestCollections": false,
+  "parallelizeAssembly": false
+}

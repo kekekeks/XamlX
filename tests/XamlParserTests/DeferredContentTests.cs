@@ -69,13 +69,14 @@ namespace XamlParserTests
         }
 
         public static unsafe Func<IServiceProvider, object> FunctionPointerCustomizer(
-            delegate*<IServiceProvider, object> builder,
+            IntPtr builder,
             IServiceProvider parentServices)
         {
             var parentRoot = parentServices.GetService<ITestRootObjectProvider>().RootObject;
             var cb = parentServices.GetService<CallbackExtensionCallback>();
+            var typedBuilder = (delegate*<IServiceProvider, object>)builder;
 
-            return sp => builder(new DictionaryServiceProvider
+            return sp => typedBuilder(new DictionaryServiceProvider
             {
                 [typeof(ITestRootObjectProvider)] = new ConstantRootObjectProvider {RootObject = parentRoot},
                 [typeof(CallbackExtensionCallback)] = cb,
