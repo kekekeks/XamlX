@@ -39,6 +39,7 @@ namespace XamlParserTests
             var m = f.FieldType.Methods.First(x => x.Name == "SomeMethod");
             Assert.Equal("System.String", m.ReturnType.FullName);
             Assert.Equal("System.String", m.Parameters[0].FullName);
+            Assert.Equal(0, f.FieldType.Methods.First(x => x.Name == "SomeMethod").Parameters[0].GenericArguments.Count);
 
             var gf = f.FieldType.Fields.First(x => x.Name == "Field");
             Assert.Equal("System.String", gf.FieldType.FullName);
@@ -47,7 +48,6 @@ namespace XamlParserTests
             Assert.Equal("System.String", p.PropertyType.FullName);
             Assert.Equal("System.String", p.Getter.ReturnType.FullName);
             Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
-
         }
 
         [Fact]
