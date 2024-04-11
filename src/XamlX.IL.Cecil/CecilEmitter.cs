@@ -129,7 +129,7 @@ namespace XamlX.TypeSystem
                 => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilMethod) method).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlConstructor ctor)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilConstructor) ctor).IlReference)));
+                => Emit(Instruction.Create(Dic[code], ImportReference(((CecilConstructor) ctor).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, string arg)
                 => Emit(Instruction.Create(Dic[code], arg));
@@ -155,7 +155,18 @@ namespace XamlX.TypeSystem
             public IXamlILEmitter Emit(SreOpCode code, double arg)
                 => Emit(Instruction.Create(Dic[code], arg));
 
+            private MethodReference ImportReference(MethodReference r)
+            {
+                var rv = M.ImportReference(r);
 
+                if (r.DeclaringType is GenericInstanceType gi)
+                {
+                    for (var c = 0; c < gi.GenericArguments.Count; c++)
+                        gi.GenericArguments[c] = M.ImportReference(gi.GenericArguments[c]);
+                }
+
+                return rv;
+            }
             class CecilLocal : IXamlILLocal
             {
                 public VariableDefinition Variable { get; set; }
