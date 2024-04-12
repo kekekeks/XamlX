@@ -37,7 +37,18 @@ namespace XamlX.TypeSystem
                 rv.FieldType = Import(rv.FieldType);
                 return rv;
             }
-            
+
+            MethodReference Import(MethodReference m)
+            {
+                var rv = M.ImportReference(m);
+
+                // Types derived from MethodSpecification don't allow setting the declaring type.
+                if (m is not MethodSpecification)
+                    rv.DeclaringType = Import(m.DeclaringType);
+
+                return rv;
+            }
+
             private static Dictionary<SreOpCode, OpCode> Dic = new Dictionary<SreOpCode, OpCode>();
             private List<CecilLabel> _markedLabels = new List<CecilLabel>();
             static CecilEmitter()
@@ -126,10 +137,10 @@ namespace XamlX.TypeSystem
             }
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlMethod method)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilMethod) method).IlReference)));
+                => Emit(Instruction.Create(Dic[code], Import(((CecilMethod) method).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlConstructor ctor)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilConstructor) ctor).IlReference)));
+                => Emit(Instruction.Create(Dic[code], Import(((CecilConstructor) ctor).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, string arg)
                 => Emit(Instruction.Create(Dic[code], arg));
@@ -154,7 +165,6 @@ namespace XamlX.TypeSystem
 
             public IXamlILEmitter Emit(SreOpCode code, double arg)
                 => Emit(Instruction.Create(Dic[code], arg));
-
 
             class CecilLocal : IXamlILLocal
             {

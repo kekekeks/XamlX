@@ -91,14 +91,14 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlType> GenericArguments =>
                 _genericArguments ?? (_genericArguments = Reference is GenericInstanceType gi
                     ? gi.GenericArguments.Select(ga => TypeSystem.Resolve(ga)).ToList()
-                    : null);
+                    : Array.Empty<IXamlType>());
 
             private IReadOnlyList<IXamlType> _genericParameters;
 
             public IReadOnlyList<IXamlType> GenericParameters =>
                 _genericParameters ?? (_genericParameters = Reference is TypeDefinition td && td.HasGenericParameters
                     ? td.GenericParameters.Select(gp => TypeSystem.Resolve(gp)).ToList()
-                    : null);
+                    : Array.Empty<IXamlType>());
             
 
             protected IReadOnlyList<IXamlCustomAttribute> _attributes;
