@@ -33,7 +33,7 @@ namespace XamlX.Transform.Transformers
                             if (contentProperty != null)
                                 propertyNode = new XamlAstXamlPropertyValueNode(ni,
                                     new XamlAstClrProperty(ni, contentProperty, context.Configuration),
-                                    Array.Empty<IXamlAstValueNode>());
+                                    Array.Empty<IXamlAstValueNode>(), false);
                             else
                             {
                                 var adders = XamlTransformHelpers.FindPossibleAdders(context, ni.Type.GetClrType());
@@ -46,7 +46,7 @@ namespace XamlX.Transform.Transformers
                                         continue;
                                     }
 
-                                    throw new XamlParseException(
+                                    throw new XamlTransformException(
                                         $"No Content property or any Add methods found for type {ni.Type.GetClrType().GetFqn()}",
                                         child);
                                 }
@@ -57,7 +57,8 @@ namespace XamlX.Transform.Transformers
                                         {
                                             BinderParameters = {AllowMultiple = true}
                                         })),
-                                    Array.Empty<IXamlAstValueNode>());
+                                    Array.Empty<IXamlAstValueNode>(),
+                                    false);
                             }
                         }
                         // We are going in reverse order, so insert at the beginning

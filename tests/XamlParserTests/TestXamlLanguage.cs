@@ -5,6 +5,16 @@ using XamlParserTests;
 [assembly: XmlnsDefinition("test", "XamlParserTests")]
 namespace XamlParserTests
 {
+    public interface IAddChild
+    {
+        void AddChild(object child);
+    }
+
+    public interface IAddChild<T> : IAddChild
+    {
+        void AddChild(T child);
+    }
+
     public class ContentAttribute : Attribute
     {
         

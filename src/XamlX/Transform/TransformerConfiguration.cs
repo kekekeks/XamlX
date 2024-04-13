@@ -45,6 +45,7 @@ namespace XamlX.Transform
         public XamlXmlnsMappings XmlnsMappings { get; }
         public XamlTypeWellKnownTypes WellKnownTypes { get; }
         public XamlValueConverter CustomValueConverter { get; }
+        public XamlDiagnosticsHandler DiagnosticsHandler { get; }
         public IXamlIdentifierGenerator IdentifierGenerator { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
         {
@@ -54,7 +55,8 @@ namespace XamlX.Transform
         public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
             XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
             XamlValueConverter customValueConverter = null,
-            IXamlIdentifierGenerator identifierGenerator = null)
+            IXamlIdentifierGenerator identifierGenerator = null,
+            XamlDiagnosticsHandler diagnosticsHandler = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
@@ -62,6 +64,7 @@ namespace XamlX.Transform
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
             WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
+            DiagnosticsHandler = diagnosticsHandler ?? new XamlDiagnosticsHandler();
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
@@ -73,10 +76,6 @@ namespace XamlX.Transform
                 return null;
             if (_contentPropertyCache.TryGetValue(type.Id, out var found))
                 return found;
-
-            // Check the base type first, we'll need to throw on duplicate Content property later
-            if (type.BaseType != null)
-                found = FindContentProperty(type.BaseType);
 
             foreach (var contentAttributeOnType in GetCustomAttribute(type, TypeMappings.ContentAttributes))
             {
@@ -94,7 +93,7 @@ namespace XamlX.Transform
 
                     if (found != null && !contentProperty.Equals(found))
                         throw new XamlTypeSystemException(
-                            "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
+                            "Content attribute is declared on multiple properties of " + type.GetFqn());
                     found = contentProperty;
                 }
             }
@@ -105,10 +104,14 @@ namespace XamlX.Transform
                 {
                     if (found != null && !p.Equals(found))
                         throw new XamlTypeSystemException(
-                            "Content (or substitute) attribute is declared on multiple properties of " + type.GetFqn());
+                            "Content attribute is declared on multiple properties of " + type.GetFqn());
                     found = p;
                 }
             }
+
+            // Fall back to a Content attribute found on a base type
+            if ((found == null) && (type.BaseType != null))
+                found = FindContentProperty(type.BaseType);
 
             return _contentPropertyCache[type.Id] = found;
         }
@@ -211,6 +214,7 @@ namespace XamlX.Transform
         public IXamlType IListOfT { get; }
         public IXamlType Object { get; }
         public IXamlType String { get; }
+        public IXamlType Int32 { get; }
         public IXamlType Void { get; }
         public IXamlType Boolean { get; }
         public IXamlType Double { get; }
@@ -218,11 +222,13 @@ namespace XamlX.Transform
         public IXamlType CultureInfo { get; }
         public IXamlType IFormatProvider { get; }
         public IXamlType Delegate { get; }
+        public IXamlType ObsoleteAttribute { get; }
 
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
         {
             Void = typeSystem.GetType("System.Void");
             String = typeSystem.GetType("System.String");
+            Int32 = typeSystem.GetType("System.Int32");
             Object = typeSystem.GetType("System.Object");
             Boolean = typeSystem.GetType("System.Boolean");
             Double = typeSystem.GetType("System.Double");
@@ -234,6 +240,7 @@ namespace XamlX.Transform
             IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
             NullableT = typeSystem.GetType("System.Nullable`1");
             Delegate = typeSystem.GetType("System.Delegate");
+            ObsoleteAttribute = typeSystem.GetType("System.ObsoleteAttribute");
         }
     }
 }

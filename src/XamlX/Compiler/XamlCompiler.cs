@@ -46,6 +46,9 @@ namespace XamlX.Compiler
                     new ResolveContentPropertyTransformer(),
                     new ResolvePropertyValueAddersTransformer(),
                     new ApplyWhitespaceNormalization(),
+                    // Should happen before we split on clr and xaml assignments
+                    new ObsoleteWarningsTransformer(),
+                    new StaticIntrinsicsPostProcessTransformer(),
                     new ConvertPropertyValuesToAssignmentsTransformer(),
                     new ConstructableObjectTransformer()
                 };
@@ -56,12 +59,11 @@ namespace XamlX.Compiler
             }
         }
 
-        public AstTransformationContext CreateTransformationContext(XamlDocument doc, bool strict)
-            => new AstTransformationContext(_configuration, doc.NamespaceAliases, strict);
-        
-        public void Transform(XamlDocument doc, bool strict = true)
+        public AstTransformationContext CreateTransformationContext(XamlDocument doc) => new(_configuration, doc);
+
+        public void Transform(XamlDocument doc)
         {
-            var ctx = CreateTransformationContext(doc, strict);
+            var ctx = CreateTransformationContext(doc);
 
             var root = doc.Root;
             ctx.RootObject = new XamlRootObjectNode((XamlAstObjectNode)root);
@@ -79,8 +81,9 @@ namespace XamlX.Compiler
 
         protected abstract XamlEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
             IFileSource file,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> createDelegateType,
-            TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
+            IXamlTypeBuilder<TBackendEmitter> declaringType,
+            TBackendEmitter codeGen,
+            XamlRuntimeContext<TBackendEmitter, TEmitResult> context,
+            bool needContextLocal);
     }
 }

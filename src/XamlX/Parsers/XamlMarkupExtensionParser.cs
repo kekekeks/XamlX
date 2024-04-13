@@ -52,7 +52,7 @@ namespace XamlX.Parsers
                     rv.Arguments.Add(Convert(pa));
                 foreach (var arg in n.NamedArguments)
                     rv.Children.Add(new XamlAstXamlPropertyValueNode(info,
-                        new XamlAstNamePropertyReference(info, rv.Type, arg.name, rv.Type), Convert(arg.value)));
+                        new XamlAstNamePropertyReference(info, rv.Type, arg.name, rv.Type), Convert(arg.value), true));
 
                 return rv;
             }

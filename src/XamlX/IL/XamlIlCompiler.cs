@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -17,9 +18,18 @@ namespace XamlX.IL
     {
         public bool EnableIlVerification
         {
-            get => _configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification;
-            set => _configuration.GetOrCreateExtra<ILEmitContextSettings>().EnableILVerification = value;
+            get => Settings.EnableILVerification;
+            set => Settings.EnableILVerification = value;
         }
+
+        public IXamlDynamicSetterContainerProvider DynamicSetterContainerProvider
+        {
+            get => Settings.DynamicSetterContainerProvider;
+            set => Settings.DynamicSetterContainerProvider = value;
+        }
+
+        private ILEmitContextSettings Settings
+            => _configuration.GetOrCreateExtra<ILEmitContextSettings>();
 
         public XamlILCompiler(
             TransformerConfiguration configuration,
@@ -54,9 +64,9 @@ namespace XamlX.IL
 
         protected override XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
             IFileSource file,
-            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> defineDelegateSubType,
-            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlTypeBuilder<IXamlILEmitter> declaringType,
+            IXamlILEmitter codeGen,
+            XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             bool needContextLocal)
         {
             IXamlLocal contextLocal = null;
@@ -68,59 +78,78 @@ namespace XamlX.IL
                 codeGen
                     .Emit(OpCodes.Ldarg_0);
                 context.Factory(codeGen);
-                codeGen.Emit(OpCodes.Stloc, contextLocal);
+                codeGen.Stloc(contextLocal);
             }
 
-            var emitContext = new ILEmitContext(codeGen, _configuration,
-                _emitMappings, context, contextLocal, createSubType,
-                defineDelegateSubType,
+            return new ILEmitContext(codeGen, _configuration,
+                _emitMappings, context, contextLocal, declaringType,
                 file, Emitters);
-            return emitContext;
         }
-        
+
         protected override void CompileBuild(
             IFileSource fileSource,
-            IXamlAstValueNode rootInstance, Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>,  IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
-            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
+            IXamlAstValueNode rootInstance,
+            IXamlTypeBuilder<IXamlILEmitter> declaringType,
+            IXamlILEmitter codeGen,
+            XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             IXamlMethod compiledPopulate)
         {
-            var needContextLocal = !(rootInstance is XamlAstNewClrObjectNode newObj && newObj.Arguments.Count == 0);
-            var emitContext = InitCodeGen(fileSource, createSubType, createDelegateType, codeGen, context, needContextLocal);
+            var needContextLocal = false;
+            if (rootInstance is XamlAstNewClrObjectNode newObj)
+            {
+                needContextLocal = newObj.Arguments.Count == 1 &&
+                                   newObj.Arguments[0].Type.GetClrType() == _configuration.TypeMappings.ServiceProvider;
+
+                var ctorParams = newObj.Constructor.Parameters.Select(c => c.GetFullName());
+                var args = newObj.Arguments.Select(a => a.Type.GetClrType().GetFullName());
+                if (!ctorParams.SequenceEqual(args))
+                {
+                    throw new InvalidOperationException("Cannot compile Build method. Parameters mismatch." +
+                                                        "Type needs to have a parameterless ctor or a ctor with a single IServiceProvider argument." +
+                                                        "Or x:Arguments directive with matching arguments needs to be set");
+                }
+            }
+
+            var emitContext = InitCodeGen(fileSource, declaringType, codeGen, context, needContextLocal);
 
             var rv = codeGen.DefineLocal(rootInstance.Type.GetClrType());
             emitContext.Emit(rootInstance, codeGen, rootInstance.Type.GetClrType());
             codeGen
-                .Emit(OpCodes.Stloc, rv)
-                .Emit(OpCodes.Ldarg_0)
-                .Emit(OpCodes.Ldloc, rv)
+                .Stloc(rv)
+                .Ldarg_0()
+                .Ldloc(rv)
                 .EmitCall(compiledPopulate)
-                .Emit(OpCodes.Ldloc, rv)
-                .Emit(OpCodes.Ret);
+                .Ldloc(rv)
+                .Ret();
+
+            emitContext.ExecuteAfterEmitCallbacks();
         }
 
         /// <summary>
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
-        protected override void CompilePopulate(IFileSource fileSource, IXamlAstManipulationNode manipulation,
-            Func<string, IXamlType, IXamlTypeBuilder<IXamlILEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<IXamlILEmitter>> createDelegateType,
-            IXamlILEmitter codeGen, XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context)
+        protected override void CompilePopulate(IFileSource fileSource,
+            IXamlAstManipulationNode manipulation,
+            IXamlTypeBuilder<IXamlILEmitter> declaringType,
+            IXamlILEmitter codeGen,
+            XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context)
         {
             // Uncomment to inspect generated IL in debugger
             //codeGen = new RecordingIlEmitter(codeGen);
-            var emitContext = InitCodeGen(fileSource, createSubType, createDelegateType, codeGen, context, true);
+            var emitContext = InitCodeGen(fileSource, declaringType, codeGen, context, true);
 
             codeGen
-                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.RootObjectField)
-                .Emit(OpCodes.Ldloc, emitContext.ContextLocal)
+                .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
                 .Emit(OpCodes.Stfld, context.IntermediateRootObjectField)
                 .Emit(OpCodes.Ldarg_1);
             emitContext.Emit(manipulation, codeGen, null);
             codeGen.Emit(OpCodes.Ret);
+
+            emitContext.ExecuteAfterEmitCallbacks();
         }
 
         protected override XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> CreateRuntimeContext(

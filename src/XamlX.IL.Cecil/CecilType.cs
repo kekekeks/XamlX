@@ -53,6 +53,8 @@ namespace XamlX.TypeSystem
             public string Name => Reference.Name;
             public string FullName => Reference.FullName;
             public string Namespace => Reference.Namespace;
+            public bool IsPublic => Definition.IsPublic;
+            public bool IsNestedPrivate => Definition.IsNestedPrivate;
             public IXamlAssembly Assembly => _assembly;
             protected IReadOnlyList<IXamlMethod> _methods;
 
@@ -89,14 +91,14 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlType> GenericArguments =>
                 _genericArguments ?? (_genericArguments = Reference is GenericInstanceType gi
                     ? gi.GenericArguments.Select(ga => TypeSystem.Resolve(ga)).ToList()
-                    : null);
+                    : Array.Empty<IXamlType>());
 
             private IReadOnlyList<IXamlType> _genericParameters;
 
             public IReadOnlyList<IXamlType> GenericParameters =>
                 _genericParameters ?? (_genericParameters = Reference is TypeDefinition td && td.HasGenericParameters
                     ? td.GenericParameters.Select(gp => TypeSystem.Resolve(gp)).ToList()
-                    : null);
+                    : Array.Empty<IXamlType>());
             
 
             protected IReadOnlyList<IXamlCustomAttribute> _attributes;
@@ -112,10 +114,9 @@ namespace XamlX.TypeSystem
             }
             bool IsAssignableFromCore(IXamlType type)
             {
-                if (!type.IsValueType
-                    && type == XamlPseudoType.Null)
-                    return true;
-                
+                if (type == XamlPseudoType.Null)
+                    return !IsValueType || GenericTypeDefinition?.FullName == "System.Nullable`1";
+
                 if (type.IsValueType 
                     && GenericTypeDefinition?.FullName == "System.Nullable`1"
                     && GenericArguments[0].Equals(type))
@@ -158,7 +159,7 @@ namespace XamlX.TypeSystem
 
             public IXamlType ArrayElementType =>
                 _arrayType ?? (_arrayType =
-                    IsArray ? TypeSystem.Resolve(Definition) : null);
+                    IsArray ? TypeSystem.Resolve(Reference.GetElementType()) : null);
 
             public IXamlType MakeArrayType(int dimensions) => TypeSystem.Resolve(Reference.MakeArrayType(dimensions));
 
@@ -168,6 +169,14 @@ namespace XamlX.TypeSystem
                 ? null
                 : _baseType ?? (_baseType = TypeSystem.Resolve(
                       Definition.BaseType.TransformGeneric(Reference)));
+
+            private IXamlType _declaringType;
+
+            public IXamlType DeclaringType =>
+                Definition.DeclaringType == null
+                    ? null
+                    : _declaringType ?? (_declaringType = TypeSystem.Resolve(
+                        Definition.DeclaringType.TransformGeneric(Reference)));
             
             public bool IsValueType => Definition.IsValueType;
             public bool IsEnum => Definition.IsEnum;

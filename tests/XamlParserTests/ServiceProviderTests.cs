@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using XamlX.Runtime;
@@ -136,6 +137,7 @@ namespace XamlParserTests
             }, null);
         }
 
+        [SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Not a theory, used in XAML tests")]
         public static void SetAttachedProperty(ServiceProviderTestsClass target, string value)
         {
             
@@ -225,7 +227,7 @@ namespace XamlParserTests
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        [""] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -233,7 +235,7 @@ namespace XamlParserTests
                                 ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
                             }
                         },
-                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr1"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -241,7 +243,7 @@ namespace XamlParserTests
                                 ClrAssemblyName = "netstandard"
                             }
                         },
-                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr2"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
@@ -272,21 +274,21 @@ namespace XamlParserTests
                 Helpers.StructDiff(nsList,
                     new Dictionary<string, IReadOnlyList<XamlXmlNamespaceInfoV1>>
                     {
-                        [""] = new List<XamlXmlNamespaceInfoV1>
+                        [""] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "XamlParserTests"
                             }
                         },
-                        ["clr1"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr1"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "System.Collections.Generic"
                             }
                         },
-                        ["clr2"] = new List<XamlXmlNamespaceInfoV1>
+                        ["clr2"] = new[]
                         {
                             new XamlXmlNamespaceInfoV1
                             {

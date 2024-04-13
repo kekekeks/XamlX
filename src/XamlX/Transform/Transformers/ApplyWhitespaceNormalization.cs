@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using XamlX.Ast;
 
 namespace XamlX.Transform.Transformers
@@ -16,13 +17,12 @@ namespace XamlX.Transform.Transformers
             if (node is XamlAstXamlPropertyValueNode propertyNode)
             {
                 var childNodes = propertyNode.Values;
-                WhitespaceNormalization.Apply(
-                    childNodes,
-                    context.Configuration
-                );
 
                 var property = propertyNode.Property.GetClrProperty();
-                if (!WantsWhitespaceOnlyElements(context.Configuration, property))
+      
+                WhitespaceNormalization.Apply(childNodes, context.Configuration);              
+
+                if (!WantsWhitespaceOnlyElements(context.Configuration, property, childNodes))
                 {
                     WhitespaceNormalization.RemoveWhitespaceNodes(childNodes);
                 }
@@ -31,12 +31,18 @@ namespace XamlX.Transform.Transformers
             return node;
         }
 
-        private bool WantsWhitespaceOnlyElements(TransformerConfiguration config,
-            XamlAstClrProperty property)
+        private static bool WantsWhitespaceOnlyElements(TransformerConfiguration config,
+            XamlAstClrProperty property, IList<IXamlAstValueNode> childNodes)
         {
             var wellKnownTypes = config.WellKnownTypes;
 
-            var acceptsMultipleElements = false;
+            // A collection-like property will only receive whitespace-only nodes if the
+            // property type can be deduced, and that type is annotated as whitespace significant
+            if (property.Getter != null && config.IsWhitespaceSignificantCollection(property.Getter.ReturnType))
+            {
+                return true;
+            }
+
             foreach (var setter in property.Setters)
             {
                 // Skip any dictionary-like setters
@@ -46,31 +52,23 @@ namespace XamlX.Transform.Transformers
                 }
 
                 var parameterType = setter.Parameters[0];
+
                 if (!setter.BinderParameters.AllowMultiple)
                 {
+                    if(childNodes.Count > 1)
+                    {
+                        return false;
+                    }
+
                     // If the property can accept a scalar string, it'll get whitespace nodes by default
                     if (parameterType.Equals(wellKnownTypes.String) || parameterType.Equals(wellKnownTypes.Object))
                     {
                         return true;
                     }
                 }
-                else
-                {
-                    acceptsMultipleElements = true;
-                }
-            }
-
-            // A collection-like property will only receive whitespace-only nodes if the
-            // property type can be deduced, and that type is annotated as whitespace significant
-            if (acceptsMultipleElements
-                && property.Getter != null
-                && config.IsWhitespaceSignificantCollection(property.Getter.ReturnType))
-            {
-                return true;
             }
 
             return false;
         }
-
     }
 }

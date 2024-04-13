@@ -30,9 +30,9 @@ namespace XamlX.Transform.Transformers
                 }
 
                 if (ctor == null)
-                    throw new XamlLoadException(
-                        $"Unable to find public constructor for type {type.GetFqn()}({string.Join(", ", argTypes.Select(at => at.GetFqn()))})",
-                        n);
+                {
+                    return null;
+                }
             }
 
             for (var c = 0; c < n.Arguments.Count; c++)
@@ -57,9 +57,27 @@ namespace XamlX.Transform.Transformers
                         "Value types can only be loaded via converters. We don't want to mess with indirect loads and other weird stuff",
                         node);
 
+                var matchingCtorIsRequired = context.ParentNodes().Any();
                 var ctor = TransformArgumentsAndGetConstructor(context, ni);
-                return new XamlAstConstructableObjectNode(ni,
-                    ni.Type.GetClrTypeReference(), ctor, ni.Arguments, ni.Children);
+                if (ctor is not null)
+                {
+                    return new XamlAstConstructableObjectNode(ni,
+                        ni.Type.GetClrTypeReference(), ctor, ni.Arguments, ni.Children);
+                }
+                else if (!matchingCtorIsRequired)
+                {
+                    // If matching ctor isn't required and it wasn't found, pass the first possible ctor.
+                    // But don't pass any arguments, as compiler doesn't know what to pass at this point.
+                    var firstCtor = ni.Type.GetClrType().Constructors.First();
+                    return new XamlAstConstructableObjectNode(ni,
+                        ni.Type.GetClrTypeReference(), firstCtor, new List<IXamlAstValueNode>(), ni.Children);
+                }
+                else
+                {
+                    throw new XamlLoadException(
+                        $"Unable to find public constructor for type {ni.Type.GetClrType().GetFqn()}({string.Join(", ", ni.Arguments.Select(at => at.Type.GetClrType().GetFqn()))})",
+                        ni);
+                }
             }
 
             return node;

@@ -98,6 +98,20 @@ namespace XamlX.IL
             _inner.Emit(code, arg);
             return this;
         }
+        
+        public IXamlILEmitter Emit(OpCode code, sbyte arg)
+        {
+            Record(code, arg);
+            _inner.Emit(code, arg);
+            return this;
+        }
+        
+        public IXamlILEmitter Emit(OpCode code, byte arg)
+        {
+            Record(code, arg);
+            _inner.Emit(code, arg);
+            return this;
+        }
 
         public IXamlILEmitter Emit(OpCode code, IXamlType type)
         {

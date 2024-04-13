@@ -21,6 +21,9 @@ namespace XamlParserTests
         public ConvertersTestsClassWithConverter TypeWithConverterProperty { get; set; }
         [TypeConverter(typeof(ConvertersTests.PropertyTestConverter))]
         public ConvertersTestsClassWithoutConverter PropertyWithConverter { get; set; }
+        [TypeConverter(typeof(ConvertersTests.NegativeIntConverter))]
+        public int IntPropertyWithNegativeConverter { get; set; }
+        
         public ConvertersTestsEnum EnumProperty { get; set; }
     }
 
@@ -91,6 +94,14 @@ namespace XamlParserTests
                 return new ConvertersTestsClassWithoutConverter {Value = (string) value};
             }
         }
+        
+        public class NegativeIntConverter : TypeConverter
+        {
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                return -int.Parse((string)value);
+            }
+        }
 
         [Theory,
          InlineData("Int64Property", "1"),
@@ -110,6 +121,11 @@ namespace XamlParserTests
         public void Converters_Are_Operational(string property, string value)
             => CheckConversion(property, value, value);
 
+        [Theory,
+         InlineData("IntPropertyWithNegativeConverter", "5", "-5")]
+        public void Converters_Are_Operational2(string property, string value, string expected)
+            => CheckConversion(property, value, expected);
+
         [Fact]
         public void Type_Properties_Are_Converted()
         {
@@ -117,7 +133,7 @@ namespace XamlParserTests
                 typeof(ConvertersTestClass).ToString());
         }
         
-        public void CheckConversion(string property, string value, string expected)
+        private void CheckConversion(string property, string value, string expected)
         {
             var res = (ConvertersTestClass) CompileAndRun($@"
 <ConvertersTestClass

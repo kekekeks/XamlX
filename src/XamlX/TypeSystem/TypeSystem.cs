@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection.Emit;
-using XamlX.Ast;
 
 namespace XamlX.TypeSystem
 {
@@ -16,6 +14,8 @@ namespace XamlX.TypeSystem
         string Name { get; }
         string Namespace { get; }
         string FullName { get; }
+        bool IsPublic { get; }
+        bool IsNestedPrivate { get; }
         IXamlAssembly Assembly { get; }
         IReadOnlyList<IXamlProperty> Properties { get; }
         IReadOnlyList<IXamlEventInfo> Events { get; }
@@ -31,6 +31,7 @@ namespace XamlX.TypeSystem
         IXamlType ArrayElementType { get; }
         IXamlType MakeArrayType(int dimensions);
         IXamlType BaseType { get; }
+        IXamlType DeclaringType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlType> Interfaces { get; }
@@ -46,6 +47,8 @@ namespace XamlX.TypeSystem
     interface IXamlMethod : IEquatable<IXamlMethod>, IXamlMember
     {
         bool IsPublic { get; }
+        bool IsPrivate { get; }
+        bool IsFamily { get; }
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
@@ -132,8 +135,8 @@ namespace XamlX.TypeSystem
     {
         IEnumerable<IXamlAssembly> Assemblies { get; }
         IXamlAssembly FindAssembly(string substring);
-        IXamlType FindType(string name);
-        IXamlType FindType(string name, string assembly);
+        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name);
+        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string assembly);
     }
     
 #if !XAMLX_INTERNAL
@@ -164,19 +167,30 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
+    enum XamlVisibility
+    {
+        Public,
+        Assembly,
+        Private
+    }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
     interface IXamlTypeBuilder<TBackendEmitter> : IXamlType
     {
-        IXamlField DefineField(IXamlType type, string name, bool isPublic, bool isStatic);
+        IXamlField DefineField(IXamlType type, string name, XamlVisibility visibility, bool isStatic);
         void AddInterfaceImplementation(IXamlType type);
 
-        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name, bool isPublic, bool isStatic,
-            bool isInterfaceImpl, IXamlMethod overrideMethod = null);
+        IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
+            XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod overrideMethod = null);
 
         IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
         IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
-        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, bool isPublic);
-        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, bool isPublic, IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
+        IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, XamlVisibility visibility);
+        IXamlTypeBuilder<TBackendEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
+            IXamlType returnType, IEnumerable<IXamlType> parameterTypes);
         void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> names);
     }
 
@@ -225,36 +239,36 @@ namespace XamlX.TypeSystem
 
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
-        public string Namespace { get; } = "";
+        public string Namespace => "";
         public string FullName => Name;
-        public IXamlAssembly Assembly { get; } = null;
-        public IReadOnlyList<IXamlProperty> Properties { get; } = new IXamlProperty[0];
-        public IReadOnlyList<IXamlEventInfo> Events { get; } = new IXamlEventInfo[0];
-        public IReadOnlyList<IXamlField> Fields { get; } = new List<IXamlField>();
-        public IReadOnlyList<IXamlMethod> Methods { get; } = new IXamlMethod[0];
-        public IReadOnlyList<IXamlConstructor> Constructors { get; } = new IXamlConstructor[0];
-        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = new IXamlCustomAttribute[0];
-        public IReadOnlyList<IXamlType> GenericArguments { get; } = new IXamlType[0];
+        public bool IsPublic => true;
+        public bool IsNestedPrivate => false;
+        public IXamlAssembly Assembly => null;
+        public IReadOnlyList<IXamlProperty> Properties => Array.Empty<IXamlProperty>();
+        public IReadOnlyList<IXamlEventInfo> Events => Array.Empty<IXamlEventInfo>();
+        public IReadOnlyList<IXamlField> Fields => Array.Empty<IXamlField>();
+        public IReadOnlyList<IXamlMethod> Methods => Array.Empty<IXamlMethod>();
+        public IReadOnlyList<IXamlConstructor> Constructors => Array.Empty<IXamlConstructor>();
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => Array.Empty<IXamlCustomAttribute>();
+        public IReadOnlyList<IXamlType> GenericArguments => Array.Empty<IXamlType>();
         public IXamlType MakeArrayType(int dimensions) => throw new NullReferenceException();
 
-        public IXamlType BaseType { get; }
-        public bool IsValueType { get; } = false;
-        public bool IsEnum { get; } = false;
-        public IReadOnlyList<IXamlType> Interfaces { get; } = new IXamlType[0];
+        public IXamlType BaseType => null;
+        public IXamlType DeclaringType => null;
+        public bool IsValueType => false;
+        public bool IsEnum => false;
+        public IReadOnlyList<IXamlType> Interfaces => Array.Empty<IXamlType>();
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
-        public IReadOnlyList<IXamlType> GenericParameters { get; } = null;
+        public IReadOnlyList<IXamlType> GenericParameters => null;
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
 
-        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
-        {
-            throw new NotSupportedException();
-        }
+        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments) => throw new NotSupportedException();
 
         public IXamlType GenericTypeDefinition => null;
-        public bool IsArray { get; }
-        public IXamlType ArrayElementType { get; }
+        public bool IsArray => false;
+        public IXamlType ArrayElementType => null;
         public static XamlPseudoType Null { get; } = new XamlPseudoType("{x:Null}");
         public static XamlPseudoType Unknown { get; } = new XamlPseudoType("{Unknown type}");
 
@@ -305,7 +319,7 @@ namespace XamlX.TypeSystem
             return name;
         }
         
-        public static IXamlType GetType(this IXamlTypeSystem sys, string type)
+        public static IXamlType GetType(this IXamlTypeSystem sys, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string type)
         {
             var f = sys.FindType(type);
             if (f == null)
@@ -449,6 +463,9 @@ namespace XamlX.TypeSystem
             return null;
         }
 
+        public static bool AcceptsNull(this IXamlType type) 
+            => !type.IsValueType || type.IsNullable();
+
         public static bool IsNullable(this IXamlType type)
         {
             var def = type.GenericTypeDefinition;
@@ -471,6 +488,22 @@ namespace XamlX.TypeSystem
             if(type.BaseType!=null)
                 foreach (var i in type.BaseType.GetAllInterfaces())
                     yield return i;
+        }
+        
+        public static IEnumerable<IXamlCustomAttribute> GetAllCustomAttributes(this IXamlType type)
+        {
+            foreach (var i in type.CustomAttributes)
+                yield return i;
+            if(type.BaseType!=null)
+                foreach (var i in type.BaseType.GetAllCustomAttributes())
+                {
+                    var usageAttribute = i.Type.CustomAttributes.FirstOrDefault(a => a.Type.FullName == "System.AttributeUsageAttribute");
+                    if (usageAttribute is null
+                        || (usageAttribute.Properties.TryGetValue("Inherited", out var boolean) && boolean is true))
+                    {
+                        yield return i;
+                    }
+                }
         }
 
         public static IEnumerable<IXamlProperty> GetAllProperties(this IXamlType t)

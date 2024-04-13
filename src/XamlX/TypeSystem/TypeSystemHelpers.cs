@@ -43,9 +43,9 @@ namespace XamlX.TypeSystem
 
 
 
-        public static bool TryGetEnumValueNode(IXamlType enumType, string value, IXamlLineInfo lineInfo, out XamlConstantNode rv)
+        public static bool TryGetEnumValueNode(IXamlType enumType, string value, IXamlLineInfo lineInfo, bool ignoreCase, out XamlConstantNode rv)
         {
-            if (TryGetEnumValue(enumType, value, out var constant))
+            if (TryGetEnumValue(enumType, value, ignoreCase, out var constant))
             {
                 rv = new XamlConstantNode(lineInfo, enumType, constant);
                 return true;
@@ -54,8 +54,8 @@ namespace XamlX.TypeSystem
             rv = null;
             return false;
         }
-        
-        public static bool TryGetEnumValue(IXamlType enumType, string value, out object rv)
+
+        public static bool TryGetEnumValue(IXamlType enumType, string value, bool ignoreCase, out object rv)
         {
             rv = null;
             if (long.TryParse(value, out var parsedLong))
@@ -71,9 +71,10 @@ namespace XamlX.TypeSystem
                 value.Split(',').Select(x => x.Trim()).ToArray() :
                 new[] { value };
             object cv = null;
+            var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
             for (var c = 0; c < values.Length; c++)
             {
-                var enumValueField = enumType.Fields.FirstOrDefault(f => f.Name == values[c]);
+                var enumValueField = enumType.Fields.FirstOrDefault(f => comparer.Equals(f.Name, values[c]));
                 if (enumValueField == null)
                     return false;
                 var enumValue = GetLiteralFieldConstantValue(enumValueField);
@@ -141,14 +142,21 @@ namespace XamlX.TypeSystem
                 return null;
             }
 
-            var r = Parse();
-            if (r != null)
+            try
             {
-                rv = new XamlConstantNode(info, type, r);
-                return true;
-            }
+                var r = Parse();
+                if (r != null)
+                {
+                    rv = new XamlConstantNode(info, type, r);
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
+            catch (FormatException ex)
+            {
+                throw new XamlParseException(ex.Message, info, ex);
+            }
         }
     }
 }

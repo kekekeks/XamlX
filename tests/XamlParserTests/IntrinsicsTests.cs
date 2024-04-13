@@ -21,6 +21,15 @@ namespace XamlParserTests
         public const double DoubleConstant = 3;
     }
 
+    public class IntrinsicsListTestsClass
+    {
+        internal int AddInt32CallCount;
+        internal int AddObjectCallCount;
+
+        public void Add(int value) => ++AddInt32CallCount;
+        public void Add(object value) => ++AddObjectCallCount;
+    }
+
     public enum IntrinsicsTestsEnum : long
     {
         Foo = 100500
@@ -45,6 +54,19 @@ namespace XamlParserTests
 <IntrinsicsTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <IntrinsicsTestsClass.IntProperty><x:Null/></IntrinsicsTestsClass.IntProperty>
 </IntrinsicsTestsClass>"));
+        }
+
+        [Fact]
+        public void Null_Extension_Should_Disregard_Value_Type_Overloads()
+        {
+            var res = (IntrinsicsListTestsClass) CompileAndRun($@"
+<IntrinsicsListTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <x:Null />
+    <x:Null />
+</IntrinsicsListTestsClass>");
+
+            Assert.Equal(0, res.AddInt32CallCount);
+            Assert.Equal(2, res.AddObjectCallCount);
         }
 
         [Theory,
@@ -85,6 +107,25 @@ namespace XamlParserTests
             Assert.Equal(expected, res.ObjectProperty);
         }
 
+        [Fact]
+        public void Static_Extension_Reports_Errors()
+        {
+            var exception = Assert.Throws<AggregateException>(() => CompileAndRun($@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:scg='clr-namespace:System.Collections.Generic'
+>
+    <IntrinsicsTestsClass.ObjectProperty><x:Static Member='IntrinsicsTestsClass.StaticPropDoesntExist1'/></IntrinsicsTestsClass.ObjectProperty>
+    <IntrinsicsTestsClass.BoolProperty><x:Static Member='IntrinsicsTestsClass.StaticPropDoesntExist2'/></IntrinsicsTestsClass.BoolProperty>
+</IntrinsicsTestsClass>"));
+            
+            Assert.Equal(2, exception.InnerExceptions.Count);
+            Assert.Collection(exception.InnerExceptions,
+                ex1 => Assert.Contains("StaticPropDoesntExist1", ex1.Message),
+                ex2 => Assert.Contains("StaticPropDoesntExist2", ex2.Message));
+        }
+        
         [Fact]
         public void Static_Extension_Resolves_Enum_Values()
         {

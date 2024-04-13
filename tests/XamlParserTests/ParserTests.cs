@@ -21,7 +21,7 @@ namespace XamlParserTests
         [Fact]
         public void Parser_Should_Be_Able_To_Parse_A_Simple_Tree()
         {
-            var root = XDocumentXamlParser.Parse(
+            var root = XamlParser.Parse(
                 @"
 <Root xmlns='rootns' xmlns:t='testns' xmlns:d='directive' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
     <Child Ext='{Extension 123, 321, Prop=test, Prop2=test2, Prop3={Extension}, Prop4=test3}'
@@ -87,34 +87,34 @@ namespace XamlParserTests
                                         {
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop", extensionType),
-                                                new XamlAstTextNode(ni, "test", true)),
+                                                new XamlAstTextNode(ni, "test", true), true),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop2", extensionType),
-                                                new XamlAstTextNode(ni, "test2", true)),
+                                                new XamlAstTextNode(ni, "test2", true), true),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop3", extensionType),
-                                                new XamlAstObjectNode(ni, extensionType)),
+                                                new XamlAstObjectNode(ni, extensionType), true),
                                             new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                     extensionType, "Prop4", extensionType),
-                                                new XamlAstTextNode(ni, "test3", true)),
+                                                new XamlAstTextNode(ni, "test3", true), true),
                                         }
-                                    }),                             
+                                    }, true),                             
                                 //Other.Prop='{}Not extension'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         new XamlAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
-                                    new XamlAstTextNode(ni, "Not extension", true)),
+                                    new XamlAstTextNode(ni, "Not extension", true), true),
                                 //  Prop1='123' 
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "Prop1", childType),
-                                    new XamlAstTextNode(ni, "123", true)),
+                                    new XamlAstTextNode(ni, "123", true), true),
                                 // Root.AttachedProp='AttachedValue'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         rootType, "AttachedProp", childType),
-                                    new XamlAstTextNode(ni, "AttachedValue", true)),
+                                    new XamlAstTextNode(ni, "AttachedValue", true), true),
                                 //t:Namespaced.AttachedProp='AttachedValue'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         namespacedType, "AttachedProp", childType),
-                                    new XamlAstTextNode(ni, "AttachedValue", true)),
+                                    new XamlAstTextNode(ni, "AttachedValue", true), true),
                                 //d:Directive='DirectiveValue'>
                                 new XamlAstXmlDirective(ni, "directive", "Directive", new[]
                                 {
@@ -139,11 +139,11 @@ namespace XamlParserTests
                                     {
                                         new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 nsSubChildType, "Prop", nsSubChildType),
-                                            new XamlAstTextNode(ni, "321", true)),
+                                            new XamlAstTextNode(ni, "321", true), true),
                                         // Root.AttachedProp='AttachedValue'
                                         new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                                 rootType, "AttachedProp", nsSubChildType),
-                                            new XamlAstTextNode(ni, "AttachedValue", true)),
+                                            new XamlAstTextNode(ni, "AttachedValue", true), true),
                                     }
                                 },
                                 new XamlAstTextNode(ni, "\n        "),
@@ -153,7 +153,7 @@ namespace XamlParserTests
                                     new[]
                                     {
                                         new XamlAstTextNode(ni, "DottedValue")
-                                    }),
+                                    }, false),
                                 new XamlAstTextNode(ni, "\n        "),
                                 // <Root.AttachedDottedProp>AttachedValue</Root.AttachedDottedProp>
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
@@ -161,7 +161,7 @@ namespace XamlParserTests
                                     new[]
                                     {
                                         new XamlAstTextNode(ni, "AttachedValue")
-                                    }),
+                                    }, false),
                                 new XamlAstTextNode(ni, "\n        "),
                                 //<Child.NodeListProp>
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
@@ -175,7 +175,7 @@ namespace XamlParserTests
                                         // <SubChild/>
                                         new XamlAstObjectNode(ni, subChildType),
                                         new XamlAstTextNode(ni, "\n        ")
-                                    }),
+                                    }, false),
                                 new XamlAstTextNode(ni, "\n    "),
                             }
                         },
@@ -208,7 +208,7 @@ namespace XamlParserTests
         [Theory, InlineData(false), InlineData(true)]
         public void Parser_Should_Handle_Ignorable_Content(bool map)
         {
-            var root = XDocumentXamlParser.Parse(@"
+            var root = XamlParser.Parse(@"
 <Root xmlns='rootns' xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' 
     mc:Ignorable='d d2' xmlns:d='test' xmlns:d2='test2'
     d:DataContext='123' d2:Lalala='321'>

@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;net47</TargetFrameworks>
+        <DefineConstants>GUILABS;$(DefineConstants)</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="..\XamlParserTests\*.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
+    </ItemGroup>
+</Project>

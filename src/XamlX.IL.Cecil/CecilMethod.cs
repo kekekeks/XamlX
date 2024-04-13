@@ -59,33 +59,34 @@ namespace XamlX.TypeSystem
             
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
+            public bool IsPrivate => Definition.IsPrivate;
+            public bool IsFamily => Definition.IsFamily;
             public bool IsStatic => Definition.IsStatic;
 
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>
-                _returnType ?? (_returnType = TypeSystem.Resolve(Reference.ReturnType));
+                _returnType ??= TypeSystem.Resolve(Reference.ReturnType);
 
             private IXamlType _declaringType;
 
             public IXamlType DeclaringType =>
-                _declaringType = _declaringType ?? (_declaringType = TypeSystem.Resolve(_declaringTypeReference));
+                _declaringType ??= TypeSystem.Resolve(_declaringTypeReference);
 
             private IReadOnlyList<IXamlType> _parameters;
 
             public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ?? (_parameters =
-                    Reference.Parameters.Select(p => TypeSystem.Resolve(p.ParameterType)).ToList());
+                _parameters ??= Reference.Parameters.Select(p => TypeSystem.Resolve(p.ParameterType)).ToList();
             
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
+
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList();
 
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ?? (_generator = new CecilEmitter(TypeSystem, Definition));
+                _generator ??= new CecilEmitter(TypeSystem, Definition);
         }
 
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
@@ -101,6 +102,9 @@ namespace XamlX.TypeSystem
                 other is CecilMethod cm
                 && DeclaringType.Equals(cm.DeclaringType)
                 && Reference.FullName == cm.Reference.FullName;
+
+            public override int GetHashCode() 
+                => (DeclaringType.GetHashCode() * 397) ^ Reference.FullName.GetHashCode();
 
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {

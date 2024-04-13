@@ -21,6 +21,8 @@ namespace XamlX.IL
         IXamlILEmitter Emit(OpCode code, string arg);
         IXamlILEmitter Emit(OpCode code, int arg);
         IXamlILEmitter Emit(OpCode code, long arg);
+        IXamlILEmitter Emit(OpCode code, sbyte arg);
+        IXamlILEmitter Emit(OpCode code, byte arg);
         IXamlILEmitter Emit(OpCode code, IXamlType type);
         IXamlILEmitter Emit(OpCode code, float arg);
         IXamlILEmitter Emit(OpCode code, double arg);

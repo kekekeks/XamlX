@@ -86,54 +86,54 @@ namespace XamlX.Ast
             TargetType = (IXamlAstTypeReference) TargetType.Visit(visitor);
         }
 
-        IXamlMember ResolveMember(IXamlType type)
-        {
-            var rv = type.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
-                   (IXamlMember) type.GetAllProperties().FirstOrDefault(p =>
-                       p.Name == Member && p.Getter != null && p.Getter.IsPublic && p.Getter.IsStatic);
-            if (rv == null)
-                throw new XamlParseException(
-                    $"Unable to resolve {Member} as static field, property, constant or enum value", this);
-            return rv;
-        }
-        
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
-            var type = TargetType.GetClrType();
-            var member = ResolveMember(type);
-            if (member is IXamlProperty prop)
+            var member = ResolveMember(true);
+            switch (member)
             {
-                codeGen.Emit(OpCodes.Call, prop.Getter);
-                return XamlILNodeEmitResult.Type(0, prop.Getter.ReturnType);
-            }
-            else if (member is IXamlField field)
-            {
-                if (field.IsLiteral)
+                case IXamlProperty prop:
+                    codeGen.Emit(OpCodes.Call, prop.Getter);
+                    return XamlILNodeEmitResult.Type(0, prop.Getter.ReturnType);
+                case IXamlField field:
                 {
-                    ILEmitHelpers.EmitFieldLiteral(field, codeGen);
+                    if (field.IsLiteral)
+                    {
+                        ILEmitHelpers.EmitFieldLiteral(field, codeGen);
+                    }
+                    else
+                        codeGen.Emit(OpCodes.Ldsfld, field);
+                    return XamlILNodeEmitResult.Type(0, field.FieldType);
                 }
-                else
-                    codeGen.Emit(OpCodes.Ldsfld, field);
-                return XamlILNodeEmitResult.Type(0, field.FieldType);
+                default:
+                    throw new InvalidOperationException();
             }
-            else
-                throw new XamlLoadException(
-                    $"Unable to resolve {Member} as static field, property, constant or enum value", this);
         }
 
-        IXamlType ResolveReturnType()
+        internal IXamlMember ResolveMember(bool throwOnUnknown)
         {
-            if (!(TargetType is XamlAstClrTypeReference type))
-                return XamlPseudoType.Unknown;
-            var member = ResolveMember(type.Type);
-            if (member is IXamlField field)
-                return field.FieldType;
-            if (member is IXamlProperty prop && prop.Getter != null)
-                return prop.Getter.ReturnType;
-            throw new XamlParseException($"Unable to resolve {Member} as static field, property, constant or enum value", this);
+            var type = TargetType?.GetClrType();
+            var member = type?.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
+                   (IXamlMember)type?.GetAllProperties().FirstOrDefault(p =>
+                       p.Name == Member && p.Getter is { IsPublic: true, IsStatic: true });
+
+            if (member is IXamlProperty or IXamlField)
+            {
+                return member;
+            }
+            else if (throwOnUnknown)
+            {
+                throw new XamlTransformException(
+                    $"Unable to resolve \"{type?.Name}.{Member}\" as static field, property, constant or enum value", this);
+            }
+            return null;
         }
-        
-        public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveReturnType(), false);
+
+        public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveMember(false) switch
+        {
+            IXamlField field => field.FieldType,
+            IXamlProperty { Getter: not null } prop => prop.Getter.ReturnType,
+            _ => XamlPseudoType.Unknown
+        }, false);
     }
 
 #if !XAMLX_INTERNAL
@@ -165,7 +165,7 @@ namespace XamlX.Ast
             else if (Constant is bool b)
                 codeGen.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             else
-                codeGen.Emit(OpCodes.Ldc_I4, TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
+                codeGen.Ldc_I4(TypeSystem.TypeSystemHelpers.ConvertLiteralToInt(Constant));
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
     }
@@ -175,12 +175,18 @@ namespace XamlX.Ast
 #endif
     class XamlRootObjectNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        private IXamlAstTypeReference _type;
+
         public XamlRootObjectNode(XamlAstObjectNode root) : base(root)
         {
-            Type = root.Type;
+            Type = root.Type ?? throw new InvalidOperationException("XamlRootObjectNode.Type cannot be null.");
         }
 
-        public IXamlAstTypeReference Type { get; set; }
+        public IXamlAstTypeReference Type
+        {
+            get => _type;
+            set => _type = value ?? throw new InvalidOperationException("XamlAstObjectNode.Type cannot be null.");
+        }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {

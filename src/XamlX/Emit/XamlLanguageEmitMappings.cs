@@ -1,6 +1,6 @@
 ﻿using System;
 using XamlX.Ast;
-using XamlX.TypeSystem;
+using XamlX.IL;
 
 namespace XamlX.Emit
 {
@@ -18,7 +18,7 @@ namespace XamlX.Emit
 #if !XAMLX_INTERNAL
     public
 #endif
-    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlTypeBuilder<TBackendEmitter> typeBuilder, TBackendEmitter constructor);
+    delegate void XamlContextTypeBuilderCallback<TBackendEmitter>(IXamlILContextDefinition<TBackendEmitter> contextDefinition);
 
 #if !XAMLX_INTERNAL
     public

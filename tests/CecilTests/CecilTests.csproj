@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="$(MSBuildThisFileDirectory)\..\Tests.Common.props" />
     <PropertyGroup>
-        <TargetFrameworks>netcoreapp2.1;net47;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net6.0;net47;netstandard2.0</TargetFrameworks>
         <DefineConstants>CECIL;$(DefineConstants)</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="..\XamlParserTests\*.cs" />
+        <Compile Include="..\XamlParserTests\*.cs" Exclude="..\XamlParserTests\*.Sre.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\src\XamlX.IL.Cecil\XamlX.IL.Cecil.csproj" />
+      <ProjectReference Include="..\..\src\XamlX.Parser.GuiLabs\XamlX.Parser.GuiLabs.csproj" />
     </ItemGroup>
 </Project>
