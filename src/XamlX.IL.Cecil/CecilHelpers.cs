@@ -43,6 +43,10 @@ namespace XamlX.TypeSystem
                                 clone.GenericArguments[c] = inst.GenericArguments[genericParameter.Position];
 
                             }
+                             else if (arg is GenericInstanceType nested)
+                             {
+                                 gref.GenericArguments[c] = TransformGeneric(nested, declaringType);
+                             }
                         }
 
                         return clone ?? gref;
