@@ -11,11 +11,11 @@ namespace XamlX.TypeSystem
     {
         class CecilTypeBuilder : CecilType, IXamlTypeBuilder<IXamlILEmitter>
         {
-            protected TypeReference SelfReference;
-            public CecilTypeBuilder(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition) 
-                : base(typeSystem, assembly, definition)
+            private XamlTypeResolver _builderTypeResolver;
+            public CecilTypeBuilder(XamlTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition) 
+                : base(parentTypeResolver, assembly, definition)
             {
-                SelfReference = definition;
+                _builderTypeResolver = parentTypeResolver.Nested(definition);
             }
 
             TypeReference GetReference(IXamlType type) =>
@@ -39,7 +39,7 @@ namespace XamlX.TypeSystem
 
                 var def = new FieldDefinition(name, attrs, r);
                 Definition.Fields.Add(def);
-                var rv = new CecilField(TypeSystem, def, SelfReference);
+                var rv = new CecilField(_builderTypeResolver, def);
                 ((List<CecilField>)Fields).Add(rv);
                 return rv;
             }
@@ -77,7 +77,7 @@ namespace XamlX.TypeSystem
                     def.Overrides.Add(Definition.Module.ImportReference(((CecilMethod) overrideMethod).Reference));
                 def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
-                var rv = new CecilMethod(TypeSystem, def, SelfReference);
+                var rv = new CecilMethod(_builderTypeResolver, def);
                 ((List<CecilMethod>)Methods).Add(rv);
                 return rv;
             }
@@ -91,7 +91,7 @@ namespace XamlX.TypeSystem
                 def.SetMethod = s?.Definition;
                 def.GetMethod = g?.Definition;
                 Definition.Properties.Add(def);
-                var rv = new CecilProperty(TypeSystem, def, SelfReference);
+                var rv = new CecilProperty(_builderTypeResolver, def);
                 ((List<CecilProperty>)Properties).Add(rv);
                 return rv;
             }
@@ -112,7 +112,7 @@ namespace XamlX.TypeSystem
                         def.Parameters.Add(new ParameterDefinition(GetReference(a)));
                 def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
-                var rv = new CecilConstructor(TypeSystem, def, SelfReference);
+                var rv = new CecilConstructor(_builderTypeResolver, def);
                 ((List<CecilConstructor>)Constructors).Add(rv);
                 return rv;
             }
@@ -134,7 +134,7 @@ namespace XamlX.TypeSystem
                 var td = new TypeDefinition("", name, attrs, GetReference(baseType));
 
                 Definition.NestedTypes.Add(td);
-                return new CecilTypeBuilder(TypeSystem, (CecilAssembly) Assembly, td);
+                return new CecilTypeBuilder(_builderTypeResolver, (CecilAssembly) Assembly, td);
             }
 
             public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
@@ -169,7 +169,7 @@ namespace XamlX.TypeSystem
                     invoke.Parameters.Add(new ParameterDefinition(GetReference(param)));
                 }
 
-                return new CecilTypeBuilder(TypeSystem, (CecilAssembly)Assembly, builder);
+                return new CecilTypeBuilder(_builderTypeResolver, (CecilAssembly)Assembly, builder);
             }
 
             public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> args)
@@ -185,10 +185,10 @@ namespace XamlX.TypeSystem
 
                 Definition.Name = Name + "`" + args.Count;
                 Reference.Name = Definition.Name;
-                SelfReference = Definition.MakeGenericInstanceType(Definition.GenericParameters.Cast<TypeReference>()
+                var selfReference = Definition.MakeGenericInstanceType(Definition.GenericParameters.Cast<TypeReference>()
                     .ToArray());
+                _builderTypeResolver = _builderTypeResolver.Nested(selfReference);
             }
         }
-
     }
 }

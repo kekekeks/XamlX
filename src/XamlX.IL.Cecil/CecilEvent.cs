@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using Mono.Cecil;
-using XamlX.TypeSystem;
 
 namespace XamlX.TypeSystem
 {
@@ -8,24 +6,22 @@ namespace XamlX.TypeSystem
     {
         class CecilEvent : IXamlEventInfo
         {
-            private readonly TypeReference _declaringType;
-            public CecilTypeSystem TypeSystem { get; }
+            private readonly XamlTypeResolver _typeResolver;
             public EventDefinition Event { get; }
 
-            public CecilEvent(CecilTypeSystem typeSystem, EventDefinition ev, TypeReference declaringType)
+            public CecilEvent(XamlTypeResolver typeResolver, EventDefinition ev)
             {
-                _declaringType = declaringType;
-                TypeSystem = typeSystem;
+                _typeResolver = typeResolver;
                 Event = ev;
             }
-            
+
             public string Name => Event.Name;
 
             private IXamlMethod _getter;
 
             public IXamlMethod Add => Event.AddMethod == null
                 ? null
-                : _getter ?? (_getter = TypeSystem.Resolve(Event.AddMethod, _declaringType));
+                : _getter ??= new CecilMethod(_typeResolver, Event.AddMethod);
 
             public bool Equals(IXamlEventInfo other) =>
                 other is CecilEvent cf

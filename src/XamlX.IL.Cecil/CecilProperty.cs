@@ -8,14 +8,12 @@ namespace XamlX.TypeSystem
     {
         class CecilProperty : IXamlProperty
         {
-            private readonly TypeReference _declaringType;
-            public CecilTypeSystem TypeSystem { get; }
+            private readonly XamlTypeResolver _typeResolver;
             public PropertyDefinition Property { get; }
 
-            public CecilProperty(CecilTypeSystem typeSystem, PropertyDefinition property, TypeReference declaringType)
+            public CecilProperty(XamlTypeResolver typeResolver, PropertyDefinition property)
             {
-                _declaringType = declaringType;
-                TypeSystem = typeSystem;
+                _typeResolver = typeResolver;
                 Property = property;
             }
 
@@ -23,38 +21,36 @@ namespace XamlX.TypeSystem
             private IXamlType _type;
 
             public IXamlType PropertyType =>
-                _type ?? (_type = TypeSystem.Resolve(Property.PropertyType.TransformGeneric(_declaringType)));
+                _type ??= _typeResolver.ResolvePropertyType(Property);
             private IXamlMethod _setter;
 
             public IXamlMethod Setter => Property.SetMethod == null
                 ? null
-                : _setter ?? (_setter = TypeSystem.Resolve(Property.SetMethod, _declaringType));
+                : _setter ??= new CecilMethod(_typeResolver, Property.SetMethod);
             
             private IXamlMethod _getter;
 
             public IXamlMethod Getter => Property.GetMethod == null
                 ? null
-                : _getter ?? (_getter = TypeSystem.Resolve(Property.GetMethod, _declaringType));
+                : _getter ??= new CecilMethod(_typeResolver, Property.GetMethod);
 
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Property.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+                _attributes ??= Property.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolver, ca)).ToList();
 
             private IReadOnlyList<IXamlType> _indexerParameters;
             public IReadOnlyList<IXamlType> IndexerParameters =>
-                _indexerParameters ?? (_indexerParameters =
-                    Property.Parameters.Select(param => TypeSystem.Resolve(param.ParameterType.TransformGeneric(_declaringType))).ToList());
+                _indexerParameters ??= Property.Parameters.Select(param => _typeResolver.ResolveParameterType(Property, param)).ToList();
 
             public bool Equals(IXamlProperty other) =>
                 other is CecilProperty cf
-                && TypeReferenceEqualityComparer.AreEqual(_declaringType, cf._declaringType)
+                && TypeReferenceEqualityComparer.AreEqual(Property.DeclaringType, cf.Property.DeclaringType)
                 && cf.Property.FullName == Property.FullName;
 
             public override bool Equals(object other) => Equals(other as IXamlProperty); 
 
             public override int GetHashCode() =>
-                (TypeReferenceEqualityComparer.GetHashCodeFor(_declaringType), Property.FullName).GetHashCode();
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Property.DeclaringType), Property.FullName).GetHashCode();
 
             public override string ToString() => Property.ToString();
         }

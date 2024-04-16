@@ -4,7 +4,7 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        class UnresolvedCecilType : XamlPseudoType, ITypeReference
+        internal class UnresolvedCecilType : XamlPseudoType, ITypeReference
         {
             public TypeReference Reference { get; }
 

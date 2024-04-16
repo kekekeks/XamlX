@@ -8,24 +8,18 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        abstract class CecilMethodBase
+        internal abstract class CecilMethodBase
         {
-            public CecilTypeSystem TypeSystem { get; }
+            protected XamlTypeResolver TypeResolver { get; }
             public MethodReference Reference { get; }
             public MethodReference IlReference { get; }
             public MethodDefinition Definition { get; }
-            protected readonly TypeReference _declaringTypeReference;
 
-            public CecilMethodBase(CecilTypeSystem typeSystem, MethodReference method, TypeReference declaringType)
+            public CecilMethodBase(XamlTypeResolver typeResolver, MethodReference method)
             {
-                TypeSystem = typeSystem;
-
-                MethodReference MakeRef(bool transform)
+                MethodReference MakeIlRef()
                 {
-                    TypeReference Transform(TypeReference r) => transform ? r.TransformGeneric(declaringType) : r;
-
-                    var reference = new MethodReference(method.Name, Transform(method.ReturnType),
-                        declaringType)
+                    var reference = new MethodReference(method.Name, method.ReturnType, Reference.DeclaringType)
                     {
                         HasThis = method.HasThis,
                         ExplicitThis = method.ExplicitThis,
@@ -33,7 +27,7 @@ namespace XamlX.TypeSystem
 
                     foreach (ParameterDefinition parameter in method.Parameters)
                         reference.Parameters.Add(
-                            new ParameterDefinition(Transform(parameter.ParameterType)));
+                            new ParameterDefinition(parameter.ParameterType));
 
                     foreach (var genericParam in method.GenericParameters)
                         reference.GenericParameters.Add(new GenericParameter(genericParam.Name, reference));
@@ -43,7 +37,7 @@ namespace XamlX.TypeSystem
                         var genericReference = new GenericInstanceMethod(reference);
                         foreach (var genericArg in generic.GenericArguments)
                         {
-                            genericReference.GenericArguments.Add(Transform(genericArg));
+                            genericReference.GenericArguments.Add(genericArg);
                         }
                         reference = genericReference;
                     }
@@ -51,10 +45,10 @@ namespace XamlX.TypeSystem
                     return reference;
                 }
 
-                Reference = MakeRef(true);
-                IlReference = MakeRef(false);
+                Reference = typeResolver.ResolveReference(method);
+                IlReference = MakeIlRef();
                 Definition = method.Resolve();
-                _declaringTypeReference = declaringType;
+                TypeResolver = typeResolver.Nested(Reference);
             }
             
             public string Name => Reference.Name;
@@ -66,27 +60,27 @@ namespace XamlX.TypeSystem
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>
-                _returnType ??= TypeSystem.Resolve(Reference.ReturnType);
+                _returnType ??= TypeResolver.ResolveReturnType(Reference);
 
             private IXamlType _declaringType;
 
             public IXamlType DeclaringType =>
-                _declaringType ??= TypeSystem.Resolve(_declaringTypeReference);
+                _declaringType ??= TypeResolver.Resolve(Reference.DeclaringType);
 
             private IReadOnlyList<IXamlType> _parameters;
 
             public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= Reference.Parameters.Select(p => TypeSystem.Resolve(p.ParameterType)).ToList();
+                _parameters ??= Reference.Parameters.Select(p => TypeResolver.ResolveParameterType(Reference, p)).ToList();
             
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList();
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolver, ca)).ToList();
 
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ??= new CecilEmitter(TypeSystem, Definition);
+                _generator ??= new CecilEmitter(TypeResolver.TypeSystem, Definition);
 
             public override string ToString() => Definition.ToString();
         }
@@ -94,8 +88,8 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
-            public CecilMethod(CecilTypeSystem typeSystem, MethodReference methodRef,
-                TypeReference declaringType) : base(typeSystem, methodRef, declaringType)
+            public CecilMethod(XamlTypeResolver typeResolver, MethodReference method)
+                : base(typeResolver, method)
             {
             }
 
@@ -108,7 +102,7 @@ namespace XamlX.TypeSystem
                     instantiation.GenericArguments.Add(type);
                 }
 
-                return new CecilMethod(TypeSystem, instantiation, _declaringTypeReference);
+                return new CecilMethod(TypeResolver, instantiation);
             }
 
             public bool Equals(IXamlMethod other) =>
@@ -124,8 +118,8 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
-            public CecilConstructor(CecilTypeSystem typeSystem, MethodDefinition methodDef,
-                TypeReference declaringType) : base(typeSystem, methodDef, declaringType)
+            public CecilConstructor(XamlTypeResolver typeResolver, MethodDefinition methodDef)
+                : base(typeResolver, methodDef)
             {
             }
 
