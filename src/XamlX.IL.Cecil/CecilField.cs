@@ -19,10 +19,6 @@ namespace XamlX.TypeSystem
                 Field = new FieldReference(def.Name, def.FieldType, declaringType);
             }
 
-            public bool Equals(IXamlField other) => other is CecilField cf && cf.Field.FullName == Field.FullName;
-
-            public override int GetHashCode() => Field.FullName.GetHashCode();
-
             public string Name => Field.Name;
             private IXamlType _type;
             public IXamlType FieldType => _type ?? (_type = TypeSystem.Resolve(Field.FieldType.TransformGeneric(Field.DeclaringType)));
@@ -41,6 +37,18 @@ namespace XamlX.TypeSystem
                     return _def.Constant;
                 return null;
             }
+
+            public bool Equals(IXamlField other) =>
+                other is CecilField cf
+                && TypeReferenceEqualityComparer.AreEqual(Field.DeclaringType, cf.Field.DeclaringType)
+                && cf.Field.FullName == Field.FullName;
+
+            public override bool Equals(object other) => Equals(other as IXamlField); 
+
+            public override int GetHashCode() =>
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Field.DeclaringType), Field.FullName).GetHashCode();
+
+            public override string ToString() => Field.ToString();
         }
     }
 }

@@ -9,9 +9,6 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        // TODO: Make generic type definitions have Reference set to GenericTypeInstance with parameters for
-        // consistency with CecilTypeBuilder
-        
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         class CecilType : IXamlType, ITypeReference
         {
@@ -37,17 +34,6 @@ namespace XamlX.TypeSystem
                 if (reference.IsArray)
                     Definition = ((CecilType)typeSystem.GetType("System.Array")).Definition;
             }
-
-            public bool Equals(IXamlType other)
-            {
-                if (ReferenceEquals(this, other))
-                    return true;
-                if (!(other is CecilType o))
-                    return false;
-                return CecilHelpers.Equals(Reference, o.Reference);
-            }
-
-            public override string ToString() => Definition.ToString();
 
             public object Id => Reference.FullName;
             public string Name => Reference.Name;
@@ -194,8 +180,19 @@ namespace XamlX.TypeSystem
                     return null;
                 return TypeSystem.Resolve(Definition.GetEnumUnderlyingType());
             }
-            
-            
+
+            public bool Equals(IXamlType other)
+            {
+                if (!(other is CecilType o))
+                    return false;
+                return TypeReferenceEqualityComparer.AreEqual(Reference, o.Reference);
+            }
+
+            public override bool Equals(object other) => Equals(other as IXamlType);
+
+            public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference);
+
+            public override string ToString() => Definition.ToString();
         }
     }
 }

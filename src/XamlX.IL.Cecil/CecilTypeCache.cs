@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 
 namespace XamlX.TypeSystem
 {
+
     partial class CecilTypeSystem
     {
         class CecilTypeCache
         {
             public CecilTypeSystem TypeSystem { get; }
             
-            Dictionary<TypeDefinition, DefinitionEntry> _definitions = new Dictionary<TypeDefinition, DefinitionEntry>();
+            Dictionary<TypeDefinition, DefinitionEntry> _definitions = new(new TypeDefinitionEqualityComparer());
 
             public CecilTypeCache(CecilTypeSystem typeSystem)
             {
@@ -45,7 +47,7 @@ namespace XamlX.TypeSystem
                 var rtype = reference.GetType();
                 if (!dentry.References.TryGetValue(rtype, out var rlist))
                     dentry.References[rtype] = rlist = new List<CecilType>();
-                var found = rlist.FirstOrDefault(t => CecilHelpers.Equals(t.Reference, reference));
+                var found = rlist.FirstOrDefault(t => TypeReferenceEqualityComparer.AreEqual(t.Reference, reference));
                 if (found != null)
                     return found;
                 var rv = new CecilType(TypeSystem, asm, definition, reference);

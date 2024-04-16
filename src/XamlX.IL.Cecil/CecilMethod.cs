@@ -8,7 +8,7 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        class CecilMethodBase
+        abstract class CecilMethodBase
         {
             public CecilTypeSystem TypeSystem { get; }
             public MethodReference Reference { get; }
@@ -87,24 +87,17 @@ namespace XamlX.TypeSystem
 
             public IXamlILEmitter Generator =>
                 _generator ??= new CecilEmitter(TypeSystem, Definition);
+
+            public override string ToString() => Definition.ToString();
         }
 
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
+        sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
             public CecilMethod(CecilTypeSystem typeSystem, MethodReference methodRef,
                 TypeReference declaringType) : base(typeSystem, methodRef, declaringType)
             {
             }
-
-            public bool Equals(IXamlMethod other) =>
-                // I hope this is enough...
-                other is CecilMethod cm
-                && DeclaringType.Equals(cm.DeclaringType)
-                && Reference.FullName == cm.Reference.FullName;
-
-            public override int GetHashCode() 
-                => (DeclaringType.GetHashCode() * 397) ^ Reference.FullName.GetHashCode();
 
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
@@ -117,18 +110,33 @@ namespace XamlX.TypeSystem
 
                 return new CecilMethod(TypeSystem, instantiation, _declaringTypeReference);
             }
+
+            public bool Equals(IXamlMethod other) =>
+                other is CecilMethod cm
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+
+            public override bool Equals(object other) => Equals(other as IXamlMethod);
+
+            public override int GetHashCode() 
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
+        sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
             public CecilConstructor(CecilTypeSystem typeSystem, MethodDefinition methodDef,
                 TypeReference declaringType) : base(typeSystem, methodDef, declaringType)
             {
             }
 
-            public bool Equals(IXamlConstructor other) => other is CecilConstructor cm
-                                                            && cm.Reference.Equals(Reference);
+            public bool Equals(IXamlConstructor other) =>
+                other is CecilConstructor cm
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+
+            public override bool Equals(object other) => Equals(other as IXamlConstructor);
+
+            public override int GetHashCode() 
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
         }
     }
 }

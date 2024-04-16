@@ -19,8 +19,6 @@ namespace XamlX.TypeSystem
                 Property = property;
             }
 
-            public bool Equals(IXamlProperty other) => other is CecilProperty cp && cp.Property == Property;
-
             public string Name => Property.Name;
             private IXamlType _type;
 
@@ -47,6 +45,18 @@ namespace XamlX.TypeSystem
             public IReadOnlyList<IXamlType> IndexerParameters =>
                 _indexerParameters ?? (_indexerParameters =
                     Property.Parameters.Select(param => TypeSystem.Resolve(param.ParameterType.TransformGeneric(_declaringType))).ToList());
+
+            public bool Equals(IXamlProperty other) =>
+                other is CecilProperty cf
+                && TypeReferenceEqualityComparer.AreEqual(_declaringType, cf._declaringType)
+                && cf.Property.FullName == Property.FullName;
+
+            public override bool Equals(object other) => Equals(other as IXamlProperty); 
+
+            public override int GetHashCode() =>
+                (TypeReferenceEqualityComparer.GetHashCodeFor(_declaringType), Property.FullName).GetHashCode();
+
+            public override string ToString() => Property.ToString();
         }
     }
 }

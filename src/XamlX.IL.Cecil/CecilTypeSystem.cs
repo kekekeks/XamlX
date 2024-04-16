@@ -17,12 +17,11 @@ namespace XamlX.TypeSystem
     partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
     {
         private List<CecilAssembly> _asms = new List<CecilAssembly>();
-        private Dictionary<string, CecilAssembly> _assemblyCache = new Dictionary<string, CecilAssembly>();
-        private Dictionary<TypeReference, IXamlType> _typeReferenceCache = new Dictionary<TypeReference, IXamlType>();
-        private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic 
-            = new Dictionary<AssemblyDefinition, CecilAssembly>();
-        private Dictionary<string, IXamlType> _unresolvedTypeCache = new Dictionary<string, IXamlType>();
-        
+        private Dictionary<string, CecilAssembly> _assemblyCache = new(StringComparer.Ordinal);
+        private Dictionary<TypeReference, IXamlType> _typeReferenceCache = new(new TypeReferenceEqualityComparer());
+        private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic = new();
+        private Dictionary<string, IXamlType> _unresolvedTypeCache = new(StringComparer.Ordinal);
+
         private CustomMetadataResolver _resolver;
         private CecilTypeCache _typeCache;
         public void Dispose()
