@@ -127,7 +127,7 @@ namespace XamlX.TypeSystem
                 {
                     var i = Definition.MakeGenericInstanceType(typeArguments.Cast<ITypeReference>().Select(r => r.Reference)
                         .ToArray());
-                    return new CecilType(TypeResolver, (CecilAssembly)Assembly, i.Resolve(), i);
+                    return TypeResolver.Resolve(i);
                 }
                 throw new InvalidOperationException();
             }
