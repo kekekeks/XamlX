@@ -26,7 +26,7 @@ namespace XamlX.TypeSystem
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ??= Assembly.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem._rootTypeResolver, ca)).ToList();
+                _attributes ??= Assembly.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem.RootTypeResolver, ca)).ToList();
 
             public IXamlType FindType(string fullName)
             {
@@ -40,7 +40,7 @@ namespace XamlX.TypeSystem
                         fullName.Substring(lastDot + 1), Assembly.MainModule, asmRef);
                 var resolved = tref.Resolve();
                 if (resolved != null)
-                    return _typeCache[fullName] = TypeSystem._rootTypeResolver.Resolve(resolved);
+                    return _typeCache[fullName] = TypeSystem.RootTypeResolver.Resolve(resolved);
 
                 return null;
 

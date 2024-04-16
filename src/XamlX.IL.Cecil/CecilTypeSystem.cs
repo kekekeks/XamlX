@@ -18,7 +18,6 @@ namespace XamlX.TypeSystem
         private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic = new();
 
         private CustomMetadataResolver _resolver;
-        private CecilTypeResolver _rootTypeResolver;
         public void Dispose()
         {
             foreach (var asm in _asms)
@@ -47,7 +46,7 @@ namespace XamlX.TypeSystem
             if (targetPath != null)
                 paths = paths.Concat(new[] {targetPath});
             _resolver = new CustomMetadataResolver(this);
-            _rootTypeResolver = CecilTypeResolver.For(this);
+            RootTypeResolver = CecilTypeResolver.For(this);
             foreach (var path in paths.Distinct())
             {
                 var isTarget = path == targetPath;
@@ -73,6 +72,7 @@ namespace XamlX.TypeSystem
             }    
         }
 
+        internal CecilTypeResolver RootTypeResolver { get; } 
         public IXamlAssembly TargetAssembly { get; private set; }
         public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
         public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
@@ -133,7 +133,7 @@ namespace XamlX.TypeSystem
 
         public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeDefinition def)
         {
-            return new CecilTypeBuilder(_rootTypeResolver, FindAsm(def.Module.Assembly), def);
+            return new CecilTypeBuilder(RootTypeResolver, FindAsm(def.Module.Assembly), def);
         }
 
         public AssemblyDefinition GetAssembly(IXamlAssembly asm)
