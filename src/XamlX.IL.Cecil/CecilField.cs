@@ -9,10 +9,10 @@ namespace XamlX.TypeSystem
         class CecilField : IXamlField
         {
             private readonly FieldDefinition _def;
-            private readonly XamlTypeResolver _typeResolver;
+            private readonly CecilTypeResolver _typeResolver;
             public FieldDefinition Field { get; }
 
-            public CecilField(XamlTypeResolver typeResolver, FieldDefinition def)
+            public CecilField(CecilTypeResolver typeResolver, FieldDefinition def)
             {
                 _typeResolver = typeResolver;
                 _def = def;

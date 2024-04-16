@@ -8,10 +8,10 @@ namespace XamlX.TypeSystem
     {
         class CecilProperty : IXamlProperty
         {
-            private readonly XamlTypeResolver _typeResolver;
+            private readonly CecilTypeResolver _typeResolver;
             public PropertyDefinition Property { get; }
 
-            public CecilProperty(XamlTypeResolver typeResolver, PropertyDefinition property)
+            public CecilProperty(CecilTypeResolver typeResolver, PropertyDefinition property)
             {
                 _typeResolver = typeResolver;
                 Property = property;

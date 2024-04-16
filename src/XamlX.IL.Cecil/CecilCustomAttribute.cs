@@ -8,11 +8,11 @@ namespace XamlX.TypeSystem
     {       
         class CecilCustomAttribute : IXamlCustomAttribute
         {
-            private readonly XamlTypeResolver _typeResolver;
+            private readonly CecilTypeResolver _typeResolver;
 
             public CustomAttribute Data { get; }
 
-            public CecilCustomAttribute(XamlTypeResolver typeResolver, CustomAttribute data)
+            public CecilCustomAttribute(CecilTypeResolver typeResolver, CustomAttribute data)
             {
                 _typeResolver = typeResolver;
                 Data = data;

@@ -11,8 +11,8 @@ namespace XamlX.TypeSystem
     {
         class CecilTypeBuilder : CecilType, IXamlTypeBuilder<IXamlILEmitter>
         {
-            private XamlTypeResolver _builderTypeResolver;
-            public CecilTypeBuilder(XamlTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition) 
+            private CecilTypeResolver _builderTypeResolver;
+            public CecilTypeBuilder(CecilTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition) 
                 : base(parentTypeResolver, assembly, definition)
             {
                 _builderTypeResolver = parentTypeResolver.Nested(definition);

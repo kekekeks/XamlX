@@ -10,12 +10,12 @@ namespace XamlX.TypeSystem
     {
         internal abstract class CecilMethodBase
         {
-            protected XamlTypeResolver TypeResolver { get; }
+            protected CecilTypeResolver TypeResolver { get; }
             public MethodReference Reference { get; }
             public MethodReference IlReference { get; }
             public MethodDefinition Definition { get; }
 
-            public CecilMethodBase(XamlTypeResolver typeResolver, MethodReference method)
+            public CecilMethodBase(CecilTypeResolver typeResolver, MethodReference method)
             {
                 MethodReference MakeIlRef()
                 {
@@ -88,7 +88,7 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
-            public CecilMethod(XamlTypeResolver typeResolver, MethodReference method)
+            public CecilMethod(CecilTypeResolver typeResolver, MethodReference method)
                 : base(typeResolver, method)
             {
             }
@@ -118,7 +118,7 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
-            public CecilConstructor(XamlTypeResolver typeResolver, MethodDefinition methodDef)
+            public CecilConstructor(CecilTypeResolver typeResolver, MethodDefinition methodDef)
                 : base(typeResolver, methodDef)
             {
             }

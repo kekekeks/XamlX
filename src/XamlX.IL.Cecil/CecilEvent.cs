@@ -6,10 +6,10 @@ namespace XamlX.TypeSystem
     {
         class CecilEvent : IXamlEventInfo
         {
-            private readonly XamlTypeResolver _typeResolver;
+            private readonly CecilTypeResolver _typeResolver;
             public EventDefinition Event { get; }
 
-            public CecilEvent(XamlTypeResolver typeResolver, EventDefinition ev)
+            public CecilEvent(CecilTypeResolver typeResolver, EventDefinition ev)
             {
                 _typeResolver = typeResolver;
                 Event = ev;

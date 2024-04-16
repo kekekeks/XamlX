@@ -18,13 +18,13 @@ namespace XamlX.TypeSystem
             public TypeDefinition Definition { get; }
 
             private Dictionary<IXamlType, bool> _isAssignableFromCache = new Dictionary<IXamlType, bool>();
-            public CecilType(XamlTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition)
+            public CecilType(CecilTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition)
                 : this(parentTypeResolver, assembly, definition, definition)
             {
                 
             }
             
-            public CecilType(XamlTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition,
+            public CecilType(CecilTypeResolver parentTypeResolver, CecilAssembly assembly, TypeDefinition definition,
                 TypeReference reference)
             {
                 _assembly = assembly;
@@ -43,7 +43,7 @@ namespace XamlX.TypeSystem
             public string Namespace => Reference.Namespace;
             public bool IsPublic => Definition.IsPublic;
             public bool IsNestedPrivate => Definition.IsNestedPrivate;
-            protected XamlTypeResolver TypeResolver { get; }
+            protected CecilTypeResolver TypeResolver { get; }
 
             public IXamlAssembly Assembly => _assembly;
             protected IReadOnlyList<IXamlMethod> _methods;
