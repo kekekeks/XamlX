@@ -8,27 +8,27 @@ namespace XamlX.TypeSystem
     {       
         class CecilCustomAttribute : IXamlCustomAttribute
         {
-            private readonly CecilTypeResolver _typeResolver;
+            private readonly CecilTypeResolveContext _typeResolveContext;
 
             public CustomAttribute Data { get; }
 
-            public CecilCustomAttribute(CecilTypeResolver typeResolver, CustomAttribute data)
+            public CecilCustomAttribute(CecilTypeResolveContext typeResolveContext, CustomAttribute data)
             {
-                _typeResolver = typeResolver;
+                _typeResolveContext = typeResolveContext;
                 Data = data;
             }
 
             public bool Equals(IXamlCustomAttribute other) => other is CecilCustomAttribute ca && ca.Data == Data;
 
             private IXamlType _type;
-            public IXamlType Type => _type ??= _typeResolver.Resolve(Data.AttributeType);
+            public IXamlType Type => _type ??= _typeResolveContext.Resolve(Data.AttributeType);
 
             private List<object> _parameters;
 
             object ConvertValue(object value)
             {
                 if (value is TypeReference tr)
-                    return _typeResolver.Resolve(tr);
+                    return _typeResolveContext.Resolve(tr);
                 if (value is CustomAttributeArgument attr)
                     return attr.Value;
                 if (value is IEnumerable<CustomAttributeArgument> array)

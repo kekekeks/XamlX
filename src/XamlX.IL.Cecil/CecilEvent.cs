@@ -6,12 +6,12 @@ namespace XamlX.TypeSystem
     {
         class CecilEvent : IXamlEventInfo
         {
-            private readonly CecilTypeResolver _typeResolver;
+            private readonly CecilTypeResolveContext _typeResolveContext;
             public EventDefinition Event { get; }
 
-            public CecilEvent(CecilTypeResolver typeResolver, EventDefinition ev)
+            public CecilEvent(CecilTypeResolveContext typeResolveContext, EventDefinition ev)
             {
-                _typeResolver = typeResolver;
+                _typeResolveContext = typeResolveContext;
                 Event = ev;
             }
 
@@ -21,7 +21,7 @@ namespace XamlX.TypeSystem
 
             public IXamlMethod Add => Event.AddMethod == null
                 ? null
-                : _getter ??= new CecilMethod(_typeResolver, Event.AddMethod);
+                : _getter ??= new CecilMethod(_typeResolveContext, Event.AddMethod);
 
             public bool Equals(IXamlEventInfo other) =>
                 other is CecilEvent cf

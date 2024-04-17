@@ -9,28 +9,28 @@ namespace XamlX.TypeSystem
         class CecilField : IXamlField
         {
             private readonly FieldDefinition _def;
-            private readonly CecilTypeResolver _typeResolver;
+            private readonly CecilTypeResolveContext _typeResolveContext;
             public FieldReference Field { get; }
 
-            public CecilField(CecilTypeResolver typeResolver, FieldDefinition def)
+            public CecilField(CecilTypeResolveContext typeResolveContext, FieldDefinition def)
             {
-                _typeResolver = typeResolver;
+                _typeResolveContext = typeResolveContext;
                 _def = def;
 
                 // Can't use FieldDefinition for IL, because it doesn't hold generics information.
-                Field = typeResolver.ResolveReference(def);
+                Field = typeResolveContext.ResolveReference(def);
             }
 
             public string Name => Field.Name;
             private IXamlType _type;
-            public IXamlType FieldType => _type ??= _typeResolver.ResolveFieldType(Field);
+            public IXamlType FieldType => _type ??= _typeResolveContext.ResolveFieldType(Field);
             public bool IsPublic => _def.IsPublic;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
 
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ??= _def.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolver, ca)).ToList();
+                _attributes ??= _def.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
 
             public object GetLiteralValue()
             {

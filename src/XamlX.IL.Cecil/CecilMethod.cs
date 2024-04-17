@@ -10,17 +10,17 @@ namespace XamlX.TypeSystem
     {
         internal abstract class CecilMethodBase
         {
-            protected CecilTypeResolver TypeResolver { get; }
+            protected CecilTypeResolveContext TypeResolveContext { get; }
             public MethodReference Reference { get; }
             public MethodReference IlReference { get; }
             public MethodDefinition Definition { get; }
 
-            public CecilMethodBase(CecilTypeResolver typeResolver, MethodReference method)
+            public CecilMethodBase(CecilTypeResolveContext typeResolveContext, MethodReference method)
             {
-                Reference = typeResolver.ResolveReference(method);
-                IlReference = typeResolver.ResolveReference(method, transformGenerics: false);
+                Reference = typeResolveContext.ResolveReference(method);
+                IlReference = typeResolveContext.ResolveReference(method, transformGenerics: false);
                 Definition = method.Resolve();
-                TypeResolver = typeResolver.Nested(Reference);
+                TypeResolveContext = typeResolveContext.Nested(Reference);
             }
             
             public string Name => Reference.Name;
@@ -32,27 +32,27 @@ namespace XamlX.TypeSystem
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>
-                _returnType ??= TypeResolver.ResolveReturnType(Reference);
+                _returnType ??= TypeResolveContext.ResolveReturnType(Reference);
 
             private IXamlType _declaringType;
 
             public IXamlType DeclaringType =>
-                _declaringType ??= TypeResolver.Resolve(Reference.DeclaringType);
+                _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
 
             private IReadOnlyList<IXamlType> _parameters;
 
             public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= Reference.Parameters.Select(p => TypeResolver.ResolveParameterType(Reference, p)).ToList();
+                _parameters ??= Reference.Parameters.Select(p => TypeResolveContext.ResolveParameterType(Reference, p)).ToList();
             
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolver, ca)).ToList();
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolveContext, ca)).ToList();
 
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ??= new CecilEmitter(TypeResolver.TypeSystem, Definition);
+                _generator ??= new CecilEmitter(TypeResolveContext.TypeSystem, Definition);
 
             public override string ToString() => Definition.ToString();
         }
@@ -60,8 +60,8 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
-            public CecilMethod(CecilTypeResolver typeResolver, MethodReference method)
-                : base(typeResolver, method)
+            public CecilMethod(CecilTypeResolveContext typeResolveContext, MethodReference method)
+                : base(typeResolveContext, method)
             {
             }
 
@@ -74,7 +74,7 @@ namespace XamlX.TypeSystem
                     instantiation.GenericArguments.Add(type);
                 }
 
-                return new CecilMethod(TypeResolver, instantiation);
+                return new CecilMethod(TypeResolveContext, instantiation);
             }
 
             public bool Equals(IXamlMethod other) =>
@@ -90,8 +90,8 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
-            public CecilConstructor(CecilTypeResolver typeResolver, MethodDefinition methodDef)
-                : base(typeResolver, methodDef)
+            public CecilConstructor(CecilTypeResolveContext typeResolveContext, MethodDefinition methodDef)
+                : base(typeResolveContext, methodDef)
             {
             }
 

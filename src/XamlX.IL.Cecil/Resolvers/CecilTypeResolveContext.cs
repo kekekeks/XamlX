@@ -3,18 +3,18 @@ using Mono.Cecil;
 
 namespace XamlX.TypeSystem;
 
-internal class CecilTypeResolver
+internal class CecilTypeResolveContext
 {
     private readonly GenericTypeResolver _genericTypeResolver;
     private readonly Dictionary<TypeReference, IXamlType> _typeReferenceCache;
     public CecilTypeSystem TypeSystem { get; }
 
-    public static CecilTypeResolver For(CecilTypeSystem typeSystem)
+    public static CecilTypeResolveContext For(CecilTypeSystem typeSystem)
     {
-        return new CecilTypeResolver(typeSystem, new GenericTypeResolver());
+        return new CecilTypeResolveContext(typeSystem, new GenericTypeResolver());
     }
 
-    private CecilTypeResolver(
+    private CecilTypeResolveContext(
         CecilTypeSystem typeSystem,
         GenericTypeResolver genericTypeResolver,
         Dictionary<TypeReference, IXamlType> typeReferenceCache = null)
@@ -24,14 +24,14 @@ internal class CecilTypeResolver
         _typeReferenceCache = typeReferenceCache ?? new(new TypeReferenceEqualityComparer());
     }
 
-    public CecilTypeResolver Nested(TypeReference typeReference)
+    public CecilTypeResolveContext Nested(TypeReference typeReference)
     {
-        return new CecilTypeResolver(TypeSystem, _genericTypeResolver.Nested(typeReference, null), _typeReferenceCache);
+        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(typeReference, null), _typeReferenceCache);
     }
 
-    public CecilTypeResolver Nested(MethodReference methodReference)
+    public CecilTypeResolveContext Nested(MethodReference methodReference)
     {
-        return new CecilTypeResolver(TypeSystem, _genericTypeResolver.Nested(null, methodReference), _typeReferenceCache);
+        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(null, methodReference), _typeReferenceCache);
     }
 
     public IXamlType Resolve(TypeReference reference, bool resolveGenerics = true)
