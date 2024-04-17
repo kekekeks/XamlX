@@ -17,36 +17,8 @@ namespace XamlX.TypeSystem
 
             public CecilMethodBase(CecilTypeResolver typeResolver, MethodReference method)
             {
-                MethodReference MakeIlRef()
-                {
-                    var reference = new MethodReference(method.Name, method.ReturnType, Reference.DeclaringType)
-                    {
-                        HasThis = method.HasThis,
-                        ExplicitThis = method.ExplicitThis,
-                    };
-
-                    foreach (ParameterDefinition parameter in method.Parameters)
-                        reference.Parameters.Add(
-                            new ParameterDefinition(parameter.ParameterType));
-
-                    foreach (var genericParam in method.GenericParameters)
-                        reference.GenericParameters.Add(new GenericParameter(genericParam.Name, reference));
-
-                    if (method is GenericInstanceMethod generic)
-                    {
-                        var genericReference = new GenericInstanceMethod(reference);
-                        foreach (var genericArg in generic.GenericArguments)
-                        {
-                            genericReference.GenericArguments.Add(genericArg);
-                        }
-                        reference = genericReference;
-                    }
-
-                    return reference;
-                }
-
                 Reference = typeResolver.ResolveReference(method);
-                IlReference = MakeIlRef();
+                IlReference = typeResolver.ResolveReference(method, transformGenerics: false);
                 Definition = method.Resolve();
                 TypeResolver = typeResolver.Nested(Reference);
             }

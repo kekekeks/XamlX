@@ -24,7 +24,7 @@ internal class GenericTypeResolver
 		_methodDefinitionContext = methodDefinitionContext;
 	}
 
-	public MethodReference Resolve(MethodReference method)
+	public MethodReference Resolve(MethodReference method, bool transformGenerics = true)
 	{
 		var methodReference = method;
 		if (IsDummy())
@@ -48,7 +48,7 @@ internal class GenericTypeResolver
 			var m = new GenericInstanceMethod(methodReference);
 			foreach (var ga in genericInstanceMethod.GenericArguments)
 			{
-				m.GenericArguments.Add(Resolve(ga));
+				m.GenericArguments.Add(transformGenerics ? Resolve(ga) : ga);
 			}
 
 			methodReference = m;

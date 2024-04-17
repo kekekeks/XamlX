@@ -103,9 +103,9 @@ internal class CecilTypeResolver
         return Resolve(type);
     }
 
-    public MethodReference ResolveReference(MethodReference method)
+    public MethodReference ResolveReference(MethodReference method, bool transformGenerics = true)
     {
-        return _genericTypeResolver.Resolve(method);
+        return _genericTypeResolver.Resolve(method, transformGenerics);
     }
     public TypeReference ResolveReference(TypeReference type)
     {
