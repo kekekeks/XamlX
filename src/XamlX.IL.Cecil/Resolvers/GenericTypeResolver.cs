@@ -70,6 +70,14 @@ internal class GenericTypeResolver
 		return methodReference;
 	}
 
+	public FieldReference Resolve(FieldReference field)
+	{
+		if (IsDummy())
+			return field;
+
+		return new FieldReference(field.Name, field.FieldType, Resolve(field.DeclaringType));
+	}
+
 	public TypeReference Resolve(TypeReference typeReference)
 	{
 		return Resolve(typeReference, true);

@@ -111,4 +111,8 @@ internal class CecilTypeResolver
     {
         return _genericTypeResolver.Resolve(type);
     }
+    public FieldReference ResolveReference(FieldReference field)
+    {
+        return _genericTypeResolver.Resolve(field);
+    }
 }
