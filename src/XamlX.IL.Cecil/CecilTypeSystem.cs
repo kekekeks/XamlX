@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Pdb;
-using Mono.Cecil.Rocks;
 using XamlX.IL;
 
 namespace XamlX.TypeSystem
@@ -17,14 +14,10 @@ namespace XamlX.TypeSystem
     partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
     {
         private List<CecilAssembly> _asms = new List<CecilAssembly>();
-        private Dictionary<string, CecilAssembly> _assemblyCache = new Dictionary<string, CecilAssembly>();
-        private Dictionary<TypeReference, IXamlType> _typeReferenceCache = new Dictionary<TypeReference, IXamlType>();
-        private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic 
-            = new Dictionary<AssemblyDefinition, CecilAssembly>();
-        private Dictionary<string, IXamlType> _unresolvedTypeCache = new Dictionary<string, IXamlType>();
-        
+        private Dictionary<string, CecilAssembly> _assemblyCache = new(StringComparer.Ordinal);
+        private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic = new();
+
         private CustomMetadataResolver _resolver;
-        private CecilTypeCache _typeCache;
         public void Dispose()
         {
             foreach (var asm in _asms)
@@ -53,7 +46,7 @@ namespace XamlX.TypeSystem
             if (targetPath != null)
                 paths = paths.Concat(new[] {targetPath});
             _resolver = new CustomMetadataResolver(this);
-            _typeCache = new CecilTypeCache(this);
+            RootTypeResolveContext = CecilTypeResolveContext.For(this);
             foreach (var path in paths.Distinct())
             {
                 var isTarget = path == targetPath;
@@ -79,6 +72,7 @@ namespace XamlX.TypeSystem
             }    
         }
 
+        internal CecilTypeResolveContext RootTypeResolveContext { get; } 
         public IXamlAssembly TargetAssembly { get; private set; }
         public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
         public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
@@ -105,58 +99,10 @@ namespace XamlX.TypeSystem
         public MethodReference GetMethodReference(IXamlMethod t) => ((CecilMethod)t).IlReference;
         public MethodReference GetMethodReference(IXamlConstructor t) => ((CecilConstructor)t).IlReference;
 
-        CecilAssembly FindAsm(AssemblyDefinition d)
+        internal CecilAssembly FindAsm(AssemblyDefinition d)
         {
             _assemblyDic.TryGetValue(d, out var asm);
             return asm;
-        }
-
-        static string GetTypeReferenceKey(TypeReference reference)
-        {
-            if (reference is GenericParameter gp)
-            {
-                if (gp.Owner is TypeReference tr)
-                    return tr.FullName + "|GenericParameter|" + reference.FullName;
-                else if (gp.Owner is MethodReference mr)
-                    return GetTypeReferenceKey(mr.DeclaringType) + mr.FullName + "|GenericParameter|" +
-                           reference.FullName;
-                else 
-                    throw new ArgumentException("Unable to get key for " + gp.Owner.GetType().FullName);
-            }
-
-            return reference.FullName;
-        }
-        
-        IXamlType Resolve(TypeReference reference)
-        {
-            if (!_typeReferenceCache.TryGetValue(reference, out var rv))
-            {
-
-                TypeDefinition resolved = null;
-                try
-                {
-                    resolved = reference.Resolve();
-                }
-                catch (AssemblyResolutionException)
-                {
-                    
-                }
-
-                if (resolved != null)
-                {
-                    rv = _typeCache.Get(reference);
-                }
-                else
-                {
-                    var key = GetTypeReferenceKey(reference);
-
-                    if (!_unresolvedTypeCache.TryGetValue(key, out rv))
-                        _unresolvedTypeCache[key] =
-                            rv = new UnresolvedCecilType(reference);
-                }
-                _typeReferenceCache[reference] = rv;
-            }
-            return rv;
         }
 
         public IXamlAssembly RegisterAssembly(AssemblyDefinition asm)
@@ -180,13 +126,6 @@ namespace XamlX.TypeSystem
             return def;
         }
 
-        private IXamlMethod Resolve(MethodDefinition method, TypeReference declaringType)
-        {
-            return new CecilMethod(this, method, declaringType);
-        }
-
-        private CecilType GetTypeFor(TypeReference reference) => _typeCache.Get(reference);
-
         interface ITypeReference
         {
             TypeReference Reference { get; }
@@ -194,7 +133,7 @@ namespace XamlX.TypeSystem
 
         public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder(TypeDefinition def)
         {
-            return new CecilTypeBuilder(this, FindAsm(def.Module.Assembly), def);
+            return new CecilTypeBuilder(RootTypeResolveContext, FindAsm(def.Module.Assembly), def);
         }
 
         public AssemblyDefinition GetAssembly(IXamlAssembly asm)

@@ -35,6 +35,7 @@ namespace XamlX.TypeSystem
             {
                 var rv = M.ImportReference(f);
                 rv.FieldType = Import(rv.FieldType);
+                rv.DeclaringType = Import(rv.DeclaringType);
                 return rv;
             }
 
