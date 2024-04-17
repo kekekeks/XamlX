@@ -10,22 +10,23 @@ namespace XamlX.TypeSystem
     {
         class CecilParameterInfo : IXamlParameterInfo
         {
-            private readonly CecilTypeSystem _typeSystem;
+            private readonly CecilTypeResolveContext _typeResolveContext;
             private readonly ParameterReference _parameterReference;
 
-            public CecilParameterInfo(CecilTypeSystem typeSystem, ParameterReference parameterReference)
+            public CecilParameterInfo(CecilTypeResolveContext typeResolveContext, ParameterReference parameterReference)
             {
-                _typeSystem = typeSystem;
+                _typeResolveContext = typeResolveContext;
                 _parameterReference = parameterReference;
             }
 
             public string Name => _parameterReference.Name;
-            public IXamlType ParameterType => _typeSystem.Resolve(_parameterReference.ParameterType);
+
+            private IXamlType _parameterType;
+            public IXamlType ParameterType => _parameterType ??= _typeResolveContext.Resolve(_parameterReference.ParameterType);
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _parameterReference.Resolve().CustomAttributes
-                .Select(ca => new CecilCustomAttribute(_typeSystem, ca)).ToList();
+                .Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
         }
 
-        class CecilMethodBase
         internal abstract class CecilMethodBase
         {
             protected CecilTypeResolveContext TypeResolveContext { get; }
@@ -57,11 +58,8 @@ namespace XamlX.TypeSystem
             public IXamlType DeclaringType =>
                 _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
 
-            private IReadOnlyList<IXamlType> _parameters;
+            public IReadOnlyList<IXamlType> Parameters => ParameterInfos.Select(p => p.ParameterType).ToList();
 
-            public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= Reference.Parameters.Select(p => new CecilParameterInfo(TypeSystem, p).ParameterType).ToList();
-            
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
@@ -72,7 +70,11 @@ namespace XamlX.TypeSystem
             public IXamlILEmitter Generator =>
                 _generator ??= new CecilEmitter(TypeResolveContext.TypeSystem, Definition);
 
-            public IXamlParameterInfo GetParameterInfo(int index) => new CecilParameterInfo(TypeSystem, Reference.Parameters[index]);
+            public IXamlParameterInfo GetParameterInfo(int index) => ParameterInfos[index];
+
+            private IReadOnlyList<IXamlParameterInfo> _parameterInfos;
+            private IReadOnlyList<IXamlParameterInfo> ParameterInfos =>
+                _parameterInfos ??= Reference.Parameters.Select(p => new CecilParameterInfo(TypeResolveContext, p)).ToList();
 
             public override string ToString() => Definition.ToString();
         }
