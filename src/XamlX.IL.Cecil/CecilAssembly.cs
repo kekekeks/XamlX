@@ -7,9 +7,10 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        private class CecilAssembly : IXamlAssembly
+        internal class CecilAssembly : IXamlAssembly
         {
-            private Dictionary<string, CecilType> _typeCache = new Dictionary<string, CecilType>();
+            private Dictionary<string, IXamlType> _typeCache = new();
+            
             public CecilTypeSystem TypeSystem { get; }
             public AssemblyDefinition Assembly { get; }
 
@@ -25,9 +26,8 @@ namespace XamlX.TypeSystem
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Assembly.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
-            
+                _attributes ??= Assembly.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem.RootTypeResolveContext, ca)).ToList();
+
             public IXamlType FindType(string fullName)
             {
                 if (_typeCache.TryGetValue(fullName, out var rv))
@@ -40,7 +40,7 @@ namespace XamlX.TypeSystem
                         fullName.Substring(lastDot + 1), Assembly.MainModule, asmRef);
                 var resolved = tref.Resolve();
                 if (resolved != null)
-                    return _typeCache[fullName] = TypeSystem.GetTypeFor(resolved);
+                    return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(resolved);
 
                 return null;
 
