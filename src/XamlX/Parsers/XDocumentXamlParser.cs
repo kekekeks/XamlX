@@ -252,16 +252,12 @@ namespace XamlX.Parsers
                         if (elementNode.HasAttributes)
                             throw ParseError(node, "Attributes aren't allowed on element properties");
                         var pair = elementNode.Name.LocalName.Split(new[] {'.'}, 2);
-                        IEnumerable<XamlAstXmlTypeReference> parentGenericArguments = null;
-                        if (type.GenericArguments.Count > 0 && el.Name.LocalName.Equals(pair[0]))
-                        {
-                            parentGenericArguments = type.GenericArguments;
-                        }
                         i.Children.Add(new XamlAstXamlPropertyValueNode(el.AsLi(), new XamlAstNamePropertyReference
                             (
                                 el.AsLi(),
+                                pair[0] == type.Name && elementNode.Name.NamespaceName == type.XmlNamespace ? type : 
                                 new XamlAstXmlTypeReference(el.AsLi(), elementNode.Name.NamespaceName,
-                                    pair[0], parentGenericArguments), pair[1], type
+                                    pair[0]), pair[1], type
                             ),
                             ParseValueNodeChildren(elementNode, spaceMode),
                             false
