@@ -135,11 +135,11 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		if (!a.Name.Equals(b.Name) || !a.Namespace.Equals(b.Namespace))
 			return false;
 
-		if (comparisonMode == CecilTypeComparisonMode.Exact)
-		{
-			var xDefinition = a.Resolve();
-			var yDefinition = b.Resolve();
+		var xDefinition = comparisonMode == CecilTypeComparisonMode.Exact ? a.Resolve() : a as TypeDefinition;
+		var yDefinition = comparisonMode == CecilTypeComparisonMode.Exact ? b.Resolve() : b as TypeDefinition;
 
+		if (xDefinition is not null && yDefinition is not null)
+		{
 			if (xDefinition.Module.Name != yDefinition.Module.Name)
 				return false;
 
@@ -292,9 +292,10 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			throw new NotImplementedException("We currently don't handle function pointer types.");
 		}
 
-		if (comparisonMode == CecilTypeComparisonMode.Exact)
+		var def = comparisonMode == CecilTypeComparisonMode.Exact ? obj.Resolve() : obj as TypeDefinition;
+
+		if (def is not null)
 		{
-			var def = obj.Resolve();
 			return def.Module.Name.GetHashCode() * moduleMultiplier
 			       + def.Module.Assembly.Name.Name.GetHashCode() * assemblyMultiplier
 			       + obj.Namespace.GetHashCode() * hashCodeMultiplier
