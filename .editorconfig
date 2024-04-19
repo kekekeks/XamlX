@@ -3,7 +3,7 @@ root = true
 [*.cs]
 
 # CS0162: Remove unreachable code
-dotnet_diagnostic.CS0162.severity = error
+dotnet_diagnostic.CS0162.severity = warning
 
 # CA1826: Do not use Enumerable methods on indexable collections
 dotnet_diagnostic.CA1826.severity = warning
