@@ -209,6 +209,8 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		const int optionalModifierMultiplier = 47;
 		const int pinnedMultiplier = 53;
 		const int sentinelMultiplier = 59;
+		const int moduleMultiplier = 61;
+		const int assemblyMultiplier = 67;
 
 		var metadataType = obj.MetadataType;
 
@@ -290,6 +292,18 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			throw new NotImplementedException("We currently don't handle function pointer types.");
 		}
 
-		return obj.Namespace.GetHashCode() * hashCodeMultiplier + obj.FullName.GetHashCode();
+		if (comparisonMode == CecilTypeComparisonMode.Exact)
+		{
+			var def = obj.Resolve();
+			return def.Module.Name.GetHashCode() * moduleMultiplier
+			       + def.Module.Assembly.Name.Name.GetHashCode() * assemblyMultiplier
+			       + obj.Namespace.GetHashCode() * hashCodeMultiplier
+			       + obj.FullName.GetHashCode();
+		}
+		else
+		{
+			return obj.Namespace.GetHashCode() * hashCodeMultiplier
+			       + obj.FullName.GetHashCode();
+		}
 	}
 }
