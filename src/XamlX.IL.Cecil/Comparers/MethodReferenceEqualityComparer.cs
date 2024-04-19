@@ -25,7 +25,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		return GetHashCodeFor(obj);
 	}
 
-	public static bool AreEqual(MethodReference x, MethodReference y)
+	public static bool AreEqual(MethodReference x, MethodReference y, CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.SignatureOnlyLoose)
 	{
 		if (ReferenceEquals(x, y))
 			return true;
@@ -45,7 +45,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		if (x.Name != y.Name)
 			return false;
 
-		if (!TypeReferenceEqualityComparer.AreEqual(x.DeclaringType, y.DeclaringType))
+		if (!TypeReferenceEqualityComparer.AreEqual(x.DeclaringType, y.DeclaringType, comparisonMode))
 			return false;
 
 		var xGeneric = x as GenericInstanceMethod;
@@ -59,12 +59,12 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 				return false;
 
 			for (int i = 0; i < xGeneric.GenericArguments.Count; i++)
-				if (!TypeReferenceEqualityComparer.AreEqual(xGeneric.GenericArguments[i], yGeneric.GenericArguments[i]))
+				if (!TypeReferenceEqualityComparer.AreEqual(xGeneric.GenericArguments[i], yGeneric.GenericArguments[i], comparisonMode))
 					return false;
 		}
 
-		var xResolved = x.Resolve();
-		var yResolved = y.Resolve();
+		var xResolved = comparisonMode == CecilTypeComparisonMode.Exact ? x.Resolve() : x as MethodDefinition;
+		var yResolved = comparisonMode == CecilTypeComparisonMode.Exact ? y.Resolve() : y as MethodDefinition;
 
 		if (xResolved != yResolved)
 			return false;
@@ -100,7 +100,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 					for (int i = 0; i < x.Parameters.Count; i++)
 					{
 						if (!TypeReferenceEqualityComparer.AreEqual(x.Parameters[i].ParameterType,
-							    y.Parameters[i].ParameterType))
+							    y.Parameters[i].ParameterType, comparisonMode))
 							return false;
 					}
 				}
@@ -119,7 +119,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 	}
 
 	public static bool AreSignaturesEqual(MethodReference x, MethodReference y,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.SignatureOnlyLoose)
 	{
 		if (x.HasThis != y.HasThis)
 			return false;
