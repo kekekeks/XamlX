@@ -6,36 +6,32 @@ namespace XamlX.TypeSystem;
 internal class CecilTypeResolveContext
 {
     private readonly GenericTypeResolver _genericTypeResolver;
-    private readonly Dictionary<TypeReference, IXamlType> _typeReferenceCache;
+    private readonly CecilTypeCache _typeCache;
     public CecilTypeSystem TypeSystem { get; }
 
     public static CecilTypeResolveContext For(CecilTypeSystem typeSystem)
     {
-        return new CecilTypeResolveContext(typeSystem, new GenericTypeResolver());
+        return new CecilTypeResolveContext(typeSystem, new GenericTypeResolver(), new CecilTypeCache());
     }
 
     private CecilTypeResolveContext(
         CecilTypeSystem typeSystem,
         GenericTypeResolver genericTypeResolver,
-        Dictionary<TypeReference, IXamlType> typeReferenceCache = null)
+        CecilTypeCache typeCache)
     {
         TypeSystem = typeSystem;
         _genericTypeResolver = genericTypeResolver;
-
-        // Don't use CecilTypeComparisonMode.Exact on type cache, as we don't want to Resolve all types for that.
-        // We don't mind some duplicates, if comes. 
-        _typeReferenceCache = typeReferenceCache ?? new(new TypeReferenceEqualityComparer(
-            CecilTypeComparisonMode.SignatureOnlyLoose));
+        _typeCache = typeCache;
     }
 
     public CecilTypeResolveContext Nested(TypeReference typeReference)
     {
-        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(typeReference, null), _typeReferenceCache);
+        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(typeReference, null), _typeCache);
     }
 
     public CecilTypeResolveContext Nested(MethodReference methodReference)
     {
-        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(null, methodReference), _typeReferenceCache);
+        return new CecilTypeResolveContext(TypeSystem, _genericTypeResolver.Nested(null, methodReference), _typeCache);
     }
 
     public IXamlType Resolve(TypeReference reference, bool resolveGenerics = true)
@@ -51,30 +47,7 @@ internal class CecilTypeResolveContext
             reference = _genericTypeResolver.Resolve(reference);
         }
 
-        if (!_typeReferenceCache.TryGetValue(reference, out var rv))
-        {
-            TypeDefinition definition = null;
-            try
-            {
-                definition = reference.Resolve();
-            }
-            catch (AssemblyResolutionException)
-            {
-
-            }
-
-            if (definition != null)
-            {
-                var asm = TypeSystem.FindAsm(definition.Module.Assembly);
-                rv = new CecilTypeSystem.CecilType(this, asm, definition, reference);
-            }
-            else
-            {
-                rv = new CecilTypeSystem.UnresolvedCecilType(reference);
-            }
-            _typeReferenceCache[reference] = rv;
-        }
-        return rv;
+        return _typeCache.Resolve(this, reference);
     }
 
     public IXamlType ResolveReturnType(MethodReference method)
