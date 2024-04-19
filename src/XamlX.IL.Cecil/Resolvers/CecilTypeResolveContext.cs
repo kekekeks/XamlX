@@ -21,7 +21,11 @@ internal class CecilTypeResolveContext
     {
         TypeSystem = typeSystem;
         _genericTypeResolver = genericTypeResolver;
-        _typeReferenceCache = typeReferenceCache ?? new(new TypeReferenceEqualityComparer());
+
+        // Don't use CecilTypeComparisonMode.Exact on type cache, as we don't want to Resolve all types for that.
+        // We don't mind some duplicates, if comes. 
+        _typeReferenceCache = typeReferenceCache ?? new(new TypeReferenceEqualityComparer(
+            CecilTypeComparisonMode.SignatureOnlyLoose));
     }
 
     public CecilTypeResolveContext Nested(TypeReference typeReference)

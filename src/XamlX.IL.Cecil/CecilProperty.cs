@@ -44,13 +44,13 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlProperty other) =>
                 other is CecilProperty cf
-                && TypeReferenceEqualityComparer.AreEqual(Property.DeclaringType, cf.Property.DeclaringType)
+                && TypeReferenceEqualityComparer.AreEqual(Property.DeclaringType, cf.Property.DeclaringType, CecilTypeComparisonMode.Exact)
                 && cf.Property.FullName == Property.FullName;
 
             public override bool Equals(object other) => Equals(other as IXamlProperty); 
 
             public override int GetHashCode() =>
-                (TypeReferenceEqualityComparer.GetHashCodeFor(Property.DeclaringType), Property.FullName).GetHashCode();
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Property.DeclaringType, CecilTypeComparisonMode.Exact), Property.FullName).GetHashCode();
 
             public override string ToString() => Property.ToString();
         }

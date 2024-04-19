@@ -41,13 +41,13 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlField other) =>
                 other is CecilField cf
-                && TypeReferenceEqualityComparer.AreEqual(Field.DeclaringType, cf.Field.DeclaringType)
+                && TypeReferenceEqualityComparer.AreEqual(Field.DeclaringType, cf.Field.DeclaringType, CecilTypeComparisonMode.Exact)
                 && cf.Field.FullName == Field.FullName;
 
             public override bool Equals(object other) => Equals(other as IXamlField); 
 
             public override int GetHashCode() =>
-                (TypeReferenceEqualityComparer.GetHashCodeFor(Field.DeclaringType), Field.FullName).GetHashCode();
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Field.DeclaringType, CecilTypeComparisonMode.Exact), Field.FullName).GetHashCode();
 
             public override string ToString() => Field.ToString();
         }
