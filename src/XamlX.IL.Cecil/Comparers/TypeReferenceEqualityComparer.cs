@@ -34,7 +34,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 	}
 
 	public static bool AreEqual(TypeReference a, TypeReference b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.SignatureOnlyLoose)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
@@ -141,12 +141,11 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		if (!a.Name.Equals(b.Name) || !a.Namespace.Equals(b.Namespace))
 			return false;
 
-		var xDefinition = a.Resolve();
-		var yDefinition = b.Resolve();
-
-		// For loose signature the types could be in different assemblies, as long as the type names match we will consider them equal
-		if (comparisonMode == CecilTypeComparisonMode.SignatureOnlyLoose)
+		if (comparisonMode == CecilTypeComparisonMode.Exact)
 		{
+			var xDefinition = a.Resolve();
+			var yDefinition = b.Resolve();
+
 			if (xDefinition.Module.Name != yDefinition.Module.Name)
 				return false;
 
@@ -156,11 +155,11 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			return xDefinition.FullName == yDefinition.FullName;
 		}
 
-		return xDefinition == yDefinition;
+		return true;
 	}
 
 	static bool AreEqual(GenericParameter a, GenericParameter b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.SignatureOnlyLoose)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
@@ -185,7 +184,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 	}
 
 	static bool AreEqual(GenericInstanceType a, GenericInstanceType b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.SignatureOnlyLoose)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
