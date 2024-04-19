@@ -138,7 +138,8 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			return AreEqual(((SentinelType)a).ElementType, ((SentinelType)b).ElementType, comparisonMode);
 		}
 
-		if (!a.Name.Equals(b.Name) || !a.Namespace.Equals(b.Namespace))
+		if (!a.Name.Equals(b.Name, StringComparison.Ordinal) ||
+			!a.Namespace.Equals(b.Namespace, StringComparison.Ordinal))
 			return false;
 
 		var xDefinition = a.Resolve();
