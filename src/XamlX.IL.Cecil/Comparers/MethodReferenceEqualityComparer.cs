@@ -64,7 +64,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		}
 
 		var xResolved = comparisonMode == CecilTypeComparisonMode.Exact ? x.Resolve() : x as MethodDefinition;
-		var yResolved = comparisonMode == CecilTypeComparisonMode.Exact ? y.Resolve() : x as MethodDefinition;
+		var yResolved = comparisonMode == CecilTypeComparisonMode.Exact ? y.Resolve() : y as MethodDefinition;
 
 		if (xResolved != yResolved)
 			return false;
