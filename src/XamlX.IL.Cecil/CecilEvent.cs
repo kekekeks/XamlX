@@ -25,13 +25,13 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlEventInfo other) =>
                 other is CecilEvent cf
-                && TypeReferenceEqualityComparer.AreEqual(Event.DeclaringType, cf.Event.DeclaringType)
+                && TypeReferenceEqualityComparer.AreEqual(Event.DeclaringType, cf.Event.DeclaringType, CecilTypeComparisonMode.Exact)
                 && cf.Event.FullName == Event.FullName;
 
             public override bool Equals(object other) => Equals(other as IXamlEventInfo); 
 
             public override int GetHashCode() =>
-                (TypeReferenceEqualityComparer.GetHashCodeFor(Event.DeclaringType), Event.FullName).GetHashCode();
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Event.DeclaringType, CecilTypeComparisonMode.Exact), Event.FullName).GetHashCode();
 
             public override string ToString() => Event.ToString();
         }
