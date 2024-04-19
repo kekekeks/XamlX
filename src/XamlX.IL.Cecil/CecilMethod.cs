@@ -8,53 +8,19 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        class CecilMethodBase
+        internal abstract class CecilMethodBase
         {
-            public CecilTypeSystem TypeSystem { get; }
+            protected CecilTypeResolveContext TypeResolveContext { get; }
             public MethodReference Reference { get; }
             public MethodReference IlReference { get; }
             public MethodDefinition Definition { get; }
-            protected readonly TypeReference _declaringTypeReference;
 
-            public CecilMethodBase(CecilTypeSystem typeSystem, MethodReference method, TypeReference declaringType)
+            public CecilMethodBase(CecilTypeResolveContext typeResolveContext, MethodReference method)
             {
-                TypeSystem = typeSystem;
-
-                MethodReference MakeRef(bool transform)
-                {
-                    TypeReference Transform(TypeReference r) => transform ? r.TransformGeneric(declaringType) : r;
-
-                    var reference = new MethodReference(method.Name, Transform(method.ReturnType),
-                        declaringType)
-                    {
-                        HasThis = method.HasThis,
-                        ExplicitThis = method.ExplicitThis,
-                    };
-
-                    foreach (ParameterDefinition parameter in method.Parameters)
-                        reference.Parameters.Add(
-                            new ParameterDefinition(Transform(parameter.ParameterType)));
-
-                    foreach (var genericParam in method.GenericParameters)
-                        reference.GenericParameters.Add(new GenericParameter(genericParam.Name, reference));
-
-                    if (method is GenericInstanceMethod generic)
-                    {
-                        var genericReference = new GenericInstanceMethod(reference);
-                        foreach (var genericArg in generic.GenericArguments)
-                        {
-                            genericReference.GenericArguments.Add(Transform(genericArg));
-                        }
-                        reference = genericReference;
-                    }
-
-                    return reference;
-                }
-
-                Reference = MakeRef(true);
-                IlReference = MakeRef(false);
+                Reference = typeResolveContext.ResolveReference(method);
+                IlReference = typeResolveContext.ResolveReference(method, transformGenerics: false);
                 Definition = method.Resolve();
-                _declaringTypeReference = declaringType;
+                TypeResolveContext = typeResolveContext.Nested(Reference);
             }
             
             public string Name => Reference.Name;
@@ -66,45 +32,38 @@ namespace XamlX.TypeSystem
             private IXamlType _returnType;
             
             public IXamlType ReturnType =>
-                _returnType ??= TypeSystem.Resolve(Reference.ReturnType);
+                _returnType ??= TypeResolveContext.ResolveReturnType(Reference);
 
             private IXamlType _declaringType;
 
             public IXamlType DeclaringType =>
-                _declaringType ??= TypeSystem.Resolve(_declaringTypeReference);
+                _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
 
             private IReadOnlyList<IXamlType> _parameters;
 
             public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= Reference.Parameters.Select(p => TypeSystem.Resolve(p.ParameterType)).ToList();
+                _parameters ??= Reference.Parameters.Select(p => TypeResolveContext.ResolveParameterType(Reference, p)).ToList();
             
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList();
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolveContext, ca)).ToList();
 
             private IXamlILEmitter _generator;
 
             public IXamlILEmitter Generator =>
-                _generator ??= new CecilEmitter(TypeSystem, Definition);
+                _generator ??= new CecilEmitter(TypeResolveContext.TypeSystem, Definition);
+
+            public override string ToString() => Definition.ToString();
         }
 
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
+        sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
-            public CecilMethod(CecilTypeSystem typeSystem, MethodReference methodRef,
-                TypeReference declaringType) : base(typeSystem, methodRef, declaringType)
+            public CecilMethod(CecilTypeResolveContext typeResolveContext, MethodReference method)
+                : base(typeResolveContext, method)
             {
             }
-
-            public bool Equals(IXamlMethod other) =>
-                // I hope this is enough...
-                other is CecilMethod cm
-                && DeclaringType.Equals(cm.DeclaringType)
-                && Reference.FullName == cm.Reference.FullName;
-
-            public override int GetHashCode() 
-                => (DeclaringType.GetHashCode() * 397) ^ Reference.FullName.GetHashCode();
 
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
@@ -115,20 +74,35 @@ namespace XamlX.TypeSystem
                     instantiation.GenericArguments.Add(type);
                 }
 
-                return new CecilMethod(TypeSystem, instantiation, _declaringTypeReference);
+                return new CecilMethod(TypeResolveContext, instantiation);
             }
+
+            public bool Equals(IXamlMethod other) =>
+                other is CecilMethod cm
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+
+            public override bool Equals(object other) => Equals(other as IXamlMethod);
+
+            public override int GetHashCode() 
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
+        sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
-            public CecilConstructor(CecilTypeSystem typeSystem, MethodDefinition methodDef,
-                TypeReference declaringType) : base(typeSystem, methodDef, declaringType)
+            public CecilConstructor(CecilTypeResolveContext typeResolveContext, MethodDefinition methodDef)
+                : base(typeResolveContext, methodDef)
             {
             }
 
-            public bool Equals(IXamlConstructor other) => other is CecilConstructor cm
-                                                            && cm.Reference.Equals(Reference);
+            public bool Equals(IXamlConstructor other) =>
+                other is CecilConstructor cm
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+
+            public override bool Equals(object other) => Equals(other as IXamlConstructor);
+
+            public override int GetHashCode() 
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
         }
     }
 }

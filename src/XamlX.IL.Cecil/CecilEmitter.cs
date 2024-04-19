@@ -28,6 +28,11 @@ namespace XamlX.TypeSystem
                         gi.GenericArguments[c] = Import(gi.GenericArguments[c]);
                 }
 
+                if (rv is not TypeSpecification and not GenericParameter && rv.DeclaringType is not null)
+                {
+                    rv.DeclaringType = Import(rv.DeclaringType);
+                }
+
                 return rv;
             }
 
@@ -35,9 +40,24 @@ namespace XamlX.TypeSystem
             {
                 var rv = M.ImportReference(f);
                 rv.FieldType = Import(rv.FieldType);
+                rv.DeclaringType = Import(rv.DeclaringType);
                 return rv;
             }
-            
+
+            MethodReference Import(MethodReference m)
+            {
+                var rv = M.ImportReference(m);
+
+                // Types derived from MethodSpecification don't allow setting the declaring type.
+                if (m is not MethodSpecification)
+                {
+                    rv.DeclaringType = Import(m.DeclaringType);
+                    rv.ReturnType = Import(rv.ReturnType);
+                }
+
+                return rv;
+            }
+
             private static Dictionary<SreOpCode, OpCode> Dic = new Dictionary<SreOpCode, OpCode>();
             private List<CecilLabel> _markedLabels = new List<CecilLabel>();
             static CecilEmitter()
@@ -126,10 +146,10 @@ namespace XamlX.TypeSystem
             }
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlMethod method)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilMethod) method).IlReference)));
+                => Emit(Instruction.Create(Dic[code], Import(((CecilMethod) method).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, IXamlConstructor ctor)
-                => Emit(Instruction.Create(Dic[code], M.ImportReference(((CecilConstructor) ctor).IlReference)));
+                => Emit(Instruction.Create(Dic[code], Import(((CecilConstructor) ctor).IlReference)));
 
             public IXamlILEmitter Emit(SreOpCode code, string arg)
                 => Emit(Instruction.Create(Dic[code], arg));
@@ -154,7 +174,6 @@ namespace XamlX.TypeSystem
 
             public IXamlILEmitter Emit(SreOpCode code, double arg)
                 => Emit(Instruction.Create(Dic[code], arg));
-
 
             class CecilLocal : IXamlILLocal
             {

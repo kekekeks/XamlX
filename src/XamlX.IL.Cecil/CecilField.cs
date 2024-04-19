@@ -6,41 +6,50 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        public class CecilField : IXamlField
+        class CecilField : IXamlField
         {
             private readonly FieldDefinition _def;
-            public CecilTypeSystem TypeSystem { get; }
+            private readonly CecilTypeResolveContext _typeResolveContext;
             public FieldReference Field { get; }
 
-            public CecilField(CecilTypeSystem typeSystem, FieldDefinition def, TypeReference declaringType)
+            public CecilField(CecilTypeResolveContext typeResolveContext, FieldDefinition def)
             {
-                TypeSystem = typeSystem;
+                _typeResolveContext = typeResolveContext;
                 _def = def;
-                Field = new FieldReference(def.Name, def.FieldType, declaringType);
+
+                // Can't use FieldDefinition for IL, because it doesn't hold generics information.
+                Field = typeResolveContext.ResolveReference(def);
             }
-
-            public bool Equals(IXamlField other) => other is CecilField cf && cf.Field.FullName == Field.FullName;
-
-            public override int GetHashCode() => Field.FullName.GetHashCode();
 
             public string Name => Field.Name;
             private IXamlType _type;
-            public IXamlType FieldType => _type ?? (_type = TypeSystem.Resolve(Field.FieldType.TransformGeneric(Field.DeclaringType)));
+            public IXamlType FieldType => _type ??= _typeResolveContext.ResolveFieldType(Field);
             public bool IsPublic => _def.IsPublic;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
-            
+
             private IReadOnlyList<IXamlCustomAttribute> _attributes;
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Field.Resolve().CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
-            
+                _attributes ??= _def.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
+
             public object GetLiteralValue()
             {
                 if (IsLiteral && _def.HasConstant)
                     return _def.Constant;
                 return null;
             }
+
+            public bool Equals(IXamlField other) =>
+                other is CecilField cf
+                && TypeReferenceEqualityComparer.AreEqual(Field.DeclaringType, cf.Field.DeclaringType)
+                && cf.Field.FullName == Field.FullName;
+
+            public override bool Equals(object other) => Equals(other as IXamlField); 
+
+            public override int GetHashCode() =>
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Field.DeclaringType), Field.FullName).GetHashCode();
+
+            public override string ToString() => Field.ToString();
         }
     }
 }
