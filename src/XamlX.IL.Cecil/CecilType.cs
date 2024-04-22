@@ -174,6 +174,7 @@ namespace XamlX.TypeSystem
                 return TypeResolveContext.Resolve(Definition.GetEnumUnderlyingType());
             }
 
+            // Note: should always be false, as a TypeDefinition can't be a function pointer.
             public bool IsFunctionPointer => Definition.IsFunctionPointer;
 
             public bool Equals(IXamlType other)

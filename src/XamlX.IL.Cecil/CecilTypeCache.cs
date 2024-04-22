@@ -36,6 +36,7 @@ internal class CecilTypeCache
             {
                 rv = SecondLayerCache(resolveContext, reference, definition);
             }
+            // For a function pointer, definition will always be null, as function pointers never have any TypeDefinition.
             else if (reference is FunctionPointerType functionPointerType)
             {
                 rv = new CecilTypeSystem.CecilFunctionPointerType(functionPointerType);
