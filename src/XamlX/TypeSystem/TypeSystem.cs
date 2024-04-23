@@ -45,6 +45,15 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
+    interface IXamlParameterInfo : IXamlMember
+    {
+        IXamlType ParameterType { get; }
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+    }
+    
+#if !XAMLX_INTERNAL
+    public
+#endif
     interface IXamlMethod : IEquatable<IXamlMethod>, IXamlMember
     {
         bool IsPublic { get; }
@@ -56,6 +65,7 @@ namespace XamlX.TypeSystem
         IXamlType DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+        IXamlParameterInfo GetParameterInfo(int index);
     }
 
 #if !XAMLX_INTERNAL
@@ -74,6 +84,7 @@ namespace XamlX.TypeSystem
         bool IsPublic { get; }
         bool IsStatic { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
+        IXamlParameterInfo GetParameterInfo(int index);
     }
     
 #if !XAMLX_INTERNAL
@@ -303,7 +314,25 @@ namespace XamlX.TypeSystem
                 $"{(IsStatic ? "static" : "instance")} {ReturnType.GetFullName()} {Name} ({string.Join(", ", Parameters.Select(p => p.GetFullName()))}) (exact match: {IsExactMatch}, declaring only: {DeclaringOnly})";
         }
     }
-    
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class AnonymousParameterInfo : IXamlParameterInfo
+    {
+        public AnonymousParameterInfo(IXamlType type, string name)
+        {
+            ParameterType = type;
+            Name = name ?? "unknown";
+        }
+        public AnonymousParameterInfo(IXamlType type, int index) : this(type, "arg" + index)
+        { 
+        }
+        public string Name { get; }
+        public IXamlType ParameterType { get; }
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => Array.Empty<IXamlCustomAttribute>();
+    }
+
 #if !XAMLX_INTERNAL
     public
 #endif

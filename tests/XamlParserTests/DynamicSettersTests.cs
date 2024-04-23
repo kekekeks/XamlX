@@ -533,6 +533,7 @@ namespace XamlParserTests
             public PropertySetterBinderParameters BinderParameters { get; }
 
             public IReadOnlyList<IXamlType> Parameters { get; }
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
 
             public void Emit(IXamlILEmitter emitter)
             {

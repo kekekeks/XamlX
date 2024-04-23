@@ -255,6 +255,7 @@ namespace XamlX.Parsers
                         i.Children.Add(new XamlAstXamlPropertyValueNode(el.AsLi(), new XamlAstNamePropertyReference
                             (
                                 el.AsLi(),
+                                pair[0] == type.Name && elementNode.Name.NamespaceName == type.XmlNamespace ? type : 
                                 new XamlAstXmlTypeReference(el.AsLi(), elementNode.Name.NamespaceName,
                                     pair[0]), pair[1], type
                             ),
