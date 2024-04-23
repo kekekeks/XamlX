@@ -171,15 +171,14 @@ namespace XamlParserTests
             Assert.Equal(" CONTENT", content);
         }
 
+        [Theory]
         [Trait("Category", "PropertySetters")]
-        public void XmlSpacePreserveDoesNotAffectAttributeValueNormalization()
+        [InlineData(false)]
+        [InlineData(true)]
+        public void XmlSpacePreserveDoesNotAffectAttributeValueNormalization(bool xmlPreserve)
         {
             var xaml = $"<ContentControl Content=\"{AllWhitespace}X{AllWhitespace}\" />";
-            var content = TestContentControlContent<ContentControl>(xaml);
-            // This normalization is due to XML spec 3.3.3 Attribute-Value Normalization
-            Assert.Equal("   X   ", content.Content);
-
-            content = TestContentControlContent<ContentControl>(xaml, xmlPreserve: true);
+            var content = TestContentControlContent<ContentControl>(xaml, xmlPreserve);
             // This normalization is due to XML spec 3.3.3 Attribute-Value Normalization
             Assert.Equal("   X   ", content.Content);
         }
@@ -194,19 +193,25 @@ namespace XamlParserTests
             Assert.Equal(AllWhitespace, content.Content);
         }
 
-        // xml:space=preserve can be used to disable whitespace normalization for property setters too,
-        // even though the schema does not allow the attribute to be set on the property-setter itself,
-        // it's value is inherited from the parent.
+        [Fact]
         [Trait("Category", "PropertySetters")]
-        public void XmlSpacePreserveAffectsPropertySetterElement()
+        public void XmlSpaceDefaultAppliesPropertySetterElementNormalization()
         {
             // Whitespace normalization is applied normally
             var content =
                 TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>");
             Assert.Null(content);
+        }
 
+        // xml:space=preserve can be used to disable whitespace normalization for property setters too,
+        // even though the schema does not allow the attribute to be set on the property-setter itself,
+        // it's value is inherited from the parent.
+        [Fact]
+        [Trait("Category", "PropertySetters")]
+        public void XmlSpacePreserveDoesNotApplyPropertySetterElementNormalization()
+        {
             // Whitespace normalization isn't applied, because the parent has xml:space="preserve"
-            content = TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>",
+            var content = TestContentControlContent($"<ContentControl.Content>{AllWhitespace}</ContentControl.Content>",
                 xmlPreserve: true);
             Assert.Equal(AllWhitespace, content);
         }
