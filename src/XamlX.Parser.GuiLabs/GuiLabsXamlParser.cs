@@ -302,6 +302,7 @@ namespace XamlX.Parsers
                                     new XamlAstNamePropertyReference
                                     (
                                         newEl.AsLi(_text),
+                                        pair[0] == type.Name && nodeNs == type.XmlNamespace ? type :
                                         new XamlAstXmlTypeReference(newEl.AsLi(_text), nodeNs,
                                             pair[0]), pair[1], type
                                     ),
