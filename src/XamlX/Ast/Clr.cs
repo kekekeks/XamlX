@@ -114,7 +114,8 @@ namespace XamlX.Ast
         public IXamlType TargetType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
         public IReadOnlyList<IXamlType> Parameters { get; }
-        
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
+
         public void Emit(IXamlILEmitter emitter)
             => emitter.EmitCall(_method, true);
 
@@ -203,6 +204,7 @@ namespace XamlX.Ast
         IXamlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -602,7 +604,8 @@ namespace XamlX.Ast
         public bool IsStatic => true;
         public IReadOnlyList<IXamlType> Parameters { get; }
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
-        
+        public IXamlParameterInfo GetParameterInfo(int index) => _method.GetParameterInfo(index);
+
         public void EmitCall(IXamlILEmitter codeGen)
         {
             int firstCast = -1; 
