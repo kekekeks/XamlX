@@ -1,14 +1,10 @@
+#nullable enable
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
 using XamlX;
 using XamlX.Ast;
-using XamlX.Parsers;
 using XamlX.Transform;
 using XamlX.TypeSystem;
 using XamlX.IL;
@@ -18,13 +14,15 @@ namespace XamlParserTests
 {
     public partial class CompilerTestBase
     {
-        private readonly IXamlTypeSystem _typeSystem;
+        public CompilerTestBase() : this(CreateTypeSystem())
+        {
+        }
+
         public TransformerConfiguration Configuration { get; }
         public List<XamlDiagnostic> Diagnostics { get; } = new();
 
         private CompilerTestBase(IXamlTypeSystem typeSystem)
         {
-            _typeSystem = typeSystem;
             Configuration = new TransformerConfiguration(typeSystem,
                 typeSystem.FindAssembly("XamlParserTests"),
                 new XamlLanguageTypeMappings(typeSystem)
@@ -73,29 +71,21 @@ namespace XamlParserTests
             );
         }
 
-        protected object CompileAndRun(string xaml, IServiceProvider prov = null) => Compile(xaml).create(prov);
+        protected TestCompiler CreateTestCompiler()
+            => new(Configuration, Diagnostics);
 
-        protected object CompileAndPopulate(string xaml, IServiceProvider prov = null, object instance = null)
-            => Compile(xaml).create(prov);
-        XamlDocument Compile(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlType context, string xaml, bool generateBuildMethod)
+        protected (Func<IServiceProvider?, object>? create, Action<IServiceProvider?, object?> populate)
+            Compile(string xaml, bool generateBuildMethod = true)
         {
-            var parsed = XamlParser.Parse(xaml);
-            var compiler = new XamlILCompiler(
-                Configuration,
-                new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
-                true)
-            {
-                EnableIlVerification = true
-            };
-            compiler.Transform(parsed);
-            Diagnostics.ThrowExceptionIfAnyError();
-
-            compiler.Compile(parsed, builder, context, "Populate", generateBuildMethod ? "Build" : null,
-                "XamlNamespaceInfo",
-                "http://example.com/", null);
-            return parsed;
+            var compiler = CreateTestCompiler();
+            return compiler.Compile(xaml, generateBuildMethod);
         }
-        static object s_asmLock = new object();
+
+        protected object CompileAndRun(string xaml, IServiceProvider? prov = null)
+            => Compile(xaml).create!(prov);
+
+        protected void CompileAndPopulate(string xaml, IServiceProvider? prov = null, object? instance = null)
+            => Compile(xaml, false).populate(prov, instance);
 
         public XamlDocument Transform(string xaml)
         {
@@ -110,76 +100,114 @@ namespace XamlParserTests
             compiler.Transform(parsed);
             return parsed;
         }
-        
-#if !CECIL
-        private static SreTypeSystem CreateTypeSystem()
-        {
-            // Force XamlX.Runtime to be loaded, or else it won't be included in the type system
-            Assembly.Load("XamlX.Runtime");
-            return new SreTypeSystem();
-        }
 
-        public CompilerTestBase() : this(CreateTypeSystem())
-        {
-            
-        }
-        
-        protected (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate) Compile(string xaml, bool generateBuildMethod = true)
-        {
-            #if !NETCOREAPP && !NETSTANDARD
-            var da = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")),
-                AssemblyBuilderAccess.RunAndSave,
-                Directory.GetCurrentDirectory());
-            #else
-            var da = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.Run);
-            #endif
+        private static partial IXamlTypeSystem CreateTypeSystem();
 
-            var dm = da.DefineDynamicModule("testasm.dll");
-            var t = dm.DefineType(Guid.NewGuid().ToString("N"), TypeAttributes.Public);
-            var ct = dm.DefineType(t.Name + "Context");
-            var ctb = ((SreTypeSystem)_typeSystem).CreateTypeBuilder(ct);
-            var contextTypeDef =
-                XamlILContextDefinition.GenerateContextClass(
-                    ctb,
-                    _typeSystem,
-                    Configuration.TypeMappings,
+        protected sealed partial class TestCompiler
+        {
+            private readonly TransformerConfiguration _configuration;
+            private readonly List<XamlDiagnostic> _diagnostics;
+            private readonly List<RuntimeTypeBuilder> _typeBuilders = new();
+
+            public XamlILCompiler IlCompiler { get; }
+
+            public TestCompiler(TransformerConfiguration configuration, List<XamlDiagnostic> diagnostics)
+            {
+                _configuration = configuration;
+                _diagnostics = diagnostics;
+
+                Initialize();
+
+                IlCompiler = new XamlILCompiler(
+                    configuration,
+                    new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>(),
+                    true)
+                {
+                    EnableIlVerification = true
+                };
+            }
+
+            public RuntimeTypeBuilder CreateTypeBuilder(string name, bool isPublic)
+            {
+                var typeBuilder = CreateTypeBuilderCore(name, isPublic);
+                _typeBuilders.Add(typeBuilder);
+                return typeBuilder;
+            }
+
+            public (Func<IServiceProvider?, object>? create, Action<IServiceProvider?, object?> populate)
+                Compile(string xaml, bool generateBuildMethod = true, RuntimeTypeBuilder? parsedTypeBuilder = null)
+            {
+                parsedTypeBuilder ??= CreateTypeBuilder(Guid.NewGuid().ToString("N"), true);
+                var contextTypeBuilder = CreateTypeBuilder(parsedTypeBuilder.XamlTypeBuilder.Name + "Context", false);
+
+                var contextTypeDef = XamlILContextDefinition.GenerateContextClass(
+                    contextTypeBuilder.XamlTypeBuilder,
+                    _configuration.TypeSystem,
+                    _configuration.TypeMappings,
                     new XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult>());
-            
-            
-            var parserTypeBuilder = ((SreTypeSystem) _typeSystem).CreateTypeBuilder(t);
 
-            var parsed = Compile(parserTypeBuilder, contextTypeDef, xaml, generateBuildMethod);
+                var document = XamlParser.Parse(xaml);
+                IlCompiler.Transform(document);
+                _diagnostics.ThrowExceptionIfAnyError();
 
-            var created = t.CreateTypeInfo();
-            #if !NETCOREAPP && !NETSTANDARD
-            dm.CreateGlobalFunctions();
-            // Useful for debugging the actual MSIL, don't remove
-            lock (s_asmLock)
-                da.Save("testasm.dll");
-            #endif
+                IlCompiler.Compile(
+                    document,
+                    parsedTypeBuilder.XamlTypeBuilder,
+                    contextTypeDef,
+                    "Populate",
+                    generateBuildMethod ? "Build" : null,
+                    "XamlNamespaceInfo",
+                    "http://example.com/", null);
 
-            return GetCallbacks(created);
+                foreach (var typeBuilder in _typeBuilders)
+                    typeBuilder.XamlTypeBuilder.CreateType();
+
+                CompleteCompilation();
+
+                return GetCallbacks(parsedTypeBuilder.RuntimeType);
+            }
+
+            private static (Func<IServiceProvider?, object>? create, Action<IServiceProvider?, object?> populate)
+                GetCallbacks(Type created)
+            {
+                var isp = Expression.Parameter(typeof(IServiceProvider));
+                var createCb = created.GetMethod("Build") is {} buildMethod
+                    ? Expression.Lambda<Func<IServiceProvider?, object>>(
+                        Expression.Convert(Expression.Call(buildMethod, isp), typeof(object)), isp).Compile()
+                    : null;
+
+                var epar = Expression.Parameter(typeof(object));
+                var populate = created.GetMethod("Populate")!;
+                isp = Expression.Parameter(typeof(IServiceProvider));
+                var populateCb = Expression.Lambda<Action<IServiceProvider?, object?>>(
+                    Expression.Call(populate, isp, Expression.Convert(epar, populate.GetParameters()[1].ParameterType)),
+                    isp, epar).Compile();
+
+                return (createCb, populateCb);
+            }
+
+            private partial void Initialize();
+
+            private partial void CompleteCompilation();
+
+            private partial RuntimeTypeBuilder CreateTypeBuilderCore(string name, bool isPublic);
         }
-        #endif
 
-        (Func<IServiceProvider, object> create, Action<IServiceProvider, object> populate)
-            GetCallbacks(Type created)
+        protected sealed class RuntimeTypeBuilder
         {
-            var isp = Expression.Parameter(typeof(IServiceProvider));
-            var createCb = created.GetMethod("Build") is {} buildMethod
-                ? Expression.Lambda<Func<IServiceProvider, object>>(
-                    Expression.Convert(Expression.Call(buildMethod, isp), typeof(object)), isp).Compile()
-                : null;
-            
-            var epar = Expression.Parameter(typeof(object));
-            var populate = created.GetMethod("Populate");
-            isp = Expression.Parameter(typeof(IServiceProvider));
-            var populateCb = Expression.Lambda<Action<IServiceProvider, object>>(
-                Expression.Call(populate, isp, Expression.Convert(epar, populate.GetParameters()[1].ParameterType)),
-                isp, epar).Compile();
-            
-            return (createCb, populateCb);
+            private readonly Func<Type> _createRuntimeType;
+            private Type? _runtimeType;
+
+            public RuntimeTypeBuilder(IXamlTypeBuilder<IXamlILEmitter> xamlTypeBuilder, Func<Type> createRuntimeType)
+            {
+                XamlTypeBuilder = xamlTypeBuilder;
+                _createRuntimeType = createRuntimeType;
+            }
+
+            public IXamlTypeBuilder<IXamlILEmitter> XamlTypeBuilder { get; }
+
+            public Type RuntimeType
+                => _runtimeType ??= _createRuntimeType();
         }
-        
     }
 }

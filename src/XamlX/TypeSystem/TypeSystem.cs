@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection.Emit;
-using XamlX.Ast;
 
 namespace XamlX.TypeSystem
 {
@@ -17,6 +14,8 @@ namespace XamlX.TypeSystem
         string Name { get; }
         string Namespace { get; }
         string FullName { get; }
+        bool IsPublic { get; }
+        bool IsNestedPrivate { get; }
         IXamlAssembly Assembly { get; }
         IReadOnlyList<IXamlProperty> Properties { get; }
         IReadOnlyList<IXamlEventInfo> Events { get; }
@@ -32,27 +31,41 @@ namespace XamlX.TypeSystem
         IXamlType ArrayElementType { get; }
         IXamlType MakeArrayType(int dimensions);
         IXamlType BaseType { get; }
+        IXamlType DeclaringType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlType> Interfaces { get; }
         bool IsInterface { get; }
         IXamlType GetEnumUnderlyingType();
         IReadOnlyList<IXamlType> GenericParameters { get; }
+        bool IsFunctionPointer { get; }
         int GetHashCode();
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
+    interface IXamlParameterInfo : IXamlMember
+    {
+        IXamlType ParameterType { get; }
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+    }
+    
+#if !XAMLX_INTERNAL
+    public
+#endif
     interface IXamlMethod : IEquatable<IXamlMethod>, IXamlMember
     {
         bool IsPublic { get; }
+        bool IsPrivate { get; }
+        bool IsFamily { get; }
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
         IXamlType DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+        IXamlParameterInfo GetParameterInfo(int index);
     }
 
 #if !XAMLX_INTERNAL
@@ -71,6 +84,7 @@ namespace XamlX.TypeSystem
         bool IsPublic { get; }
         bool IsStatic { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
+        IXamlParameterInfo GetParameterInfo(int index);
     }
     
 #if !XAMLX_INTERNAL
@@ -237,36 +251,37 @@ namespace XamlX.TypeSystem
 
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
-        public string Namespace { get; } = "";
+        public string Namespace => "";
         public string FullName => Name;
-        public IXamlAssembly Assembly { get; } = null;
-        public IReadOnlyList<IXamlProperty> Properties { get; } = new IXamlProperty[0];
-        public IReadOnlyList<IXamlEventInfo> Events { get; } = new IXamlEventInfo[0];
-        public IReadOnlyList<IXamlField> Fields { get; } = new List<IXamlField>();
-        public IReadOnlyList<IXamlMethod> Methods { get; } = new IXamlMethod[0];
-        public IReadOnlyList<IXamlConstructor> Constructors { get; } = new IXamlConstructor[0];
-        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; } = new IXamlCustomAttribute[0];
-        public IReadOnlyList<IXamlType> GenericArguments { get; } = new IXamlType[0];
+        public bool IsPublic => true;
+        public bool IsNestedPrivate => false;
+        public IXamlAssembly Assembly => null;
+        public IReadOnlyList<IXamlProperty> Properties => Array.Empty<IXamlProperty>();
+        public IReadOnlyList<IXamlEventInfo> Events => Array.Empty<IXamlEventInfo>();
+        public IReadOnlyList<IXamlField> Fields => Array.Empty<IXamlField>();
+        public IReadOnlyList<IXamlMethod> Methods => Array.Empty<IXamlMethod>();
+        public IReadOnlyList<IXamlConstructor> Constructors => Array.Empty<IXamlConstructor>();
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => Array.Empty<IXamlCustomAttribute>();
+        public IReadOnlyList<IXamlType> GenericArguments => Array.Empty<IXamlType>();
         public IXamlType MakeArrayType(int dimensions) => throw new NullReferenceException();
 
-        public IXamlType BaseType { get; }
-        public bool IsValueType { get; } = false;
-        public bool IsEnum { get; } = false;
-        public IReadOnlyList<IXamlType> Interfaces { get; } = new IXamlType[0];
+        public IXamlType BaseType => null;
+        public IXamlType DeclaringType => null;
+        public bool IsValueType => false;
+        public bool IsEnum => false;
+        public IReadOnlyList<IXamlType> Interfaces => Array.Empty<IXamlType>();
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
-        public IReadOnlyList<IXamlType> GenericParameters { get; } = null;
+        public IReadOnlyList<IXamlType> GenericParameters => null;
+        public bool IsFunctionPointer => false;
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
 
-        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
-        {
-            throw new NotSupportedException();
-        }
+        public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments) => throw new NotSupportedException();
 
         public IXamlType GenericTypeDefinition => null;
-        public bool IsArray { get; }
-        public IXamlType ArrayElementType { get; }
+        public bool IsArray => false;
+        public IXamlType ArrayElementType => null;
         public static XamlPseudoType Null { get; } = new XamlPseudoType("{x:Null}");
         public static XamlPseudoType Unknown { get; } = new XamlPseudoType("{Unknown type}");
 
@@ -299,7 +314,25 @@ namespace XamlX.TypeSystem
                 $"{(IsStatic ? "static" : "instance")} {ReturnType.GetFullName()} {Name} ({string.Join(", ", Parameters.Select(p => p.GetFullName()))}) (exact match: {IsExactMatch}, declaring only: {DeclaringOnly})";
         }
     }
-    
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    class AnonymousParameterInfo : IXamlParameterInfo
+    {
+        public AnonymousParameterInfo(IXamlType type, string name)
+        {
+            ParameterType = type;
+            Name = name ?? "unknown";
+        }
+        public AnonymousParameterInfo(IXamlType type, int index) : this(type, "arg" + index)
+        { 
+        }
+        public string Name { get; }
+        public IXamlType ParameterType { get; }
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => Array.Empty<IXamlCustomAttribute>();
+    }
+
 #if !XAMLX_INTERNAL
     public
 #endif

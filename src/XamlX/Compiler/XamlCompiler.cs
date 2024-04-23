@@ -81,8 +81,9 @@ namespace XamlX.Compiler
 
         protected abstract XamlEmitContext<TBackendEmitter, TEmitResult> InitCodeGen(
             IFileSource file,
-            Func<string, IXamlType, IXamlTypeBuilder<TBackendEmitter>> createSubType,
-            Func<string, IXamlType, IEnumerable<IXamlType>, IXamlTypeBuilder<TBackendEmitter>> createDelegateType,
-            TBackendEmitter codeGen, XamlRuntimeContext<TBackendEmitter, TEmitResult> context, bool needContextLocal);
+            IXamlTypeBuilder<TBackendEmitter> declaringType,
+            TBackendEmitter codeGen,
+            XamlRuntimeContext<TBackendEmitter, TEmitResult> context,
+            bool needContextLocal);
     }
 }

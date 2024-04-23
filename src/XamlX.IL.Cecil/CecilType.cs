@@ -9,11 +9,8 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        // TODO: Make generic type definitions have Reference set to GenericTypeInstance with parameters for
-        // consistency with CecilTypeBuilder
-        
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
-        class CecilType : IXamlType, ITypeReference
+        internal class CecilType : IXamlType, ITypeReference
         {
             private readonly CecilAssembly _assembly;
             public CecilTypeSystem TypeSystem { get; }
@@ -21,88 +18,78 @@ namespace XamlX.TypeSystem
             public TypeDefinition Definition { get; }
 
             private Dictionary<IXamlType, bool> _isAssignableFromCache = new Dictionary<IXamlType, bool>();
-            public CecilType(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition)
-                : this(typeSystem, assembly, definition, definition)
+            public CecilType(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly assembly, TypeDefinition definition)
+                : this(parentTypeResolveContext, assembly, definition, definition)
             {
                 
             }
             
-            public CecilType(CecilTypeSystem typeSystem, CecilAssembly assembly, TypeDefinition definition,
+            public CecilType(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly assembly, TypeDefinition definition,
                 TypeReference reference)
             {
                 _assembly = assembly;
-                TypeSystem = typeSystem;
+                TypeSystem = parentTypeResolveContext.TypeSystem;
                 Reference = reference;
                 Definition = definition;
                 if (reference.IsArray)
-                    Definition = ((CecilType)typeSystem.GetType("System.Array")).Definition;
-            }
+                    Definition = ((CecilType)TypeSystem.GetType("System.Array")).Definition;
 
-            public bool Equals(IXamlType other)
-            {
-                if (ReferenceEquals(this, other))
-                    return true;
-                if (!(other is CecilType o))
-                    return false;
-                return CecilHelpers.Equals(Reference, o.Reference);
+                TypeResolveContext = parentTypeResolveContext.Nested(reference);
             }
-
-            public override string ToString() => Definition.ToString();
 
             public object Id => Reference.FullName;
             public string Name => Reference.Name;
             public string FullName => Reference.FullName;
             public string Namespace => Reference.Namespace;
+            public bool IsPublic => Definition.IsPublic;
+            public bool IsNestedPrivate => Definition.IsNestedPrivate;
+            protected CecilTypeResolveContext TypeResolveContext { get; }
+
             public IXamlAssembly Assembly => _assembly;
             protected IReadOnlyList<IXamlMethod> _methods;
 
             public IReadOnlyList<IXamlMethod> Methods =>
-                _methods ?? (_methods = Definition.GetMethods().Select(m => new CecilMethod(TypeSystem,
-                    m, Reference)).ToList());
+                _methods ??= Definition.GetMethods().Select(m => new CecilMethod(TypeResolveContext, m)).ToList();
 
             protected IReadOnlyList<IXamlConstructor> _constructors;
 
             public IReadOnlyList<IXamlConstructor> Constructors =>
-                _constructors ?? (_constructors = Definition.GetConstructors()
-                    .Select(c => new CecilConstructor(TypeSystem, c, Reference)).ToList());
+                _constructors ??= Definition.GetConstructors()
+                    .Select(c => new CecilConstructor(TypeResolveContext, c)).ToList();
 
             protected IReadOnlyList<IXamlField> _fields;
 
             public IReadOnlyList<IXamlField> Fields =>
-                _fields ?? (_fields = Definition.Fields
-                    .Select(f => new CecilField(TypeSystem, f, Reference)).ToList());
+                _fields ??= Definition.Fields
+                    .Select(f => new CecilField(TypeResolveContext, f)).ToList();
 
             protected IReadOnlyList<IXamlProperty> _properties;
 
             public IReadOnlyList<IXamlProperty> Properties =>
-                _properties ?? (_properties =
-                    Definition.Properties.Select(p => new CecilProperty(TypeSystem, p, Reference)).ToList());
+                _properties ??= Definition.Properties.Select(p => new CecilProperty(TypeResolveContext, p)).ToList();
             
             protected IReadOnlyList<IXamlEventInfo> _events;
 
             public IReadOnlyList<IXamlEventInfo> Events =>
-                _events ?? (_events =
-                    Definition.Events.Select(p => new CecilEvent(TypeSystem, p, Reference)).ToList());
+                _events ??= Definition.Events.Select(p => new CecilEvent(TypeResolveContext, p)).ToList();
 
             private IReadOnlyList<IXamlType> _genericArguments;
 
             public IReadOnlyList<IXamlType> GenericArguments =>
-                _genericArguments ?? (_genericArguments = Reference is GenericInstanceType gi
-                    ? gi.GenericArguments.Select(ga => TypeSystem.Resolve(ga)).ToList()
-                    : null);
+                _genericArguments ??= Reference is GenericInstanceType gi
+                    ? gi.GenericArguments.Select(ga => TypeResolveContext.Resolve(ga)).ToList()
+                    : Array.Empty<IXamlType>();
 
             private IReadOnlyList<IXamlType> _genericParameters;
 
             public IReadOnlyList<IXamlType> GenericParameters =>
-                _genericParameters ?? (_genericParameters = Reference is TypeDefinition td && td.HasGenericParameters
-                    ? td.GenericParameters.Select(gp => TypeSystem.Resolve(gp)).ToList()
-                    : null);
-            
+                _genericParameters ??= Reference is TypeDefinition { HasGenericParameters: true } td
+                    ? td.GenericParameters.Select(gp => TypeResolveContext.Resolve(gp)).ToList()
+                    : Array.Empty<IXamlType>();
 
             protected IReadOnlyList<IXamlCustomAttribute> _attributes;
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
-                _attributes ?? (_attributes =
-                    Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem, ca)).ToList());
+                _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolveContext, ca)).ToList();
 
             public bool IsAssignableFrom(IXamlType type)
             {
@@ -140,7 +127,7 @@ namespace XamlX.TypeSystem
                 {
                     var i = Definition.MakeGenericInstanceType(typeArguments.Cast<ITypeReference>().Select(r => r.Reference)
                         .ToArray());
-                    return TypeSystem.GetTypeFor(i);
+                    return TypeResolveContext.Resolve(i);
                 }
                 throw new InvalidOperationException();
             }
@@ -148,44 +135,60 @@ namespace XamlX.TypeSystem
             private IXamlType _genericTypeDefinition;
 
             public IXamlType GenericTypeDefinition =>
-                _genericTypeDefinition ?? (_genericTypeDefinition =
-                    (Reference is GenericInstanceType) ? TypeSystem.Resolve(Definition) : null);
+                _genericTypeDefinition ??= (Reference is GenericInstanceType) ? TypeResolveContext.Resolve(Definition, false) : null;
 
             public bool IsArray => Reference.IsArray;
 
             private IXamlType _arrayType;
 
             public IXamlType ArrayElementType =>
-                _arrayType ?? (_arrayType =
-                    IsArray ? TypeSystem.Resolve(Reference.GetElementType()) : null);
+                _arrayType ??= IsArray ? TypeResolveContext.Resolve(Reference.GetElementType()) : null;
 
-            public IXamlType MakeArrayType(int dimensions) => TypeSystem.Resolve(Reference.MakeArrayType(dimensions));
+            public IXamlType MakeArrayType(int dimensions) => TypeResolveContext.Resolve(Reference.MakeArrayType(dimensions));
 
             private IXamlType _baseType;
 
             public IXamlType BaseType => Definition.BaseType == null
                 ? null
-                : _baseType ?? (_baseType = TypeSystem.Resolve(
-                      Definition.BaseType.TransformGeneric(Reference)));
-            
+                : _baseType ??= TypeResolveContext.Resolve(Definition.BaseType);
+
+            private IXamlType _declaringType;
+
+            public IXamlType DeclaringType =>
+                Definition.DeclaringType == null
+                    ? null
+                    : _declaringType ??= TypeResolveContext.Resolve(Definition.DeclaringType);
+
             public bool IsValueType => Definition.IsValueType;
             public bool IsEnum => Definition.IsEnum;
             protected IReadOnlyList<IXamlType> _interfaces;
 
             public IReadOnlyList<IXamlType> Interfaces =>
-                _interfaces ?? (_interfaces =
-                    Definition.Interfaces.Select(i => TypeSystem.Resolve(i.InterfaceType
-                        .TransformGeneric(Reference))).ToList());
-            
+                _interfaces ??= Definition.Interfaces.Select(i => TypeResolveContext.Resolve(i.InterfaceType)).ToList();
+
             public bool IsInterface => Definition.IsInterface;
             public IXamlType GetEnumUnderlyingType()
             {
                 if (!IsEnum)
                     return null;
-                return TypeSystem.Resolve(Definition.GetEnumUnderlyingType());
+                return TypeResolveContext.Resolve(Definition.GetEnumUnderlyingType());
             }
-            
-            
+
+            // Note: should always be false, as a TypeDefinition can't be a function pointer.
+            public bool IsFunctionPointer => Definition.IsFunctionPointer;
+
+            public bool Equals(IXamlType other)
+            {
+                if (!(other is CecilType o))
+                    return false;
+                return TypeReferenceEqualityComparer.AreEqual(Reference, o.Reference, CecilTypeComparisonMode.Exact);
+            }
+
+            public override bool Equals(object other) => Equals(other as IXamlType);
+
+            public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
+
+            public override string ToString() => Definition.ToString();
         }
     }
 }

@@ -36,6 +36,9 @@ namespace XamlX.Ast
     class XamlAstClrProperty : XamlAstNode, IXamlAstPropertyReference
     {
         public string Name { get; set; }
+        public bool IsPublic { get; set; }
+        public bool IsPrivate { get; set; }
+        public bool IsFamily { get; set; }
         public IXamlMethod Getter { get; set; }
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
@@ -50,7 +53,11 @@ namespace XamlX.Ast
             if (property.Setter != null)
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
-            DeclaringType = (property.Getter ?? property.Setter)?.DeclaringType;
+            var accessor = property.Getter ?? property.Setter;
+            DeclaringType = accessor?.DeclaringType;
+            IsPrivate = accessor?.IsPrivate == true;
+            IsPublic = accessor?.IsPublic == true;
+            IsFamily = accessor?.IsFamily == true;
             var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
             if (typeConverterAttributes != null)
             {
@@ -73,6 +80,9 @@ namespace XamlX.Ast
             Name = name;
             DeclaringType = declaringType;
             Getter = getter;
+            IsPublic = getter?.IsPublic == true;
+            IsPrivate = getter?.IsPrivate == true;
+            IsFamily = getter?.IsFamily == true;
             if (setters != null)
                 Setters.AddRange(setters);
         }
@@ -104,7 +114,8 @@ namespace XamlX.Ast
         public IXamlType TargetType { get; }
         public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
         public IReadOnlyList<IXamlType> Parameters { get; }
-        
+        public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
+
         public void Emit(IXamlILEmitter emitter)
             => emitter.EmitCall(_method, true);
 
@@ -193,6 +204,7 @@ namespace XamlX.Ast
         IXamlType TargetType { get; }
         PropertySetterBinderParameters BinderParameters { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
+        IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -587,10 +599,13 @@ namespace XamlX.Ast
         public IXamlType ReturnType => _method.ReturnType;
         public IXamlType DeclaringType => _method.DeclaringType;
         public bool IsPublic => true;
+        public bool IsPrivate => false;
+        public bool IsFamily => false;
         public bool IsStatic => true;
         public IReadOnlyList<IXamlType> Parameters { get; }
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
-        
+        public IXamlParameterInfo GetParameterInfo(int index) => _method.GetParameterInfo(index);
+
         public void EmitCall(IXamlILEmitter codeGen)
         {
             int firstCast = -1; 
@@ -637,12 +652,17 @@ namespace XamlX.Ast
         }
     }
 
+#nullable enable
+
 #if !XAMLX_INTERNAL
     public
 #endif
     class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        private readonly IXamlType _deferredContentCustomizationTypeParameter;
+        private readonly IXamlMethod? _deferredContentCustomization;
+        private readonly IXamlType? _deferredContentCustomizationTypeParameter;
+        private readonly IXamlType _funcType;
+
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
@@ -650,11 +670,16 @@ namespace XamlX.Ast
             IXamlType deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
+            _deferredContentCustomization = config.TypeMappings.DeferredContentExecutorCustomization;
             _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
-            var funcType = config.TypeSystem.GetType("System.Func`2")
+
+            _funcType = config.TypeSystem
+                .GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
-            Type = new XamlAstClrTypeReference(value, funcType, false);
+
+            var returnType = _deferredContentCustomization?.ReturnType ?? _funcType;
+            Type = new XamlAstClrTypeReference(value, returnType, false);
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -662,47 +687,14 @@ namespace XamlX.Ast
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
 
-        void CompileBuilder(ILEmitContext context)
+        void CompileBuilder(ILEmitContext context, XamlClosureInfo xamlClosure)
         {
             var il = context.Emitter;
             // Initialize the context
             il
-                .Ldarg_0();
-            context.RuntimeContext.Factory(il);    
-            il.Stloc(context.ContextLocal);
-
-            // It might be better to save this in a closure
-            if (context.Configuration.TypeMappings.RootObjectProvider != null)
-            {
-                // Attempt to get the root object from parent service provider
-                var noRoot = il.DefineLabel();
-                using (var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object))
-                    il
-                        // if(arg == null) goto noRoot;
-                        .Ldarg_0()
-                        .Brfalse(noRoot)
-                        // var loc = arg.GetService(typeof(IRootObjectProvider))
-                        .Ldarg_0()
-                        .Ldtype(context.Configuration.TypeMappings.RootObjectProvider)
-                        .EmitCall(context.Configuration.TypeMappings.ServiceProvider
-                            .FindMethod(m => m.Name == "GetService"))
-                        .Stloc(loc.Local)
-                        // if(loc == null) goto noRoot;
-                        .Ldloc(loc.Local)
-                        .Brfalse(noRoot)
-                        // loc = ((IRootObjectProvider)loc).RootObject
-                        .Ldloc(loc.Local)
-                        .Castclass(context.Configuration.TypeMappings.RootObjectProvider)
-                        .EmitCall(context.Configuration.TypeMappings.RootObjectProvider
-                            .FindMethod(m => m.Name == "get_RootObject"))
-                        .Stloc(loc.Local)
-                        // contextLocal.RootObject = loc;
-                        .Ldloc(context.ContextLocal)
-                        .Ldloc(loc.Local)
-                        .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
-                        .Stfld(context.RuntimeContext.RootObjectField)
-                        .MarkLabel(noRoot);
-            }
+                .Ldarg_0()
+                .EmitCall(xamlClosure.CreateRuntimeContextMethod)
+                .Stloc(context.ContextLocal);
 
             context.Emit(Value, context.Emitter, context.Configuration.WellKnownTypes.Object);
             il.Ret();
@@ -714,42 +706,167 @@ namespace XamlX.Ast
         {
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
-            var subType = context.CreateSubType("XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(), so);
-            var buildMethod = subType.DefineMethod(so, new[]
-            {
-                isp
-            }, "Build", XamlVisibility.Public, true, false);
-            CompileBuilder(new ILEmitContext(buildMethod.Generator, context.Configuration,
-                context.EmitMappings, runtimeContext: context.RuntimeContext,
-                contextLocal: buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
-                createSubType: (s, type) => subType.DefineSubType(type, s, XamlVisibility.Private),
-                defineDelegateSubType: (s, returnType, parameters) => subType.DefineDelegateSubType(s, XamlVisibility.Private, returnType, parameters),
-                file: context.File,
-                emitters: context.Emitters));
 
-            var funcType = Type.GetClrType();
-            codeGen
-                .Ldnull()
-                .Ldftn(buildMethod)
-                .Newobj(funcType.Constructors.FirstOrDefault(ct =>
-                    ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            if (!context.TryGetItem(out XamlClosureInfo closureInfo))
+            {
+                var closureType = context.DeclaringType.DefineSubType(
+                    so,
+                    "XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
+                    XamlVisibility.Private);
+
+                closureInfo = new XamlClosureInfo(closureType, context);
+                context.AddAfterEmitCallbacks(() => closureType.CreateType());
+                context.SetItem(closureInfo);
+            }
+
+            var counter = ++closureInfo.BuildMethodCounter;
+
+            var buildMethod = closureInfo.Type.DefineMethod(
+                so,
+                new[] { isp },
+                $"Build_{counter}",
+                XamlVisibility.Public,
+                true,
+                false);
+
+            var subContext = new ILEmitContext(
+                buildMethod.Generator,
+                context.Configuration,
+                context.EmitMappings,
+                context.RuntimeContext,
+                buildMethod.Generator.DefineLocal(context.RuntimeContext.ContextType),
+                closureInfo.Type,
+                context.File,
+                context.Emitters);
+
+            subContext.SetItem(closureInfo);
+
+            CompileBuilder(subContext, closureInfo);
+
+            var customization = _deferredContentCustomization;
+
+            if (_deferredContentCustomizationTypeParameter is not null)
+                customization = customization?.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
+
+            if (customization is not null && IsFunctionPointerLike(customization.Parameters[0]))
+            {
+                // &Build
+                codeGen
+                    .Ldftn(buildMethod);
+            }
+            else
+            {
+                // new Func<IServiceProvider, object>(null, &Build);
+                codeGen
+                    .Ldnull()
+                    .Ldftn(buildMethod)
+                    .Newobj(_funcType.Constructors.FirstOrDefault(ct =>
+                        ct.Parameters.Count == 2 &&
+                        ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            }
 
             // Allow to save values from the parent context, pass own service provider, etc, etc
-            if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
+            if (customization is not null)
             {
-
-                var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
-                if (_deferredContentCustomizationTypeParameter != null)
-                    customization =
-                        customization.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
                 codeGen
                     .Ldloc(context.ContextLocal)
                     .EmitCall(customization);
             }
-            
-            subType.CreateType();
-            return XamlILNodeEmitResult.Type(0, funcType);
+
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
+
+        private static bool IsFunctionPointerLike(IXamlType xamlType)
+            => xamlType.IsFunctionPointer // Cecil, SRE with .NET 8
+               || xamlType.FullName == "System.IntPtr"; // SRE with .NET < 8 or .NET Standard
+
+        private sealed class XamlClosureInfo
+        {
+            private readonly XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> _parentContext;
+            private IXamlMethod? _createRuntimeContextMethod;
+
+            public IXamlTypeBuilder<IXamlILEmitter> Type { get; }
+
+            public IXamlMethod CreateRuntimeContextMethod
+                => _createRuntimeContextMethod ??= BuildCreateRuntimeContextMethod();
+
+            public int BuildMethodCounter { get; set; }
+
+            public XamlClosureInfo(
+                IXamlTypeBuilder<IXamlILEmitter> type,
+                XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> parentContext)
+            {
+                Type = type;
+                _parentContext = parentContext;
+            }
+
+            private IXamlMethod BuildCreateRuntimeContextMethod()
+            {
+                var method = Type.DefineMethod(
+                    _parentContext.RuntimeContext.ContextType,
+                    new[] { _parentContext.Configuration.TypeMappings.ServiceProvider },
+                    "CreateContext",
+                    XamlVisibility.Public,
+                    true,
+                    false);
+
+                var context = new ILEmitContext(
+                    method.Generator,
+                    _parentContext.Configuration,
+                    _parentContext.EmitMappings,
+                    _parentContext.RuntimeContext,
+                    method.Generator.DefineLocal(_parentContext.RuntimeContext.ContextType),
+                    Type,
+                    _parentContext.File,
+                    _parentContext.Emitters);
+
+                var il = context.Emitter;
+
+                // context = new Context(arg0, ...)
+                il.Ldarg_0();
+                context.RuntimeContext.Factory(il);
+
+                if (context.Configuration.TypeMappings.RootObjectProvider is { } rootObjectProviderType)
+                {
+                    // Attempt to get the root object from parent service provider
+                    var noRoot = il.DefineLabel();
+                    using var loc = context.GetLocalOfType(context.Configuration.WellKnownTypes.Object);
+                    il
+                        .Stloc(context.ContextLocal)
+                        // if(arg == null) goto noRoot;
+                        .Ldarg_0()
+                        .Brfalse(noRoot)
+                        // var loc = arg.GetService(typeof(IRootObjectProvider))
+                        .Ldarg_0()
+                        .Ldtype(rootObjectProviderType)
+                        .EmitCall(context.Configuration.TypeMappings.ServiceProvider
+                            .FindMethod(m => m.Name == "GetService"))
+                        .Stloc(loc.Local)
+                        // if(loc == null) goto noRoot;
+                        .Ldloc(loc.Local)
+                        .Brfalse(noRoot)
+                        // loc = ((IRootObjectProvider)loc).RootObject
+                        .Ldloc(loc.Local)
+                        .Castclass(rootObjectProviderType)
+                        .EmitCall(rootObjectProviderType
+                            .FindMethod(m => m.Name == "get_RootObject"))
+                        .Stloc(loc.Local)
+                        // contextLocal.RootObject = loc;
+                        .Ldloc(context.ContextLocal)
+                        .Ldloc(loc.Local)
+                        .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
+                        .Stfld(context.RuntimeContext.RootObjectField)
+                        .MarkLabel(noRoot)
+                        .Ldloc(context.ContextLocal);
+                }
+
+                il.Ret();
+
+                return method;
+            }
+        }
+
+#nullable restore
     }
 #if !XAMLX_INTERNAL
     public

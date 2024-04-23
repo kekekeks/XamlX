@@ -164,6 +164,8 @@ namespace XamlX.IL
             private IReadOnlyList<IXamlType> _genericParameters;
             private IReadOnlyList<IXamlType> _interfaces;
             private IReadOnlyList<IXamlEventInfo> _events;
+            private IXamlType _baseType;
+            private IXamlType _declaringType;
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] public Type Type { get; }
 
             public SreType(SreTypeSystem system, SreAssembly asm, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type): base(system, type)
@@ -178,6 +180,8 @@ namespace XamlX.IL
 
             public string FullName => Type.FullName;
             public string Namespace => Type.Namespace;
+            public bool IsPublic => Type.IsPublic;
+            public bool IsNestedPrivate => Type.IsNestedPrivate;
             public IXamlAssembly Assembly { get; }
 
             public IReadOnlyList<IXamlProperty> Properties =>
@@ -266,7 +270,12 @@ namespace XamlX.IL
             public IXamlType MakeArrayType(int dimensions) => System.ResolveType(
                 dimensions == 1 ? Type.MakeArrayType() : Type.MakeArrayType(dimensions));
 
-            public IXamlType BaseType => Type.BaseType == null ? null : System.ResolveType(Type.BaseType);
+            public IXamlType BaseType =>
+                _baseType ??= Type.BaseType is { } baseType ? System.ResolveType(baseType) : null;
+
+            public IXamlType DeclaringType =>
+                _declaringType ??= Type.DeclaringType is { } declaringType ? System.ResolveType(declaringType) : null;
+
             public bool IsValueType => Type.IsValueType;
             public bool IsEnum => Type.IsEnum;
 
@@ -275,6 +284,14 @@ namespace XamlX.IL
             {
                 return System.ResolveType(Enum.GetUnderlyingType(Type));
             }
+
+            public bool IsFunctionPointer
+#if NET8_0_OR_GREATER
+                => Type.IsFunctionPointer;
+#else
+                => false; // represented as IntPtr before .NET 8
+#endif
+
             public override string ToString() => Type.ToString();
         }
 
@@ -313,24 +330,49 @@ namespace XamlX.IL
             public Dictionary<string, object> Properties { get; }
         }
 
+        [DebuggerDisplay("{_parameterInfo}")]
+        class SreXamlParameterInfo : IXamlParameterInfo
+        {
+            private readonly SreTypeSystem _system;
+            private readonly ParameterInfo _parameterInfo;
+
+            public SreXamlParameterInfo(SreTypeSystem system, ParameterInfo parameterInfo)
+            {
+                _system = system;
+                _parameterInfo = parameterInfo;
+            }
+
+            public string Name => _parameterInfo.Name;
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
+            public IXamlType ParameterType => _system.ResolveType(_parameterInfo.ParameterType);
+            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _parameterInfo.GetCustomAttributesData()
+                .Select(a => new SreCustomAttribute(_system, a, _system.ResolveType(a.AttributeType))).ToList();
+        }
+        
         [DebuggerDisplay("{_method}")]
         class SreMethodBase : SreMemberInfo
         {
             private readonly MethodBase _method;
+            private IReadOnlyList<IXamlParameterInfo> _parameters;
 
-            protected IReadOnlyList<IXamlType> _parameters;
             public SreMethodBase(SreTypeSystem system, MethodBase method) : base(system, method)
             {
                 _method = method;
             }
             public bool IsPublic => _method.IsPublic;
+            public bool IsPrivate => _method.IsPrivate;
+            public bool IsFamily => _method.IsFamily;
             public bool IsStatic => _method.IsStatic;
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
-            public IReadOnlyList<IXamlType> Parameters =>
-                _parameters ??= _method.GetParameters()
-                    .Select(p => System.ResolveType(p.ParameterType)).ToList();
+            protected virtual IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters ??=
+                _method.GetParameters().Select(p => new SreXamlParameterInfo(System, p)).ToArray();
 
+            public IReadOnlyList<IXamlType> Parameters =>
+                SreParameters.Select(p => p.ParameterType).ToList();
+
+            public IXamlParameterInfo GetParameterInfo(int index) => SreParameters[index];
+            
             public override string ToString() => _method.DeclaringType?.FullName + " " + _method;
         }
         
@@ -641,6 +683,7 @@ namespace XamlX.IL
 
             class SreMethodBuilder : SreMethod, IXamlMethodBuilder<IXamlILEmitter>
             {
+                private readonly IReadOnlyList<IXamlParameterInfo> _parameters;
                 public MethodBuilder MethodBuilder { get; }
 
                 public SreMethodBuilder(SreTypeSystem system, MethodBuilder methodBuilder,
@@ -648,8 +691,10 @@ namespace XamlX.IL
                 {
                     MethodBuilder = methodBuilder;
                     Generator = new IlGen(system, methodBuilder.GetILGenerator());
-                    _parameters = parameters;
+                    _parameters = parameters.Select((p, i) => new AnonymousParameterInfo(p, i)).ToArray();
                 }
+
+                protected override IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters;
 
                 public IXamlILEmitter Generator { get; }
 

@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using Mono.Cecil;
-using XamlX.TypeSystem;
 
 namespace XamlX.TypeSystem
 {
@@ -8,26 +6,34 @@ namespace XamlX.TypeSystem
     {
         class CecilEvent : IXamlEventInfo
         {
-            private readonly TypeReference _declaringType;
-            public CecilTypeSystem TypeSystem { get; }
+            private readonly CecilTypeResolveContext _typeResolveContext;
             public EventDefinition Event { get; }
 
-            public CecilEvent(CecilTypeSystem typeSystem, EventDefinition ev, TypeReference declaringType)
+            public CecilEvent(CecilTypeResolveContext typeResolveContext, EventDefinition ev)
             {
-                _declaringType = declaringType;
-                TypeSystem = typeSystem;
+                _typeResolveContext = typeResolveContext;
                 Event = ev;
             }
-            public bool Equals(IXamlEventInfo other) => other is CecilEvent cp && cp.Event == Event;
+
             public string Name => Event.Name;
 
             private IXamlMethod _getter;
 
             public IXamlMethod Add => Event.AddMethod == null
                 ? null
-                : _getter ?? (_getter = TypeSystem.Resolve(Event.AddMethod, _declaringType));
+                : _getter ??= new CecilMethod(_typeResolveContext, Event.AddMethod);
 
+            public bool Equals(IXamlEventInfo other) =>
+                other is CecilEvent cf
+                && TypeReferenceEqualityComparer.AreEqual(Event.DeclaringType, cf.Event.DeclaringType, CecilTypeComparisonMode.Exact)
+                && cf.Event.FullName == Event.FullName;
 
+            public override bool Equals(object other) => Equals(other as IXamlEventInfo); 
+
+            public override int GetHashCode() =>
+                (TypeReferenceEqualityComparer.GetHashCodeFor(Event.DeclaringType, CecilTypeComparisonMode.Exact), Event.FullName).GetHashCode();
+
+            public override string ToString() => Event.ToString();
         }
     }
 }

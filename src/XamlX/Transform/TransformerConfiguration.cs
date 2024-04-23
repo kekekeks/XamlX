@@ -37,7 +37,7 @@ namespace XamlX.Transform
         public void AddExtra<T>(T extra) => _extras[typeof(T)] = extra;
 
         public delegate bool XamlValueConverter(AstTransformationContext context,
-            IXamlAstValueNode node, IXamlType type, out IXamlAstValueNode result);
+            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type, out IXamlAstValueNode result);
         
         public IXamlTypeSystem TypeSystem { get; }
         public IXamlAssembly DefaultAssembly { get; }
@@ -173,7 +173,7 @@ namespace XamlX.Transform
             if (custom != null)
                 yield return custom;
             foreach(var attr in type.CustomAttributes)
-                if (attr.Type == attributeType)
+                if (attr.Type.Equals(attributeType))
                     yield return attr;
         }
         
