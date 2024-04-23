@@ -48,7 +48,7 @@ namespace XamlX.Transform.Transformers
                                 if (convertedTo == null)
                                 {
                                     if (!XamlTransformHelpers.TryGetCorrectlyTypedValue(context, arguments[c],
-                                        setter.Parameters[c], out var converted))
+                                        setter.CustomAttributes, setter.Parameters[c], out var converted))
                                     {
                                         filteredSetters.RemoveAt(c);
                                         continue;
@@ -104,7 +104,7 @@ namespace XamlX.Transform.Transformers
                             if(CanAssign(valueArg, setterType))
                                 matchedSetters.Add(setter);
                             // Converted value have more priority than custom setters, so we just create a setter without an alternative
-                            else if (XamlTransformHelpers.TryConvertValue(context, valueArg, setterType, property,
+                            else if (XamlTransformHelpers.TryConvertValue(context, valueArg, setter.CustomAttributes, setterType, property,
                                 out var converted))
                             {
                                 

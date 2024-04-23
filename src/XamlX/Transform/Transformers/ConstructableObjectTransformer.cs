@@ -37,7 +37,7 @@ namespace XamlX.Transform.Transformers
 
             for (var c = 0; c < n.Arguments.Count; c++)
             {
-                if (!XamlTransformHelpers.TryGetCorrectlyTypedValue(context, n.Arguments[c], ctor.Parameters[c], out var arg))
+                if (!XamlTransformHelpers.TryGetCorrectlyTypedValue(context, n.Arguments[c], ctor.GetParameterInfo(c), out var arg))
                     throw new XamlLoadException(
                         $"Unable to convert {n.Arguments[c].Type.GetClrType().GetFqn()} to {ctor.Parameters[c].GetFqn()} for constructor of {n.Type.GetClrType().GetFqn()}",
                         n.Arguments[c]);
