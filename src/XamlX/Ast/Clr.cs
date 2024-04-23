@@ -652,12 +652,17 @@ namespace XamlX.Ast
         }
     }
 
+#nullable enable
+
 #if !XAMLX_INTERNAL
     public
 #endif
     class XamlDeferredContentNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        private readonly IXamlType _deferredContentCustomizationTypeParameter;
+        private readonly IXamlMethod? _deferredContentCustomization;
+        private readonly IXamlType? _deferredContentCustomizationTypeParameter;
+        private readonly IXamlType _funcType;
+
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
@@ -665,11 +670,16 @@ namespace XamlX.Ast
             IXamlType deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
+            _deferredContentCustomization = config.TypeMappings.DeferredContentExecutorCustomization;
             _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
-            var funcType = config.TypeSystem.GetType("System.Func`2")
+
+            _funcType = config.TypeSystem
+                .GetType("System.Func`2")
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
-            Type = new XamlAstClrTypeReference(value, funcType, false);
+
+            var returnType = _deferredContentCustomization?.ReturnType ?? _funcType;
+            Type = new XamlAstClrTypeReference(value, returnType, false);
         }
 
         public override void VisitChildren(Visitor visitor)
@@ -733,30 +743,42 @@ namespace XamlX.Ast
 
             CompileBuilder(subContext, closureInfo);
 
-            var funcType = Type.GetClrType();
-            codeGen
-                .Ldnull()
-                .Ldftn(buildMethod)
-                .Newobj(funcType.Constructors.FirstOrDefault(ct =>
-                    ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            var customization = _deferredContentCustomization;
+
+            if (_deferredContentCustomizationTypeParameter is not null)
+                customization = customization?.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
+
+            if (customization is not null && IsFunctionPointerLike(customization.Parameters[0]))
+            {
+                // &Build
+                codeGen
+                    .Ldftn(buildMethod);
+            }
+            else
+            {
+                // new Func<IServiceProvider, object>(null, &Build);
+                codeGen
+                    .Ldnull()
+                    .Ldftn(buildMethod)
+                    .Newobj(_funcType.Constructors.FirstOrDefault(ct =>
+                        ct.Parameters.Count == 2 &&
+                        ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
+            }
 
             // Allow to save values from the parent context, pass own service provider, etc, etc
-            if (context.Configuration.TypeMappings.DeferredContentExecutorCustomization != null)
+            if (customization is not null)
             {
-
-                var customization = context.Configuration.TypeMappings.DeferredContentExecutorCustomization;
-                if (_deferredContentCustomizationTypeParameter != null)
-                    customization =
-                        customization.MakeGenericMethod(new[] { _deferredContentCustomizationTypeParameter });
                 codeGen
                     .Ldloc(context.ContextLocal)
                     .EmitCall(customization);
             }
 
-            return XamlILNodeEmitResult.Type(0, funcType);
+            return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
 
-#nullable enable
+        private static bool IsFunctionPointerLike(IXamlType xamlType)
+            => xamlType.IsFunctionPointer // Cecil, SRE with .NET 8
+               || xamlType.FullName == "System.IntPtr"; // SRE with .NET < 8 or .NET Standard
 
         private sealed class XamlClosureInfo
         {

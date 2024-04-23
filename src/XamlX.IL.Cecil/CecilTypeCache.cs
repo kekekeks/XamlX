@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 
@@ -21,11 +20,6 @@ internal class CecilTypeCache
 
     public IXamlType Resolve(CecilTypeResolveContext resolveContext, TypeReference reference)
     {
-        if (reference.Name.Contains("RelativeSource"))
-        {
-            
-        }
-        
         if (!_typeReferenceCache.TryGetValue(reference, out var rv))
         {
             TypeDefinition definition = null;
@@ -41,6 +35,11 @@ internal class CecilTypeCache
             if (definition != null)
             {
                 rv = SecondLayerCache(resolveContext, reference, definition);
+            }
+            // For a function pointer, definition will always be null, as function pointers never have any TypeDefinition.
+            else if (reference is FunctionPointerType functionPointerType)
+            {
+                rv = new CecilTypeSystem.CecilFunctionPointerType(functionPointerType);
             }
             else
             {

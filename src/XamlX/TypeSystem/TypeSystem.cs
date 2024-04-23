@@ -38,6 +38,7 @@ namespace XamlX.TypeSystem
         bool IsInterface { get; }
         IXamlType GetEnumUnderlyingType();
         IReadOnlyList<IXamlType> GenericParameters { get; }
+        bool IsFunctionPointer { get; }
         int GetHashCode();
     }
 
@@ -272,6 +273,7 @@ namespace XamlX.TypeSystem
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
         public IReadOnlyList<IXamlType> GenericParameters => null;
+        public bool IsFunctionPointer => false;
 
         public bool IsAssignableFrom(IXamlType type) => type == this;
 
