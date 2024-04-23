@@ -178,12 +178,12 @@ namespace XamlX.TypeSystem
             {
                 if (!(other is CecilType o))
                     return false;
-                return TypeReferenceEqualityComparer.AreEqual(Reference, o.Reference);
+                return TypeReferenceEqualityComparer.AreEqual(Reference, o.Reference, CecilTypeComparisonMode.Exact);
             }
 
             public override bool Equals(object other) => Equals(other as IXamlType);
 
-            public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference);
+            public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
 
             public override string ToString() => Definition.ToString();
         }

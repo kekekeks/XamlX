@@ -10,22 +10,29 @@ namespace XamlX.TypeSystem;
 
 public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 {
+	private readonly CecilTypeComparisonMode _comparisonMode;
+
 	// Initialized lazily for each thread
 	[ThreadStatic] static List<MethodReference> xComparisonStack = null;
 
 	[ThreadStatic] static List<MethodReference> yComparisonStack = null;
 
+	public MethodReferenceEqualityComparer(CecilTypeComparisonMode comparisonMode)
+	{
+		_comparisonMode = comparisonMode;
+	}
+	
 	public override bool Equals(MethodReference x, MethodReference y)
 	{
-		return AreEqual(x, y);
+		return AreEqual(x, y, _comparisonMode);
 	}
 
 	public override int GetHashCode(MethodReference obj)
 	{
-		return GetHashCodeFor(obj);
+		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
-	public static bool AreEqual(MethodReference x, MethodReference y)
+	public static bool AreEqual(MethodReference x, MethodReference y, CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(x, y))
 			return true;
@@ -45,7 +52,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		if (x.Name != y.Name)
 			return false;
 
-		if (!TypeReferenceEqualityComparer.AreEqual(x.DeclaringType, y.DeclaringType))
+		if (!TypeReferenceEqualityComparer.AreEqual(x.DeclaringType, y.DeclaringType, comparisonMode))
 			return false;
 
 		var xGeneric = x as GenericInstanceMethod;
@@ -59,12 +66,12 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 				return false;
 
 			for (int i = 0; i < xGeneric.GenericArguments.Count; i++)
-				if (!TypeReferenceEqualityComparer.AreEqual(xGeneric.GenericArguments[i], yGeneric.GenericArguments[i]))
+				if (!TypeReferenceEqualityComparer.AreEqual(xGeneric.GenericArguments[i], yGeneric.GenericArguments[i], comparisonMode))
 					return false;
 		}
 
-		var xResolved = x.Resolve();
-		var yResolved = y.Resolve();
+		var xResolved = comparisonMode == CecilTypeComparisonMode.Exact ? x.Resolve() : x as MethodDefinition;
+		var yResolved = comparisonMode == CecilTypeComparisonMode.Exact ? y.Resolve() : y as MethodDefinition;
 
 		if (xResolved != yResolved)
 			return false;
@@ -100,7 +107,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 					for (int i = 0; i < x.Parameters.Count; i++)
 					{
 						if (!TypeReferenceEqualityComparer.AreEqual(x.Parameters[i].ParameterType,
-							    y.Parameters[i].ParameterType))
+							    y.Parameters[i].ParameterType, comparisonMode))
 							return false;
 					}
 				}
@@ -119,7 +126,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 	}
 
 	public static bool AreSignaturesEqual(MethodReference x, MethodReference y,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode)
 	{
 		if (x.HasThis != y.HasThis)
 			return false;
@@ -141,7 +148,7 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		return true;
 	}
 
-	public static int GetHashCodeFor(MethodReference obj)
+	public static int GetHashCodeFor(MethodReference obj, CecilTypeComparisonMode comparisonMode)
 	{
 		// a very good prime number
 		const int hashCodeMultiplier = 486187739;
@@ -149,14 +156,14 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		var genericInstanceMethod = obj as GenericInstanceMethod;
 		if (genericInstanceMethod != null)
 		{
-			var hashCode = GetHashCodeFor(genericInstanceMethod.ElementMethod);
+			var hashCode = GetHashCodeFor(genericInstanceMethod.ElementMethod, comparisonMode);
 			for (var i = 0; i < genericInstanceMethod.GenericArguments.Count; i++)
 				hashCode = hashCode * hashCodeMultiplier +
-				           TypeReferenceEqualityComparer.GetHashCodeFor(genericInstanceMethod.GenericArguments[i]);
+				           TypeReferenceEqualityComparer.GetHashCodeFor(genericInstanceMethod.GenericArguments[i], comparisonMode);
 			return hashCode;
 		}
 
-		return TypeReferenceEqualityComparer.GetHashCodeFor(obj.DeclaringType) * hashCodeMultiplier +
+		return TypeReferenceEqualityComparer.GetHashCodeFor(obj.DeclaringType, comparisonMode) * hashCodeMultiplier +
 		       obj.Name.GetHashCode();
 	}
 }

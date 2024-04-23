@@ -48,7 +48,7 @@ public
 
         IXamlCustomAttribute? FindAttr(IEnumerable<IXamlCustomAttribute> attributes)
         {
-            return attributes.FirstOrDefault(a => a.Type == obsoleteAttributeType);
+            return attributes.FirstOrDefault(a => a.Type.Equals(obsoleteAttributeType));
         }
 
         void ReportObsolete(string member, IXamlCustomAttribute attribute)
