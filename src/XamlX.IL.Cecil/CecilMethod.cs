@@ -101,12 +101,12 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlMethod other) =>
                 other is CecilMethod cm
-                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
             public override bool Equals(object other) => Equals(other as IXamlMethod);
 
             public override int GetHashCode() 
-                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
         
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
@@ -119,12 +119,12 @@ namespace XamlX.TypeSystem
 
             public bool Equals(IXamlConstructor other) =>
                 other is CecilConstructor cm
-                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference);
+                && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
             public override bool Equals(object other) => Equals(other as IXamlConstructor);
 
             public override int GetHashCode() 
-                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference);
+                => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
     }
 }

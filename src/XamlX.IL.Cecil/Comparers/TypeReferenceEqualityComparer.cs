@@ -8,33 +8,27 @@ namespace XamlX.TypeSystem;
 // https://github.com/jbevain/cecil/blob/56d4409b8a0165830565c6e3f96f41bead2c418b/Mono.Cecil/TypeReferenceEqualityComparer.cs
 // Also https://github.com/jbevain/cecil/issues/389
 
-internal sealed class TypeDefinitionEqualityComparer : EqualityComparer<TypeDefinition>
-{
-	public override bool Equals(TypeDefinition x, TypeDefinition y)
-	{
-		return TypeReferenceEqualityComparer.AreEqual(x, y);
-	}
-
-	public override int GetHashCode(TypeDefinition obj)
-	{
-		return TypeReferenceEqualityComparer.GetHashCodeFor(obj);
-	}
-}
-
 internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeReference>
 {
+	private readonly CecilTypeComparisonMode _comparisonMode;
+
+	public TypeReferenceEqualityComparer(CecilTypeComparisonMode comparisonMode)
+	{
+		_comparisonMode = comparisonMode;
+	}
+
 	public override bool Equals(TypeReference x, TypeReference y)
 	{
-		return AreEqual(x, y);
+		return AreEqual(x, y, _comparisonMode);
 	}
 
 	public override int GetHashCode(TypeReference obj)
 	{
-		return GetHashCodeFor(obj);
+		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
 	public static bool AreEqual(TypeReference a, TypeReference b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
@@ -141,11 +135,10 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		if (!a.Name.Equals(b.Name) || !a.Namespace.Equals(b.Namespace))
 			return false;
 
-		var xDefinition = a.Resolve();
-		var yDefinition = b.Resolve();
+		var xDefinition = comparisonMode == CecilTypeComparisonMode.Exact ? a.Resolve() : a as TypeDefinition;
+		var yDefinition = comparisonMode == CecilTypeComparisonMode.Exact ? b.Resolve() : b as TypeDefinition;
 
-		// For loose signature the types could be in different assemblies, as long as the type names match we will consider them equal
-		if (comparisonMode == CecilTypeComparisonMode.SignatureOnlyLoose)
+		if (xDefinition is not null && yDefinition is not null)
 		{
 			if (xDefinition.Module.Name != yDefinition.Module.Name)
 				return false;
@@ -156,11 +149,11 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			return xDefinition.FullName == yDefinition.FullName;
 		}
 
-		return xDefinition == yDefinition;
+		return true;
 	}
 
 	static bool AreEqual(GenericParameter a, GenericParameter b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
@@ -177,7 +170,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 
 		var aOwnerMethod = a.Owner as MethodReference;
 		if (aOwnerMethod != null && comparisonMode != CecilTypeComparisonMode.SignatureOnlyLoose &&
-		    MethodReferenceEqualityComparer.AreEqual(aOwnerMethod, b.Owner as MethodReference))
+		    MethodReferenceEqualityComparer.AreEqual(aOwnerMethod, b.Owner as MethodReference, comparisonMode))
 			return true;
 
 		return comparisonMode == CecilTypeComparisonMode.SignatureOnly ||
@@ -185,7 +178,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 	}
 
 	static bool AreEqual(GenericInstanceType a, GenericInstanceType b,
-		CecilTypeComparisonMode comparisonMode = CecilTypeComparisonMode.Exact)
+		CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
@@ -204,7 +197,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		return true;
 	}
 
-	public static int GetHashCodeFor(TypeReference obj)
+	public static int GetHashCodeFor(TypeReference obj, CecilTypeComparisonMode comparisonMode)
 	{
 		// a very good prime number
 		const int hashCodeMultiplier = 486187739;
@@ -216,23 +209,25 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		const int optionalModifierMultiplier = 47;
 		const int pinnedMultiplier = 53;
 		const int sentinelMultiplier = 59;
+		const int moduleMultiplier = 61;
+		const int assemblyMultiplier = 67;
 
 		var metadataType = obj.MetadataType;
 
 		if (metadataType == MetadataType.GenericInstance)
 		{
 			var genericInstanceType = (GenericInstanceType)obj;
-			var hashCode = GetHashCodeFor(genericInstanceType.ElementType) * hashCodeMultiplier +
+			var hashCode = GetHashCodeFor(genericInstanceType.ElementType, comparisonMode) * hashCodeMultiplier +
 			               genericInstanceTypeMultiplier;
 			for (var i = 0; i < genericInstanceType.GenericArguments.Count; i++)
-				hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(genericInstanceType.GenericArguments[i]);
+				hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(genericInstanceType.GenericArguments[i], comparisonMode);
 			return hashCode;
 		}
 
 		if (metadataType == MetadataType.Array)
 		{
 			var arrayType = (ArrayType)obj;
-			return GetHashCodeFor(arrayType.ElementType) * hashCodeMultiplier + arrayType.Rank.GetHashCode();
+			return GetHashCodeFor(arrayType.ElementType, comparisonMode) * hashCodeMultiplier + arrayType.Rank.GetHashCode();
 		}
 
 		if (metadataType == MetadataType.Var || metadataType == MetadataType.MVar)
@@ -243,11 +238,11 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 
 			var ownerTypeReference = genericParameter.Owner as TypeReference;
 			if (ownerTypeReference != null)
-				return hashCode * hashCodeMultiplier + GetHashCodeFor(ownerTypeReference);
+				return hashCode * hashCodeMultiplier + GetHashCodeFor(ownerTypeReference, comparisonMode);
 
 			var ownerMethodReference = genericParameter.Owner as MethodReference;
 			if (ownerMethodReference != null)
-				return hashCode * hashCodeMultiplier + MethodReferenceEqualityComparer.GetHashCodeFor(ownerMethodReference);
+				return hashCode * hashCodeMultiplier + MethodReferenceEqualityComparer.GetHashCodeFor(ownerMethodReference, comparisonMode);
 
 			throw new InvalidOperationException("Generic parameter encountered with invalid owner");
 		}
@@ -255,41 +250,41 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		if (metadataType == MetadataType.ByReference)
 		{
 			var byReferenceType = (ByReferenceType)obj;
-			return GetHashCodeFor(byReferenceType.ElementType) * hashCodeMultiplier * byReferenceMultiplier;
+			return GetHashCodeFor(byReferenceType.ElementType, comparisonMode) * hashCodeMultiplier * byReferenceMultiplier;
 		}
 
 		if (metadataType == MetadataType.Pointer)
 		{
 			var pointerType = (PointerType)obj;
-			return GetHashCodeFor(pointerType.ElementType) * hashCodeMultiplier * pointerMultiplier;
+			return GetHashCodeFor(pointerType.ElementType, comparisonMode) * hashCodeMultiplier * pointerMultiplier;
 		}
 
 		if (metadataType == MetadataType.RequiredModifier)
 		{
 			var requiredModifierType = (RequiredModifierType)obj;
-			var hashCode = GetHashCodeFor(requiredModifierType.ElementType) * requiredModifierMultiplier;
-			hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(requiredModifierType.ModifierType);
+			var hashCode = GetHashCodeFor(requiredModifierType.ElementType, comparisonMode) * requiredModifierMultiplier;
+			hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(requiredModifierType.ModifierType, comparisonMode);
 			return hashCode;
 		}
 
 		if (metadataType == MetadataType.OptionalModifier)
 		{
 			var optionalModifierType = (OptionalModifierType)obj;
-			var hashCode = GetHashCodeFor(optionalModifierType.ElementType) * optionalModifierMultiplier;
-			hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(optionalModifierType.ModifierType);
+			var hashCode = GetHashCodeFor(optionalModifierType.ElementType, comparisonMode) * optionalModifierMultiplier;
+			hashCode = hashCode * hashCodeMultiplier + GetHashCodeFor(optionalModifierType.ModifierType, comparisonMode);
 			return hashCode;
 		}
 
 		if (metadataType == MetadataType.Pinned)
 		{
 			var pinnedType = (PinnedType)obj;
-			return GetHashCodeFor(pinnedType.ElementType) * hashCodeMultiplier * pinnedMultiplier;
+			return GetHashCodeFor(pinnedType.ElementType, comparisonMode) * hashCodeMultiplier * pinnedMultiplier;
 		}
 
 		if (metadataType == MetadataType.Sentinel)
 		{
 			var sentinelType = (SentinelType)obj;
-			return GetHashCodeFor(sentinelType.ElementType) * hashCodeMultiplier * sentinelMultiplier;
+			return GetHashCodeFor(sentinelType.ElementType, comparisonMode) * hashCodeMultiplier * sentinelMultiplier;
 		}
 
 		if (metadataType == MetadataType.FunctionPointer)
@@ -297,6 +292,19 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 			throw new NotImplementedException("We currently don't handle function pointer types.");
 		}
 
-		return obj.Namespace.GetHashCode() * hashCodeMultiplier + obj.FullName.GetHashCode();
+		var def = comparisonMode == CecilTypeComparisonMode.Exact ? obj.Resolve() : obj as TypeDefinition;
+
+		if (def is not null)
+		{
+			return def.Module.Name.GetHashCode() * moduleMultiplier
+			       + def.Module.Assembly.Name.Name.GetHashCode() * assemblyMultiplier
+			       + obj.Namespace.GetHashCode() * hashCodeMultiplier
+			       + obj.FullName.GetHashCode();
+		}
+		else
+		{
+			return obj.Namespace.GetHashCode() * hashCodeMultiplier
+			       + obj.FullName.GetHashCode();
+		}
 	}
 }

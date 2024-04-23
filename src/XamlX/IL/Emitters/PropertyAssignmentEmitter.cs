@@ -288,7 +288,7 @@ namespace XamlX.IL.Emitters
             }
 
             public bool Equals(SettersCacheKey other)
-                => ParentType == other.ParentType
+                => ParentType.Equals(other.ParentType)
                    && AreListEqual(ValueTypes, other.ValueTypes)
                    && AreListEqual(Setters, other.Setters);
 

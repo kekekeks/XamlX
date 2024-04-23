@@ -98,7 +98,7 @@ namespace XamlX.IL
             if (rootInstance is XamlAstNewClrObjectNode newObj)
             {
                 needContextLocal = newObj.Arguments.Count == 1 &&
-                                   newObj.Arguments[0].Type.GetClrType() == _configuration.TypeMappings.ServiceProvider;
+                                   newObj.Arguments[0].Type.GetClrType().Equals(_configuration.TypeMappings.ServiceProvider);
 
                 var ctorParams = newObj.Constructor.Parameters.Select(c => c.GetFullName());
                 var args = newObj.Arguments.Select(a => a.Type.GetClrType().GetFullName());

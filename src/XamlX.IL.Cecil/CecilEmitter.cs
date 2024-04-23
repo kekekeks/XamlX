@@ -28,6 +28,11 @@ namespace XamlX.TypeSystem
                         gi.GenericArguments[c] = Import(gi.GenericArguments[c]);
                 }
 
+                if (rv is not TypeSpecification and not GenericParameter && rv.DeclaringType is not null)
+                {
+                    rv.DeclaringType = Import(rv.DeclaringType);
+                }
+
                 return rv;
             }
 
@@ -45,7 +50,10 @@ namespace XamlX.TypeSystem
 
                 // Types derived from MethodSpecification don't allow setting the declaring type.
                 if (m is not MethodSpecification)
+                {
                     rv.DeclaringType = Import(m.DeclaringType);
+                    rv.ReturnType = Import(rv.ReturnType);
+                }
 
                 return rv;
             }

@@ -173,7 +173,7 @@ namespace XamlX.Transform
             if (custom != null)
                 yield return custom;
             foreach(var attr in type.CustomAttributes)
-                if (attr.Type == attributeType)
+                if (attr.Type.Equals(attributeType))
                     yield return attr;
         }
         
