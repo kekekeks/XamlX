@@ -39,17 +39,14 @@ namespace XamlParserTests
     </RootNode>");
             
             var res = (RootNode)comp.create(null);
-            //comp.populate(null, res);
             
             Assert.NotNull(res);
             Assert.NotNull(res.Children);
-            Assert.Equal(res.Children.Count, 1);
-            var child1 = res.Children[0];
-            Assert.IsType(typeof(GenericClass<TypeArgument>), res.Children[0]);
-            GenericClass<TypeArgument> child = res.Children[0] as GenericClass<TypeArgument>;
-            Assert.NotNull(child.Items);
-            Assert.Equal(child.Items.Count, 1);
-            Assert.IsType(typeof(ItemNode), child.Items[0]);
+            var untypedChild = Assert.Single(res.Children);
+            var typedChild = Assert.IsType<GenericClass<TypeArgument>>(untypedChild);
+            Assert.NotNull(typedChild.Items);
+            var item = Assert.Single(typedChild.Items);
+            Assert.IsType<ItemNode>(item);
         }    
     }
 }
