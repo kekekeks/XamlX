@@ -606,6 +606,16 @@ namespace XamlX.Ast
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
         public IXamlParameterInfo GetParameterInfo(int index) => _method.GetParameterInfo(index);
 
+        public bool IsGenericMethodDefinition => _method.IsGenericMethodDefinition;
+
+        public IReadOnlyList<IXamlType> GenericParameters => _method.GenericParameters;
+
+        public IReadOnlyList<IXamlType> GenericArguments => _method.GenericArguments;
+
+        public bool IsGenericMethod => _method.IsGenericMethod;
+
+        public bool ContainsGenericParameters => _method.ContainsGenericParameters;
+
         public void EmitCall(IXamlILEmitter codeGen)
         {
             int firstCast = -1; 

@@ -1,7 +1,7 @@
+using Mono.Cecil;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Mono.Cecil;
 using XamlX.IL;
 
 namespace XamlX.TypeSystem
@@ -41,7 +41,7 @@ namespace XamlX.TypeSystem
                 Definition = method.Resolve();
                 TypeResolveContext = typeResolveContext.Nested(Reference);
             }
-            
+
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
             public bool IsPrivate => Definition.IsPrivate;
@@ -49,7 +49,7 @@ namespace XamlX.TypeSystem
             public bool IsStatic => Definition.IsStatic;
 
             private IXamlType _returnType;
-            
+
             public IXamlType ReturnType =>
                 _returnType ??= TypeResolveContext.ResolveReturnType(Reference);
 
@@ -82,6 +82,24 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
+            private IReadOnlyList<IXamlType> _genericParameters;
+            private IReadOnlyList<IXamlType> _genericArguments;
+
+            public bool IsGenericMethod => Reference.HasGenericParameters;
+            public bool IsGenericMethodDefinition => Reference.IsDefinition && Reference.HasGenericParameters;
+
+            public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
+                Reference.GenericParameters.Select(gp => TypeResolveContext.Resolve(gp)).ToArray() 
+                ?? System.Array.Empty<IXamlType>();
+
+            public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
+                 Reference.IsGenericInstance
+                 ? ((GenericInstanceMethod)Reference).GenericArguments.Select(ga=> TypeResolveContext.Resolve(ga))?.ToArray() 
+                        ?? System.Array.Empty<IXamlType>()
+                    : System.Array.Empty<IXamlType>();
+
+            public bool ContainsGenericParameters => Reference.ContainsGenericParameter;
+
             public CecilMethod(CecilTypeResolveContext typeResolveContext, MethodReference method)
                 : base(typeResolveContext, method)
             {
@@ -105,10 +123,10 @@ namespace XamlX.TypeSystem
 
             public override bool Equals(object other) => Equals(other as IXamlMethod);
 
-            public override int GetHashCode() 
+            public override int GetHashCode()
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
-        
+
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
@@ -123,7 +141,7 @@ namespace XamlX.TypeSystem
 
             public override bool Equals(object other) => Equals(other as IXamlConstructor);
 
-            public override int GetHashCode() 
+            public override int GetHashCode()
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
     }
