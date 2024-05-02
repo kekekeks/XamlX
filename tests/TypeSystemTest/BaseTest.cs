@@ -112,7 +112,7 @@ public abstract class BaseTest
         Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
 
         var gm_1 = wut.FindMethod(m => m.IsGenericMethodDefinition && m.Name == nameof(TestType.Sub) && m.GenericParameters.Count == 1);
-
+        
         Assert.NotNull(gm_1);
         Assert.Empty(gm_1.GenericArguments);
         Assert.True(gm_1.ContainsGenericParameters);
@@ -141,6 +141,8 @@ public abstract class BaseTest
         Assert.Equal("TArg", wutGenericClass.Methods[0].Parameters[0].Name);
         Assert.Equal("Int32", wutGenericClass.Methods[0].Parameters[1].Name);
         Assert.Equal("T", wutGenericClass.Methods[0].ReturnType.Name);
+        Assert.Single(wutGenericClass.Methods[0].GenericParameters);
+        Assert.Empty(wutGenericClass.Methods[0].GenericArguments);
 
         var gi = wutGenericClass.MakeGenericType(ts);
 
@@ -149,6 +151,8 @@ public abstract class BaseTest
         Assert.Equal("TArg", gi.Methods[0].Parameters[0].Name);
         Assert.Equal("Int32", gi.Methods[0].Parameters[1].Name);
         Assert.Equal("String", gi.Methods[0].ReturnType.Name);
+        Assert.Single(gi.Methods[0].GenericParameters);
+        Assert.Empty(gi.Methods[0].GenericArguments);
 
         var gim = gi.Methods[0].MakeGenericMethod([ts]);
 
@@ -157,6 +161,8 @@ public abstract class BaseTest
         Assert.Equal("String", gim.Parameters[0].Name);
         Assert.Equal("Int32", gim.Parameters[1].Name);
         Assert.Equal("String", gim.ReturnType.Name);
+        Assert.Empty(gim.GenericParameters);
+        Assert.Single(gim.GenericArguments);
     }
 
     [Fact]
