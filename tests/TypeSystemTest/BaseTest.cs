@@ -90,79 +90,90 @@ public abstract class BaseTest
     [Fact]
     public void Generic_Types_Are_Correctly_Handled()
     {
-        var wut = TypeSystem.GetType("TypeSystemTest.Models.TestType");
-        var ts = TypeSystem.GetType("System.String");
-        var f = wut.Fields.First(x => x.Name == nameof(TestType.GenericStringField));
-        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizzeFullName(f.FieldType.FullName));
-        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizzeFullName(f.FieldType.BaseType.FullName));
-        var iface = f.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
-        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizzeFullName(iface.FullName));
+        var testTypeType = TypeSystem.GetType("TypeSystemTest.Models.TestType");
+        var stringType = TypeSystem.GetType("System.String");
+        var genericStringField = testTypeType.Fields.First(x => x.Name == nameof(TestType.GenericStringField));
+        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizzeFullName(genericStringField.FieldType.FullName));
+        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizzeFullName(genericStringField.FieldType.BaseType.FullName));
+        var genericInterfceType = genericStringField.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
+        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizzeFullName(genericInterfceType.FullName));
 
-        var m = f.FieldType.Methods.First(x => x.Name == "SomeMethod");
-        Assert.Equal("System.String", m.ReturnType.FullName);
-        Assert.Equal("System.String", m.Parameters[0].FullName);
-        Assert.Empty(f.FieldType.Methods.First(x => x.Name == "SomeMethod").Parameters[0].GenericArguments);
+        var genericSomeMethod = genericStringField.FieldType.Methods.First(x => x.Name == "SomeMethod");
+        Assert.Equal("System.String", genericSomeMethod.ReturnType.FullName);
+        Assert.Equal("System.String", genericSomeMethod.Parameters[0].FullName);
+        Assert.Empty(genericStringField.FieldType.Methods.First(x => x.Name == "SomeMethod").Parameters[0].GenericArguments);
 
-        var gf = f.FieldType.Fields.First(x => x.Name == "Field");
+        var gf = genericStringField.FieldType.Fields.First(x => x.Name == "Field");
         Assert.Equal("System.String", gf.FieldType.FullName);
 
-        var p = f.FieldType.Properties.First(x => x.Name == "Property");
+        var p = genericStringField.FieldType.Properties.First(x => x.Name == "Property");
         Assert.Equal("System.String", p.PropertyType.FullName);
         Assert.Equal("System.String", p.Getter.ReturnType.FullName);
         Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
 
-        var gm_1 = wut.FindMethod(m => m.IsGenericMethodDefinition && m.Name == nameof(TestType.Sub) && m.GenericParameters.Count == 1);
+        var genericSubMethodGenericDefinition = testTypeType.FindMethod(m => m.IsGenericMethodDefinition && m.Name == nameof(TestType.Sub) && m.GenericParameters.Count == 1);
         
-        Assert.NotNull(gm_1);
-        Assert.Empty(gm_1.GenericArguments);
-        Assert.True(gm_1.ContainsGenericParameters);
-        Assert.Equal("T", gm_1.Parameters[0].Name);
+        Assert.NotNull(genericSubMethodGenericDefinition);
+        Assert.Empty(genericSubMethodGenericDefinition.GenericArguments);
+        Assert.True(genericSubMethodGenericDefinition.ContainsGenericParameters);
+        Assert.Equal("T", genericSubMethodGenericDefinition.Parameters[0].Name);
 
-        var cgm_1 = gm_1.MakeGenericMethod([ts]);
+        var concreteSubMethod = genericSubMethodGenericDefinition.MakeGenericMethod([stringType]);
 
-        Assert.NotNull(cgm_1);
-        Assert.False(cgm_1.ContainsGenericParameters);
-        Assert.False(cgm_1.IsGenericMethodDefinition);
-        Assert.Empty(cgm_1.GenericParameters);
-        Assert.Single(cgm_1.GenericArguments);
-        Assert.Equal("System.String", GetNormalizzeFullName(cgm_1.Parameters[0].FullName));
+        Assert.NotNull(concreteSubMethod);
+        Assert.False(concreteSubMethod.ContainsGenericParameters);
+        Assert.False(concreteSubMethod.IsGenericMethodDefinition);
+        Assert.Empty(concreteSubMethod.GenericParameters);
+        Assert.Single(concreteSubMethod.GenericArguments);
+        Assert.Equal("System.String", GetNormalizzeFullName(concreteSubMethod.Parameters[0].FullName));
 
-        var wutGenericClass = TypeSystem.GetType("TypeSystemTest.Models.ComplexGenericType`1");
+        /*
+        public class ComplexGenericType<T>
+        {
+            public T Do<TArg>(TArg arg, int i)
+            {
+                return default(T);
+            }
+        }
+        */
+        var complexGenericTypeDefinition = TypeSystem.GetType("TypeSystemTest.Models.ComplexGenericType`1");
 
-        Assert.NotNull(wutGenericClass);
+        Assert.NotNull(complexGenericTypeDefinition);
 
-        Assert.Single(wutGenericClass.GenericParameters);
+        Assert.Single(complexGenericTypeDefinition.GenericParameters);
 
-        Assert.Equal("T", wutGenericClass.GenericParameters[0].Name);
+        Assert.Equal("T", complexGenericTypeDefinition.GenericParameters[0].Name);
 
 
-        Assert.True(wutGenericClass.Methods[0].ContainsGenericParameters);
-        Assert.Equal(2, wutGenericClass.Methods[0].Parameters.Count);
-        Assert.Equal("TArg", wutGenericClass.Methods[0].Parameters[0].Name);
-        Assert.Equal("Int32", wutGenericClass.Methods[0].Parameters[1].Name);
-        Assert.Equal("T", wutGenericClass.Methods[0].ReturnType.Name);
-        Assert.Single(wutGenericClass.Methods[0].GenericParameters);
-        Assert.Empty(wutGenericClass.Methods[0].GenericArguments);
+        Assert.True(complexGenericTypeDefinition.Methods[0].ContainsGenericParameters);
+        Assert.Equal(2, complexGenericTypeDefinition.Methods[0].Parameters.Count);
+        Assert.Equal("TArg", complexGenericTypeDefinition.Methods[0].Parameters[0].Name);
+        Assert.Equal("Int32", complexGenericTypeDefinition.Methods[0].Parameters[1].Name);
+        Assert.Equal("T", complexGenericTypeDefinition.Methods[0].ReturnType.Name);
+        Assert.Single(complexGenericTypeDefinition.Methods[0].GenericParameters);
+        Assert.Empty(complexGenericTypeDefinition.Methods[0].GenericArguments);
 
-        var gi = wutGenericClass.MakeGenericType(ts);
+        var concreteComplexType = complexGenericTypeDefinition.MakeGenericType(stringType);
 
-        Assert.True(gi.Methods[0].ContainsGenericParameters);
-        Assert.Equal(2, gi.Methods[0].Parameters.Count);
-        Assert.Equal("TArg", gi.Methods[0].Parameters[0].Name);
-        Assert.Equal("Int32", gi.Methods[0].Parameters[1].Name);
-        Assert.Equal("String", gi.Methods[0].ReturnType.Name);
-        Assert.Single(gi.Methods[0].GenericParameters);
-        Assert.Empty(gi.Methods[0].GenericArguments);
+        Assert.True(concreteComplexType.Methods[0].ContainsGenericParameters);
 
-        var gim = gi.Methods[0].MakeGenericMethod([ts]);
+        IXamlMethod genericDoMethodDefinition = concreteComplexType.Methods[0];
+        Assert.Equal(2, genericDoMethodDefinition.Parameters.Count);
+        Assert.Equal("TArg", genericDoMethodDefinition.Parameters[0].Name);
+        Assert.Equal("Int32", genericDoMethodDefinition.Parameters[1].Name);
+        Assert.Equal("String", genericDoMethodDefinition.ReturnType.Name);
+        Assert.Single(genericDoMethodDefinition.GenericParameters);
+        Assert.Empty(genericDoMethodDefinition.GenericArguments);
 
-        Assert.False(gim.ContainsGenericParameters);
-        Assert.Equal(2, gim.Parameters.Count);
-        Assert.Equal("String", gim.Parameters[0].Name);
-        Assert.Equal("Int32", gim.Parameters[1].Name);
-        Assert.Equal("String", gim.ReturnType.Name);
-        Assert.Empty(gim.GenericParameters);
-        Assert.Single(gim.GenericArguments);
+        var concreteDoMethod = concreteComplexType.Methods[0].MakeGenericMethod([stringType]);
+
+        Assert.False(concreteDoMethod.ContainsGenericParameters);
+        Assert.Equal(2, concreteDoMethod.Parameters.Count);
+        Assert.Equal("String", concreteDoMethod.Parameters[0].Name);
+        Assert.Equal("Int32", concreteDoMethod.Parameters[1].Name);
+        Assert.Equal("String", concreteDoMethod.ReturnType.Name);
+        Assert.Empty(concreteDoMethod.GenericParameters);
+        Assert.Single(concreteDoMethod.GenericArguments);
     }
 
     [Fact]
