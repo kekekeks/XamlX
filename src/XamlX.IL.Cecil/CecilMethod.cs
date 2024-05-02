@@ -89,8 +89,11 @@ namespace XamlX.TypeSystem
             public bool IsGenericMethodDefinition => Reference.IsDefinition && Reference.HasGenericParameters;
 
             public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
-                Reference.GenericParameters.Select(gp => TypeResolveContext.Resolve(gp)).ToArray() 
-                ?? System.Array.Empty<IXamlType>();
+                !Reference.IsGenericInstance && Reference.ContainsGenericParameter
+                ? Reference.GenericParameters
+                    .Select(gp => TypeResolveContext.Resolve(gp))
+                    .ToArray() ?? System.Array.Empty<IXamlType>()
+                : System.Array.Empty<IXamlType>();
 
             public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
                  Reference.IsGenericInstance
@@ -98,7 +101,7 @@ namespace XamlX.TypeSystem
                         ?? System.Array.Empty<IXamlType>()
                     : System.Array.Empty<IXamlType>();
 
-            public bool ContainsGenericParameters => Reference.ContainsGenericParameter;
+            public bool ContainsGenericParameters => !Reference.IsGenericInstance && Reference.ContainsGenericParameter;
 
             public CecilMethod(CecilTypeResolveContext typeResolveContext, MethodReference method)
                 : base(typeResolveContext, method)
