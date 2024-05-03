@@ -18,7 +18,7 @@ public abstract class BaseTest
     /// </summary>
     /// <param name="fullName"></param>
     /// <returns></returns>
-    private static string GetNormalizzeFullName(string fullName)
+    private static string GetNormalizedFullName(string fullName)
     {
         if (!_cleanedFullName.TryGetValue(fullName, out var cleanedName))
         {
@@ -93,10 +93,10 @@ public abstract class BaseTest
         var testTypeType = TypeSystem.GetType("TypeSystemTest.Models.TestType");
         var stringType = TypeSystem.GetType("System.String");
         var genericStringField = testTypeType.Fields.First(x => x.Name == nameof(TestType.GenericStringField));
-        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizzeFullName(genericStringField.FieldType.FullName));
-        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizzeFullName(genericStringField.FieldType.BaseType.FullName));
+        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizedFullName(genericStringField.FieldType.FullName));
+        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizedFullName(genericStringField.FieldType.BaseType.FullName));
         var genericInterfceType = genericStringField.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
-        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizzeFullName(genericInterfceType.FullName));
+        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizedFullName(genericInterfceType.FullName));
 
         var genericSomeMethod = genericStringField.FieldType.Methods.First(x => x.Name == "SomeMethod");
         Assert.Equal("System.String", genericSomeMethod.ReturnType.FullName);
@@ -125,7 +125,7 @@ public abstract class BaseTest
         Assert.False(concreteSubMethod.IsGenericMethodDefinition);
         Assert.Empty(concreteSubMethod.GenericParameters);
         Assert.Single(concreteSubMethod.GenericArguments);
-        Assert.Equal("System.String", GetNormalizzeFullName(concreteSubMethod.Parameters[0].FullName));
+        Assert.Equal("System.String", GetNormalizedFullName(concreteSubMethod.Parameters[0].FullName));
 
         /*
         public class ComplexGenericType<T>
@@ -199,10 +199,10 @@ public abstract class BaseTest
     public void Generic_FullName_Is_Normalizzed()
     {
         var ts = TypeSystem.GetType("System.String");
-        Assert.Equal("System.String", GetNormalizzeFullName(ts.FullName));
+        Assert.Equal("System.String", GetNormalizedFullName(ts.FullName));
         var tl = TypeSystem.GetType("System.Collections.Generic.List`1");
-        Assert.Equal("System.Collections.Generic.List`1", GetNormalizzeFullName(tl.FullName));
+        Assert.Equal("System.Collections.Generic.List`1", GetNormalizedFullName(tl.FullName));
         var ls = tl.MakeGenericType(ts);
-        Assert.Equal("System.Collections.Generic.List`1<System.String>", GetNormalizzeFullName(ls.FullName));
+        Assert.Equal("System.Collections.Generic.List`1<System.String>", GetNormalizedFullName(ls.FullName));
     }
 }
