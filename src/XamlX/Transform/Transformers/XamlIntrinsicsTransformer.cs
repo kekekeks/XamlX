@@ -1,4 +1,5 @@
 using XamlX.Ast;
+using XamlX.TypeSystem;
 
 namespace XamlX.Transform.Transformers
 {
@@ -15,7 +16,7 @@ namespace XamlX.Transform.Transformers
             {
                 XamlAstTextNode ResolveArgumentOrValue(string extension, string name)
                 {
-                    IXamlAstNode value = null;
+                    IXamlAstNode? value = null;
                     
                     if (ni.Arguments.Count == 1 && ni.Children.Count == 0)
                         value = ni.Arguments[0];
@@ -45,10 +46,6 @@ namespace XamlX.Transform.Transformers
                 if (xml.Name == "Type")
                 {
                     var textNode = ResolveArgumentOrValue("x:Type", "TypeName");
-                    if (textNode == null)
-                        return null;
-                        
-
                     var typeRefText = textNode.Text.Trim();
                     var pair = typeRefText.Split(new[] {':'}, 2);
                     if (pair.Length == 1)
@@ -59,14 +56,12 @@ namespace XamlX.Transform.Transformers
 
                     return new XamlTypeExtensionNode(node,
                         new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1], xml.GenericArguments),
-                        context.Configuration.TypeSystem.FindType("System.Type"));
+                        context.Configuration.TypeSystem.GetType("System.Type"));
                 }
 
                 if (xml.Name == "Static")
                 {
                     var textNode = ResolveArgumentOrValue("x:Static", "Member");
-                    if (textNode == null)
-                        return null;
                     var nsp = textNode.Text.Trim().Split(new[] {':'}, 2);
                     string ns, typeAndMember;
                     if (nsp.Length == 1)

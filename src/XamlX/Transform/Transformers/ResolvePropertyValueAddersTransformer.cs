@@ -33,7 +33,7 @@ namespace XamlX.Transform.Transformers
             {
                 _getter = getter;
                 _adder = adder;
-                TargetType = getter.DeclaringType;
+                TargetType = getter.DeclaringType!;
                 Parameters = adder.ParametersWithThis().Skip(1).ToList();
 
                 bool allowNull = Parameters.Last().AcceptsNull();
@@ -84,7 +84,7 @@ namespace XamlX.Transform.Transformers
                 emitter.EmitCall(_adder, true);
             }
 
-            public bool Equals(AdderSetter other)
+            public bool Equals(AdderSetter? other)
             {
                 if (ReferenceEquals(null, other))
                     return false;
@@ -94,7 +94,7 @@ namespace XamlX.Transform.Transformers
                 return _getter.Equals(other._getter) && _adder.Equals(other._adder);
             }
 
-            public override bool Equals(object obj) 
+            public override bool Equals(object? obj)
                 => Equals(obj as AdderSetter);
 
             public override int GetHashCode() 

@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using XamlX.Ast;
-using XamlX.Emit;
-using XamlX.Transform.Transformers;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -14,49 +11,49 @@ namespace XamlX.Transform
 #endif
     class TransformerConfiguration
     {
-        private Dictionary<Type, object> _extras = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, object> _extras = new();
+
         /// <summary>
         /// Gets extension configuration section
         /// </summary>
-        public T GetExtra<T>() => (T) _extras[typeof(T)];
+        public T GetExtra<T>() where T : notnull => (T) _extras[typeof(T)];
+
         /// <summary>
         /// Gets or create extension configuration section
         /// </summary>
         public T GetOrCreateExtra<T>()
-            where T : new()
+            where T : notnull, new()
         {
             if (!_extras.TryGetValue(typeof(T), out var rv))
                 _extras[typeof(T)] = rv = new T();
             return (T)rv;
         }
+
         /// <summary>
         /// Adds extension configuration section
         /// </summary>
         /// <param name="extra"></param>
         /// <typeparam name="T"></typeparam>
-        public void AddExtra<T>(T extra) => _extras[typeof(T)] = extra;
+        public void AddExtra<T>(T extra) where T : notnull => _extras[typeof(T)] = extra;
 
         public delegate bool XamlValueConverter(AstTransformationContext context,
-            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type, out IXamlAstValueNode result);
+            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute>? customAttributes, IXamlType type, out IXamlAstValueNode result);
         
         public IXamlTypeSystem TypeSystem { get; }
-        public IXamlAssembly DefaultAssembly { get; }
+        public IXamlAssembly? DefaultAssembly { get; }
         public XamlLanguageTypeMappings TypeMappings { get; }
         public XamlXmlnsMappings XmlnsMappings { get; }
         public XamlTypeWellKnownTypes WellKnownTypes { get; }
-        public XamlValueConverter CustomValueConverter { get; }
+        public XamlValueConverter? CustomValueConverter { get; }
         public XamlDiagnosticsHandler DiagnosticsHandler { get; }
         public IXamlIdentifierGenerator IdentifierGenerator { get; }
-        public List<(string ns, string name)> KnownDirectives { get; } = new List<(string, string)>
-        {
-            
-        };
+        public List<(string ns, string name)> KnownDirectives { get; } = [];
 
-        public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly defaultAssembly,
-            XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings xmlnsMappings = null,
-            XamlValueConverter customValueConverter = null,
-            IXamlIdentifierGenerator identifierGenerator = null,
-            XamlDiagnosticsHandler diagnosticsHandler = null)
+        public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly? defaultAssembly,
+            XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings? xmlnsMappings = null,
+            XamlValueConverter? customValueConverter = null,
+            IXamlIdentifierGenerator? identifierGenerator = null,
+            XamlDiagnosticsHandler? diagnosticsHandler = null)
         {
             TypeSystem = typeSystem;
             DefaultAssembly = defaultAssembly;
@@ -68,9 +65,9 @@ namespace XamlX.Transform
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
         }
 
-        private readonly IDictionary<object, IXamlProperty> _contentPropertyCache = new Dictionary<object, IXamlProperty>();
+        private readonly Dictionary<object, IXamlProperty?> _contentPropertyCache = new();
 
-        public IXamlProperty FindContentProperty(IXamlType type)
+        public IXamlProperty? FindContentProperty(IXamlType type)
         {
             if (TypeMappings.ContentAttributes.Count == 0)
                 return null;
@@ -85,7 +82,7 @@ namespace XamlX.Transform
                 }
                 if (contentAttributeOnType.Properties["Name"] is string propertyName)
                 {
-                    IXamlProperty contentProperty = type.GetAllProperties().FirstOrDefault(prop => prop.Name == propertyName);
+                    var contentProperty = type.GetAllProperties().FirstOrDefault(prop => prop.Name == propertyName);
                     if (contentProperty is null)
                     {
                         throw new XamlTypeSystemException($"The property name '{propertyName}' specified in the content property of {type.GetFqn()} does not exist.");

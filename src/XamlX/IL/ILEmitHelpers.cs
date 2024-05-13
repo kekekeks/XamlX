@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Emit;
-using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace XamlX.IL
@@ -41,7 +38,7 @@ namespace XamlX.IL
             IXamlType what,
             IXamlType to)
         {
-            XamlLocalsPool.PooledLocal local = null;
+            XamlLocalsPool.PooledLocal? local = null;
 
             EmitConvert(context, node, what, to, lda =>
             {
@@ -92,7 +89,7 @@ namespace XamlX.IL
                 }
                 else if (what.IsNullableOf(what))
                     ld(true)
-                        .EmitCall(what.FindMethod(m => m.Name == "get_Value"));
+                        .EmitCall(what.GetMethod(m => m.Name == "get_Value"));
                 else
                     throw new XamlLoadException(
                         $"Don't know how to convert value type {what.GetFullName()} to value type {to.GetFullName()}",

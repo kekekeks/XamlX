@@ -15,23 +15,27 @@ namespace XamlX.TypeSystem
 
         public sealed class PooledLocal : IDisposable
         {
-            public IXamlLocal Local { get; private set; }
+            private IXamlLocal? _local;
+
+            public IXamlLocal Local
+                => _local ?? throw new ObjectDisposedException(nameof(PooledLocal));
+
             private readonly XamlLocalsPool _parent;
             private readonly IXamlType _type;
 
             public PooledLocal(XamlLocalsPool parent, IXamlType type, IXamlLocal local)
             {
-                Local = local;
+                _local = local;
                 _parent = parent;
                 _type = type;
             }
 
             public void Dispose()
             {
-                if (Local == null)
+                if (_local == null)
                     return;
                 _parent._localsPool.Add((_type, Local));
-                Local = null;
+                _local = null;
             }
         }
         

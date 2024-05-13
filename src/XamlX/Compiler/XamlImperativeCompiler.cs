@@ -57,10 +57,10 @@ namespace XamlX.Compiler
             IXamlTypeBuilder<TBackendEmitter> typeBuilder,
             IXamlType contextType,
             string populateMethodName,
-            string createMethodName,
+            string? createMethodName,
             string namespaceInfoClassName,
             string baseUri,
-            IFileSource fileSource)
+            IFileSource? fileSource)
             => Compile(
                 doc,
                 contextType,
@@ -81,17 +81,17 @@ namespace XamlX.Compiler
             IXamlType contextType,
             IXamlMethodBuilder<TBackendEmitter> populateMethod,
             IXamlTypeBuilder<TBackendEmitter> populateDeclaringType,
-            IXamlMethodBuilder<TBackendEmitter> buildMethod,
+            IXamlMethodBuilder<TBackendEmitter>? buildMethod,
             IXamlTypeBuilder<TBackendEmitter> buildDeclaringType,
-            IXamlTypeBuilder<TBackendEmitter> namespaceInfoBuilder,
+            IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
             string baseUri,
-            IFileSource fileSource)
+            IFileSource? fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
             var rootType = rootGrp.Type.GetClrType();
             var context = CreateRuntimeContext(doc, contextType, namespaceInfoBuilder, baseUri, rootType);
 
-            CompilePopulate(fileSource, rootGrp.Manipulation, populateDeclaringType, populateMethod.Generator, context);
+            CompilePopulate(fileSource, rootGrp.Manipulation!, populateDeclaringType, populateMethod.Generator, context);
 
             if (buildMethod != null)
             {
@@ -102,14 +102,14 @@ namespace XamlX.Compiler
         }
 
         protected abstract void CompilePopulate(
-            IFileSource fileSource,
+            IFileSource? fileSource,
             IXamlAstManipulationNode manipulation,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
             TBackendEmitter codeGen,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> context);
 
         protected abstract void CompileBuild(
-            IFileSource fileSource,
+            IFileSource? fileSource,
             IXamlAstValueNode rootInstance,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
             TBackendEmitter codeGen,
@@ -119,7 +119,7 @@ namespace XamlX.Compiler
         protected abstract XamlRuntimeContext<TBackendEmitter, TEmitResult> CreateRuntimeContext(
             XamlDocument doc,
             IXamlType contextType,
-            IXamlTypeBuilder<TBackendEmitter> namespaceInfoBuilder,
+            IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
             string baseUri,
             IXamlType rootType);
     }

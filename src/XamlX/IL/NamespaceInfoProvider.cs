@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -16,8 +17,10 @@ namespace XamlX.IL
             IXamlTypeBuilder<IXamlILEmitter> typeBuilder,
             XamlDocument document)
         {
-            var nsInfoProviderType = configuration.TypeMappings.XmlNamespaceInfoProvider;
-            var getNamespacesInterfaceMethod = nsInfoProviderType.FindMethod(m => m.Name == "get_XmlNamespaces");
+            Debug.Assert(configuration.TypeMappings.XmlNamespaceInfoProvider is not null);
+
+            var nsInfoProviderType = configuration.TypeMappings.XmlNamespaceInfoProvider!;
+            var getNamespacesInterfaceMethod = nsInfoProviderType.GetMethod(m => m.Name == "get_XmlNamespaces");
             var roDictionaryType = getNamespacesInterfaceMethod.ReturnType;
             var nsInfoType = roDictionaryType.GenericArguments[1].GenericArguments[0];
 
@@ -36,13 +39,13 @@ namespace XamlX.IL
 
                 // return new XamlXmlNamespaceInfoV1() { ClrNamespace = arg0, ClrAssemblyName = arg1 }
                 method.Generator
-                    .Newobj(nsInfoType.FindConstructor())
+                    .Newobj(nsInfoType.GetConstructor())
                     .Dup()
                     .Ldarg_0()
-                    .EmitCall(nsInfoType.FindMethod(m => m.Name == "set_ClrNamespace"))
+                    .EmitCall(nsInfoType.GetMethod(m => m.Name == "set_ClrNamespace"))
                     .Dup()
                     .Ldarg(1)
-                    .EmitCall(nsInfoType.FindMethod(m => m.Name == "set_ClrAssemblyName"))
+                    .EmitCall(nsInfoType.GetMethod(m => m.Name == "set_ClrAssemblyName"))
                     .Ret();
 
                 return method;
@@ -55,19 +58,19 @@ namespace XamlX.IL
                 // C#: private static IReadOnlyDictionary<string, IReadOnlyList<string>> CreateNamespaces()
                 var method = typeBuilder.DefineMethod(
                     roDictionaryType,
-                    null,
+                    [],
                     "CreateNamespaces",
                     XamlVisibility.Private, true, false);
 
-                var roListType = configuration.TypeSystem.FindType("System.Collections.Generic.IReadOnlyList`1")
+                var roListType = configuration.TypeSystem.GetType("System.Collections.Generic.IReadOnlyList`1")
                     .MakeGenericType(nsInfoType);
 
-                var dictionaryType = configuration.TypeSystem.FindType("System.Collections.Generic.Dictionary`2")
+                var dictionaryType = configuration.TypeSystem.GetType("System.Collections.Generic.Dictionary`2")
                     .MakeGenericType(configuration.WellKnownTypes.String, roListType);
 
-                var dictionaryCtor = dictionaryType.FindConstructor(new List<IXamlType> { configuration.WellKnownTypes.Int32 });
+                var dictionaryCtor = dictionaryType.GetConstructor(new List<IXamlType> { configuration.WellKnownTypes.Int32 });
 
-                var dictionaryAddMethod = dictionaryType.FindMethod(
+                var dictionaryAddMethod = dictionaryType.GetMethod(
                     "Add",
                     configuration.WellKnownTypes.Void, true, configuration.WellKnownTypes.String, roListType);
 
@@ -126,7 +129,7 @@ namespace XamlX.IL
                 // C#: private IReadOnlyDictionary<string, IReadOnlyList<string>> get_XmlNamespaces()
                 var method = typeBuilder.DefineMethod(
                     roDictionaryType,
-                    null,
+                    [],
                     getNamespacesInterfaceMethod.Name,
                     XamlVisibility.Public, false, true);
 
@@ -159,7 +162,7 @@ namespace XamlX.IL
                 // C#: base()
                 ctor.Generator
                     .Ldarg_0()
-                    .Emit(OpCodes.Call, configuration.WellKnownTypes.Object.FindConstructor())
+                    .Emit(OpCodes.Call, configuration.WellKnownTypes.Object.GetConstructor())
                     .Ret();
 
                 return ctor;
