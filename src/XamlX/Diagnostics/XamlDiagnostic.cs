@@ -4,8 +4,6 @@ using XamlX.Ast;
 
 namespace XamlX;
 
-#nullable enable
-
 #if !XAMLX_INTERNAL
 public
 #endif

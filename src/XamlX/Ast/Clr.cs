@@ -649,8 +649,6 @@ namespace XamlX.Ast
         }
     }
 
-#nullable enable
-
 #if !XAMLX_INTERNAL
     public
 #endif
@@ -862,9 +860,8 @@ namespace XamlX.Ast
                 return method;
             }
         }
-
-#nullable restore
     }
+
 #if !XAMLX_INTERNAL
     public
 #endif

@@ -2,8 +2,6 @@
 
 namespace XamlX.Transform;
 
-#nullable enable
-
 #if !XAMLX_INTERNAL
     public
 #endif
