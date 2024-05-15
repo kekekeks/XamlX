@@ -129,7 +129,7 @@ namespace XamlX.IL.Emitters
                 typeCache.MethodCacheByType[typeBuilder] = methodCache;
             }
 
-            var declaringType = property.DeclaringType!;
+            var declaringType = property.DeclaringType;
             var cacheKey = new SettersCacheKey(declaringType, valueTypes, setters);
 
             if (!methodCache.MethodByCacheKey.TryGetValue(cacheKey, out var method))

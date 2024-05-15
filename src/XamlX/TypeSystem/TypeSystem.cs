@@ -45,7 +45,7 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlParameterInfo : IXamlMember
+    interface IXamlParameterInfo
     {
         IXamlType ParameterType { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
@@ -62,7 +62,6 @@ namespace XamlX.TypeSystem
         bool IsStatic { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
-        IXamlType? DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
         IXamlParameterInfo GetParameterInfo(int index);
@@ -74,6 +73,7 @@ namespace XamlX.TypeSystem
     interface IXamlMember
     {
         string Name { get; }
+        IXamlType DeclaringType { get; }
     }
     
 #if !XAMLX_INTERNAL
@@ -587,14 +587,14 @@ namespace XamlX.TypeSystem
         }
 
         public static IXamlType ThisOrFirstParameter(this IXamlMethod method) =>
-            method.IsStatic ? method.Parameters[0] : method.DeclaringType!;
+            method.IsStatic ? method.Parameters[0] : method.DeclaringType;
 
         public static IReadOnlyList<IXamlType> ParametersWithThis(this IXamlMethod method)
         {
             if (method.IsStatic)
                 return method.Parameters;
             var lst = method.Parameters.ToList();
-            lst.Insert(0, method.DeclaringType!);
+            lst.Insert(0, method.DeclaringType);
             return lst;
         }
     }

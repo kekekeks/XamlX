@@ -497,7 +497,7 @@ namespace XamlParserTests
                 IXamlMethod handleMethod)
                 : base(original, original.Name, original.DeclaringType, original.Getter, original.Setters)
                 => Setters.Add(new SpecialHandlerPropertySetter(
-                    handleMethod.DeclaringType!,
+                    handleMethod.DeclaringType,
                     handleMethod.Parameters[0],
                     getSpecialHandlerMethod,
                     handleMethod));

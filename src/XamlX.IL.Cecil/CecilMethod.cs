@@ -55,8 +55,8 @@ namespace XamlX.TypeSystem
 
             private IXamlType? _declaringType;
 
-            public IXamlType? DeclaringType =>
-                _declaringType ??= Reference.DeclaringType is { } declaringType ? TypeResolveContext.Resolve(declaringType) : null;
+            public IXamlType DeclaringType =>
+                _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
 
             public IReadOnlyList<IXamlType> Parameters => ParameterInfos.Select(p => p.ParameterType).ToList();
 

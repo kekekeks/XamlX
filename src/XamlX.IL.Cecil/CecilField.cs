@@ -30,8 +30,14 @@ namespace XamlX.TypeSystem
             public bool IsLiteral => _def.IsLiteral;
 
             private IReadOnlyList<IXamlCustomAttribute>? _attributes;
+
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= _def.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
+
+            private IXamlType? _declaringType;
+
+            public IXamlType DeclaringType
+                => _declaringType ??= _typeResolveContext.Resolve(Field.DeclaringType);
 
             public object GetLiteralValue()
             {

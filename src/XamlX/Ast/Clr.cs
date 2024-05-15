@@ -43,7 +43,7 @@ namespace XamlX.Ast
         public IXamlMethod? Getter { get; set; }
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
-        public IXamlType? DeclaringType { get; set; }
+        public IXamlType DeclaringType { get; set; }
         public Dictionary<IXamlType, IXamlType> TypeConverters { get; set; } = new Dictionary<IXamlType, IXamlType>();
         
         public XamlAstClrProperty(IXamlLineInfo lineInfo, IXamlProperty property, 
@@ -55,7 +55,7 @@ namespace XamlX.Ast
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             var accessor = property.Getter ?? property.Setter;
-            DeclaringType = accessor?.DeclaringType;
+            DeclaringType = property.DeclaringType;
             IsPrivate = accessor?.IsPrivate == true;
             IsPublic = accessor?.IsPublic == true;
             IsFamily = accessor?.IsFamily == true;
@@ -72,7 +72,7 @@ namespace XamlX.Ast
             }
         }
 
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType? declaringType,
+        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod? getter, IEnumerable<IXamlPropertySetter>? setters) : base(lineInfo)
         {
             Name = name;
@@ -85,14 +85,14 @@ namespace XamlX.Ast
                 Setters.AddRange(setters);
         }
 
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType? declaringType,
+        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
             IXamlMethod? getter, params IXamlMethod?[] setters) : this(lineInfo, name, declaringType,
             getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x!)))
         {
 
         }
 
-        public override string ToString() => DeclaringType?.GetFqn() + "." + Name;
+        public override string ToString() => DeclaringType.GetFqn() + "." + Name;
     }
 
 #if !XAMLX_INTERNAL
@@ -494,7 +494,7 @@ namespace XamlX.Ast
     {
         string Name { get; }
         IXamlType ReturnType { get; }
-        IXamlType? DeclaringType { get; }
+        IXamlType DeclaringType { get; }
         IReadOnlyList<IXamlType> ParametersWithThis { get; }
     }
 
@@ -514,7 +514,7 @@ namespace XamlX.Ast
 
         public string Name => _method.Name;
         public IXamlType ReturnType { get; }
-        public IXamlType? DeclaringType => _method.DeclaringType;
+        public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
         public void Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
@@ -539,7 +539,7 @@ namespace XamlX.Ast
 
         public string Name => _method.Name;
         public IXamlType ReturnType => _method.ReturnType;
-        public IXamlType? DeclaringType => _method.DeclaringType;
+        public IXamlType DeclaringType => _method.DeclaringType;
         public IReadOnlyList<IXamlType> ParametersWithThis { get; }
         public void Emit(XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen, bool swallowResult)
         {
@@ -594,7 +594,7 @@ namespace XamlX.Ast
 
         public string Name => _method.Name;
         public IXamlType ReturnType => _method.ReturnType;
-        public IXamlType? DeclaringType => _method.DeclaringType;
+        public IXamlType DeclaringType => _method.DeclaringType;
         public bool IsPublic => true;
         public bool IsPrivate => false;
         public bool IsFamily => false;

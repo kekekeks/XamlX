@@ -123,7 +123,7 @@ namespace XamlX.Transform.Transformers
                             return null;
 
                         throw new XamlLoadException(
-                            $"Unable to find suitable setter or adder for property {property.Name} of type {property.DeclaringType?.GetFqn()} for argument {v.Type.GetClrType().GetFqn()}"
+                            $"Unable to find suitable setter or adder for property {property.Name} of type {property.DeclaringType.GetFqn()} for argument {v.Type.GetClrType().GetFqn()}"
                             + (keyNode != null ? $" and x:Key of type {keyNode.Type.GetClrType()}" : null)
                             + ", available setter parameter lists are:\n" + string.Join("\n",
                                 filteredSetters.Select(setter =>

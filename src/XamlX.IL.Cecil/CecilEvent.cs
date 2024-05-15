@@ -23,6 +23,11 @@ namespace XamlX.TypeSystem
                 ? null
                 : _add ??= new CecilMethod(_typeResolveContext, Event.AddMethod);
 
+            private IXamlType? _declaringType;
+
+            public IXamlType DeclaringType
+                => _declaringType ??= _typeResolveContext.Resolve(Event.DeclaringType);
+
             public bool Equals(IXamlEventInfo? other) =>
                 other is CecilEvent cf
                 && TypeReferenceEqualityComparer.AreEqual(Event.DeclaringType, cf.Event.DeclaringType, CecilTypeComparisonMode.Exact)

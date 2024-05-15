@@ -33,7 +33,7 @@ namespace XamlX.Transform.Transformers
             {
                 _getter = getter;
                 _adder = adder;
-                TargetType = getter.DeclaringType!;
+                TargetType = getter.DeclaringType;
                 Parameters = adder.ParametersWithThis().Skip(1).ToList();
 
                 bool allowNull = Parameters.Last().AcceptsNull();

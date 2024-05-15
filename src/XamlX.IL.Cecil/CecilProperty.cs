@@ -18,6 +18,7 @@ namespace XamlX.TypeSystem
             }
 
             public string Name => Property.Name;
+
             private IXamlType? _type;
 
             public IXamlType PropertyType =>
@@ -36,12 +37,19 @@ namespace XamlX.TypeSystem
                 : _getter ??= new CecilMethod(_typeResolveContext, Property.GetMethod);
 
             private IReadOnlyList<IXamlCustomAttribute>? _attributes;
+
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= Property.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
 
             private IReadOnlyList<IXamlType>? _indexerParameters;
+
             public IReadOnlyList<IXamlType> IndexerParameters =>
                 _indexerParameters ??= Property.Parameters.Select(param => _typeResolveContext.ResolveParameterType(Property, param)).ToList();
+
+            private IXamlType? _declaringType;
+
+            public IXamlType DeclaringType
+                => _declaringType ??= _typeResolveContext.Resolve(Property.DeclaringType);
 
             public bool Equals(IXamlProperty? other) =>
                 other is CecilProperty cf
