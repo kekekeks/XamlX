@@ -17,18 +17,18 @@ namespace XamlX.TypeSystem
 
             public string Name => Event.Name;
 
-            private IXamlMethod _getter;
+            private IXamlMethod? _add;
 
-            public IXamlMethod Add => Event.AddMethod == null
+            public IXamlMethod? Add => Event.AddMethod == null
                 ? null
-                : _getter ??= new CecilMethod(_typeResolveContext, Event.AddMethod);
+                : _add ??= new CecilMethod(_typeResolveContext, Event.AddMethod);
 
-            public bool Equals(IXamlEventInfo other) =>
+            public bool Equals(IXamlEventInfo? other) =>
                 other is CecilEvent cf
                 && TypeReferenceEqualityComparer.AreEqual(Event.DeclaringType, cf.Event.DeclaringType, CecilTypeComparisonMode.Exact)
                 && cf.Event.FullName == Event.FullName;
 
-            public override bool Equals(object other) => Equals(other as IXamlEventInfo); 
+            public override bool Equals(object? other) => Equals(other as IXamlEventInfo);
 
             public override int GetHashCode() =>
                 (TypeReferenceEqualityComparer.GetHashCodeFor(Event.DeclaringType, CecilTypeComparisonMode.Exact), Event.FullName).GetHashCode();

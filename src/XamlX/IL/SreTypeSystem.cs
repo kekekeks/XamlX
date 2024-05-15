@@ -485,7 +485,7 @@ namespace XamlX.IL
             public object GetLiteralValue()
             {
                 if (!IsLiteral)
-                    throw new InvalidOperationException();
+                    throw new InvalidOperationException($"{this} isn't a literal");
                 return Field.GetValue(null)!;
             }
 

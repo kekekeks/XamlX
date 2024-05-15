@@ -13,16 +13,16 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 	private readonly CecilTypeComparisonMode _comparisonMode;
 
 	// Initialized lazily for each thread
-	[ThreadStatic] static List<MethodReference> xComparisonStack = null;
+	[ThreadStatic] static List<MethodReference>? xComparisonStack;
 
-	[ThreadStatic] static List<MethodReference> yComparisonStack = null;
+	[ThreadStatic] static List<MethodReference>? yComparisonStack;
 
 	public MethodReferenceEqualityComparer(CecilTypeComparisonMode comparisonMode)
 	{
 		_comparisonMode = comparisonMode;
 	}
 	
-	public override bool Equals(MethodReference x, MethodReference y)
+	public override bool Equals(MethodReference? x, MethodReference? y)
 	{
 		return AreEqual(x, y, _comparisonMode);
 	}
@@ -32,10 +32,13 @@ public class MethodReferenceEqualityComparer : EqualityComparer<MethodReference>
 		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
-	public static bool AreEqual(MethodReference x, MethodReference y, CecilTypeComparisonMode comparisonMode)
+	public static bool AreEqual(MethodReference? x, MethodReference? y, CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(x, y))
 			return true;
+
+		if (x is null || y is null)
+			return false;
 
 		if (x.HasThis != y.HasThis)
 			return false;

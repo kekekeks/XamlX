@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -22,13 +23,13 @@ namespace XamlX.TypeSystem
             }
 
             public string Name => Field.Name;
-            private IXamlType _type;
+            private IXamlType? _type;
             public IXamlType FieldType => _type ??= _typeResolveContext.ResolveFieldType(Field);
             public bool IsPublic => _def.IsPublic;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
 
-            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+            private IReadOnlyList<IXamlCustomAttribute>? _attributes;
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= _def.CustomAttributes.Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
 
@@ -36,15 +37,15 @@ namespace XamlX.TypeSystem
             {
                 if (IsLiteral && _def.HasConstant)
                     return _def.Constant;
-                return null;
+                throw new InvalidOperationException($"{this} isn't a literal");
             }
 
-            public bool Equals(IXamlField other) =>
+            public bool Equals(IXamlField? other) =>
                 other is CecilField cf
                 && TypeReferenceEqualityComparer.AreEqual(Field.DeclaringType, cf.Field.DeclaringType, CecilTypeComparisonMode.Exact)
                 && cf.Field.FullName == Field.FullName;
 
-            public override bool Equals(object other) => Equals(other as IXamlField); 
+            public override bool Equals(object? other) => Equals(other as IXamlField);
 
             public override int GetHashCode() =>
                 (TypeReferenceEqualityComparer.GetHashCodeFor(Field.DeclaringType, CecilTypeComparisonMode.Exact), Field.FullName).GetHashCode();

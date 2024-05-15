@@ -21,7 +21,7 @@ namespace XamlX.TypeSystem
 
             public string Name => _parameterReference.Name;
 
-            private IXamlType _parameterType;
+            private IXamlType? _parameterType;
             public IXamlType ParameterType => _parameterType ??= _typeResolveContext.Resolve(_parameterReference.ParameterType);
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _parameterReference.Resolve().CustomAttributes
                 .Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
@@ -48,31 +48,31 @@ namespace XamlX.TypeSystem
             public bool IsFamily => Definition.IsFamily;
             public bool IsStatic => Definition.IsStatic;
 
-            private IXamlType _returnType;
+            private IXamlType? _returnType;
             
             public IXamlType ReturnType =>
                 _returnType ??= TypeResolveContext.ResolveReturnType(Reference);
 
-            private IXamlType _declaringType;
+            private IXamlType? _declaringType;
 
-            public IXamlType DeclaringType =>
-                _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
+            public IXamlType? DeclaringType =>
+                _declaringType ??= Reference.DeclaringType is { } declaringType ? TypeResolveContext.Resolve(declaringType) : null;
 
             public IReadOnlyList<IXamlType> Parameters => ParameterInfos.Select(p => p.ParameterType).ToList();
 
-            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+            private IReadOnlyList<IXamlCustomAttribute>? _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolveContext, ca)).ToList();
 
-            private IXamlILEmitter _generator;
+            private IXamlILEmitter? _generator;
 
             public IXamlILEmitter Generator =>
                 _generator ??= new CecilEmitter(TypeResolveContext.TypeSystem, Definition);
 
             public IXamlParameterInfo GetParameterInfo(int index) => ParameterInfos[index];
 
-            private IReadOnlyList<IXamlParameterInfo> _parameterInfos;
+            private IReadOnlyList<IXamlParameterInfo>? _parameterInfos;
             private IReadOnlyList<IXamlParameterInfo> ParameterInfos =>
                 _parameterInfos ??= Reference.Parameters.Select(p => new CecilParameterInfo(TypeResolveContext, p)).ToList();
 
@@ -99,11 +99,11 @@ namespace XamlX.TypeSystem
                 return new CecilMethod(TypeResolveContext, instantiation);
             }
 
-            public bool Equals(IXamlMethod other) =>
+            public bool Equals(IXamlMethod? other) =>
                 other is CecilMethod cm
                 && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
-            public override bool Equals(object other) => Equals(other as IXamlMethod);
+            public override bool Equals(object? other) => Equals(other as IXamlMethod);
 
             public override int GetHashCode() 
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
@@ -117,11 +117,11 @@ namespace XamlX.TypeSystem
             {
             }
 
-            public bool Equals(IXamlConstructor other) =>
+            public bool Equals(IXamlConstructor? other) =>
                 other is CecilConstructor cm
                 && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
-            public override bool Equals(object other) => Equals(other as IXamlConstructor);
+            public override bool Equals(object? other) => Equals(other as IXamlConstructor);
 
             public override int GetHashCode() 
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
