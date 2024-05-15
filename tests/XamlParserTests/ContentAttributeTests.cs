@@ -6,22 +6,22 @@ namespace XamlParserTests
     public class SimpleClassWithContentAttribute
     {
         [Content]
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 
     public class SubClassWithContentAttributeOverride : SimpleClassWithContentAttribute
     {
         [Content]
-        public string OtherText { get; set; }
+        public string? OtherText { get; set; }
     }
 
     public class SimpleClassWithTwoContentAttributes
     {
         [Content]
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         [Content]
-        public string OtherText { get; set; }
+        public string? OtherText { get; set; }
     }
 
     public class ContentAttributeTests : CompilerTestBase
@@ -32,7 +32,7 @@ namespace XamlParserTests
         {
             var comp = Compile(@"<SimpleClassWithContentAttribute xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</SimpleClassWithContentAttribute>");
 
-            var res = (SimpleClassWithContentAttribute)comp.create(null);
+            var res = (SimpleClassWithContentAttribute)comp.create!(null);
 
             comp.populate(null, res);
 
@@ -44,7 +44,7 @@ namespace XamlParserTests
         {
             var comp = Compile(@"<SubClassWithContentAttributeOverride xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</SubClassWithContentAttributeOverride>");
 
-            var res = (SubClassWithContentAttributeOverride)comp.create(null);
+            var res = (SubClassWithContentAttributeOverride)comp.create!(null);
 
             comp.populate(null, res);
 

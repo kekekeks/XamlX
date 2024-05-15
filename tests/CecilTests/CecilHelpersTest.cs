@@ -80,7 +80,7 @@ namespace CecilTests
         {
             var type = MakeGenericType("System.Collections.Generic.Dictionary`2", "System.String", "System.String");
 
-            var collectionMethod = type.FindMethod(m => m.Name == "Add" && m.Parameters.Count == 1);
+            var collectionMethod = type.GetMethod(m => m.Name == "Add" && m.Parameters.Count == 1);
             var inputParam = collectionMethod.Parameters[0];
             var expectedParamType = Configuration.TypeSystem.GetType("System.Collections.Generic.KeyValuePair`2")
                 .MakeGenericType(Configuration.TypeSystem.GetType("System.String"), Configuration.TypeSystem.GetType("System.String"));

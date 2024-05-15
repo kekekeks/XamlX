@@ -5,7 +5,7 @@ namespace XamlParserTests
 {
     public class SimpleClassWithDictionaryContent
     {
-        public string Test { get; set; }
+        public string? Test { get; set; }
         [Content]
         public Dictionary<object, object> Children { get; set; } = new Dictionary<object, object>();
         

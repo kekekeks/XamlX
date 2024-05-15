@@ -38,7 +38,7 @@ namespace XamlParserTests
         </GenericClass>
     </RootNode>");
             
-            var res = (RootNode)comp.create(null);
+            var res = (RootNode)comp.create!(null);
             
             Assert.NotNull(res);
             Assert.NotNull(res.Children);

@@ -22,7 +22,7 @@ namespace XamlParserTests
 
     public class DynamicSettersClass<T1, T2> : ISpecialHandling<T1, T2>
     {
-        private T1 _value;
+        private T1 _value = default!;
 
         internal bool IsValueSet;
 
@@ -39,7 +39,7 @@ namespace XamlParserTests
         public SpecialHandler<T2> SpecialHandler { get; } = new();
     }
 
-    public class PrivateDynamicSettersClass : ISpecialHandling<int, string>
+    public class PrivateDynamicSettersClass : ISpecialHandling<int, string?>
     {
         private int _value;
 
@@ -55,13 +55,13 @@ namespace XamlParserTests
             }
         }
 
-        int ISpecialHandling<int, string>.Value
+        int ISpecialHandling<int, string?>.Value
             => Value;
 
-        public SpecialHandler<string> SpecialHandler { get; } = new();
+        public SpecialHandler<string?> SpecialHandler { get; } = new();
     }
 
-    public class ProtectedDynamicSettersClass : ISpecialHandling<int, string>
+    public class ProtectedDynamicSettersClass : ISpecialHandling<int, string?>
     {
         private int _value;
 
@@ -77,16 +77,16 @@ namespace XamlParserTests
             }
         }
 
-        int ISpecialHandling<int, string>.Value
+        int ISpecialHandling<int, string?>.Value
             => Value;
 
-        public SpecialHandler<string> SpecialHandler { get; } = new();
+        public SpecialHandler<string?> SpecialHandler { get; } = new();
     }
 
     public class SpecialHandler<T>
     {
         internal bool Called;
-        internal T Value;
+        internal T Value = default!;
 
         public void Handle(T value)
         {
@@ -101,7 +101,7 @@ namespace XamlParserTests
 
         public ProvidedValueType ProvidedValue { get; set; }
 
-        public object ProvideValue()
+        public object? ProvideValue()
         {
             return ProvidedValue switch
             {
@@ -130,7 +130,7 @@ namespace XamlParserTests
         }
 
         private object CompileAndRunWithSpecialTransformer(string xaml)
-            => _compiler.Compile(xaml).create(null);
+            => _compiler.Compile(xaml).create!(null);
 
         [Fact]
         public void Dynamic_Setter_With_Reference_Types_And_Null_Argument_Should_Match_First_Setter()
@@ -401,7 +401,7 @@ namespace XamlParserTests
     Value='{DynamicProvider ProvidedValue=String}' />
 ");
 
-            create(null);
+            create!(null);
 
             var dynamicSetterMethod = sharedSetters.RuntimeType
                 .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -420,7 +420,7 @@ namespace XamlParserTests
         {
             var typeSystem = (CecilTypeSystem)Configuration.TypeSystem;
 
-            var xamlAssembly = typeSystem.FindAssembly(typeof(DynamicSettersTests).Assembly.GetName().Name);
+            var xamlAssembly = typeSystem.FindAssembly(typeof(DynamicSettersTests).Assembly.GetName().Name!);
             Assert.NotNull(xamlAssembly);
 
             var assemblyDefinition = typeSystem.GetAssembly(xamlAssembly);
@@ -445,7 +445,7 @@ namespace XamlParserTests
     Value='{{DynamicProvider ProvidedValue=String}}' />
 ", parsedTypeBuilder: rootTypeBuilder);
 
-            var result = create(null);
+            var result = create!(null);
 
             Assert.DoesNotContain(
                 sharedSetters.RuntimeType.GetMethods(),
@@ -497,7 +497,7 @@ namespace XamlParserTests
                 IXamlMethod handleMethod)
                 : base(original, original.Name, original.DeclaringType, original.Getter, original.Setters)
                 => Setters.Add(new SpecialHandlerPropertySetter(
-                    handleMethod.DeclaringType,
+                    handleMethod.DeclaringType!,
                     handleMethod.Parameters[0],
                     getSpecialHandlerMethod,
                     handleMethod));
@@ -533,7 +533,8 @@ namespace XamlParserTests
             public PropertySetterBinderParameters BinderParameters { get; }
 
             public IReadOnlyList<IXamlType> Parameters { get; }
-            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
+
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => [];
 
             public void Emit(IXamlILEmitter emitter)
             {
