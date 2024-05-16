@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
@@ -36,8 +37,12 @@ namespace XamlX.Transform
         /// <typeparam name="T"></typeparam>
         public void AddExtra<T>(T extra) where T : notnull => _extras[typeof(T)] = extra;
 
-        public delegate bool XamlValueConverter(AstTransformationContext context,
-            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute>? customAttributes, IXamlType type, out IXamlAstValueNode result);
+        public delegate bool XamlValueConverter(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IReadOnlyList<IXamlCustomAttribute>? customAttributes,
+            IXamlType type,
+            [NotNullWhen(true)] out IXamlAstValueNode? result);
         
         public IXamlTypeSystem TypeSystem { get; }
         public IXamlAssembly? DefaultAssembly { get; }
@@ -49,8 +54,11 @@ namespace XamlX.Transform
         public IXamlIdentifierGenerator IdentifierGenerator { get; }
         public List<(string ns, string name)> KnownDirectives { get; } = [];
 
-        public TransformerConfiguration(IXamlTypeSystem typeSystem, IXamlAssembly? defaultAssembly,
-            XamlLanguageTypeMappings typeMappings, XamlXmlnsMappings? xmlnsMappings = null,
+        public TransformerConfiguration(
+            IXamlTypeSystem typeSystem,
+            IXamlAssembly? defaultAssembly,
+            XamlLanguageTypeMappings typeMappings,
+            XamlXmlnsMappings? xmlnsMappings = null,
             XamlValueConverter? customValueConverter = null,
             IXamlIdentifierGenerator? identifierGenerator = null,
             XamlDiagnosticsHandler? diagnosticsHandler = null)

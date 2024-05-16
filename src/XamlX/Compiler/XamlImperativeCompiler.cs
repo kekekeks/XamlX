@@ -1,4 +1,5 @@
-﻿using XamlX.Ast;
+﻿using System;
+using XamlX.Ast;
 using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.Transform.Transformers;
@@ -59,7 +60,7 @@ namespace XamlX.Compiler
             string populateMethodName,
             string? createMethodName,
             string namespaceInfoClassName,
-            string baseUri,
+            string? baseUri,
             IFileSource? fileSource)
             => Compile(
                 doc,
@@ -82,9 +83,9 @@ namespace XamlX.Compiler
             IXamlMethodBuilder<TBackendEmitter> populateMethod,
             IXamlTypeBuilder<TBackendEmitter> populateDeclaringType,
             IXamlMethodBuilder<TBackendEmitter>? buildMethod,
-            IXamlTypeBuilder<TBackendEmitter> buildDeclaringType,
+            IXamlTypeBuilder<TBackendEmitter>? buildDeclaringType,
             IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
-            string baseUri,
+            string? baseUri,
             IFileSource? fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
@@ -95,6 +96,9 @@ namespace XamlX.Compiler
 
             if (buildMethod != null)
             {
+                if (buildDeclaringType is null)
+                    throw new ArgumentNullException(nameof(buildDeclaringType));
+
                 CompileBuild(fileSource, rootGrp.Value, buildDeclaringType, buildMethod.Generator, context, populateMethod);
             }
 
@@ -120,7 +124,7 @@ namespace XamlX.Compiler
             XamlDocument doc,
             IXamlType contextType,
             IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
-            string baseUri,
+            string? baseUri,
             IXamlType rootType);
     }
 }

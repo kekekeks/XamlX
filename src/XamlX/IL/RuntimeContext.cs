@@ -16,7 +16,7 @@ namespace XamlX.IL
     {
         public RuntimeContext(IXamlType definition, IXamlType constructedType,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
-            string baseUri, List<IXamlField>? staticProviders)
+            string? baseUri, List<IXamlField>? staticProviders)
             : base(definition, constructedType, baseUri, mappings,
             (context, codegen) =>
             {

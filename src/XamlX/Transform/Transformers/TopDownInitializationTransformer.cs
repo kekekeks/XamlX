@@ -14,7 +14,7 @@ namespace XamlX.Transform.Transformers
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             var usableAttrs = context.Configuration.TypeMappings.UsableDuringInitializationAttributes;
-            if (!(usableAttrs?.Count > 0))
+            if (usableAttrs.Count == 0)
                 return node;
             bool UsableDuringInitialization(IXamlType type)
             {

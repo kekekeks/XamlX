@@ -79,7 +79,7 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlConstructor : IEquatable<IXamlConstructor>
+    interface IXamlConstructor : IEquatable<IXamlConstructor>, IXamlMember
     {
         bool IsPublic { get; }
         bool IsStatic { get; }

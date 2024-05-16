@@ -20,9 +20,9 @@ namespace XamlX.Emit
         public Action<TBackendEmitter> Factory { get; set; }
         public IXamlMethod? PushParentMethod { get; set; }
         public IXamlMethod? PopParentMethod { get; set; }
-        public string BaseUrl { get; set; }
+        public string? BaseUrl { get; set; }
 
-        public XamlRuntimeContext(IXamlType definition, IXamlType constructedType, string baseUri,
+        public XamlRuntimeContext(IXamlType definition, IXamlType constructedType, string? baseUri,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> mappings,
             Action<XamlRuntimeContext<TBackendEmitter, TEmitResult>, TBackendEmitter> factory)
         {

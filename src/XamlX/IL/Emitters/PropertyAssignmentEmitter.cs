@@ -136,7 +136,7 @@ namespace XamlX.IL.Emitters
             {
                 method = typeBuilder.DefineMethod(
                     context.Configuration.WellKnownTypes.Void,
-                    valueTypes.Prepend(declaringType),
+                    new[] { property.DeclaringType }.Concat(valueTypes),
                     container.GetDynamicSetterMethodName(methodCache.MethodByCacheKey.Count),
                     container.GeneratedMethodsVisibility,
                     true,

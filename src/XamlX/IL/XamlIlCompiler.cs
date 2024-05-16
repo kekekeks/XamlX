@@ -156,7 +156,7 @@ namespace XamlX.IL
         protected override XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> CreateRuntimeContext(
             XamlDocument doc, IXamlType contextType,
             IXamlTypeBuilder<IXamlILEmitter>? namespaceInfoBuilder,
-            string baseUri, IXamlType rootType)
+            string? baseUri, IXamlType rootType)
         {
             var staticProviders = new List<IXamlField>();
 
