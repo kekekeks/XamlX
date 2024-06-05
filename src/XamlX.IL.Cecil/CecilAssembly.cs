@@ -9,7 +9,7 @@ namespace XamlX.TypeSystem
     {
         internal class CecilAssembly : IXamlAssembly
         {
-            private Dictionary<string, IXamlType> _typeCache = new();
+            private readonly Dictionary<string, IXamlType> _typeCache = new();
             
             public CecilTypeSystem TypeSystem { get; }
             public AssemblyDefinition Assembly { get; }
@@ -20,15 +20,15 @@ namespace XamlX.TypeSystem
                 Assembly = assembly;
             }
 
-            public bool Equals(IXamlAssembly other) => other == this;
+            public bool Equals(IXamlAssembly? other) => other == this;
 
             public string Name => Assembly.Name.Name;
-            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+            private IReadOnlyList<IXamlCustomAttribute>? _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= Assembly.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeSystem.RootTypeResolveContext, ca)).ToList();
 
-            public IXamlType FindType(string fullName)
+            public IXamlType? FindType(string fullName)
             {
                 if (_typeCache.TryGetValue(fullName, out var rv))
                     return rv;

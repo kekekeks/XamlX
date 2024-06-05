@@ -1,5 +1,4 @@
 using System.Reflection.Emit;
-using XamlX.Transform;
 using XamlX.IL.Emitters;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
@@ -79,14 +78,11 @@ namespace XamlX.Ast
         {
             var res = context.Emit(Value, codeGen, Value.Type.GetClrType());
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
-            var supportsInitialize = supportInitType != null
-                                     && context.Configuration.TypeMappings.SupportInitialize
-                                         .IsAssignableFrom(Value.Type.GetClrType());
-            if (supportsInitialize)
+            if (supportInitType != null && supportInitType.IsAssignableFrom(Value.Type.GetClrType()))
             {
                 codeGen
                     .Dup()
-                    .EmitCall(supportInitType.FindMethod(m => m.Name == "BeginInit"));
+                    .EmitCall(supportInitType.GetMethod(m => m.Name == "BeginInit"));
             }
 
             return res;

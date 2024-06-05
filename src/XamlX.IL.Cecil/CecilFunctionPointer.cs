@@ -19,7 +19,7 @@ partial class CecilTypeSystem
         public string Namespace => _reference.Namespace;
         public bool IsPublic => true;
         public bool IsNestedPrivate => false;
-        public IXamlAssembly Assembly => null;
+        public IXamlAssembly? Assembly => null;
         public IReadOnlyList<IXamlProperty> Properties => Array.Empty<IXamlProperty>();
         public IReadOnlyList<IXamlEventInfo> Events => Array.Empty<IXamlEventInfo>();
         public IReadOnlyList<IXamlField> Fields => Array.Empty<IXamlField>();
@@ -34,20 +34,20 @@ partial class CecilTypeSystem
         public bool IsEnum => false;
         public bool IsInterface => false;
         public bool IsFunctionPointer => true;
-        public IXamlType GenericTypeDefinition => null;
-        public IXamlType ArrayElementType => null;
-        public IXamlType BaseType => null;
-        public IXamlType DeclaringType => null;
+        public IXamlType? GenericTypeDefinition => null;
+        public IXamlType? ArrayElementType => null;
+        public IXamlType? BaseType => null;
+        public IXamlType? DeclaringType => null;
 
         public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments) => throw new InvalidOperationException();
         public IXamlType MakeArrayType(int dimensions) => throw new InvalidOperationException();
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
 
-        public bool Equals(IXamlType other)
+        public bool Equals(IXamlType? other)
             => other is CecilFunctionPointerType typedOther &&
                TypeReferenceEqualityComparer.AreEqual(Reference, typedOther.Reference, CecilTypeComparisonMode.Exact);
 
-        public override bool Equals(object obj) => Equals(obj as IXamlType);
+        public override bool Equals(object? obj) => Equals(obj as IXamlType);
         public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         public bool IsAssignableFrom(IXamlType type) => Equals(type);
     }

@@ -22,7 +22,7 @@ internal class CecilTypeCache
     {
         if (!_typeReferenceCache.TryGetValue(reference, out var rv))
         {
-            TypeDefinition definition = null;
+            TypeDefinition? definition = null;
             try
             {
                 definition = reference.Resolve();

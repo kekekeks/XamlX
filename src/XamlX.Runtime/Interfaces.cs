@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace XamlX.Runtime
 {
@@ -10,8 +9,8 @@ namespace XamlX.Runtime
 
     public class XamlXmlNamespaceInfoV1
     {
-        public string ClrNamespace { get; set; }
-        public string ClrAssemblyName { get; set; }
+        public string ClrNamespace { get; set; } = null!;
+        public string ClrAssemblyName { get; set; } = null!;
     }
     
     public interface IXamlXmlNamespaceInfoProviderV1

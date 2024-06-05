@@ -11,12 +11,12 @@ namespace XamlX.Ast
 #endif
     class XamlAstXmlDirective : XamlAstNode, IXamlAstManipulationNode
     {
-        public string Namespace { get; set; }
+        public string? Namespace { get; set; }
         public string Name { get; set; }
         public List<IXamlAstValueNode> Values { get; set; }
 
         public XamlAstXmlDirective(IXamlLineInfo lineInfo,
-            string ns, string name, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
+            string? ns, string name, IEnumerable<IXamlAstValueNode> values) : base(lineInfo)
         {
             Namespace = ns;
             Name = name;
@@ -70,7 +70,7 @@ namespace XamlX.Ast
 
         public XamlAstObjectNode(IXamlLineInfo lineInfo, IXamlAstTypeReference type) : base(lineInfo)
         {
-            Type = type;
+            _type = type;
         }
 
         public IXamlAstTypeReference Type
@@ -111,7 +111,7 @@ namespace XamlX.Ast
         /// <param name="text">The node text.</param>
         /// <param name="preserveWhitespace">True if XAML whitespace normalization should NOT be applied to this text value (i.e. xml:space="preserve" or attribute values).</param>
         /// <param name="type">The type of the node.</param>
-        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, bool preserveWhitespace = false, IXamlType type = null) : base(lineInfo)
+        public XamlAstTextNode(IXamlLineInfo lineInfo, string text, bool preserveWhitespace = false, IXamlType? type = null) : base(lineInfo)
         {
             Text = text;
             PreserveWhitespace = preserveWhitespace;

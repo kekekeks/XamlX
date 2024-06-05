@@ -1,26 +1,25 @@
 using System;
 using System.Collections.Generic;
-using XamlX;
 using Xunit;
 
 namespace XamlParserTests
 {
     public class SimpleClass
     {
-        public string Test { get; set; }
-        public string Test2 { get; set; }
+        public string? Test { get; set; }
+        public string? Test2 { get; set; }
         [Content]
         public List<SimpleSubClass> Children { get; set; } = new List<SimpleSubClass>();
     }
 
     public class SimpleSubClass
     {
-        public string Test { get; set; }
+        public string? Test { get; set; }
     }
     
     public class ObjectWithAddChild : IAddChild
     {
-        public object Child { get; private set; }
+        public object? Child { get; private set; }
 
         void IAddChild.AddChild(object child)
         {
@@ -30,9 +29,9 @@ namespace XamlParserTests
 
     public class ObjectWithGenericAddChild : IAddChild<string>
     {
-        public object Child { get; private set; }
+        public object? Child { get; private set; }
 
-        public string Text { get; private set; }
+        public string? Text { get; private set; }
 
         void IAddChild.AddChild(object child)
         {
@@ -47,26 +46,26 @@ namespace XamlParserTests
 
     public class ObjectWithoutMatchingCtor
     {
-        public ObjectWithoutMatchingCtor(string param)
+        public ObjectWithoutMatchingCtor(string? param)
         {
             Arg = param;
         }
         
-        public string Arg { get; set; }
-        public string Prop { get; set; }
+        public string? Arg { get; set; }
+        public string? Prop { get; set; }
     }
     
     public class ObjectWithPrivateCtor
     {
-        private ObjectWithPrivateCtor(string param)
+        private ObjectWithPrivateCtor(string? param)
         {
             Arg = param;
         }
 
-        public static ObjectWithPrivateCtor Factory(string param) => new(param);
+        public static ObjectWithPrivateCtor Factory(string? param) => new(param);
         
-        public string Arg { get; set; }
-        public string Prop { get; set; }
+        public string? Arg { get; set; }
+        public string? Prop { get; set; }
     }
     
     public class BasicCompilerTests : CompilerTestBase
@@ -84,7 +83,7 @@ namespace XamlParserTests
     
 </SimpleClass>");
 
-            var res = populate ? new SimpleClass() : (SimpleClass) comp.create(null);
+            var res = populate ? new SimpleClass() : (SimpleClass) comp.create!(null);
             if (populate)
                 comp.populate(null, res);
             
@@ -99,7 +98,7 @@ namespace XamlParserTests
         {
             var comp = Compile(@"<ObjectWithAddChild xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</ObjectWithAddChild>");
 
-            var res = (ObjectWithAddChild)comp.create(null);
+            var res = (ObjectWithAddChild)comp.create!(null);
 
             comp.populate(null, res);
 
@@ -111,7 +110,7 @@ namespace XamlParserTests
         {
             var comp = Compile(@"<ObjectWithGenericAddChild xmlns='test'  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>123</ObjectWithGenericAddChild>");
 
-            var res = (ObjectWithGenericAddChild)comp.create(null);
+            var res = (ObjectWithGenericAddChild)comp.create!(null);
 
             comp.populate(null, res);
 

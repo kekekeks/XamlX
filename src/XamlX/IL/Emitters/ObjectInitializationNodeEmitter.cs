@@ -12,14 +12,13 @@ namespace XamlX.IL.Emitters
 #endif
     class ObjectInitializationNodeEmitter : IXamlAstLocalsNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult? Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlObjectInitializationNode init))
                 return null;
             var supportInitType = context.Configuration.TypeMappings.SupportInitialize;
             var supportsInitialize = supportInitType != null
-                                     && context.Configuration.TypeMappings.SupportInitialize
-                                         .IsAssignableFrom(init.Type);
+                                     && supportInitType.IsAssignableFrom(init.Type);
 
             if (supportsInitialize)
             {
@@ -30,7 +29,7 @@ namespace XamlX.IL.Emitters
                 if (!init.SkipBeginInit)
                     codeGen
                         .Emit(OpCodes.Dup)
-                        .EmitCall(supportInitType.FindMethod(m => m.Name == "BeginInit"));
+                        .EmitCall(supportInitType!.GetMethod(m => m.Name == "BeginInit"));
             }
             
             
@@ -44,7 +43,7 @@ namespace XamlX.IL.Emitters
                         .Stloc(local.Local)
                         .Ldloc(context.ContextLocal)
                         .Ldloc(local.Local)
-                        .EmitCall(context.RuntimeContext.PushParentMethod)
+                        .EmitCall(context.RuntimeContext.PushParentMethod!)
                         .Ldloc(local.Local);
             }
 
@@ -54,12 +53,12 @@ namespace XamlX.IL.Emitters
             {
                 codeGen
                     .Ldloc(context.ContextLocal)
-                    .EmitCall(context.RuntimeContext.PopParentMethod, true);
+                    .EmitCall(context.RuntimeContext.PopParentMethod!, true);
             }
             
             if (supportsInitialize)
                 codeGen
-                    .EmitCall(supportInitType.FindMethod(m => m.Name == "EndInit"));
+                    .EmitCall(supportInitType!.GetMethod(m => m.Name == "EndInit"));
             
             
             return XamlILNodeEmitResult.Void(1);

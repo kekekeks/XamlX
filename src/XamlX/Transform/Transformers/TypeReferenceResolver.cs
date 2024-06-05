@@ -12,12 +12,11 @@ namespace XamlX.Transform.Transformers
     {
         class TypeResolverCache
         {
-            public Dictionary<(string, string, bool), IXamlType> CacheDictionary =
-                new Dictionary<(string, string, bool), IXamlType>();
+            public Dictionary<(string?, string, bool), IXamlType> CacheDictionary = new();
         }
         
         public static XamlAstClrTypeReference ResolveType(AstTransformationContext context,
-            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments,
+            string? xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference>? typeArguments,
             IXamlLineInfo lineInfo)
         {
             if (typeArguments == null || typeArguments.Count == 0)
@@ -26,13 +25,11 @@ namespace XamlX.Transform.Transformers
                 var cacheKey = (xmlns, name, isMarkupExtension);
                 if (cache.CacheDictionary.TryGetValue(cacheKey, out var type))
                 {
-                    if (type == null)
-                        return null;
                     return new XamlAstClrTypeReference(lineInfo, type, isMarkupExtension);
                 }
 
                 var res = ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo);
-                cache.CacheDictionary[cacheKey] = res?.Type;
+                cache.CacheDictionary[cacheKey] = res.Type;
                 return res;
 
             }
@@ -41,17 +38,17 @@ namespace XamlX.Transform.Transformers
         }
 
         static XamlAstClrTypeReference ResolveTypeCore(AstTransformationContext context,
-            string xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference> typeArguments, IXamlLineInfo lineInfo)
+            string? xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference>? typeArguments, IXamlLineInfo lineInfo)
         {
             if (typeArguments == null)
                 typeArguments = new List<XamlAstXmlTypeReference>();
             var targs = typeArguments
                 .Select(ta =>
                     ResolveType(context, ta.XmlNamespace, ta.Name, false, ta.GenericArguments, lineInfo)
-                        ?.Type)
+                        .Type)
                 .ToList();
             
-            IXamlType Attempt(Func<string, IXamlType> cb, string xname)
+            IXamlType? Attempt(Func<string, IXamlType?> cb, string xname)
             {
                 var suffix = (typeArguments.Count != 0) ? ("`" + typeArguments.Count) : "";
                 if (isMarkupExtension)
@@ -60,7 +57,7 @@ namespace XamlX.Transform.Transformers
                     return cb(xname + suffix) ?? cb(xname + "Extension" + suffix);
             }
             
-            IXamlType found = null;
+            IXamlType? found = null;
             
             // Try to resolve from system
             if (xmlns == XamlNamespaces.Xaml2006)
@@ -76,7 +73,7 @@ namespace XamlX.Transform.Transformers
                         foreach (var resolvedNs in resolvedNamespaces)
                         {
                             var rname = resolvedNs.ClrNamespace + "." + formedName;
-                            IXamlType subRes = null;
+                            IXamlType? subRes = null;
                             if (resolvedNs.Assembly != null)
                                 subRes = resolvedNs.Assembly.FindType(rname);
                             else if (resolvedNs.AssemblyName != null)
@@ -126,8 +123,6 @@ namespace XamlX.Transform.Transformers
             if (node is XamlAstXmlTypeReference xmlref)
             {
                 var resolved = ResolveType(context, xmlref);
-                if (resolved == null)
-                    return node;
                 return resolved;
             }
 

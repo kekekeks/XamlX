@@ -5,8 +5,6 @@ using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
 
-#nullable enable
-
 namespace XamlX.Transform.Transformers;
 
 #if !XAMLX_INTERNAL

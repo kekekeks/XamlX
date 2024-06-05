@@ -1,6 +1,7 @@
 ﻿using Microsoft.Language.Xml;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -16,12 +17,12 @@ namespace XamlX.Parsers
     class GuiLabsXamlParser
     {
 
-        public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(string s, Dictionary<string, string>? compatibilityMappings = null)
         {
             return Parse(new StringReader(s), compatibilityMappings);
         }
 
-        public static XamlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(TextReader reader, Dictionary<string, string>? compatibilityMappings = null)
         {
             string data = reader.ReadToEnd();
             var buffer = new StringBuffer(data);
@@ -95,7 +96,7 @@ namespace XamlX.Parsers
 
             XamlAstXmlTypeReference GetTypeReference(IXmlElement el)
             {
-                (string ns, _, string name) = _ns.GetNsFromName(el.Name);
+                (string? ns, _, string name) = _ns.GetNsFromName(el.Name);
                 return new XamlAstXmlTypeReference(el.AsLi(_text), ns, name);
             }
 
@@ -105,10 +106,10 @@ namespace XamlX.Parsers
                         ? _ns.DefaultNamespace
                         : _ns.NsForPrefix(ns) ?? "");
 
-            static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, Func<string, string> prefixResolver)
+            static XamlAstXmlTypeReference ParseTypeName(IXamlLineInfo info, string typeName, Func<string, string?> prefixResolver)
             {
                 var pair = typeName.Trim().Split(new[] { ':' }, 2);
-                string xmlns, name;
+                string? xmlns, name;
                 if (pair.Length == 1)
                 {
                     xmlns = prefixResolver("");
@@ -130,7 +131,7 @@ namespace XamlX.Parsers
                 {
                     XamlAstXmlTypeReference Parse(CommaSeparatedParenthesesTreeParser.Node node)
                     {
-                        var rv = ParseTypeName(info, node.Value);
+                        var rv = ParseTypeName(info, node.Value!);
 
                         if (node.Children.Count != 0)
                             rv.GenericArguments = node.Children.Select(Parse).ToList();
@@ -227,7 +228,7 @@ namespace XamlX.Parsers
 
                 foreach (XmlAttributeSyntax attribute in newEl.AsSyntaxElement.Attributes)
                 {
-                    (string attrNs, string attrPrefix, string attrName) = _ns.GetNsFromName(attribute.Name);
+                    (string? attrNs, string attrPrefix, string attrName) = _ns.GetNsFromName(attribute.Name);
                     if (_ns.IsIgnorable(attrNs))
                     {
                         continue;
@@ -240,7 +241,7 @@ namespace XamlX.Parsers
                             throw ParseError(attribute.AsLi(_text),
                                 "xmlns declarations are only allowed on the root element to preserve memory");
                     }
-                    else if (attrPrefix == "xml" || attrNs.StartsWith("http://www.w3.org"))
+                    else if (attrPrefix == "xml" || attrNs?.StartsWith("http://www.w3.org") == true)
                     {
                         // Silently ignore all xml-parser related attributes
                     }
@@ -283,7 +284,7 @@ namespace XamlX.Parsers
                 {
                     if (child is IXmlElement newNode)
                     {
-                        (string nodeNs, string nodePrefix, string nodeName) = _ns.GetNsFromName(newNode.Name);
+                        (string? nodeNs, string nodePrefix, string nodeName) = _ns.GetNsFromName(newNode.Name);
 
                         if (TryGetNodeFromLeadingTrivia(newNode, out var leadingTrivia, spaceMode))
                         {
@@ -360,7 +361,7 @@ namespace XamlX.Parsers
                 return i;
             }
 
-            bool TryGetNodeFromLeadingTrivia(object node, out IXamlAstValueNode value, XmlSpace spaceMode)
+            bool TryGetNodeFromLeadingTrivia(object? node, [NotNullWhen(true)] out IXamlAstValueNode? value, XmlSpace spaceMode)
             {
                 if (node is SyntaxNode { HasLeadingTrivia: true } syntax
                     && TryParseText(syntax, syntax.GetLeadingTrivia(), out var trivia, spaceMode))
@@ -373,7 +374,7 @@ namespace XamlX.Parsers
                 return false;
             }
 
-            bool TryGetNodeFromTrailingTrivia(object node, out IXamlAstValueNode value, XmlSpace spaceMode)
+            bool TryGetNodeFromTrailingTrivia(object? node, [NotNullWhen(true)] out IXamlAstValueNode? value, XmlSpace spaceMode)
             {
                 if (node is SyntaxNode { HasTrailingTrivia: true } syntax
                     && TryParseText(syntax, syntax.GetTrailingTrivia(), out var trivia, spaceMode))
@@ -390,7 +391,7 @@ namespace XamlX.Parsers
             {
                 var lst = new List<IXamlAstValueNode>();
 
-                var children = (IEnumerable<object>)newParent.AsSyntaxElement?.Content ?? newParent.Elements;
+                var children = (IEnumerable<object>?)newParent.AsSyntaxElement?.Content ?? newParent.Elements;
                 foreach (var child in children)
                 {
                     if (child is IXmlElement newNode)
@@ -430,7 +431,7 @@ namespace XamlX.Parsers
                 return lst;
             }
 
-            public bool TryParseText(SyntaxNode element, SyntaxTriviaList trivia, out IXamlAstValueNode node, XmlSpace spaceMode)
+            public bool TryParseText(SyntaxNode element, SyntaxTriviaList trivia, [NotNullWhen(true)] out IXamlAstValueNode? node, XmlSpace spaceMode)
             {
                 if (trivia.Count > 0)
                 {

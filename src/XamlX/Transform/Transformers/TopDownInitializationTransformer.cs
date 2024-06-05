@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
@@ -13,7 +14,7 @@ namespace XamlX.Transform.Transformers
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             var usableAttrs = context.Configuration.TypeMappings.UsableDuringInitializationAttributes;
-            if (!(usableAttrs?.Count > 0))
+            if (usableAttrs.Count == 0)
                 return node;
             bool UsableDuringInitialization(IXamlType type)
             {
@@ -32,7 +33,9 @@ namespace XamlX.Transform.Transformers
             }
 
             bool TryConvert(
-                IXamlAstValueNode checkedNode, out IXamlAstValueNode value, out IXamlAstManipulationNode deferred)
+                IXamlAstValueNode checkedNode,
+                [NotNullWhen(true)] out IXamlAstValueNode? value,
+                [NotNullWhen(true)] out IXamlAstManipulationNode? deferred)
             {
                 value = null;
                 deferred = null;

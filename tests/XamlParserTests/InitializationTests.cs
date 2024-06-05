@@ -2,21 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading;
+using System.Diagnostics.CodeAnalysis;
 using Xunit;
 
 namespace XamlParserTests
 {
-
-    
-    
     public class InitializationTestsClass
     {
-        private string _prop;
-        private InitializationTestsClass _child;
+        private string? _prop;
+        private InitializationTestsClass? _child;
 
         [ThreadStatic]
-        public static List<string> Events;
+        public static List<string>? Events;
         [ThreadStatic]
         public static int NextId;
 
@@ -33,7 +30,7 @@ namespace XamlParserTests
 
         public void AddEvent(string ev)
         {
-            Events.Add($"{Id}:{ev}");
+            Events!.Add($"{Id}:{ev}");
         }
         
         public InitializationTestsClass()
@@ -41,14 +38,14 @@ namespace XamlParserTests
             Id = ++NextId;
             Children.CollectionChanged += (_, ev) =>
             {
-                foreach (var ni in ev.NewItems)
+                foreach (var ni in ev.NewItems ?? Array.Empty<object>())
                 {
                     AddEvent(InitializationTests.ChildAddedEvent + ":" + ((InitializationTestsClass) ni).Id);
                 }
             };
         }
         
-        public string Property
+        public string? Property
         {
             get => _prop;
             set
@@ -57,14 +54,14 @@ namespace XamlParserTests
                 AddEvent(InitializationTests.PropertySetEvent);
             }
         }
-        
-        public InitializationTestsClass Child
+
+        public InitializationTestsClass? Child
         {
             get => _child;
             set
             {
                 _child = value;
-                AddEvent(InitializationTests.ChildAddedEvent + ":" + value.Id);
+                AddEvent(InitializationTests.ChildAddedEvent + ":" + value?.Id);
             }
         }
         

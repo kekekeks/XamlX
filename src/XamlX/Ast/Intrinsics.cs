@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Runtime.Serialization;
 using XamlX.Emit;
 using XamlX.IL;
 using XamlX.Transform;
@@ -47,7 +47,7 @@ namespace XamlX.Ast
 
         public override void VisitChildren(Visitor visitor)
         {
-            Value = Value.Visit(visitor) as IXamlAstTypeReference;
+            Value = (IXamlAstTypeReference)Value.Visit(visitor);
         }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
@@ -72,18 +72,18 @@ namespace XamlX.Ast
 #endif
     class XamlStaticExtensionNode : XamlAstNode, IXamlAstValueNode, IXamlAstEmitableNode<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlStaticExtensionNode(XamlAstObjectNode lineInfo, IXamlAstTypeReference targetType, string member) : base(lineInfo)
+        public XamlStaticExtensionNode(XamlAstObjectNode lineInfo, IXamlAstTypeReference? targetType, string member) : base(lineInfo)
         {
             TargetType = targetType;
             Member = member;
         }
 
         public string Member { get; set; }
-        public IXamlAstTypeReference TargetType { get; set; }
+        public IXamlAstTypeReference? TargetType { get; set; }
 
         public override void VisitChildren(Visitor visitor)
         {
-            TargetType = (IXamlAstTypeReference) TargetType.Visit(visitor);
+            TargetType = (IXamlAstTypeReference?) TargetType?.Visit(visitor);
         }
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
@@ -92,8 +92,9 @@ namespace XamlX.Ast
             switch (member)
             {
                 case IXamlProperty prop:
-                    codeGen.Emit(OpCodes.Call, prop.Getter);
-                    return XamlILNodeEmitResult.Type(0, prop.Getter.ReturnType);
+                    var getter = prop.Getter ?? throw new InvalidOperationException($"Property {prop} doesn't have a getter");
+                    codeGen.Emit(OpCodes.Call, getter);
+                    return XamlILNodeEmitResult.Type(0, getter.ReturnType);
                 case IXamlField field:
                 {
                     if (field.IsLiteral)
@@ -109,11 +110,11 @@ namespace XamlX.Ast
             }
         }
 
-        internal IXamlMember ResolveMember(bool throwOnUnknown)
+        internal IXamlMember? ResolveMember(bool throwOnUnknown)
         {
             var type = TargetType?.GetClrType();
             var member = type?.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
-                   (IXamlMember)type?.GetAllProperties().FirstOrDefault(p =>
+                   (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
                        p.Name == Member && p.Getter is { IsPublic: true, IsStatic: true });
 
             if (member is IXamlProperty or IXamlField)
@@ -179,7 +180,7 @@ namespace XamlX.Ast
 
         public XamlRootObjectNode(XamlAstObjectNode root) : base(root)
         {
-            Type = root.Type ?? throw new InvalidOperationException("XamlRootObjectNode.Type cannot be null.");
+            _type = root.Type ?? throw new InvalidOperationException("XamlRootObjectNode.Type cannot be null.");
         }
 
         public IXamlAstTypeReference Type
@@ -190,9 +191,12 @@ namespace XamlX.Ast
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
+            Debug.Assert(context.RuntimeContext.RootObjectField is not null);
+            var rootObjectField = context.RuntimeContext.RootObjectField;
+
             codeGen
                 .Ldloc(context.ContextLocal)
-                .Ldfld(context.RuntimeContext.RootObjectField);
+                .Ldfld(rootObjectField!);
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
 
@@ -216,9 +220,12 @@ namespace XamlX.Ast
 
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
+            Debug.Assert(context.RuntimeContext.IntermediateRootObjectField is not null);
+            var intermediateRootObjectField = context.RuntimeContext.IntermediateRootObjectField!;
+
             codeGen
                 .Ldloc(context.ContextLocal)
-                .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
+                .Ldfld(intermediateRootObjectField);
             return XamlILNodeEmitResult.Type(0, Type.GetClrType());
         }
 
@@ -251,7 +258,7 @@ namespace XamlX.Ast
             context.Emit(Value, codeGen, Method.DeclaringType);
             codeGen
                 .Ldftn(Method)
-                .Newobj(DelegateType.Constructors.FirstOrDefault(ct =>
+                .Newobj(DelegateType.Constructors.First(ct =>
                     ct.Parameters.Count == 2 && ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
             return XamlILNodeEmitResult.Type(0, DelegateType);
         }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,7 +7,6 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using XamlX.Emit;
 using XamlX.IL;
-using XamlX.Transform;
 using XamlX.TypeSystem;
 
 namespace BenchmarksCompiler
@@ -21,7 +19,8 @@ namespace BenchmarksCompiler
             var refsPath = target + ".refs";
             var refs = File.ReadAllLines(refsPath).Concat(new[] {target});
             var typeSystem = new CecilTypeSystem(refs, target);
-            var asm = typeSystem.GetAssembly(typeSystem.FindAssembly("Benchmarks"));
+            var xamlAssembly = typeSystem.FindAssembly("Benchmarks") ?? throw new InvalidOperationException("Benchmarks assembly not found");
+            var asm = typeSystem.GetAssembly(xamlAssembly);
             var config = Benchmarks.BenchmarksXamlXConfiguration.Configure(typeSystem);
             var loadBench = asm.MainModule.Types.First(t => t.Name == "LoadBenchmark");
             var baseMethod = loadBench.Methods.First(m => m.Name == "LoadXamlPrecompiled");
