@@ -8,7 +8,7 @@ namespace XamlX.TypeSystem
         {
             public TypeReference Reference { get; }
 
-            public UnresolvedCecilType(TypeReference reference) : base("Unresolved:" + reference.FullName)
+            public UnresolvedCecilType(TypeReference reference) : base(reference.FullName)
             {
                 Reference = reference;
             }
