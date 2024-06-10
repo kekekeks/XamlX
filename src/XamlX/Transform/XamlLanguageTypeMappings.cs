@@ -13,9 +13,7 @@ namespace XamlX.Transform
             ServiceProvider = typeSystem.GetType("System.IServiceProvider");
             TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
             SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
-            var tconv = typeSystem.GetType("System.ComponentModel.TypeConverterAttribute");
-            if (tconv != null)
-                TypeConverterAttributes.Add(tconv);
+            TypeConverterAttributes.Add(typeSystem.GetType("System.ComponentModel.TypeConverterAttribute"));
         }
 
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem, bool useDefault)
@@ -25,9 +23,7 @@ namespace XamlX.Transform
                 ServiceProvider = typeSystem.GetType("System.IServiceProvider");
                 TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
                 SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
-                var tconv = typeSystem.GetType("System.ComponentModel.TypeConverterAttribute");
-                if (tconv != null)
-                    TypeConverterAttributes.Add(tconv);
+                TypeConverterAttributes.Add(typeSystem.GetType("System.ComponentModel.TypeConverterAttribute"));
             }
         }
 
@@ -37,24 +33,24 @@ namespace XamlX.Transform
         public List<IXamlType> WhitespaceSignificantCollectionAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> TrimSurroundingWhitespaceAttributes { get; set; } = new List<IXamlType>();
         public List<IXamlType> TypeConverterAttributes { get; set; } = new List<IXamlType>();
-        public IXamlType ServiceProvider { get; set; }
-        public IXamlType TypeDescriptorContext { get; set; }
-        public IXamlType SupportInitialize { get; set; }
-        public IXamlType ProvideValueTarget { get; set; }
-        public IXamlType RootObjectProvider { get; set; }
-        public IXamlType ParentStackProvider { get; set; }
-        public IXamlType XmlNamespaceInfoProvider { get; set; }
-        public IXamlType UriContextProvider { get; set; }
-        public IXamlType IAddChild { get; set; }
-        public IXamlType IAddChildOfT { get; set; }
+        public IXamlType ServiceProvider { get; set; } = null!;
+        public IXamlType? TypeDescriptorContext { get; set; }
+        public IXamlType? SupportInitialize { get; set; }
+        public IXamlType? ProvideValueTarget { get; set; }
+        public IXamlType? RootObjectProvider { get; set; }
+        public IXamlType? ParentStackProvider { get; set; }
+        public IXamlType? XmlNamespaceInfoProvider { get; set; }
+        public IXamlType? UriContextProvider { get; set; }
+        public IXamlType? IAddChild { get; set; }
+        public IXamlType? IAddChildOfT { get; set; }
 
-        public IXamlCustomAttributeResolver CustomAttributeResolver { get; set; }
+        public IXamlCustomAttributeResolver? CustomAttributeResolver { get; set; }
         
         /// <summary>
         /// Expected signature:
         /// static IServiceProvider InnerServiceProviderFactory(IServiceProvider self);
         /// </summary>
-        public IXamlMethod InnerServiceProviderFactoryMethod { get; set; }
+        public IXamlMethod? InnerServiceProviderFactoryMethod { get; set; }
         /// <summary>
         /// Expected signature:
         /// <code>
@@ -65,11 +61,11 @@ namespace XamlX.Transform
         /// static *any-non-void* DeferredTransformationFactory(delegate*&lt;IServiceProvider, object&gt;, IServiceProvider provider);
         /// </code>
         /// </summary>
-        public IXamlMethod DeferredContentExecutorCustomization { get; set; }
+        public IXamlMethod? DeferredContentExecutorCustomization { get; set; }
         public List<IXamlType> DeferredContentPropertyAttributes { get; set; } = new List<IXamlType>();
-        public IXamlType DeferredContentExecutorCustomizationDefaultTypeParameter { get; set; }
+        public IXamlType? DeferredContentExecutorCustomizationDefaultTypeParameter { get; set; }
         public List<string> DeferredContentExecutorCustomizationTypeParameterDeferredContentAttributePropertyNames { get; set; } = new List<string>();
-        public string RootObjectProviderIntermediateRootPropertyName { get; set; }
+        public string? RootObjectProviderIntermediateRootPropertyName { get; set; }
     }
 
 #if !XAMLX_INTERNAL
@@ -77,7 +73,7 @@ namespace XamlX.Transform
 #endif
     interface IXamlCustomAttributeResolver
     {
-        IXamlCustomAttribute GetCustomAttribute(IXamlType type, IXamlType attributeType);
-        IXamlCustomAttribute GetCustomAttribute(IXamlProperty property, IXamlType attributeType);
+        IXamlCustomAttribute? GetCustomAttribute(IXamlType type, IXamlType attributeType);
+        IXamlCustomAttribute? GetCustomAttribute(IXamlProperty property, IXamlType attributeType);
     }
 }

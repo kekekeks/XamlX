@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
-using XamlX.Ast;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -12,20 +10,22 @@ namespace XamlX.Transform
 #endif
     static class NamespaceInfoHelper
     {
-        public class NamespaceResolveResult
+        public class NamespaceResolveResult(string clrNamespace)
         {
-            public string ClrNamespace { get; set; }
-            public IXamlAssembly Assembly { get; set; }
-            public string AssemblyName { get; set; }
+            public string ClrNamespace { get; set; } = clrNamespace;
+            public IXamlAssembly? Assembly { get; set; }
+            public string? AssemblyName { get; set; }
         }
         
-        public static List<NamespaceResolveResult> TryResolve(TransformerConfiguration config, string xmlns)
+        public static List<NamespaceResolveResult>? TryResolve(TransformerConfiguration config, string? xmlns)
         {
+            if (xmlns is null)
+                return null;
+
             if (config.XmlnsMappings.Namespaces.TryGetValue(xmlns, out var lst))
             {
-                return lst.Select(p => new NamespaceResolveResult
+                return lst.Select(p => new NamespaceResolveResult(p.ns)
                 {
-                    ClrNamespace = p.ns,
                     Assembly = p.asm
                 }).ToList();
             }
@@ -39,7 +39,7 @@ namespace XamlX.Transform
                 var ns = xmlns.Substring(clrNamespace.Length);
                 
                 var indexOfAssemblyPrefix = ns.IndexOf(assemblyNamePrefix, prefixStringComparison);
-                string asm = config.DefaultAssembly?.Name;
+                string? asm = config.DefaultAssembly?.Name;
                 if (indexOfAssemblyPrefix != -1)
                 {
                     asm = ns.Substring(indexOfAssemblyPrefix + assemblyNamePrefix.Length).Trim();
@@ -47,9 +47,8 @@ namespace XamlX.Transform
                 }
                 return new List<NamespaceResolveResult>
                 {
-                    new NamespaceResolveResult
+                    new NamespaceResolveResult(ns)
                     {
-                        ClrNamespace = ns,
                         AssemblyName = asm
                     }
                 };
@@ -61,10 +60,7 @@ namespace XamlX.Transform
                 var ns = xmlns.Substring(usingPrefix.Length);
                 return new List<NamespaceResolveResult>
                 {
-                    new NamespaceResolveResult
-                    {
-                        ClrNamespace = ns
-                    }
+                    new NamespaceResolveResult(ns)
                 };
             }
 

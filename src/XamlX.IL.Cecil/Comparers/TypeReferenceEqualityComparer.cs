@@ -17,7 +17,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		_comparisonMode = comparisonMode;
 	}
 
-	public override bool Equals(TypeReference x, TypeReference y)
+	public override bool Equals(TypeReference? x, TypeReference? y)
 	{
 		return AreEqual(x, y, _comparisonMode);
 	}
@@ -27,7 +27,7 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
-	public static bool AreEqual(TypeReference a, TypeReference b,
+	public static bool AreEqual(TypeReference? a, TypeReference? b,
 		CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))

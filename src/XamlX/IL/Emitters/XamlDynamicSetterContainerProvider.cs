@@ -19,9 +19,9 @@ namespace XamlX.IL.Emitters
 #endif
     class DefaultXamlDynamicSetterContainerProvider : IXamlDynamicSetterContainerProvider
     {
-        private readonly IXamlDynamicSetterContainer _sharedContainer;
+        private readonly IXamlDynamicSetterContainer? _sharedContainer;
 
-        public DefaultXamlDynamicSetterContainerProvider(IXamlTypeBuilder<IXamlILEmitter> sharedContainerType)
+        public DefaultXamlDynamicSetterContainerProvider(IXamlTypeBuilder<IXamlILEmitter>? sharedContainerType)
             => _sharedContainer = sharedContainerType is null
                 ? null
                 : new DefaultXamlDynamicSetterContainer(sharedContainerType, XamlVisibility.Public);
@@ -33,7 +33,7 @@ namespace XamlX.IL.Emitters
                 ? GetOrCreatePrivateContainer(context)
                 : _sharedContainer;
 
-        private static bool IsTypeEffectivelyPrivate(IXamlType xamlType)
+        private static bool IsTypeEffectivelyPrivate(IXamlType? xamlType)
         {
             for (var type = xamlType; type is not null; type = type.DeclaringType)
             {

@@ -11,7 +11,7 @@ namespace XamlParserTests
 {
     public class InitPropertiesTestClass
     {
-        public string Prop1 { get; init; }
+        public string? Prop1 { get; init; }
         public int Prop2 { get; init; }
     }
 

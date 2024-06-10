@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.TypeSystem;
@@ -13,14 +12,9 @@ namespace XamlX.IL
     class CheckingILEmitter : IXamlILEmitter
     {
         private readonly IXamlILEmitter _inner;
-
-        private Dictionary<IXamlLabel, string> _unmarkedLabels =
-            new Dictionary<IXamlLabel, string>();
-
-        private Dictionary<IXamlLabel, Instruction> _labels =
-            new Dictionary<IXamlLabel, Instruction>();
-        
-        private List<IXamlLabel> _labelsToMarkOnNextInstruction = new List<IXamlLabel>();
+        private readonly Dictionary<IXamlLabel, string?> _unmarkedLabels = new();
+        private readonly Dictionary<IXamlLabel, Instruction> _labels = new();
+        private readonly List<IXamlLabel> _labelsToMarkOnNextInstruction = [];
         private bool _paused;
 
         public CheckingILEmitter(IXamlILEmitter inner)
@@ -32,14 +26,14 @@ namespace XamlX.IL
         {
             public int Offset { get; }
             public OpCode Opcode { get; set; }
-            public object Operand { get; }
+            public object? Operand { get; }
             public int BalanceChange { get; set; }
-            public IXamlLabel JumpToLabel { get; set; }
-            public Instruction JumpToInstruction { get; set; }
+            public IXamlLabel? JumpToLabel { get; set; }
+            public Instruction? JumpToInstruction { get; set; }
             public int? ExpectedBalance { get; set; }
             public bool IsExplicit { get; set; }
 
-            public Instruction(int offset, OpCode opcode, object operand)
+            public Instruction(int offset, OpCode opcode, object? operand)
             {
                 Offset = offset;
                 Opcode = opcode;
@@ -96,7 +90,7 @@ namespace XamlX.IL
             {StackBehaviour.Popref_popi_pop1, -3}
         };
 
-        static int GetInstructionBalance(OpCode code, object operand)
+        static int GetInstructionBalance(OpCode code, object? operand)
         {
             return GetInstructionPopBalance(code, operand) + GetInstructionPushBalance(code, operand);
         }
@@ -109,7 +103,7 @@ namespace XamlX.IL
                 throw new Exception("Don't know how to track stack for " + op);
         }
         
-        static int GetInstructionPopBalance(OpCode code, object operand)
+        static int GetInstructionPopBalance(OpCode code, object? operand)
         {
             var method = operand as IXamlMethod;
             var ctor = operand as IXamlConstructor;
@@ -136,7 +130,7 @@ namespace XamlX.IL
             return stackBalance;
         }
         
-        static int GetInstructionPushBalance(OpCode code, object operand)
+        static int GetInstructionPushBalance(OpCode code, object? operand)
         {
             var method = operand as IXamlMethod;
             var ctor = operand as IXamlConstructor;
@@ -178,7 +172,7 @@ namespace XamlX.IL
             (_inner as CheckingILEmitter)?.ExplicitStack(change);
         }
         
-        void Track(OpCode code, object operand)
+        void Track(OpCode code, object? operand)
         {
             if (_paused)
                 return;
@@ -315,7 +309,7 @@ namespace XamlX.IL
 
         public XamlLocalsPool LocalsPool => _inner.LocalsPool;
 
-        string VerifyAndGetBalanceAtExit(int expectedBalance, bool expectReturn)
+        string? VerifyAndGetBalanceAtExit(int expectedBalance, bool expectReturn)
         {
             if (_instructions.Count == 0)
             {
@@ -345,7 +339,7 @@ namespace XamlX.IL
             while (toInspect.Count > 0)
             {
                 var ip = toInspect.Pop();
-                var currentBalance = _instructions[ip].ExpectedBalance.Value;
+                var currentBalance = _instructions[ip].ExpectedBalance!.Value;
                 while (ip < _instructions.Count)
                 {
                     var op = _instructions[ip];
@@ -409,7 +403,7 @@ namespace XamlX.IL
         }
 
 
-        public string Check(int expectedBalance, bool expectReturn)
+        public string? Check(int expectedBalance, bool expectReturn)
         {
             if (_unmarkedLabels.Count != 0)
                 return "Code block has unmarked labels defined at:\n" +

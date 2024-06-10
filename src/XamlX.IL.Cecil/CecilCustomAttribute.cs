@@ -18,14 +18,14 @@ namespace XamlX.TypeSystem
                 Data = data;
             }
 
-            public bool Equals(IXamlCustomAttribute other) => other is CecilCustomAttribute ca && ca.Data == Data;
+            public bool Equals(IXamlCustomAttribute? other) => other is CecilCustomAttribute ca && ca.Data == Data;
 
-            private IXamlType _type;
+            private IXamlType? _type;
             public IXamlType Type => _type ??= _typeResolveContext.Resolve(Data.AttributeType);
 
-            private List<object> _parameters;
+            private List<object?>? _parameters;
 
-            object ConvertValue(object value)
+            object? ConvertValue(object? value)
             {
                 if (value is TypeReference tr)
                     return _typeResolveContext.Resolve(tr);
@@ -36,18 +36,18 @@ namespace XamlX.TypeSystem
                 return value;
             }
 
-            public List<object> Parameters =>
+            public List<object?> Parameters =>
                 _parameters ??= Data.ConstructorArguments.Select(d => ConvertValue(d.Value)).ToList();
 
-            private Dictionary<string, object> _properties;
+            private Dictionary<string, object?>? _properties;
 
-            public Dictionary<string, object> Properties
+            public Dictionary<string, object?> Properties
             {
                 get
                 {
                     if (_properties is null)
                     {
-                        Dictionary<string, object> properties = new Dictionary<string, object>();
+                        var properties = new Dictionary<string, object?>();
                         foreach (var prop in Data.Properties)
                         {
                             properties.Add(prop.Name, ConvertValue(prop.Argument.Value));

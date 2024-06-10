@@ -18,8 +18,12 @@ public abstract class BaseTest
     /// </summary>
     /// <param name="fullName"></param>
     /// <returns></returns>
-    private static string GetNormalizedFullName(string fullName)
+    private static string? GetNormalizedFullName(string? fullName)
     {
+        if (fullName is null)
+        {
+            return null;
+        }
         if (!_cleanedFullName.TryGetValue(fullName, out var cleanedName))
         {
             cleanedName = fullName;
@@ -93,12 +97,12 @@ public abstract class BaseTest
         var testTypeType = TypeSystem.GetType("TypeSystemTest.Models.TestType");
         var stringType = TypeSystem.GetType("System.String");
         var genericStringField = testTypeType.Fields.First(x => x.Name == nameof(TestType.GenericStringField));
-        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizedFullName(genericStringField.FieldType.FullName));
-        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizedFullName(genericStringField.FieldType.BaseType.FullName));
-        var genericInterfceType = genericStringField.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
-        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizedFullName(genericInterfceType.FullName));
+        Assert.Equal("TypeSystemTest.Models.GenericType`1<System.String>", GetNormalizedFullName(genericStringField?.FieldType.FullName));
+        Assert.Equal("TypeSystemTest.Models.GenericBaseType`1<System.String>", GetNormalizedFullName(genericStringField?.FieldType.BaseType?.FullName));
+        var genericInterfceType = genericStringField?.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
+        Assert.Equal("TypeSystemTest.Models.IGenericInterface`1<System.String>", GetNormalizedFullName(genericInterfceType?.FullName));
 
-        var genericSomeMethod = genericStringField.FieldType.Methods.First(x => x.Name == "SomeMethod");
+        var genericSomeMethod = genericStringField!.FieldType.Methods.First(x => x.Name == "SomeMethod");
         Assert.Equal("System.String", genericSomeMethod.ReturnType.FullName);
         Assert.Equal("System.String", genericSomeMethod.Parameters[0].FullName);
         Assert.Empty(genericStringField.FieldType.Methods.First(x => x.Name == "SomeMethod").Parameters[0].GenericArguments);
@@ -108,8 +112,8 @@ public abstract class BaseTest
 
         var p = genericStringField.FieldType.Properties.First(x => x.Name == "Property");
         Assert.Equal("System.String", p.PropertyType.FullName);
-        Assert.Equal("System.String", p.Getter.ReturnType.FullName);
-        Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
+        Assert.Equal("System.String", p.Getter?.ReturnType.FullName);
+        Assert.Equal("System.String", p.Setter?.Parameters[0].FullName);
 
         var genericSubMethodGenericDefinition = testTypeType.FindMethod(m => m.IsGenericMethodDefinition && m.Name == nameof(TestType.Sub) && m.GenericParameters.Count == 1);
         
@@ -181,14 +185,14 @@ public abstract class BaseTest
     {
         var wut = TypeSystem.GetType("TypeSystemTest.Models.TestType");
         var af = wut.Fields.First(x => x.Name == nameof(TestType.ArrayElementType));
-        Assert.True(af.FieldType?.IsArray);
-        Assert.Equal("System.String", af.FieldType.ArrayElementType?.FullName);
+        Assert.True(af?.FieldType.IsArray);
+        Assert.Equal("System.String", af!.FieldType.ArrayElementType?.FullName);
     }
 
     [Fact]
     public void Dictionary_Not_Assignable_From_String()
     {
-        var stringType = TypeSystem.FindType("System.String");
+        var stringType = TypeSystem.GetType("System.String");
         var dictBase = TypeSystem.GetType("System.Collections.Generic.IDictionary`2");
         var stringStringDict = dictBase.MakeGenericType(stringType, stringType);
 

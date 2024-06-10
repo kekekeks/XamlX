@@ -14,7 +14,7 @@ namespace XamlX.Parsers
 #endif
     class XDocumentXamlParserSettings
     {
-        public Dictionary<string, string> CompatibleNamespaces { get; set; }
+        public Dictionary<string, string>? CompatibleNamespaces { get; set; }
     }
 
 #if !XAMLX_INTERNAL
@@ -23,12 +23,12 @@ namespace XamlX.Parsers
     class XDocumentXamlParser
     {
 
-        public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(string s, Dictionary<string, string>? compatibilityMappings = null)
         {
             return Parse(new StringReader(s), compatibilityMappings);
         }
 
-        public static XamlDocument Parse(TextReader reader, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(TextReader reader, Dictionary<string, string>? compatibilityMappings = null)
         {
             var xr = XmlReader.Create(reader, new XmlReaderSettings
             {
@@ -36,7 +36,7 @@ namespace XamlX.Parsers
             });
             xr = new CompatibleXmlReader(xr, compatibilityMappings ?? new Dictionary<string, string>());
 
-            var root = XDocument.Load(xr, LoadOptions.SetLineInfo).Root;
+            var root = XDocument.Load(xr, LoadOptions.SetLineInfo).Root!;
 
             var doc = new XamlDocument
             {
@@ -107,7 +107,7 @@ namespace XamlX.Parsers
                 {
                     XamlAstXmlTypeReference Parse(CommaSeparatedParenthesesTreeParser.Node node)
                     {
-                        var rv = ParseTypeName(info, node.Value, xel);
+                        var rv = ParseTypeName(info, node.Value!, xel);
 
                         if (node.Children.Count != 0)
                             rv.GenericArguments = node.Children.Select(Parse).ToList();
@@ -275,7 +275,7 @@ namespace XamlX.Parsers
                 return i;
             }
 
-            IXamlAstValueNode ParseValueNode(XNode node, XmlSpace spaceMode)
+            IXamlAstValueNode? ParseValueNode(XNode node, XmlSpace spaceMode)
             {
                 if (node is XElement el)
                     return ParseNewInstance(el, false, spaceMode);

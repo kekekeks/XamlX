@@ -14,27 +14,31 @@ namespace XamlX.Emit
     abstract class XamlEmitContext<TBackendEmitter, TEmitResult> : XamlContextBase
         where TEmitResult : IXamlEmitResult
     {
-        public IFileSource File { get; }
+        private IXamlLocal? _contextLocal;
+
+        public IFileSource? File { get; }
         public List<object> Emitters { get; }
 
         private readonly List<Action> _afterEmitCallbacks = new();
-        private IXamlAstNode _currentNode;
+        private IXamlAstNode? _currentNode;
 
         public TransformerConfiguration Configuration { get; }
         public XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> EmitMappings { get; }
         public XamlRuntimeContext<TBackendEmitter, TEmitResult> RuntimeContext { get; }
-        public IXamlLocal ContextLocal { get; }
         public IXamlTypeBuilder<TBackendEmitter> DeclaringType { get; }
         public TBackendEmitter Emitter { get; }
+
+        public IXamlLocal ContextLocal
+            => _contextLocal ?? throw new InvalidOperationException("The current emit context doesn't supply a runtime context");
 
         public XamlEmitContext(
             TBackendEmitter emitter,
             TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
-            IXamlLocal contextLocal,
+            IXamlLocal? contextLocal,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
-            IFileSource file,
+            IFileSource? file,
             IEnumerable<object> emitters)
         {
             File = file;
@@ -42,12 +46,12 @@ namespace XamlX.Emit
             Emitters = emitters.ToList();
             Configuration = configuration;
             RuntimeContext = runtimeContext;
-            ContextLocal = contextLocal;
+            _contextLocal = contextLocal;
             DeclaringType = declaringType;
             EmitMappings = emitMappings;
         }
 
-        public TEmitResult Emit(IXamlAstNode value, TBackendEmitter codeGen, IXamlType expectedType)
+        public TEmitResult Emit(IXamlAstNode value, TBackendEmitter codeGen, IXamlType? expectedType)
         {
             TEmitResult res;
             if (_currentNode != null)
@@ -141,10 +145,10 @@ namespace XamlX.Emit
             return foundEmitter;
         }
 
-        private TEmitResult EmitCore(IXamlAstNode value, TBackendEmitter codeGen, IXamlType expectedType)
+        private TEmitResult EmitCore(IXamlAstNode value, TBackendEmitter codeGen, IXamlType? expectedType)
         {
             TEmitResult res = EmitNode(value, codeGen);
-            IXamlType returnedType = res.ReturnType;
+            IXamlType? returnedType = res.ReturnType;
 
             if (returnedType != null || expectedType != null)
             {
@@ -156,9 +160,9 @@ namespace XamlX.Emit
                     throw new XamlLoadException(
                         $"Emit of node {value} resulted in void while caller expected {expectedType.GetFqn()}", value);
 
-                if (!returnedType.Equals(expectedType))
+                if (!returnedType!.Equals(expectedType!))
                 {
-                    EmitConvert(value, codeGen, expectedType, returnedType);
+                    EmitConvert(value, codeGen, expectedType!, returnedType);
                 }
             }
 
@@ -170,7 +174,7 @@ namespace XamlX.Emit
 #if XAMLX_DEBUG
             var res = EmitNodeCore(value, codeGen);
 #else
-            TEmitResult res;
+            TEmitResult? res;
             try
             {
                 res = EmitNodeCore(value, codeGen, out var foundEmitter);
@@ -186,14 +190,14 @@ namespace XamlX.Emit
                     "Internal compiler error while emitting node " + value + ":\n" + e, value);
             }
 #endif
-            return res;
+            return res!;
         }
 
         protected abstract void EmitConvert(IXamlAstNode value, TBackendEmitter codeGen, IXamlType expectedType, IXamlType returnedType);
 
-        protected virtual TEmitResult EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
+        protected virtual TEmitResult? EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
         {
-            TEmitResult res = default;
+            TEmitResult? res = default;
             foreach (var e in Emitters)
             {
                 if (e is IXamlAstNodeEmitter<TBackendEmitter, TEmitResult> ve)
@@ -234,7 +238,7 @@ namespace XamlX.Emit
 #endif
     interface IXamlEmitResult
     {
-        IXamlType ReturnType { get; }
+        IXamlType? ReturnType { get; }
         bool Valid { get; }
     }
 
@@ -244,7 +248,7 @@ namespace XamlX.Emit
     interface IXamlAstNodeEmitter<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(IXamlAstNode node, XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult? Emit(IXamlAstNode node, XamlEmitContext<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL

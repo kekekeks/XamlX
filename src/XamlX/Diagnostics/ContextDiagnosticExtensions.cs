@@ -7,8 +7,6 @@ using System.Xml;
 using XamlX.Ast;
 using XamlX.Transform;
 
-#nullable enable
-
 namespace XamlX;
 
 #if NET6_0_OR_GREATER

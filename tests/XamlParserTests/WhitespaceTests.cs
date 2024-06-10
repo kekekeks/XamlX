@@ -415,7 +415,7 @@ namespace XamlParserTests
             
         }
 
-        private object TestContentControlContent(string rawContent, bool xmlPreserve = false)
+        private object? TestContentControlContent(string rawContent, bool xmlPreserve = false)
         {
             var xmlSpaceAttr = xmlPreserve ? " xml:space='preserve'" : "";
             var control =
@@ -458,7 +458,7 @@ namespace XamlParserTests
 
     public class Control
     {
-        public string StrProp { get; set; }
+        public string? StrProp { get; set; }
 
         public bool BoolProp { get; set; }
     }
@@ -466,7 +466,7 @@ namespace XamlParserTests
     public class ContentControl : Control
     {
         [Content]
-        public object Content { get; set; }
+        public object? Content { get; set; }
     }
 
     public class MixedContentControl
@@ -506,7 +506,7 @@ namespace XamlParserTests
 
     public class Run : Inline
     {
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 
     public class InlineWithInlines : Inline

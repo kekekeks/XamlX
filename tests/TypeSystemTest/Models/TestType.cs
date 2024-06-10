@@ -2,8 +2,8 @@
 
 public class TestType
 {
-    public GenericType<string> GenericStringField;
-    public string[] ArrayElementType;
+    public GenericType<string>? GenericStringField;
+    public string[]? ArrayElementType;
     public void Sub<T>(T obj)
     {
 

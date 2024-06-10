@@ -22,9 +22,9 @@ namespace XamlX.Emit
             TransformerConfiguration configuration,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> emitMappings,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> runtimeContext,
-            IXamlLocal contextLocal,
+            IXamlLocal? contextLocal,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
-            IFileSource file,
+            IFileSource? file,
             IEnumerable<object> emitters)
             : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, declaringType, file, emitters)
         {
@@ -50,7 +50,7 @@ namespace XamlX.Emit
             return Emitter.LocalsPool.GetLocal(type);
         }
 
-        protected override TEmitResult EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
+        protected override TEmitResult? EmitNodeCore(IXamlAstNode value, TBackendEmitter codeGen, out bool foundEmitter)
         {
             var result = base.EmitNodeCore(value, codeGen, out foundEmitter);
 
@@ -132,7 +132,7 @@ namespace XamlX.Emit
         where TBackendEmitter : IHasLocalsPool
         where TEmitResult : IXamlEmitResult
     {
-        TEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
+        TEmitResult? Emit(IXamlAstNode node, XamlEmitContextWithLocals<TBackendEmitter, TEmitResult> context, TBackendEmitter codeGen);
     }
 
 #if !XAMLX_INTERNAL

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace XamlX.Parsers
 {
@@ -33,36 +31,36 @@ namespace XamlX.Parsers
             }
         }
 
-        public string DefaultNamespace
+        public string? DefaultNamespace
         {
             get
             {
-                _prefixToNamespace.TryGetValue("", out string ns);
+                _prefixToNamespace.TryGetValue("", out string? ns);
                 return ns;
             }
         }
 
-        public (string ns, string prefix, string name) GetNsFromName(string name)
+        public (string? ns, string prefix, string name) GetNsFromName(string name)
         {
             (string prefix, string localName) = GetPrefixFromName(name);
-            _prefixToNamespace.TryGetValue(prefix, out string ns);
-            if (ns != null && _compatibilityMappings.TryGetValue(ns, out string mappedNs))
+            _prefixToNamespace.TryGetValue(prefix, out string? ns);
+            if (ns != null && _compatibilityMappings.TryGetValue(ns, out string? mappedNs))
             {
                 ns = mappedNs;
             }
             return (ns, prefix, localName);
         }
 
-        internal bool IsIgnorable(string attrNs)
+        internal bool IsIgnorable(string? attrNs)
         {
-            return _ignoredNamespaces.Contains(attrNs);
+            return attrNs is not null && _ignoredNamespaces.Contains(attrNs);
         }
 
-        internal string NsForPrefix(string prefix)
+        internal string? NsForPrefix(string prefix)
         {
-            if(_prefixToNamespace.TryGetValue(prefix, out string ns))
+            if(_prefixToNamespace.TryGetValue(prefix, out string? ns))
             {
-                if (_compatibilityMappings.TryGetValue(ns, out string mappedNs))
+                if (_compatibilityMappings.TryGetValue(ns, out string? mappedNs))
                 {
                     ns = mappedNs;
                 }

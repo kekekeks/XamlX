@@ -7,27 +7,27 @@ namespace XamlX.Parsers
 {
 	internal class CompatibleXmlReader : XmlReader, IXmlLineInfo, IXmlNamespaceResolver
 	{
-		class Scope
+		class Scope(int depth, List<string> ignore)
 		{
-			public List<string> Ignore { get; set; }
-			public int Depth { get; set; }
+			public int Depth { get; set; } = depth;
+			public List<string> Ignore { get; set; } = ignore;
 		}
 
 		private readonly XmlReader _base;
-		private readonly Dictionary<string, string> _compatible;
+		private readonly Dictionary<string, string>? _compatible;
 		private readonly Dictionary<string, string> _nsmap = new Dictionary<string, string>();
 		private readonly HashSet<string> _knownNamespaces = new HashSet<string>();
-		private Stack<Scope> _scopeStack = new Stack<Scope>();
-		private Scope _scope = new Scope {Ignore = new List<string>()};
+		private readonly Stack<Scope> _scopeStack = new Stack<Scope>();
+		private Scope _scope = new(0, []);
 		private bool _previousWasEmpty;
 		private int _ignoredAttributes;
 
 		private bool _savedPositionWasAttribute;
-		private string _savedPositionAttributeName;
-		private IXmlLineInfo _baseLineInfo;
-		private IXmlNamespaceResolver _baseNamespaceResolver;
+		private string? _savedPositionAttributeName;
+		private readonly IXmlLineInfo? _baseLineInfo;
+		private readonly IXmlNamespaceResolver? _baseNamespaceResolver;
 
-		public CompatibleXmlReader(XmlReader baseReader, Dictionary<string, string> compatible)
+		public CompatibleXmlReader(XmlReader baseReader, Dictionary<string, string>? compatible)
 		{
 			_base = baseReader;
 			_compatible = compatible;
@@ -41,12 +41,12 @@ namespace XamlX.Parsers
 		{
 			var newIgnore = new HashSet<string>(_scope.Ignore);
 			foreach (var prefix in prefixes.Split(Splitter, StringSplitOptions.RemoveEmptyEntries))
-				newIgnore.Add(LookupNamespace(prefix));
-			var newScope = new Scope
 			{
-				Depth = Depth,
-				Ignore = newIgnore.ToList()
-			};
+				if (LookupNamespace(prefix) is { } ns)
+					newIgnore.Add(ns);
+			}
+
+			var newScope = new Scope(Depth, newIgnore.ToList());
 			_scopeStack.Push(_scope);
 			_scope = newScope;
 		}
@@ -178,7 +178,7 @@ namespace XamlX.Parsers
 		void RestorePosition()
 		{
 			if (_savedPositionWasAttribute)
-				_base.MoveToAttribute(_savedPositionAttributeName);
+				_base.MoveToAttribute(_savedPositionAttributeName!);
 			else
 				_base.MoveToElement();
 		}
@@ -206,14 +206,14 @@ namespace XamlX.Parsers
 			return res;
 		}
 
-		public override string GetAttribute(string name) => _base.GetAttribute(name);
+		public override string? GetAttribute(string name) => _base.GetAttribute(name);
 
-		public override string GetAttribute(string name, string namespaceURI)
+		public override string? GetAttribute(string name, string? namespaceURI)
 		{
 			if (!HasAttributes)
 				return null;
 			SavePosition();
-			string res = null;
+			string? res = null;
 			MoveToFirstAttribute();
 			do
 			{
@@ -233,7 +233,7 @@ namespace XamlX.Parsers
 			return _base.MoveToAttribute(name);
 		}
 
-		public override bool MoveToAttribute(string name, string ns)
+		public override bool MoveToAttribute(string name, string? ns)
 		{
 			if (!HasAttributes)
 				return false;
@@ -259,11 +259,12 @@ namespace XamlX.Parsers
 		public override string NamespaceURI => GetMapped(_base.NamespaceURI);
 
 		public IDictionary<string, string> GetNamespacesInScope(XmlNamespaceScope scope) =>
-			_baseNamespaceResolver?.GetNamespacesInScope(scope);
+			_baseNamespaceResolver?.GetNamespacesInScope(scope) ?? new Dictionary<string, string>();
 
-		public override string LookupNamespace(string prefix) => GetMapped(_base.LookupNamespace(prefix));
+		public override string? LookupNamespace(string prefix)
+			=> _base.LookupNamespace(prefix) is { } ns ? GetMapped(ns) : null;
 
-		public string LookupPrefix(string namespaceName) =>
+		public string? LookupPrefix(string namespaceName) =>
 			_baseNamespaceResolver?.LookupPrefix(
 				_nsmap.FirstOrDefault(x => x.Value == namespaceName).Value ?? namespaceName);
 
@@ -273,12 +274,12 @@ namespace XamlX.Parsers
 			{
 				if (_base.LocalName == "xmlns")
 				{
-					return LookupNamespace(string.Empty);
+					return LookupNamespace(string.Empty) ?? string.Empty;
 				}
 
 				if (_base.Prefix == "xmlns")
 				{
-					return LookupNamespace(_base.LocalName);
+					return LookupNamespace(_base.LocalName) ?? string.Empty;
 				}
 
 				return _base.Value;
