@@ -63,13 +63,13 @@ namespace XamlX.IL
         }
 
         protected override XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> InitCodeGen(
-            IFileSource file,
+            IFileSource? file,
             IXamlTypeBuilder<IXamlILEmitter> declaringType,
             IXamlILEmitter codeGen,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> context,
             bool needContextLocal)
         {
-            IXamlLocal contextLocal = null;
+            IXamlLocal? contextLocal = null;
 
             if (needContextLocal)
             {
@@ -87,7 +87,7 @@ namespace XamlX.IL
         }
 
         protected override void CompileBuild(
-            IFileSource fileSource,
+            IFileSource? fileSource,
             IXamlAstValueNode rootInstance,
             IXamlTypeBuilder<IXamlILEmitter> declaringType,
             IXamlILEmitter codeGen,
@@ -128,7 +128,8 @@ namespace XamlX.IL
         /// <summary>
         /// void Populate(IServiceProvider sp, T target);
         /// </summary>
-        protected override void CompilePopulate(IFileSource fileSource,
+        protected override void CompilePopulate(
+            IFileSource? fileSource,
             IXamlAstManipulationNode manipulation,
             IXamlTypeBuilder<IXamlILEmitter> declaringType,
             IXamlILEmitter codeGen,
@@ -141,10 +142,10 @@ namespace XamlX.IL
             codeGen
                 .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, context.RootObjectField)
+                .Emit(OpCodes.Stfld, context.RootObjectField!)
                 .Ldloc(emitContext.ContextLocal)
                 .Emit(OpCodes.Ldarg_1)
-                .Emit(OpCodes.Stfld, context.IntermediateRootObjectField)
+                .Emit(OpCodes.Stfld, context.IntermediateRootObjectField!)
                 .Emit(OpCodes.Ldarg_1);
             emitContext.Emit(manipulation, codeGen, null);
             codeGen.Emit(OpCodes.Ret);
@@ -154,8 +155,8 @@ namespace XamlX.IL
 
         protected override XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> CreateRuntimeContext(
             XamlDocument doc, IXamlType contextType,
-            IXamlTypeBuilder<IXamlILEmitter> namespaceInfoBuilder,
-            string baseUri, IXamlType rootType)
+            IXamlTypeBuilder<IXamlILEmitter>? namespaceInfoBuilder,
+            string? baseUri, IXamlType rootType)
         {
             var staticProviders = new List<IXamlField>();
 
@@ -177,13 +178,13 @@ namespace XamlX.IL
     class XamlILNodeEmitResult : IXamlEmitResult
     {
         public int ConsumedItems { get; }
-        public IXamlType ReturnType { get; set; }
+        public IXamlType? ReturnType { get; set; }
         public int ProducedItems => ReturnType == null ? 0 : 1;
         public bool AllowCast { get; set; }
 
         bool IXamlEmitResult.Valid => true;
 
-        public XamlILNodeEmitResult(int consumedItems, IXamlType returnType = null)
+        public XamlILNodeEmitResult(int consumedItems, IXamlType? returnType = null)
         {
             ConsumedItems = consumedItems;
             ReturnType = returnType;
@@ -191,7 +192,7 @@ namespace XamlX.IL
 
         public static XamlILNodeEmitResult Void(int consumedItems) => new XamlILNodeEmitResult(consumedItems);
 
-        public static XamlILNodeEmitResult Type(int consumedItems, IXamlType type) =>
+        public static XamlILNodeEmitResult Type(int consumedItems, IXamlType? type) =>
             new XamlILNodeEmitResult(consumedItems, type);
     }
     

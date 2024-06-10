@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 using XamlX.IL;
 using MethodBody = Mono.Cecil.Cil.MethodBody;
 using SreOpCode = System.Reflection.Emit.OpCode;
@@ -68,7 +67,7 @@ namespace XamlX.TypeSystem
                     .Where(f=>f.FieldType == typeof(SreOpCode)))
 
                 {
-                    var sre = (SreOpCode) sreField.GetValue(null);
+                    var sre = (SreOpCode) sreField.GetValue(null)!;
 
                     var cecil = sreField.Name switch
                     {
@@ -87,8 +86,9 @@ namespace XamlX.TypeSystem
             
             private readonly MethodBody _body;
             private readonly MethodDefinition _method;
-            private CecilDebugPoint _pendingDebugPoint;
-            private CecilDebugPoint _lastDebugPoint;
+            private CecilDebugPoint? _pendingDebugPoint;
+            private CecilDebugPoint? _lastDebugPoint;
+
             public CecilEmitter(IXamlTypeSystem typeSystem, MethodDefinition method)
             {
                 _method = method;
@@ -175,17 +175,18 @@ namespace XamlX.TypeSystem
             public IXamlILEmitter Emit(SreOpCode code, double arg)
                 => Emit(Instruction.Create(Dic[code], arg));
 
-            class CecilLocal : IXamlILLocal
+            class CecilLocal(VariableDefinition variable) : IXamlILLocal
             {
-                public VariableDefinition Variable { get; set; }
+                public VariableDefinition Variable { get; } = variable;
 
                 public int Index => Variable.Index;
             }
 
             class CecilLabel : IXamlLabel
             {
-                private List<Instruction> _pendingConsumers;
-                private Instruction _target;
+                private List<Instruction>? _pendingConsumers;
+                private Instruction? _target;
+
                 public Instruction CreateInstruction(OpCode opcode)
                 {
                     if (_target != null)
@@ -215,7 +216,7 @@ namespace XamlX.TypeSystem
                 var r = Import(((ITypeReference) type).Reference);
                 var def = new VariableDefinition(r);
                 _body.Variables.Add(def);
-                return new CecilLocal {Variable = def};
+                return new CecilLocal(def);
             }
 
             public IXamlLabel DefineLabel() => new CecilLabel();
@@ -318,7 +319,7 @@ namespace XamlX.TypeSystem
                         Hash = hash,
                     };
                     var r = new StreamReader(new MemoryStream(data));
-                    string l;
+                    string? l;
                     while ((l = r.ReadLine()) != null)
                         Lines.Add(l);
                 }

@@ -13,15 +13,15 @@ namespace XamlParserTests
     
     public class GenericType<T> : GenericBaseType<T>, IGenericInterface<T>
     {
-        public T Field;
-        public T Property { get; set; }
+        public T Field = default!;
+        public T Property { get; set; } = default!;
         public T SomeMethod(T x) => x;
     }
 
     public class CecilTestType
     {
-        public GenericType<string> GenericStringField;
-        public string[] ArrayElementType;
+        public GenericType<string>? GenericStringField;
+        public string[]? ArrayElementType;
     }
     
     public class CecilTests : CompilerTestBase
@@ -32,7 +32,7 @@ namespace XamlParserTests
             var wut = Configuration.TypeSystem.GetType("XamlParserTests.CecilTestType");
             var f = wut.Fields.First(x => x.Name == nameof(CecilTestType.GenericStringField));
             Assert.Equal("XamlParserTests.GenericType`1<System.String>", f.FieldType.FullName);
-            Assert.Equal("XamlParserTests.GenericBaseType`1<System.String>", f.FieldType.BaseType.FullName);
+            Assert.Equal("XamlParserTests.GenericBaseType`1<System.String>", f.FieldType.BaseType?.FullName);
             var iface = f.FieldType.Interfaces.First(x => x.Name == "IGenericInterface`1");
             Assert.Equal("XamlParserTests.IGenericInterface`1<System.String>", iface.FullName);
 
@@ -46,8 +46,8 @@ namespace XamlParserTests
 
             var p = f.FieldType.Properties.First(x => x.Name == "Property");
             Assert.Equal("System.String", p.PropertyType.FullName);
-            Assert.Equal("System.String", p.Getter.ReturnType.FullName);
-            Assert.Equal("System.String", p.Setter.Parameters[0].FullName);
+            Assert.Equal("System.String", p.Getter?.ReturnType.FullName);
+            Assert.Equal("System.String", p.Setter?.Parameters[0].FullName);
         }
 
         [Fact]
@@ -55,14 +55,14 @@ namespace XamlParserTests
         {
             var wut = Configuration.TypeSystem.GetType("XamlParserTests.CecilTestType");
             var af = wut.Fields.First(x => x.Name == nameof(CecilTestType.ArrayElementType));
-            Assert.True(af.FieldType?.IsArray);
-            Assert.Equal("System.String", af.FieldType.ArrayElementType?.FullName);
+            Assert.True(af.FieldType.IsArray);
+            Assert.Equal("System.String", af.FieldType?.ArrayElementType?.FullName);
         }
 
         [Fact]
         public void Dictionary_Not_Assignable_From_String()
         {
-            var stringType = Configuration.TypeSystem.FindType("System.String");
+            var stringType = Configuration.TypeSystem.GetType("System.String");
             var dictBase = Configuration.TypeSystem.GetType("System.Collections.Generic.IDictionary`2");
             var stringStringDict = dictBase.MakeGenericType(stringType, stringType);
 

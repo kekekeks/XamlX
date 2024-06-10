@@ -2,8 +2,6 @@ using System;
 using System.Xml;
 using XamlX.Ast;
 
-#nullable enable
-
 namespace XamlX
 {
 #if !XAMLX_INTERNAL

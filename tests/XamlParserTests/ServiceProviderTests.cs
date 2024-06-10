@@ -3,28 +3,26 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 using XamlX.Runtime;
 using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
 {
-
     public class CallbackExtension
     {
-        public object ProvideValue(IServiceProvider provider)
+        public object? ProvideValue(IServiceProvider provider)
         {
-            return provider.GetService<CallbackExtensionCallback>()(provider);
+            return provider.GetRequiredService<CallbackExtensionCallback>()(provider);
         }
     }
 
-    public delegate object CallbackExtensionCallback(IServiceProvider provider);
+    public delegate object? CallbackExtensionCallback(IServiceProvider provider);
 
     public class UnknownServiceUsageExtension
     {
-        public object Return { get; set; }
-        public object ProvideValue(IServiceProvider provider)
+        public object? Return { get; set; }
+        public object? ProvideValue(IServiceProvider provider)
         {
             Assert.Null(provider.GetService(typeof(string)));
             return Return;
@@ -33,17 +31,17 @@ namespace XamlParserTests
     
     public class ServiceProviderTestsClass
     {
-        public string Id { get; set; }
-        public object Property { get; set; }
-        public ServiceProviderTestsClass Child { get; set; }
+        public string? Id { get; set; }
+        public object? Property { get; set; }
+        public ServiceProviderTestsClass? Child { get; set; }
         [Content]
         public List<ServiceProviderTestsClass> Children { get; } = new List<ServiceProviderTestsClass>(); 
     }
     
     public class ServiceProviderTests : CompilerTestBase
     {
-        void CompileAndRun(string xaml, CallbackExtensionCallback cb, IXamlParentStackProviderV1 parentStack)
-            => Compile(xaml).create(new DictionaryServiceProvider
+        void CompileAndRun(string xaml, CallbackExtensionCallback? cb, IXamlParentStackProviderV1? parentStack)
+            => Compile(xaml).create!(new DictionaryServiceProvider
             {
                 [typeof(CallbackExtensionCallback)] = cb,
                 [typeof(IXamlParentStackProviderV1)] = parentStack
@@ -77,7 +75,7 @@ namespace XamlParserTests
             {
                 //Manual unrolling of enumerable, useful for state tracking
                 var stack = new List<object>();
-                var parentsEnumerable = sp.GetService<IXamlParentStackProviderV1>().Parents;
+                var parentsEnumerable = sp.GetRequiredService<IXamlParentStackProviderV1>().Parents;
                 using (var parentsEnumerator = parentsEnumerable.GetEnumerator())
                 {
                     while (parentsEnumerator.MoveNext())
@@ -126,7 +124,7 @@ namespace XamlParserTests
             CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
             {
                 var tdc = (ITypeDescriptorContext) sp;
-                Assert.Equal(tdc, sp.GetService<ITypeDescriptorContext>());
+                Assert.Equal(tdc, sp.GetRequiredService<ITypeDescriptorContext>());
                 Assert.Null(tdc.Instance);
                 Assert.Null(tdc.Container);
                 Assert.Null(tdc.PropertyDescriptor);
@@ -153,7 +151,7 @@ namespace XamlParserTests
     ServiceProviderTests.AttachedProperty='{Callback}'
 />", sp =>
             {
-                var pt = sp.GetService<ITestProvideValueTarget>();
+                var pt = sp.GetRequiredService<ITestProvideValueTarget>();
                 Assert.IsType<ServiceProviderTestsClass>(pt.TargetObject);
                 if(num == 0)
                     Assert.Equal("Property", pt.TargetProperty);
@@ -173,15 +171,15 @@ namespace XamlParserTests
 
         class InnerProvider : IServiceProvider, ITestRootObjectProvider
         {
-            private ITestRootObjectProvider _originalRootObjectProvider;
+            private readonly ITestRootObjectProvider _originalRootObjectProvider;
             public object RootObject => "Definitely not the root object";
-            public object OriginalRootObject => _originalRootObjectProvider.RootObject;
+            public object? OriginalRootObject => _originalRootObjectProvider.RootObject;
             public InnerProvider(IServiceProvider parent)
             {
-                _originalRootObjectProvider = parent.GetService<ITestRootObjectProvider>();
+                _originalRootObjectProvider = parent.GetRequiredService<ITestRootObjectProvider>();
             }
             
-            public object GetService(Type serviceType)
+            public object? GetService(Type serviceType)
             {
                 if (serviceType == typeof(ITestRootObjectProvider))
                     return this;
@@ -196,12 +194,12 @@ namespace XamlParserTests
         {
 
             Configuration.TypeMappings.InnerServiceProviderFactoryMethod =
-                Configuration.TypeSystem.GetType(typeof(ServiceProviderTests).FullName)
+                Configuration.TypeSystem.GetType(typeof(ServiceProviderTests).FullName!)
                     .FindMethod(m => m.Name == "InnerProviderFactory");
                     
             CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
             {
-                var rootProv = (InnerProvider)sp.GetService<ITestRootObjectProvider>();
+                var rootProv = (InnerProvider)sp.GetRequiredService<ITestRootObjectProvider>();
                 Assert.IsType<ServiceProviderTestsClass>(rootProv.OriginalRootObject);
                 Assert.IsType<string>(rootProv.RootObject);
                 
@@ -220,7 +218,7 @@ namespace XamlParserTests
     xmlns:clr2='clr-namespace:Dummy;assembly=XamlParserTests'
     Property='{Callback}'/>", sp =>
             {
-                var nsList = sp.GetService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                var nsList = sp.GetRequiredService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
                 // Direct calls without struct diff because of EntryPointNotFoundException issue before
                 Assert.True(nsList.TryGetValue("clr1", out var xlst));
                 Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
@@ -232,7 +230,7 @@ namespace XamlParserTests
                             new XamlXmlNamespaceInfoV1
                             {
                                 ClrNamespace = "XamlParserTests",
-                                ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name
+                                ClrAssemblyName = typeof(ServiceProviderTests).Assembly.GetName().Name!
                             }
                         },
                         ["clr1"] = new[]
@@ -267,7 +265,7 @@ namespace XamlParserTests
     xmlns:clr2='using:Dummy'
     Property='{Callback}'/>", sp =>
             {
-                var nsList = sp.GetService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
+                var nsList = sp.GetRequiredService<IXamlXmlNamespaceInfoProviderV1>().XmlNamespaces;
                 // Direct calls without struct diff because of EntryPointNotFoundException issue before
                 Assert.True(nsList.TryGetValue("clr1", out var xlst));
                 Assert.Equal("System.Collections.Generic", xlst[0].ClrNamespace);
@@ -307,7 +305,7 @@ namespace XamlParserTests
             bool ok = false;
             CompileAndRun(@"<ServiceProviderTestsClass xmlns='test' Property='{Callback}'/>", sp =>
             {
-                Assert.Equal("http://example.com/", sp.GetService<ITestUriContext>().BaseUri.ToString());
+                Assert.Equal("http://example.com/", sp.GetRequiredService<ITestUriContext>().BaseUri?.ToString());
                 ok = true;
                 return "Value";
             }, null);

@@ -7,9 +7,9 @@ namespace XamlParserTests
 {
     public class IntrinsicsTestsClass
     {
-        public object ObjectProperty { get; set; }
+        public object? ObjectProperty { get; set; }
         public int IntProperty { get; set; }
-        public Type TypeProperty { get; set; }
+        public Type? TypeProperty { get; set; }
         public bool BoolProperty { get; set; }
         public bool? NullableBoolProperty { get; set; }
 

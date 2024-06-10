@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using XamlX.TypeSystem;
 
 namespace XamlX.Emit
@@ -12,29 +10,29 @@ namespace XamlX.Emit
     class XamlRuntimeContext<TBackendEmitter, TEmitResult>
         where TEmitResult : IXamlEmitResult
     {
-        public IXamlField RootObjectField { get; set; }
-        public IXamlField IntermediateRootObjectField { get; set; }
-        public IXamlField ParentListField { get; set; }
+        public IXamlField? RootObjectField { get; set; }
+        public IXamlField? IntermediateRootObjectField { get; set; }
+        public IXamlField? ParentListField { get; set; }
         public IXamlType ContextType { get; set; }
-        public IXamlField PropertyTargetObject { get; set; }
-        public IXamlField PropertyTargetProperty { get; set; }
+        public IXamlField? PropertyTargetObject { get; set; }
+        public IXamlField? PropertyTargetProperty { get; set; }
         public IXamlConstructor Constructor { get; set; }
         public Action<TBackendEmitter> Factory { get; set; }
-        public IXamlMethod PushParentMethod { get; set; }
-        public IXamlMethod PopParentMethod { get; set; }
-        public string BaseUrl { get; set; }
+        public IXamlMethod? PushParentMethod { get; set; }
+        public IXamlMethod? PopParentMethod { get; set; }
+        public string? BaseUrl { get; set; }
 
-        public XamlRuntimeContext(IXamlType definition, IXamlType constructedType, string baseUri,
+        public XamlRuntimeContext(IXamlType definition, IXamlType constructedType, string? baseUri,
             XamlLanguageEmitMappings<TBackendEmitter, TEmitResult> mappings,
             Action<XamlRuntimeContext<TBackendEmitter, TEmitResult>, TBackendEmitter> factory)
         {
             ContextType = definition.MakeGenericType(constructedType);
             BaseUrl = baseUri;
 
-            IXamlField Get(string s) =>
+            IXamlField? Get(string s) =>
                 ContextType.Fields.FirstOrDefault(f => f.Name == s);
 
-            IXamlMethod GetMethod(string s) =>
+            IXamlMethod? GetMethod(string s) =>
                 ContextType.Methods.FirstOrDefault(f => f.Name == s);
 
             RootObjectField = Get(XamlRuntimeContextDefintion.RootObjectFieldName);

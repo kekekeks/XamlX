@@ -1,8 +1,6 @@
-using System.Reflection.Emit;
+using System;
 using XamlX.Ast;
 using XamlX.Emit;
-using XamlX.Transform;
-using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
 {
@@ -11,11 +9,15 @@ namespace XamlX.IL.Emitters
 #endif
     class PropertyValueManipulationEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult? Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlPropertyValueManipulationNode pvm))
                 return null;
-            codeGen.EmitCall(pvm.Property.Getter);
+
+            var getter = pvm.Property.Getter
+                ?? throw new InvalidOperationException($"Property {pvm.Property} doesn't have a getter");
+
+            codeGen.EmitCall(getter);
             context.Emit(pvm.Manipulation, codeGen, null);
             
             return XamlILNodeEmitResult.Void(1);

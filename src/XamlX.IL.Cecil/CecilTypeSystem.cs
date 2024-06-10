@@ -13,20 +13,21 @@ namespace XamlX.TypeSystem
     #endif
     partial class CecilTypeSystem : IXamlTypeSystem,  IAssemblyResolver
     {
-        private List<CecilAssembly> _asms = new List<CecilAssembly>();
-        private Dictionary<string, CecilAssembly> _assemblyCache = new(StringComparer.Ordinal);
-        private Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic = new();
+        private readonly List<CecilAssembly> _asms = [];
+        private readonly Dictionary<string, CecilAssembly> _assemblyCache = new(StringComparer.Ordinal);
+        private readonly Dictionary<AssemblyDefinition, CecilAssembly> _assemblyDic = new();
+        private readonly CustomMetadataResolver _resolver;
 
-        private CustomMetadataResolver _resolver;
         public void Dispose()
         {
             foreach (var asm in _asms)
                 asm.Assembly.Dispose();
         }
 
-        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name, true)?.Assembly;
-        public AssemblyNameReference CoerceReference(AssemblyNameReference name) => ResolveWrapped(name, false)?.Assembly?.Name ?? name;
-        private CecilAssembly ResolveWrapped(AssemblyNameReference name, bool throwOnNotFound)
+        public AssemblyDefinition Resolve(AssemblyNameReference name) => ResolveWrapped(name, true)!.Assembly;
+        public AssemblyNameReference CoerceReference(AssemblyNameReference name) => ResolveWrapped(name, false)?.Assembly.Name ?? name;
+
+        private CecilAssembly? ResolveWrapped(AssemblyNameReference name, bool throwOnNotFound)
         {
             if (_assemblyCache.TryGetValue(name.FullName, out var rv))
                 return rv;
@@ -41,7 +42,7 @@ namespace XamlX.TypeSystem
 
         public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters) => Resolve(name);
 
-        public CecilTypeSystem(IEnumerable<string> paths, string targetPath = null)
+        public CecilTypeSystem(IEnumerable<string> paths, string? targetPath = null)
         {
             if (targetPath != null)
                 paths = paths.Concat(new[] {targetPath});
@@ -73,13 +74,13 @@ namespace XamlX.TypeSystem
         }
 
         internal CecilTypeResolveContext RootTypeResolveContext { get; } 
-        public IXamlAssembly TargetAssembly { get; private set; }
-        public AssemblyDefinition TargetAssemblyDefinition { get; private set; }
+        public IXamlAssembly? TargetAssembly { get; private set; }
+        public AssemblyDefinition? TargetAssemblyDefinition { get; private set; }
         public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
-        public IXamlAssembly FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
+        public IXamlAssembly? FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
 
         [UnconditionalSuppressMessage("Trimming", "IL2092", Justification = TrimmingMessages.Cecil)]
-        public IXamlType FindType(string name)
+        public IXamlType? FindType(string name)
         {
             foreach (var asm in _asms)
             {
@@ -91,7 +92,7 @@ namespace XamlX.TypeSystem
         }
 
         [UnconditionalSuppressMessage("Trimming", "IL2092", Justification = TrimmingMessages.Cecil)]
-        public IXamlType FindType(string name, string assembly) 
+        public IXamlType? FindType(string name, string assembly)
             => FindAssembly(assembly)?.FindType(name);
 
 
@@ -99,7 +100,7 @@ namespace XamlX.TypeSystem
         public MethodReference GetMethodReference(IXamlMethod t) => ((CecilMethod)t).IlReference;
         public MethodReference GetMethodReference(IXamlConstructor t) => ((CecilConstructor)t).IlReference;
 
-        internal CecilAssembly FindAsm(AssemblyDefinition d)
+        internal CecilAssembly? FindAsm(AssemblyDefinition d)
         {
             _assemblyDic.TryGetValue(d, out var asm);
             return asm;

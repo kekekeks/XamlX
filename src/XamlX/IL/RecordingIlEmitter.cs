@@ -18,10 +18,10 @@ namespace XamlX.IL
 
         private readonly Dictionary<IXamlLocal, LocalInfo> _locals = new Dictionary<IXamlLocal, LocalInfo>();
         
-        public class LocalInfo
+        public class LocalInfo(int number, IXamlType type)
         {
-            public int Number { get; set; }
-            public IXamlType Type { get; set; }
+            public int Number { get; } = number;
+            public IXamlType Type { get; } = type;
 
             public override string ToString()
             {
@@ -38,10 +38,10 @@ namespace XamlX.IL
             }
         }
         
-        public class RecordedInstruction
+        public class RecordedInstruction(OpCode opCode, object? operand)
         {
-            public OpCode OpCode { get; set; }
-            public object Operand { get; set; }
+            public OpCode OpCode { get; } = opCode;
+            public object? Operand { get; } = operand;
         }
 
         public RecordingIlEmitter(IXamlILEmitter inner)
@@ -137,7 +137,7 @@ namespace XamlX.IL
         public IXamlLocal DefineLocal(IXamlType type)
         {
             var rv= _inner.DefineLocal(type);
-            _locals[rv] = new LocalInfo {Number = _locals.Count, Type = type};
+            _locals[rv] = new LocalInfo(_locals.Count, type);
             return rv;
         }
 
@@ -177,7 +177,7 @@ namespace XamlX.IL
 
         public XamlLocalsPool LocalsPool => _inner.LocalsPool;
 
-        void Record(OpCode code, object operand)
+        void Record(OpCode code, object? operand)
         {
             if (operand is IXamlLabel l
                 && _labels.TryGetValue(l, out var labelInfo))
@@ -187,7 +187,7 @@ namespace XamlX.IL
                 && _locals.TryGetValue(loc, out var localInfo))
                 operand = localInfo;
 
-            Instructions.Add(new RecordedInstruction {OpCode = code, Operand = operand});
+            Instructions.Add(new RecordedInstruction(code, operand));
         }
 
         public override string ToString()

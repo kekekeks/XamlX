@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using System.Xml;
 using XamlX.Ast;
 using XamlX.TypeSystem;
@@ -11,16 +10,23 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-        class AstTransformationContext : XamlContextBase
+    class AstTransformationContext : XamlContextBase
     {
-        public virtual string Document { get; }
+        private IXamlAstValueNode? _rootObject;
+
+        public virtual string? Document { get; }
         public Dictionary<string, string> NamespaceAliases { get; set; }
         public TransformerConfiguration Configuration { get; }
-        public IXamlAstValueNode RootObject { get; set; }
+
+        public IXamlAstValueNode RootObject
+        {
+            get => _rootObject ?? throw new InvalidOperationException($"{nameof(RootObject)} hasn't been set");
+            set => _rootObject = value;
+        }
 
         public AstTransformationContext(
             TransformerConfiguration configuration,
-            XamlDocument xamlDocument)
+            XamlDocument? xamlDocument)
         {
             Configuration = configuration;
             NamespaceAliases = xamlDocument?.NamespaceAliases ?? new();

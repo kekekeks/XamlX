@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
@@ -41,11 +40,11 @@ namespace XamlX.Transform.Transformers
                                                                                     && p.Add != null);
                     if (clrEvent != null)
                         return new XamlAstClrProperty(prop,
-                            prop.Name, clrEvent.Add.DeclaringType, null, clrEvent.Add);
+                            prop.Name, clrEvent.Add!.DeclaringType, null, clrEvent.Add);
                 }
 
                 // Look for attached properties on declaring type
-                IXamlMethod setter = null, getter = null, adder = null;
+                IXamlMethod? setter = null, getter = null, adder = null;
                 var setterName = "Set" + prop.Name;
                 var getterName = "Get" + prop.Name;
                 var adderName = "Add" + prop.Name + "Handler";

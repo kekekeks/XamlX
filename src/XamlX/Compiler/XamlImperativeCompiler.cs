@@ -1,4 +1,5 @@
-﻿using XamlX.Ast;
+﻿using System;
+using XamlX.Ast;
 using XamlX.Emit;
 using XamlX.Transform;
 using XamlX.Transform.Transformers;
@@ -57,10 +58,10 @@ namespace XamlX.Compiler
             IXamlTypeBuilder<TBackendEmitter> typeBuilder,
             IXamlType contextType,
             string populateMethodName,
-            string createMethodName,
+            string? createMethodName,
             string namespaceInfoClassName,
-            string baseUri,
-            IFileSource fileSource)
+            string? baseUri,
+            IFileSource? fileSource)
             => Compile(
                 doc,
                 contextType,
@@ -81,20 +82,23 @@ namespace XamlX.Compiler
             IXamlType contextType,
             IXamlMethodBuilder<TBackendEmitter> populateMethod,
             IXamlTypeBuilder<TBackendEmitter> populateDeclaringType,
-            IXamlMethodBuilder<TBackendEmitter> buildMethod,
-            IXamlTypeBuilder<TBackendEmitter> buildDeclaringType,
-            IXamlTypeBuilder<TBackendEmitter> namespaceInfoBuilder,
-            string baseUri,
-            IFileSource fileSource)
+            IXamlMethodBuilder<TBackendEmitter>? buildMethod,
+            IXamlTypeBuilder<TBackendEmitter>? buildDeclaringType,
+            IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
+            string? baseUri,
+            IFileSource? fileSource)
         {
             var rootGrp = (XamlValueWithManipulationNode)doc.Root;
             var rootType = rootGrp.Type.GetClrType();
             var context = CreateRuntimeContext(doc, contextType, namespaceInfoBuilder, baseUri, rootType);
 
-            CompilePopulate(fileSource, rootGrp.Manipulation, populateDeclaringType, populateMethod.Generator, context);
+            CompilePopulate(fileSource, rootGrp.Manipulation!, populateDeclaringType, populateMethod.Generator, context);
 
             if (buildMethod != null)
             {
+                if (buildDeclaringType is null)
+                    throw new ArgumentNullException(nameof(buildDeclaringType));
+
                 CompileBuild(fileSource, rootGrp.Value, buildDeclaringType, buildMethod.Generator, context, populateMethod);
             }
 
@@ -102,14 +106,14 @@ namespace XamlX.Compiler
         }
 
         protected abstract void CompilePopulate(
-            IFileSource fileSource,
+            IFileSource? fileSource,
             IXamlAstManipulationNode manipulation,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
             TBackendEmitter codeGen,
             XamlRuntimeContext<TBackendEmitter, TEmitResult> context);
 
         protected abstract void CompileBuild(
-            IFileSource fileSource,
+            IFileSource? fileSource,
             IXamlAstValueNode rootInstance,
             IXamlTypeBuilder<TBackendEmitter> declaringType,
             TBackendEmitter codeGen,
@@ -119,8 +123,8 @@ namespace XamlX.Compiler
         protected abstract XamlRuntimeContext<TBackendEmitter, TEmitResult> CreateRuntimeContext(
             XamlDocument doc,
             IXamlType contextType,
-            IXamlTypeBuilder<TBackendEmitter> namespaceInfoBuilder,
-            string baseUri,
+            IXamlTypeBuilder<TBackendEmitter>? namespaceInfoBuilder,
+            string? baseUri,
             IXamlType rootType);
     }
 }

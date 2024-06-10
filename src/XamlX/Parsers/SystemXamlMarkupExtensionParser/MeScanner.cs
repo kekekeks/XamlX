@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
@@ -61,20 +62,20 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
         enum StringState { Value, Type, Property };
 
-        XamlParserContext _context;
-        string _inputText;
-        int _idx;
-        MeTokenType _token;
-        XamlType _tokenXamlType;
-        XamlMember _tokenProperty;
-        string _tokenNamespace;
-        string _tokenText;
-        StringState _state;
-        bool _hasTrailingWhitespace;
-        int _lineNumber;
-        int _startPosition;
-        private string _currentParameterName;
-        private SpecialBracketCharacters _currentSpecialBracketCharacters;
+        private readonly XamlParserContext _context;
+        private readonly string _inputText;
+        private int _idx;
+        private MeTokenType _token;
+        private XamlType? _tokenXamlType;
+        private XamlMember? _tokenProperty;
+        private string? _tokenNamespace;
+        private string _tokenText = string.Empty;
+        private StringState _state;
+        private bool _hasTrailingWhitespace;
+        private readonly int _lineNumber;
+        private readonly int _startPosition;
+        private string? _currentParameterName;
+        private SpecialBracketCharacters? _currentSpecialBracketCharacters;
 
         public MeScanner(XamlParserContext context, string text, int lineNumber, int linePosition)
         {
@@ -102,7 +103,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             }
         }
 
-        public string Namespace
+        public string? Namespace
         {
             get { return _tokenNamespace; }
         }
@@ -112,12 +113,12 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             get { return _token; }
         }
 
-        public XamlType TokenType
+        public XamlType? TokenType
         {
             get { return _tokenXamlType; }
         }
 
-        public XamlMember TokenProperty
+        public XamlMember? TokenProperty
         {
             get { return _tokenProperty; }
         }
@@ -215,8 +216,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
             if(readString)
             {
-                if (_context.CurrentType.IsMarkupExtension 
-                    && _context.CurrentBracketModeParseParameters != null 
+                if (_context.CurrentType.IsMarkupExtension
                     && _context.CurrentBracketModeParseParameters.IsConstructorParsingMode)
                 {
                     int currentCtrParam = _context.CurrentBracketModeParseParameters.CurrentConstructorParam;
@@ -293,13 +293,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
         private void ResolveTypeName(string longName)
         {
-            string error;
-            XamlTypeName typeName = XamlTypeName.ParseInternal(longName, _context.FindNamespaceByPrefix, out error);
-            if (typeName == null)
-            {
-                throw new XamlParseException(this, error);
-            }
-            var xamlType = typeName;
+            XamlTypeName typeName = XamlTypeName.ParseInternal(longName, _context.FindNamespaceByPrefix);
             
             // Original System.Xaml resolves types in the tokenizer, we don't
             
@@ -320,7 +314,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 xamlType = _context.GetXamlType(typeName, true);
             }*/
 
-            _tokenXamlType = xamlType;
+            _tokenXamlType = typeName;
             _tokenNamespace = typeName.Namespace;
         }
 /*
@@ -393,10 +387,10 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 }
                 // If we are inside of MarkupExtensionBracketCharacters for a particular property or position parameter,
                 // scoop up everything inside one by one, and keep track of nested Bracket Characters in the stack. 
-                else if (_context.CurrentBracketModeParseParameters != null && _context.CurrentBracketModeParseParameters.IsBracketEscapeMode)
+                else if (_context.CurrentBracketModeParseParameters.IsBracketEscapeMode)
                 {
                     Stack<char> bracketCharacterStack = _context.CurrentBracketModeParseParameters.BracketCharacterStack;
-                    if (_currentSpecialBracketCharacters.StartsEscapeSequence(ch))
+                    if (_currentSpecialBracketCharacters!.StartsEscapeSequence(ch))
                     {
                         bracketCharacterStack.Push(ch);
                     }
@@ -500,7 +494,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         }
                         else
                         {
-                            if (_context.CurrentBracketModeParseParameters?.BracketCharacterStack.Count > 0)
+                            if (_context.CurrentBracketModeParseParameters.BracketCharacterStack.Count > 0)
                             {
                                 throw new XamlParseException(this, SR.Get(SRID.MalformedBracketCharacters, ch.ToString()));
                             }
@@ -603,7 +597,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             _idx -= 1;
         }
 
-        private SpecialBracketCharacters GetBracketCharacterForProperty(string propertyName)
+        private SpecialBracketCharacters? GetBracketCharacterForProperty(string? propertyName)
         {
             return null;
             // Xaml resolves markup extension types after parsing the initial AST,

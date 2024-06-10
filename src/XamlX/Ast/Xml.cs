@@ -8,7 +8,7 @@ namespace XamlX.Ast
 #endif
     class XamlAstXmlTypeReference : XamlAstNode, IXamlAstTypeReference
     {
-        public string XmlNamespace { get; set; }
+        public string? XmlNamespace { get; set; }
         public string Name { get; set; }
         public bool IsMarkupExtension { get; set; }
 
@@ -19,8 +19,8 @@ namespace XamlX.Ast
 
         public List<XamlAstXmlTypeReference> GenericArguments { get; set; } = new List<XamlAstXmlTypeReference>();
 
-        public XamlAstXmlTypeReference(IXamlLineInfo lineInfo, string xmlNamespace, string name,
-            IEnumerable<XamlAstXmlTypeReference> genericArguments = null) : base(lineInfo)
+        public XamlAstXmlTypeReference(IXamlLineInfo lineInfo, string? xmlNamespace, string name,
+            IEnumerable<XamlAstXmlTypeReference>? genericArguments = null) : base(lineInfo)
         {
             XmlNamespace = xmlNamespace;
             Name = name;
