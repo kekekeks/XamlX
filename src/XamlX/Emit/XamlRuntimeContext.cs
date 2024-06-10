@@ -42,7 +42,7 @@ namespace XamlX.Emit
             PropertyTargetProperty = Get(XamlRuntimeContextDefintion.ProvideTargetPropertyName);
             PushParentMethod = GetMethod(XamlRuntimeContextDefintion.PushParentMethodName);
             PopParentMethod = GetMethod(XamlRuntimeContextDefintion.PopParentMethodName);
-            Constructor = ContextType.Constructors.First();
+            Constructor = ContextType.Constructors[0];
             Factory = il => factory(this, il);
             if (mappings.ContextFactoryCallback != null)
                 Factory = il =>

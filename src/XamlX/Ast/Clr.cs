@@ -134,7 +134,7 @@ namespace XamlX.Ast
             Parameters = method.ParametersWithThis().Skip(1).ToList();
             TargetType = method.ThisOrFirstParameter();
 
-            bool allowNull = Parameters.Last().AcceptsNull();
+            bool allowNull = Parameters[Parameters.Count - 1].AcceptsNull();
             BinderParameters = new PropertySetterBinderParameters
             {
                 AllowMultiple = false,

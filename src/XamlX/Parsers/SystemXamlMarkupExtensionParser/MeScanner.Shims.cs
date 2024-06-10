@@ -25,7 +25,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
         public XamlAstNamePropertyReference ResolvePropertyName(string pname)
         {
-            if (pname.Contains("."))
+            if (pname.Contains('.'))
             {
                 var parts = pname.Split(new[] { '.' }, 2);
                 var decraringType = _typeResolver(parts[0]);
@@ -66,12 +66,12 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
 
     class MeScannerSRID
     {
-        public static readonly string UnexpectedTokenAfterME = "Unexpected token after Markup Extension";
-        public static readonly string MalformedBracketCharacters = "Malformed bracket characters: {0}";
-        public static readonly string UnclosedQuote = "Unclosed quote";
-        public static readonly string QuoteCharactersOutOfPlace = "Quote characters out of place";
-        public static readonly string InvalidClosingBracketCharacers = "Invalid closing bracket characters: {0}";
-        public static readonly string MalformedPropertyName = "Malformed property name";
+        public const string UnexpectedTokenAfterME = "Unexpected token after Markup Extension";
+        public const string MalformedBracketCharacters = "Malformed bracket characters: {0}";
+        public const string UnclosedQuote = "Unclosed quote";
+        public const string QuoteCharactersOutOfPlace = "Quote characters out of place";
+        public const string InvalidClosingBracketCharacers = "Invalid closing bracket characters: {0}";
+        public const string MalformedPropertyName = "Malformed property name";
     }
 
     class MeScannerParseException : Exception
