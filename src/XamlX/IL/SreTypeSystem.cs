@@ -131,7 +131,9 @@ namespace XamlX.IL
             public void Init()
             {
                 var types = Assembly.GetTypes()
-                    .Where(t => t.IsPublic || t.IsTopLevelInternal())
+                    .Where(t => t.IsPublic 
+                        || t.IsTopLevelInternal()
+                        || t.IsNestedlPublic_Or_Internal())
                     .Select(t => _system.ResolveType(t)).ToList();
                 Types = types;
                 _typeDic = types.ToDictionary(t => t.Type.FullName!);

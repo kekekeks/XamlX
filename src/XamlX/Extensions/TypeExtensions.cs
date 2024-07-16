@@ -15,4 +15,8 @@ internal static class TypeExtensions
             && !t.IsNestedAssembly
             && !t.IsNestedFamORAssem
             && !t.IsNestedFamANDAssem;
+
+    public static bool IsNestedlPublic_Or_Internal(this Type t) => !t.IsPublic
+        && t.IsNested
+        && (t.IsNestedPublic || t.IsNestedAssembly);
 }
