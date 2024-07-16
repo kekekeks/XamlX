@@ -1,7 +1,6 @@
-using System;
+using Mono.Cecil;
 using System.Collections.Generic;
 using System.Linq;
-using Mono.Cecil;
 
 namespace XamlX.TypeSystem
 {
@@ -10,7 +9,7 @@ namespace XamlX.TypeSystem
         internal class CecilAssembly : IXamlAssembly
         {
             private readonly Dictionary<string, IXamlType> _typeCache = new();
-            
+
             public CecilTypeSystem TypeSystem { get; }
             public AssemblyDefinition Assembly { get; }
 
@@ -62,7 +61,7 @@ namespace XamlX.TypeSystem
                 }
 
                 var resolved = tref?.Resolve();
-                if (resolved != null)
+                if (resolved?.IsNestedPrivate == false)
                     return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(resolved);
 
                 return null;
