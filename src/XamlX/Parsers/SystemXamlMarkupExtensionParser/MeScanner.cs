@@ -52,6 +52,8 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
         public const char Space = ' ';
         public const char OpenCurlie = '{';
         public const char CloseCurlie = '}';
+        public const char OpenBrackets = '[';
+        public const char CloseBrackets = ']';
         public const char Comma = ',';
         public const char EqualSign = '=';
         public const char Quote1 = '\'';
@@ -355,6 +357,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
         private string ReadString()
         {
             bool escaped = false;
+            bool isIndexer = false;
             char quoteChar = NullChar;
             bool atStart = true;
             bool wasQuoted = false;
@@ -456,7 +459,9 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         }
                         break;
                     case Comma:
-                        done = true;  // we are done.
+                            if(isIndexer)
+                                sb.Append(ch);
+                            done = !isIndexer;  // if we are not in an array, we are done.
                         break;
 
                     case EqualSign:
@@ -477,6 +482,14 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         quoteChar = ch;
                         wasQuoted = true;
                         break;
+                    case OpenBrackets:
+                            isIndexer = true;
+                            sb.Append(ch);
+                            break;
+                    case CloseBrackets:
+                            isIndexer = false;
+                            sb.Append(ch);
+                            break;
 
                     default:  // All other character (including whitespace)
                         if (_currentSpecialBracketCharacters != null && _currentSpecialBracketCharacters.StartsEscapeSequence(ch))
