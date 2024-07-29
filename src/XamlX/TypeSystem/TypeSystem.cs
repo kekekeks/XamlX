@@ -60,11 +60,16 @@ namespace XamlX.TypeSystem
         bool IsPrivate { get; }
         bool IsFamily { get; }
         bool IsStatic { get; }
+        bool ContainsGenericParameters { get; }
+        bool IsGenericMethod { get; }
+        bool IsGenericMethodDefinition { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
         IXamlParameterInfo GetParameterInfo(int index);
+        IReadOnlyList<IXamlType> GenericParameters { get; }
+        IReadOnlyList<IXamlType> GenericArguments { get; }
     }
 
 #if !XAMLX_INTERNAL
