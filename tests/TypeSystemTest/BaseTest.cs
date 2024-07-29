@@ -88,5 +88,4 @@ public abstract partial class BaseTest
     }
 
     protected IXamlTypeSystem TypeSystem => _typeSystem;
-
 }

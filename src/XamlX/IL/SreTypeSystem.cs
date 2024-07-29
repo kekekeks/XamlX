@@ -18,7 +18,7 @@ namespace XamlX.IL
     {
         private List<IXamlAssembly> _assemblies = new List<IXamlAssembly>();
         public IEnumerable<IXamlAssembly> Assemblies => EnumerateList(_assemblies);
-        
+
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
 
         public SreTypeSystem()
@@ -46,8 +46,8 @@ namespace XamlX.IL
         {
             if (asm.IsDynamic)
                 return null;
-            foreach(var a in Assemblies)
-                if (((SreAssembly) a).Assembly == asm)
+            foreach (var a in Assemblies)
+                if (((SreAssembly)a).Assembly == asm)
                     return (SreAssembly)a;
             var n = new SreAssembly(this, asm);
             _assemblies.Add(n);
@@ -159,7 +159,7 @@ namespace XamlX.IL
                 => _customAttributes ??= _member.GetCustomAttributesData().Select(a => new SreCustomAttribute(System,
                     a, System.ResolveType(a.AttributeType))).ToList();
         }
-        
+
         [DebuggerDisplay("{" + nameof(Type) + "}")]
         class SreType : SreMemberInfo, IXamlType
         {
@@ -260,7 +260,7 @@ namespace XamlX.IL
             public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
             {
                 return System.ResolveType(
-                    Type.MakeGenericType(typeArguments.Select(t => ((SreType) t).Type).ToArray()));
+                    Type.MakeGenericType(typeArguments.Select(t => ((SreType)t).Type).ToArray()));
             }
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
@@ -388,12 +388,14 @@ namespace XamlX.IL
             
             public override string ToString() => _method.DeclaringType?.FullName + " " + _method;
         }
-        
+
         [DebuggerDisplay("{Method}")]
         class SreMethod : SreMethodBase, IXamlMethod
         {
             public MethodInfo Method { get; }
             private readonly SreTypeSystem _system;
+            private IReadOnlyList<IXamlType>? _genericParameters;
+            private IReadOnlyList<IXamlType>? _genericArguments;
 
             public SreMethod(SreTypeSystem system, MethodInfo method) : base(system, method)
             {
@@ -404,7 +406,7 @@ namespace XamlX.IL
             public bool Equals(IXamlMethod? other)
                 => other is SreMethod typedOther && Method == typedOther.Method;
 
-            public override int GetHashCode() 
+            public override int GetHashCode()
                 => Method.GetHashCode();
 
             [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = TrimmingMessages.TypePreservedElsewhere)]
@@ -415,6 +417,29 @@ namespace XamlX.IL
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType ReturnType => _system.ResolveType(Method.ReturnType);
+
+
+            public bool IsGenericMethod => Method.IsGenericMethod;
+
+            public bool IsGenericMethodDefinition => Method.IsGenericMethodDefinition;
+
+            public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
+                Method.ContainsGenericParameters
+                    ? Method.GetGenericArguments()
+                            .Select(System.ResolveType)
+                            .OfType<IXamlType>()
+                            .ToArray()
+                    : Array.Empty<IXamlType>();
+
+            public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
+                !Method.ContainsGenericParameters
+                    ? Method.GetGenericArguments()
+                            .Select(System.ResolveType)
+                            .OfType<IXamlType>()
+                            .ToArray()
+                    : Array.Empty<IXamlType>();
+
+            public bool ContainsGenericParameters => Method.ContainsGenericParameters;
         }
 
         class SreConstructor : SreMethodBase, IXamlConstructor
@@ -489,7 +514,7 @@ namespace XamlX.IL
 
             public override string? ToString() => Event.ToString();
         }
-        
+
         class SreField : SreMemberInfo, IXamlField
         {
             private IXamlType? _declaringType;
@@ -529,7 +554,7 @@ namespace XamlX.IL
             return new IlGen(this, mb.GetILGenerator());
         }
 
-        public Type GetType(IXamlType t) => ((SreType) t).Type;
+        public Type GetType(IXamlType t) => ((SreType)t).Type;
         public IXamlType GetType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type t) => ResolveType(t);
 
         public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeBuilder builder) => new SreTypeBuilder(this, builder);
@@ -554,13 +579,13 @@ namespace XamlX.IL
 
             public IXamlILEmitter Emit(OpCode code, IXamlMethod method)
             {
-                _ilg.Emit(code, ((SreMethod) method).Method);
+                _ilg.Emit(code, ((SreMethod)method).Method);
                 return this;
             }
 
             public IXamlILEmitter Emit(OpCode code, IXamlConstructor ctor)
             {
-                _ilg.Emit(code, ((SreConstructor) ctor).Constuctor);
+                _ilg.Emit(code, ((SreConstructor)ctor).Constuctor);
                 return this;
             }
 
@@ -581,25 +606,25 @@ namespace XamlX.IL
                 _ilg.Emit(code, arg);
                 return this;
             }
-            
+
             public IXamlILEmitter Emit(OpCode code, sbyte arg)
             {
                 _ilg.Emit(code, arg);
                 return this;
             }
-            
+
             public IXamlILEmitter Emit(OpCode code, byte arg)
             {
                 _ilg.Emit(code, arg);
                 return this;
             }
-            
+
             public IXamlILEmitter Emit(OpCode code, float arg)
             {
                 _ilg.Emit(code, arg);
                 return this;
             }
-            
+
             public IXamlILEmitter Emit(OpCode code, double arg)
             {
                 _ilg.Emit(code, arg);
@@ -608,7 +633,7 @@ namespace XamlX.IL
 
             public IXamlLocal DefineLocal(IXamlType type)
             {
-                return new SreLocal(_ilg.DeclareLocal(((SreType) type).Type));
+                return new SreLocal(_ilg.DeclareLocal(((SreType)type).Type));
             }
 
             public IXamlLabel DefineLabel()
@@ -618,7 +643,7 @@ namespace XamlX.IL
 
             public IXamlILEmitter MarkLabel(IXamlLabel label)
             {
-                _ilg.MarkLabel(((SreLabel) label).Label);
+                _ilg.MarkLabel(((SreLabel)label).Label);
                 return this;
             }
 
@@ -630,7 +655,7 @@ namespace XamlX.IL
 
             public IXamlILEmitter Emit(OpCode code, IXamlLocal local)
             {
-                _ilg.Emit(code, ((SreLocal) local).Local);
+                _ilg.Emit(code, ((SreLocal)local).Local);
                 return this;
             }
 
@@ -643,14 +668,14 @@ namespace XamlX.IL
 
             public IXamlILEmitter Emit(OpCode code, IXamlType type)
             {
-                _ilg.Emit(code, ((SreType) type).Type);
+                _ilg.Emit(code, ((SreType)type).Type);
                 return this;
             }
-            
-            
+
+
             public IXamlILEmitter Emit(OpCode code, IXamlField field)
             {
-                _ilg.Emit(code, ((SreField) field).Field);
+                _ilg.Emit(code, ((SreField)field).Field);
                 return this;
             }
 
@@ -663,7 +688,7 @@ namespace XamlX.IL
                     Label = label;
                 }
             }
-            
+
             class SreLocal : IXamlILLocal
             {
                 public LocalBuilder Local { get; }
@@ -682,12 +707,12 @@ namespace XamlX.IL
             private readonly SreTypeSystem _system;
             private readonly TypeBuilder _tb;
 
-            public SreTypeBuilder(SreTypeSystem system, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeBuilder tb) : base(system,null, tb)
+            public SreTypeBuilder(SreTypeSystem system, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeBuilder tb) : base(system, null, tb)
             {
                 _system = system;
                 _tb = tb;
             }
-            
+
             public IXamlField DefineField(IXamlType type, string name, XamlVisibility visibility, bool isStatic)
             {
                 var attrs = default(FieldAttributes);
@@ -703,7 +728,7 @@ namespace XamlX.IL
                 if (isStatic)
                     attrs |= FieldAttributes.Static;
 
-                var f = _tb.DefineField(name, ((SreType) type).Type, attrs);
+                var f = _tb.DefineField(name, ((SreType)type).Type, attrs);
                 return new SreField(_system, f);
             }
 
@@ -734,7 +759,7 @@ namespace XamlX.IL
                     throw new NotImplementedException();
                 }
             }
-            
+
             public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
                 XamlVisibility visibility, bool isStatic,
                 bool isInterfaceImpl, IXamlMethod? overrideMethod)
@@ -760,7 +785,7 @@ namespace XamlX.IL
                 var argTypes = largs.Cast<SreType>().Select(t => t.Type);
                 var m = _tb.DefineMethod(name, attrs, ret, argTypes.ToArray());
                 if (overrideMethod != null)
-                    _tb.DefineMethodOverride(m, ((SreMethod) overrideMethod).Method);
+                    _tb.DefineMethodOverride(m, ((SreMethod)overrideMethod).Method);
 
                 return new SreMethodBuilder(_system, m, largs);
             }
@@ -769,9 +794,9 @@ namespace XamlX.IL
             {
                 var p = _tb.DefineProperty(name, PropertyAttributes.None, ((SreType) propertyType).Type, []);
                 if (setter != null)
-                    p.SetSetMethod(((SreMethodBuilder) setter).MethodBuilder);
+                    p.SetSetMethod(((SreMethodBuilder)setter).MethodBuilder);
                 if (getter != null)
-                    p.SetGetMethod(((SreMethodBuilder) getter).MethodBuilder);
+                    p.SetGetMethod(((SreMethodBuilder)getter).MethodBuilder);
                 return new SreProperty(_system, p);
             }
 
@@ -785,7 +810,7 @@ namespace XamlX.IL
                 public IXamlILEmitter Generator { get; }
             }
 
-            
+
             public IXamlConstructorBuilder<IXamlILEmitter> DefineConstructor(bool isStatic, params IXamlType[] args)
             {
                 var attrs = MethodAttributes.Public;
@@ -813,9 +838,9 @@ namespace XamlX.IL
                     _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
                 };
 
-                var builder  = _tb.DefineNestedType(name, attrs,
-                    ((SreType) baseType).Type);
-                
+                var builder = _tb.DefineNestedType(name, attrs,
+                    ((SreType)baseType).Type);
+
                 return new SreTypeBuilder(_system, builder);
             }
 
@@ -851,7 +876,7 @@ namespace XamlX.IL
 
             public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> args)
             {
-                var builders = _tb.DefineGenericParameters(args.Select(x=>x.Key).ToArray());
+                var builders = _tb.DefineGenericParameters(args.Select(x => x.Key).ToArray());
                 for (var c = 0; c < args.Count; c++)
                 {
                     if (args[c].Value.IsClass)
