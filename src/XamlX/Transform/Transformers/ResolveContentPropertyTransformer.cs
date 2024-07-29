@@ -20,7 +20,7 @@ namespace XamlX.Transform.Transformers
         {
             if (node is XamlAstObjectNode ni)
             {
-                XamlAstXamlPropertyValueNode propertyNode = null;
+                XamlAstXamlPropertyValueNode? propertyNode = null;
 
                 for (var c = ni.Children.Count - 1; c >= 0; c--)
                 {

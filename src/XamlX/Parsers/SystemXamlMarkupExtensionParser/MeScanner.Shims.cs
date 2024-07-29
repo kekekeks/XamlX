@@ -16,8 +16,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             CurrentType = new MeScannerTypeName(new XamlAstXmlTypeReference(lineInfo, "invalid", "invalid"));
         }
         
-        public MeScannerBracketModeParseParameters CurrentBracketModeParseParameters { get; }
-            = new MeScannerBracketModeParseParameters();
+        public MeScannerBracketModeParseParameters CurrentBracketModeParseParameters { get; } = new();
 
         public MeScannerTypeName CurrentType { get; set; }
         public MeScannerContext FindNamespaceByPrefix => this;
@@ -49,21 +48,20 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
             TypeReference = typeReference;
         }
         
-        public static MeScannerTypeName ParseInternal(string longName, MeScannerContext context, out string error)
+        public static MeScannerTypeName ParseInternal(string longName, MeScannerContext context)
         {
-            error = null;
             return new MeScannerTypeName(context.TypeResolver(longName));
         }
 
         public string Name => TypeReference.Name;
-        public string Namespace => TypeReference.XmlNamespace;
+        public string? Namespace => TypeReference.XmlNamespace;
         public bool IsMarkupExtension => false;
     }
 
     class MeScannerSr
     {
         public static string Get(string error) => error;
-        public static string Get(string error, params object[] args) => string.Format(error, args);
+        public static string Get(string error, params object?[] args) => string.Format(error, args);
     }
 
     class MeScannerSRID

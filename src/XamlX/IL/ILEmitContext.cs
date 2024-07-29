@@ -1,8 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Xml;
 using XamlX.Ast;
 using XamlX.Emit;
 using XamlX.IL.Emitters;
@@ -23,9 +19,9 @@ namespace XamlX.IL
             TransformerConfiguration configuration,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings,
             XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult> runtimeContext,
-            IXamlLocal contextLocal,
+            IXamlLocal? contextLocal,
             IXamlTypeBuilder<IXamlILEmitter> declaringType,
-            IFileSource file,
+            IFileSource? file,
             IEnumerable<object> emitters)
             : base(emitter, configuration, emitMappings, runtimeContext, contextLocal, declaringType, file, emitters)
         {
@@ -34,8 +30,8 @@ namespace XamlX.IL
         
         protected override XamlILNodeEmitResult EmitNode(IXamlAstNode value, IXamlILEmitter codeGen)
         {
-            CheckingILEmitter parent = null;
-            CheckingILEmitter checkedEmitter = null;
+            CheckingILEmitter? parent = null;
+            CheckingILEmitter? checkedEmitter = null;
             if (EnableIlVerification)
             {
                 parent = codeGen as CheckingILEmitter;
@@ -52,7 +48,7 @@ namespace XamlX.IL
             {
                 var expectedBalance = res.ProducedItems - res.ConsumedItems;
                 var checkResult =
-                    checkedEmitter.Check(res.ProducedItems - res.ConsumedItems, false);
+                    checkedEmitter!.Check(res.ProducedItems - res.ConsumedItems, false);
                 if (checkResult != null)
                     throw new XamlLoadException($"Error during IL verification: {checkResult}\n{checkedEmitter}\n",
                         value);
@@ -63,7 +59,7 @@ namespace XamlX.IL
             return res;
         }
 
-        protected override XamlILNodeEmitResult EmitNodeCore(IXamlAstNode value, IXamlILEmitter codeGen, out bool foundEmitter)
+        protected override XamlILNodeEmitResult? EmitNodeCore(IXamlAstNode value, IXamlILEmitter codeGen, out bool foundEmitter)
         {
             if(File!=null)
                 codeGen.InsertSequencePoint(File, value.Line, value.Position);
@@ -73,8 +69,7 @@ namespace XamlX.IL
 
         protected override void EmitConvert(IXamlAstNode value, IXamlILEmitter codeGen, IXamlType expectedType, IXamlType returnedType)
         {
-            XamlLocalsPool.PooledLocal local = null;
-            // ReSharper disable once ExpressionIsAlwaysNull
+            XamlLocalsPool.PooledLocal? local = null;
             // Value is assigned inside the closure in certain conditions
 
             ILEmitHelpers.EmitConvert(this, value, returnedType, expectedType, ldaddr =>
@@ -109,7 +104,7 @@ namespace XamlX.IL
 #endif
     class ILEmitContextSettings
     {
-        private IXamlDynamicSetterContainerProvider _dynamicSetterContainerProvider;
+        private IXamlDynamicSetterContainerProvider? _dynamicSetterContainerProvider;
 
         public bool EnableILVerification { get; set; }
 

@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 using XamlX;
 using XamlX.Ast;
-using XamlX.Parsers;
+using XamlX.Parsers.SystemXamlMarkupExtensionParser;
 using Xunit;
 // ReSharper disable StringLiteralTypo
 
@@ -98,12 +95,12 @@ namespace XamlParserTests
                                                     extensionType, "Prop4", extensionType),
                                                 new XamlAstTextNode(ni, "test3", true), true),
                                         }
-                                    }, true),                             
+                                    }, true),
                                 //Other.Prop='{}Not extension'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         new XamlAstXmlTypeReference(ni, "rootns", "Other"), "Prop", childType),
                                     new XamlAstTextNode(ni, "Not extension", true), true),
-                                //  Prop1='123' 
+                                //  Prop1='123'
                                 new XamlAstXamlPropertyValueNode(ni, new XamlAstNamePropertyReference(ni,
                                         childType, "Prop1", childType),
                                     new XamlAstTextNode(ni, "123", true), true),
@@ -251,7 +248,7 @@ namespace XamlParserTests
         public void Empty_Extension_With_Space_Should_Be_Parsed()
         {
             var ni = new NullLineInfo();
-            var parsed = XamlMarkupExtensionParser.Parse(ni, "{Binding }",
+            var parsed = SystemXamlMarkupExtensionParser.Parse(ni, "{Binding }",
                 n => new XamlAstXmlTypeReference(ni, "", n));
             Helpers.StructDiff(parsed, new XamlAstObjectNode(new NullLineInfo(),
                 new XamlAstXmlTypeReference(ni, "", "Binding")

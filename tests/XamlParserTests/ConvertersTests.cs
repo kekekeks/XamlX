@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
 namespace XamlParserTests
@@ -9,18 +8,18 @@ namespace XamlParserTests
     public class ConvertersTestClass
     {
         [Content]
-        public object ContentProperty { get; set; }
+        public object? ContentProperty { get; set; }
         public long Int64Property { get; set; }
         public bool BoolProperty { get; set; }
         public double DoubleProperty { get; set; }
         public float FloatProperty { get; set; }
         public TimeSpan TimeSpanProperty { get; set; }
-        public Type TypeProperty { get; set; }
+        public Type? TypeProperty { get; set; }
         public UriKind UriKindProperty { get; set; }
         public ConvertersTestValueType CustomProperty { get; set; }
-        public ConvertersTestsClassWithConverter TypeWithConverterProperty { get; set; }
+        public ConvertersTestsClassWithConverter? TypeWithConverterProperty { get; set; }
         [TypeConverter(typeof(ConvertersTests.PropertyTestConverter))]
-        public ConvertersTestsClassWithoutConverter PropertyWithConverter { get; set; }
+        public ConvertersTestsClassWithoutConverter? PropertyWithConverter { get; set; }
         [TypeConverter(typeof(ConvertersTests.NegativeIntConverter))]
         public int IntPropertyWithNegativeConverter { get; set; }
         
@@ -37,8 +36,8 @@ namespace XamlParserTests
     
     public struct ConvertersTestValueType
     {
-        public string Value { get; set; }
-        public override string ToString() => Value;
+        public string? Value { get; set; }
+        public override string? ToString() => Value;
 
         public static ConvertersTestValueType Parse(string s, IFormatProvider prov)
         {
@@ -50,14 +49,14 @@ namespace XamlParserTests
     [TypeConverter(typeof(ConvertersTests.TestConverter))]
     public class ConvertersTestsClassWithConverter
     {
-        public string Value { get; set; }
-        public override string ToString() => Value;
+        public string? Value { get; set; }
+        public override string? ToString() => Value;
     }
     
     public class ConvertersTestsClassWithoutConverter
     {
-        public string Value { get; set; }
-        public override string ToString() => Value;
+        public string? Value { get; set; }
+        public override string? ToString() => Value;
     }
 
     public class ConvertersTestsClassWithConstructor
@@ -77,27 +76,27 @@ namespace XamlParserTests
 
         public class TestConverter : TypeConverter
         {
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
             {
                 Assert.Equal(CultureInfo.InvariantCulture, culture);
-                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+                Assert.NotNull(context?.GetRequiredService<ITestRootObjectProvider>().RootObject);
                 return new ConvertersTestsClassWithConverter {Value = (string) value};
             }
         }
         
         public class PropertyTestConverter : TypeConverter
         {
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
             {
                 Assert.Equal(CultureInfo.InvariantCulture, culture);
-                Assert.NotNull(context.GetService<ITestRootObjectProvider>().RootObject);
+                Assert.NotNull(context?.GetRequiredService<ITestRootObjectProvider>().RootObject);
                 return new ConvertersTestsClassWithoutConverter {Value = (string) value};
             }
         }
         
         public class NegativeIntConverter : TypeConverter
         {
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
             {
                 return -int.Parse((string)value);
             }
@@ -145,8 +144,8 @@ namespace XamlParserTests
             try
             {
                 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-                var v = res.GetType().GetProperty(property).GetValue(res);
-                var ts = v.ToString();
+                var v = res.GetType().GetProperty(property)!.GetValue(res);
+                var ts = v?.ToString();
                 Assert.Equal(expected, ts);
             }
             finally
@@ -181,7 +180,7 @@ namespace XamlParserTests
             {
                 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
                 var v = res.ContentProperty;
-                var ts = v.ToString();
+                var ts = v?.ToString();
                 Assert.Equal(value, ts);
             }
             finally

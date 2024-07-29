@@ -53,18 +53,18 @@ namespace XamlParserTests
     
     public interface ITestRootObjectProvider
     {
-        object RootObject { get; }
+        object? RootObject { get; }
     }
 
     public interface ITestProvideValueTarget
     {
-        object TargetObject { get; }
-        object TargetProperty { get; }
+        object? TargetObject { get; }
+        object? TargetProperty { get; }
     }
     
     public interface ITestUriContext
     {
-        Uri BaseUri { get; set; }
+        Uri? BaseUri { get; set; }
     }
     
 }

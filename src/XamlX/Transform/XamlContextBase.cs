@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using XamlX.Ast;
 
 namespace XamlX.Transform
@@ -10,27 +10,26 @@ namespace XamlX.Transform
 #endif
     class XamlContextBase
     {
-        private readonly Dictionary<Type, object> _items = new Dictionary<Type, object>();
-        private readonly List<IXamlAstNode> _parentNodes = new List<IXamlAstNode>();
+        private readonly Dictionary<Type, object> _items = new();
+        private readonly List<IXamlAstNode> _parentNodes = [];
         
-        public T GetItem<T>() => (T)_items[typeof(T)];
+        public T GetItem<T>() where T : notnull => (T)_items[typeof(T)];
 
-        public T GetOrCreateItem<T>() where T : new()
+        public T GetOrCreateItem<T>() where T : notnull, new()
         {
             if (!_items.TryGetValue(typeof(T), out var rv))
                 _items[typeof(T)] = rv = new T();
-            return (T)rv;
+            return (T)rv!;
         }
 
-        public bool TryGetItem<T>(out T rv)
+        public bool TryGetItem<T>([NotNullWhen(true)] out T? rv) where T : notnull
         {
             var success = _items.TryGetValue(typeof(T), out var orv);
-            rv = (T)orv;
+            rv = (T?)orv;
             return success;
         }
 
-        public void SetItem<T>(T item) => _items[typeof(T)] = item;
-
+        public void SetItem<T>(T item) where T : notnull => _items[typeof(T)] = item;
 
         public IEnumerable<IXamlAstNode> ParentNodes()
         {

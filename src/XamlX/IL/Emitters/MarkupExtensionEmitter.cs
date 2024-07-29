@@ -1,8 +1,6 @@
 using System.Linq;
-using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Emit;
-using XamlX.Transform;
 
 namespace XamlX.IL.Emitters
 {
@@ -11,7 +9,7 @@ namespace XamlX.IL.Emitters
 #endif
     class MarkupExtensionEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen)
+        public XamlILNodeEmitResult? Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter ilgen)
         {
 
             if (!(node is XamlMarkupExtensionNode me))
@@ -27,9 +25,9 @@ namespace XamlX.IL.Emitters
             void EmitPropertyDescriptor()
             {
                 if (context.EmitMappings.ProvideValueTargetPropertyEmitter
-                        ?.Invoke(context, ilgen, prop.Property) == true)
+                        ?.Invoke(context, ilgen, prop!.Property) == true)
                     return;
-                ilgen.Ldstr(prop.Property.Name);
+                ilgen.Ldstr(prop!.Property.Name);
             }
 
             context.Emit(me.Value, ilgen, me.Value.Type.GetClrType());
@@ -44,7 +42,7 @@ namespace XamlX.IL.Emitters
                     .Ldloc(context.ContextLocal);
                 EmitPropertyDescriptor();
                 ilgen
-                    .Stfld(context.RuntimeContext.PropertyTargetProperty);
+                    .Stfld(context.RuntimeContext.PropertyTargetProperty!);
             }
 
             ilgen.EmitCall(me.ProvideValue, context);
@@ -54,7 +52,7 @@ namespace XamlX.IL.Emitters
                 ilgen
                     .Ldloc(context.ContextLocal)
                     .Ldnull()
-                    .Stfld(context.RuntimeContext.PropertyTargetProperty);
+                    .Stfld(context.RuntimeContext.PropertyTargetProperty!);
             }
 
             return XamlILNodeEmitResult.Type(0, me.ProvideValue.ReturnType);

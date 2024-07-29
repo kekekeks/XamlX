@@ -33,7 +33,7 @@ namespace XamlX.IL.Emitters
             return lst;
         }
 
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult? Emit(IXamlAstNode node, XamlEmitContextWithLocals<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (node is not XamlPropertyAssignmentNode an)
                 return null;
@@ -129,7 +129,8 @@ namespace XamlX.IL.Emitters
                 typeCache.MethodCacheByType[typeBuilder] = methodCache;
             }
 
-            var cacheKey = new SettersCacheKey(property.DeclaringType, valueTypes, setters);
+            var declaringType = property.DeclaringType;
+            var cacheKey = new SettersCacheKey(declaringType, valueTypes, setters);
 
             if (!methodCache.MethodByCacheKey.TryGetValue(cacheKey, out var method))
             {
@@ -172,8 +173,8 @@ namespace XamlX.IL.Emitters
                 codeGen.Ldarg(i + 1);
 
             var dynamicValueType = valueTypes.Last();
-            IXamlPropertySetter firstSetterAllowingNull = null;
-            IXamlLabel next = null;
+            IXamlPropertySetter? firstSetterAllowingNull = null;
+            IXamlLabel? next = null;
 
             void EmitSetterAfterChecks(IXamlPropertySetter setter, IXamlType typeOnStack)
             {
@@ -246,7 +247,7 @@ namespace XamlX.IL.Emitters
                 {
                     codeGen
                         .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
-                            .FindConstructor())
+                            .GetConstructor())
                         .Throw();
                 }
 
@@ -254,7 +255,7 @@ namespace XamlX.IL.Emitters
 
                 codeGen
                     .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
-                        .FindConstructor())
+                        .GetConstructor())
                     .Throw();
             }
         }
@@ -266,6 +267,7 @@ namespace XamlX.IL.Emitters
             public IReadOnlyList<IXamlPropertySetter> Setters { get; }
 
             private static int GetListHashCode<T>(IReadOnlyList<T> list)
+                where T : notnull
             {
                 int hashCode = list.Count;
                 for (var i = 0; i < list.Count; ++i)
@@ -292,7 +294,7 @@ namespace XamlX.IL.Emitters
                    && AreListEqual(ValueTypes, other.ValueTypes)
                    && AreListEqual(Setters, other.Setters);
 
-            public override bool Equals(object obj)
+            public override bool Equals(object? obj)
                 => obj is SettersCacheKey other && Equals(other);
 
             public override int GetHashCode()

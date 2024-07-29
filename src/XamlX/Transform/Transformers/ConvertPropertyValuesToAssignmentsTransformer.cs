@@ -1,6 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.TypeSystem;
@@ -41,7 +41,7 @@ namespace XamlX.Transform.Transformers
                     {
                         for (var c = 0; c < arguments.Count - 1; c++)
                         {
-                            IXamlType convertedTo = null;
+                            IXamlType? convertedTo = null;
                             for (var s = 0; s < filteredSetters.Count;)
                             {
                                 var setter = filteredSetters[s];
@@ -71,7 +71,7 @@ namespace XamlX.Transform.Transformers
                         }
                     }
 
-                    XamlPropertyAssignmentNode CreateAssignment()
+                    XamlPropertyAssignmentNode? CreateAssignment()
                     {
                         var matchedSetters = new List<IXamlPropertySetter>();
                         foreach (var setter in filteredSetters)
@@ -119,7 +119,7 @@ namespace XamlX.Transform.Transformers
 
                         // Current node was already skipped due an error, and it always will have unknown type, so ignore it.
                         if (property.DeclaringType == XamlPseudoType.Unknown
-                            || v.Type?.GetClrType() == XamlPseudoType.Unknown)
+                            || v.Type.GetClrType() == XamlPseudoType.Unknown)
                             return null;
 
                         throw new XamlLoadException(
@@ -154,7 +154,7 @@ namespace XamlX.Transform.Transformers
                         ass.PossibleSetters = ass.PossibleSetters.Where(s => s.BinderParameters.AllowMultiple).ToList();
                         if (ass.PossibleSetters.Count == 0)
                             throw new XamlLoadException(
-                                $"Unable to find a setter that allows multiple assignments to the property {ass.Property.Name} of type {ass.Property.DeclaringType.GetFqn()}",
+                                $"Unable to find a setter that allows multiple assignments to the property {ass.Property.Name} of type {ass.Property.DeclaringType?.GetFqn()}",
                                 node);
                     }
                 }
@@ -166,13 +166,13 @@ namespace XamlX.Transform.Transformers
             return node;
         }
 
-        static IXamlAstValueNode FindAndRemoveKey(AstTransformationContext context, IXamlAstValueNode value)
+        static IXamlAstValueNode? FindAndRemoveKey(AstTransformationContext context, IXamlAstValueNode value)
         {
-            IXamlAstValueNode keyNode = null;
+            IXamlAstValueNode? keyNode = null;
             
-            bool IsKeyDirective(object node) => node is XamlAstXmlDirective d
-                                                && d.Namespace == XamlNamespaces.Xaml2006 &&
-                                                d.Name == "Key";
+            bool IsKeyDirective([NotNullWhen(true)] object? node)
+                => node is XamlAstXmlDirective { Namespace: XamlNamespaces.Xaml2006, Name: "Key" };
+
             void ProcessDirective(object d)
             {
                 var directive = (XamlAstXmlDirective) d;
@@ -192,8 +192,9 @@ namespace XamlX.Transform.Transformers
                     nodes.Remove(d);
                 }
             }
-                
-            IXamlAstManipulationNode VisitManipulationNode(IXamlAstManipulationNode man)
+
+            [return: NotNullIfNotNull(nameof(man))]
+            IXamlAstManipulationNode? VisitManipulationNode(IXamlAstManipulationNode? man)
             {
                 if (IsKeyDirective(man))
                 {

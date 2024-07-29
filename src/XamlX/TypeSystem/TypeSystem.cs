@@ -12,11 +12,11 @@ namespace XamlX.TypeSystem
     {
         object Id { get; }
         string Name { get; }
-        string Namespace { get; }
+        string? Namespace { get; }
         string FullName { get; }
         bool IsPublic { get; }
         bool IsNestedPrivate { get; }
-        IXamlAssembly Assembly { get; }
+        IXamlAssembly? Assembly { get; }
         IReadOnlyList<IXamlProperty> Properties { get; }
         IReadOnlyList<IXamlEventInfo> Events { get; }
         IReadOnlyList<IXamlField> Fields { get; }
@@ -26,12 +26,12 @@ namespace XamlX.TypeSystem
         IReadOnlyList<IXamlType> GenericArguments { get; }
         bool IsAssignableFrom(IXamlType type);
         IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments);
-        IXamlType GenericTypeDefinition { get; }
+        IXamlType? GenericTypeDefinition { get; }
         bool IsArray { get; }
-        IXamlType ArrayElementType { get; }
+        IXamlType? ArrayElementType { get; }
         IXamlType MakeArrayType(int dimensions);
-        IXamlType BaseType { get; }
-        IXamlType DeclaringType { get; }
+        IXamlType? BaseType { get; }
+        IXamlType? DeclaringType { get; }
         bool IsValueType { get; }
         bool IsEnum { get; }
         IReadOnlyList<IXamlType> Interfaces { get; }
@@ -45,7 +45,7 @@ namespace XamlX.TypeSystem
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlParameterInfo : IXamlMember
+    interface IXamlParameterInfo
     {
         IXamlType ParameterType { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
@@ -60,12 +60,16 @@ namespace XamlX.TypeSystem
         bool IsPrivate { get; }
         bool IsFamily { get; }
         bool IsStatic { get; }
+        bool ContainsGenericParameters { get; }
+        bool IsGenericMethod { get; }
+        bool IsGenericMethodDefinition { get; }
         IXamlType ReturnType { get; }
         IReadOnlyList<IXamlType> Parameters { get; }
-        IXamlType DeclaringType { get; }
         IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments);
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
         IXamlParameterInfo GetParameterInfo(int index);
+        IReadOnlyList<IXamlType> GenericParameters { get; }
+        IReadOnlyList<IXamlType> GenericArguments { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -74,12 +78,13 @@ namespace XamlX.TypeSystem
     interface IXamlMember
     {
         string Name { get; }
+        IXamlType DeclaringType { get; }
     }
     
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface IXamlConstructor : IEquatable<IXamlConstructor>
+    interface IXamlConstructor : IEquatable<IXamlConstructor>, IXamlMember
     {
         bool IsPublic { get; }
         bool IsStatic { get; }
@@ -93,8 +98,8 @@ namespace XamlX.TypeSystem
     interface IXamlProperty : IEquatable<IXamlProperty>, IXamlMember
     {
         IXamlType PropertyType { get; }
-        IXamlMethod Setter { get; }
-        IXamlMethod Getter { get; }
+        IXamlMethod? Setter { get; }
+        IXamlMethod? Getter { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
         IReadOnlyList<IXamlType> IndexerParameters { get; }
     }
@@ -104,7 +109,7 @@ namespace XamlX.TypeSystem
 #endif
     interface IXamlEventInfo : IEquatable<IXamlEventInfo>, IXamlMember
     {
-        IXamlMethod Add { get; }
+        IXamlMethod? Add { get; }
     }
 
 #if !XAMLX_INTERNAL
@@ -127,7 +132,7 @@ namespace XamlX.TypeSystem
     {
         string Name { get; }
         IReadOnlyList<IXamlCustomAttribute> CustomAttributes { get; }
-        IXamlType FindType(string fullName);
+        IXamlType? FindType(string fullName);
     }
 
 #if !XAMLX_INTERNAL
@@ -136,8 +141,8 @@ namespace XamlX.TypeSystem
     interface IXamlCustomAttribute : IEquatable<IXamlCustomAttribute>
     {
         IXamlType Type { get; }
-        List<object> Parameters { get; }
-        Dictionary<string, object> Properties { get; }
+        List<object?> Parameters { get; }
+        Dictionary<string, object?> Properties { get; }
     }
     
 #if !XAMLX_INTERNAL
@@ -146,9 +151,9 @@ namespace XamlX.TypeSystem
     interface IXamlTypeSystem
     {
         IEnumerable<IXamlAssembly> Assemblies { get; }
-        IXamlAssembly FindAssembly(string substring);
-        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name);
-        IXamlType FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string assembly);
+        IXamlAssembly? FindAssembly(string substring);
+        IXamlType? FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name);
+        IXamlType? FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string assembly);
     }
     
 #if !XAMLX_INTERNAL
@@ -195,9 +200,9 @@ namespace XamlX.TypeSystem
         void AddInterfaceImplementation(IXamlType type);
 
         IXamlMethodBuilder<TBackendEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
-            XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod overrideMethod = null);
+            XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod? overrideMethod = null);
 
-        IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter);
+        IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod? setter, IXamlMethod? getter);
         IXamlConstructorBuilder<TBackendEmitter> DefineConstructor(bool isStatic, params IXamlType[] args);
         IXamlType CreateType();
         IXamlTypeBuilder<TBackendEmitter> DefineSubType(IXamlType baseType, string name, XamlVisibility visibility);
@@ -247,7 +252,7 @@ namespace XamlX.TypeSystem
         {
             Name = name;
         }
-        public bool Equals(IXamlType other) => other == this;
+        public bool Equals(IXamlType? other) => other == this;
 
         public object Id { get; } = Guid.NewGuid();
         public string Name { get; }
@@ -255,7 +260,7 @@ namespace XamlX.TypeSystem
         public string FullName => Name;
         public bool IsPublic => true;
         public bool IsNestedPrivate => false;
-        public IXamlAssembly Assembly => null;
+        public IXamlAssembly? Assembly => null;
         public IReadOnlyList<IXamlProperty> Properties => Array.Empty<IXamlProperty>();
         public IReadOnlyList<IXamlEventInfo> Events => Array.Empty<IXamlEventInfo>();
         public IReadOnlyList<IXamlField> Fields => Array.Empty<IXamlField>();
@@ -265,23 +270,23 @@ namespace XamlX.TypeSystem
         public IReadOnlyList<IXamlType> GenericArguments => Array.Empty<IXamlType>();
         public IXamlType MakeArrayType(int dimensions) => throw new NullReferenceException();
 
-        public IXamlType BaseType => null;
-        public IXamlType DeclaringType => null;
+        public IXamlType? BaseType => null;
+        public IXamlType? DeclaringType => null;
         public bool IsValueType => false;
         public bool IsEnum => false;
         public IReadOnlyList<IXamlType> Interfaces => Array.Empty<IXamlType>();
         public bool IsInterface => false;
         public IXamlType GetEnumUnderlyingType() => throw new InvalidOperationException();
-        public IReadOnlyList<IXamlType> GenericParameters => null;
+        public IReadOnlyList<IXamlType> GenericParameters => [];
         public bool IsFunctionPointer => false;
 
-        public bool IsAssignableFrom(IXamlType type) => type == this;
+        public bool IsAssignableFrom(IXamlType? type) => type == this;
 
         public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments) => throw new NotSupportedException();
 
-        public IXamlType GenericTypeDefinition => null;
+        public IXamlType? GenericTypeDefinition => null;
         public bool IsArray => false;
-        public IXamlType ArrayElementType => null;
+        public IXamlType? ArrayElementType => null;
         public static XamlPseudoType Null { get; } = new XamlPseudoType("{x:Null}");
         public static XamlPseudoType Unknown { get; } = new XamlPseudoType("{Unknown type}");
 
@@ -320,7 +325,7 @@ namespace XamlX.TypeSystem
 #endif
     class AnonymousParameterInfo : IXamlParameterInfo
     {
-        public AnonymousParameterInfo(IXamlType type, string name)
+        public AnonymousParameterInfo(IXamlType type, string? name)
         {
             ParameterType = type;
             Name = name ?? "unknown";
@@ -373,7 +378,11 @@ namespace XamlX.TypeSystem
                     yield return m;
         }
 
-        public static IXamlMethod FindMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
+        public static IXamlMethod GetMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
+            => FindMethod(type, criteria)
+               ?? throw new XamlTypeSystemException($"Method not found on type {type.GetFqn()}");
+
+        public static IXamlMethod? FindMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
         {
             foreach (var m in type.Methods)
                 if (criteria(m))
@@ -387,8 +396,18 @@ namespace XamlX.TypeSystem
                         return m;
             return null;
         }
-        
-        public static IXamlMethod FindMethod(this IXamlType type, string name, IXamlType returnType, 
+
+
+        public static IXamlMethod GetMethod(
+            this IXamlType type,
+            string name,
+            IXamlType returnType,
+            bool allowDowncast,
+            params IXamlType[] args)
+            => FindMethod(type, name, returnType, allowDowncast, args)
+               ?? throw new XamlTypeSystemException($"Method {name} not found with matching signature on type {type.GetFqn()}");
+
+        public static IXamlMethod? FindMethod(this IXamlType type, string name, IXamlType returnType,
             bool allowDowncast, params IXamlType[] args)
         {
             foreach (var m in type.Methods)
@@ -423,12 +442,13 @@ namespace XamlX.TypeSystem
                 throw new XamlTypeSystemException($"Method with signature {signature} is not found on type {type.GetFqn()}");
             return found;
         }
-        public static IXamlMethod FindMethod(this IXamlType type, FindMethodMethodSignature signature)
+
+        public static IXamlMethod? FindMethod(this IXamlType type, FindMethodMethodSignature signature)
         {
             foreach (var m in type.Methods)
             {
-                if (m.Name == signature.Name 
-                    && m.ReturnType.Equals(signature.ReturnType) 
+                if (m.Name == signature.Name
+                    && m.ReturnType.Equals(signature.ReturnType)
                     && m.Parameters.Count == signature.Parameters.Count
                     && m.IsStatic == signature.IsStatic
                     )
@@ -453,8 +473,8 @@ namespace XamlX.TypeSystem
                 return FindMethod(type.BaseType, signature);
             return null;
         }
-        
-        public static IXamlConstructor GetConstructor(this IXamlType type, List<IXamlType> args = null)
+
+        public static IXamlConstructor GetConstructor(this IXamlType type, List<IXamlType>? args = null)
         {
             var found = FindConstructor(type, args);
             if (found == null)
@@ -462,16 +482,16 @@ namespace XamlX.TypeSystem
                 if (args != null && args.Count > 0)
                 {
                     var argsString = string.Join(", ", args.Select(a => a.GetFullName()));
-                    
+
                     throw new XamlTypeSystemException($"Constructor with arguments {argsString} is not found on type {type.GetFqn()}");
                 }
-                
+
                 throw new XamlTypeSystemException($"Constructor with no arguments is not found on type {type.GetFqn()}");
             }
             return found;
         }
-        
-        public static IXamlConstructor FindConstructor(this IXamlType type, List<IXamlType> args = null)
+
+        public static IXamlConstructor? FindConstructor(this IXamlType type, List<IXamlType>? args = null)
         {
             if(args == null)
                 args = new List<IXamlType>();
@@ -494,7 +514,7 @@ namespace XamlX.TypeSystem
             return null;
         }
 
-        public static bool AcceptsNull(this IXamlType type) 
+        public static bool AcceptsNull(this IXamlType type)
             => !type.IsValueType || type.IsNullable();
 
         public static bool IsNullable(this IXamlType type)
@@ -520,7 +540,7 @@ namespace XamlX.TypeSystem
                 foreach (var i in type.BaseType.GetAllInterfaces())
                     yield return i;
         }
-        
+
         public static IEnumerable<IXamlCustomAttribute> GetAllCustomAttributes(this IXamlType type)
         {
             foreach (var i in type.CustomAttributes)
@@ -583,5 +603,5 @@ namespace XamlX.TypeSystem
             return lst;
         }
     }
-    
+
 }

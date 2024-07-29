@@ -1,9 +1,8 @@
-
 using System;
 using System.Collections.Generic;
-using XamlX.Transform;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
+
 namespace XamlX.Ast
 {
 #if !XAMLX_INTERNAL
@@ -62,11 +61,6 @@ namespace XamlX.Ast
     {
         public SkipXamlValueWithManipulationNode(IXamlLineInfo lineInfo) : base(lineInfo, new SkipXamlAstNode(lineInfo), null)
         {
-            if (lineInfo is not null)
-            {
-                Line = lineInfo.Line;
-                Position = lineInfo.Position;
-            }
         }
 
         public override void VisitChildren(Visitor visitor) { }

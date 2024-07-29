@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using XamlX;
-using XamlX.TypeSystem;
 using Xunit;
 
 namespace XamlParserTests
@@ -11,8 +10,8 @@ namespace XamlParserTests
         public int IntProperty { get; set; }
         public double DoubleProperty { get; set; }
         public int? NullableIntProperty { get; set; }
-        public string StringProperty { get; set; }
-        public object ObjectProperty { get; set; }
+        public string? StringProperty { get; set; }
+        public object? ObjectProperty { get; set; }
         [Content]
         public List<int> IntList { get; } = new List<int>();
         public List<int> IntList2 { get; set; } = new List<int>();
@@ -27,8 +26,8 @@ namespace XamlParserTests
 
     public class ObjectTestExtension
     {
-        public object Returned { get; set; }
-        public object ProvideValue()
+        public object? Returned { get; set; }
+        public object? ProvideValue()
         {
             return Returned;
         }
@@ -37,8 +36,8 @@ namespace XamlParserTests
     // Shouldn't be conflicted with actual generic types with the same name.
     public class GenericTestExtension
     {
-        public object Returned { get; set; }
-        public object ProvideValue()
+        public object? Returned { get; set; }
+        public object? ProvideValue()
         {
             return Returned;
         }
@@ -46,8 +45,8 @@ namespace XamlParserTests
 
     public class GenericTestExtension<TType>
     {
-        public TType Returned { get; set; }
-        public object ProvideValue()
+        public TType Returned { get; set; } = default!;
+        public object? ProvideValue()
         {
             return Returned;
         }
@@ -55,18 +54,18 @@ namespace XamlParserTests
 
     public class GenericTestExtension<TType1, TType2>
     {
-        public TType1 Returned1 { get; set; }
-        public TType2 Returned2 { get; set; }
-        public object ProvideValue()
+        public TType1 Returned1 { get; set; } = default!;
+        public TType2 Returned2 { get; set; } = default!;
+        public object? ProvideValue()
         {
             return (Returned1, Returned2);
         }
     }
 
-    class DictionaryServiceProvider : Dictionary<Type, object>, IServiceProvider
+    class DictionaryServiceProvider : Dictionary<Type, object?>, IServiceProvider
     {
-        public IServiceProvider Parent { get; set; }
-        public object GetService(Type serviceType)
+        public IServiceProvider? Parent { get; set; }
+        public object? GetService(Type serviceType)
         {
             if(TryGetValue(serviceType, out var impl))
                return impl;
@@ -76,30 +75,30 @@ namespace XamlParserTests
 
     public class ExtensionValueHolder
     {
-        public object Value { get; set; }
+        public object? Value { get; set; }
     }
 
     public class ServiceProviderValueExtension
     {
-        public object ProvideValue(IServiceProvider sp) =>
-            ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
+        public object? ProvideValue(IServiceProvider sp) =>
+            ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))!).Value;
     }
 
     public class ServiceProviderIntValueExtension
     {
         public int ProvideValue(IServiceProvider sp) =>
-            (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))).Value;
+            (int) ((ExtensionValueHolder) sp.GetService(typeof(ExtensionValueHolder))!).Value!;
     }
 
     public class ServiceProviderIntListExtension
     {
         public List<int> ProvideValue(IServiceProvider sp) =>
-            new() { (int)((ExtensionValueHolder)sp.GetService(typeof(ExtensionValueHolder))).Value };
+            new() { (int)((ExtensionValueHolder)sp.GetService(typeof(ExtensionValueHolder))!).Value! };
     }
 
     public class CustomConvertedType
     {
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 
 
@@ -297,7 +296,7 @@ namespace XamlParserTests
             var res = (MarkupExtensionTestsClass) CompileAndRun(@"
 <MarkupExtensionTestsClass xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
     ObjectProperty='{GenericTestExtension Returned1=5, Returned2=0.4, x:TypeArguments=""x:Int32,x:Single""}'/>");
-            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty);
+            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty!);
         }
 
         [Fact]
@@ -309,7 +308,7 @@ namespace XamlParserTests
         <GenericTestExtension Returned1='5' Returned2='0.4' x:TypeArguments='x:Int32,x:Single' />
     </MarkupExtensionTestsClass.ObjectProperty>
 </MarkupExtensionTestsClass>");
-            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty);
+            Assert.Equal((5, 0.4f), (ValueTuple<int, float>)res.ObjectProperty!);
         }
 
         [Fact]

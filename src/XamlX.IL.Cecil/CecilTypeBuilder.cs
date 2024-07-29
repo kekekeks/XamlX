@@ -12,7 +12,8 @@ namespace XamlX.TypeSystem
         class CecilTypeBuilder : CecilType, IXamlTypeBuilder<IXamlILEmitter>
         {
             private CecilTypeResolveContext _builderTypeResolveContext;
-            public CecilTypeBuilder(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly assembly, TypeDefinition definition) 
+
+            public CecilTypeBuilder(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly? assembly, TypeDefinition definition)
                 : base(parentTypeResolveContext, assembly, definition)
             {
                 _builderTypeResolveContext = parentTypeResolveContext.Nested(definition);
@@ -51,7 +52,7 @@ namespace XamlX.TypeSystem
             }
 
             public IXamlMethodBuilder<IXamlILEmitter> DefineMethod(IXamlType returnType, IEnumerable<IXamlType> args, string name,
-                XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod overrideMethod = null)
+                XamlVisibility visibility, bool isStatic, bool isInterfaceImpl, IXamlMethod? overrideMethod = null)
             {
                 var attrs = default(MethodAttributes);
 
@@ -70,9 +71,10 @@ namespace XamlX.TypeSystem
                     attrs |= MethodAttributes.NewSlot | MethodAttributes.Virtual;
                                
                 var def = new MethodDefinition(name, attrs, GetReference(returnType));
-                if(args!=null)
-                    foreach (var a in args)
-                        def.Parameters.Add(new ParameterDefinition(GetReference(a)));
+
+                foreach (var arg in args)
+                    def.Parameters.Add(new ParameterDefinition(GetReference(arg)));
+
                 if (overrideMethod != null)
                     def.Overrides.Add(Definition.Module.ImportReference(((CecilMethod) overrideMethod).Reference));
                 def.Body.InitLocals = true;
@@ -83,10 +85,10 @@ namespace XamlX.TypeSystem
                 return rv;
             }
             
-            public IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod setter, IXamlMethod getter)
+            public IXamlProperty DefineProperty(IXamlType propertyType, string name, IXamlMethod? setter, IXamlMethod? getter)
             {
-                var s = (CecilMethod) setter;
-                var g = (CecilMethod) getter;
+                var s = (CecilMethod?) setter;
+                var g = (CecilMethod?) getter;
                 var def = new PropertyDefinition(name, PropertyAttributes.None,
                     GetReference(propertyType));
                 def.SetMethod = s?.Definition;
@@ -108,9 +110,10 @@ namespace XamlX.TypeSystem
 
                 var def = new MethodDefinition(isStatic ? ".cctor" : ".ctor", attrs,
                     Definition.Module.TypeSystem.Void);
-                if(args!=null)
-                    foreach (var a in args)
-                        def.Parameters.Add(new ParameterDefinition(GetReference(a)));
+
+                foreach (var arg in args)
+                    def.Parameters.Add(new ParameterDefinition(GetReference(arg)));
+
                 def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
                 var rv = new CecilConstructor(_builderTypeResolveContext, def);
@@ -136,7 +139,7 @@ namespace XamlX.TypeSystem
 
                 Definition.NestedTypes.Add(td);
                 TypeSystem.AddCompilerGeneratedAttribute(td);
-                return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly) Assembly, td);
+                return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly?)Assembly, td);
             }
 
             public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
@@ -152,7 +155,7 @@ namespace XamlX.TypeSystem
                     _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
                 };
 
-                var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.FindType("System.MulticastDelegate")));
+                var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.GetType("System.MulticastDelegate")));
 
                 Definition.NestedTypes.Add(builder);
                 TypeSystem.AddCompilerGeneratedAttribute(builder);
@@ -172,7 +175,7 @@ namespace XamlX.TypeSystem
                     invoke.Parameters.Add(new ParameterDefinition(GetReference(param)));
                 }
 
-                return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly)Assembly, builder);
+                return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly?)Assembly, builder);
             }
 
             public void DefineGenericParameters(IReadOnlyList<KeyValuePair<string, XamlGenericParameterConstraint>> args)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using XamlX.Emit;
 using XamlX.IL;
@@ -39,7 +40,7 @@ namespace XamlX.Ast
         public bool IsPublic { get; set; }
         public bool IsPrivate { get; set; }
         public bool IsFamily { get; set; }
-        public IXamlMethod Getter { get; set; }
+        public IXamlMethod? Getter { get; set; }
         public List<IXamlPropertySetter> Setters { get; set; } = new List<IXamlPropertySetter>();
         public List<IXamlCustomAttribute> CustomAttributes { get; set; } = new List<IXamlCustomAttribute>();
         public IXamlType DeclaringType { get; set; }
@@ -54,28 +55,25 @@ namespace XamlX.Ast
                 Setters.Add(new XamlDirectCallPropertySetter(property.Setter));
             CustomAttributes = property.CustomAttributes.ToList();
             var accessor = property.Getter ?? property.Setter;
-            DeclaringType = accessor?.DeclaringType;
+            DeclaringType = property.DeclaringType;
             IsPrivate = accessor?.IsPrivate == true;
             IsPublic = accessor?.IsPublic == true;
             IsFamily = accessor?.IsFamily == true;
             var typeConverterAttributes = cfg.GetCustomAttribute(property, cfg.TypeMappings.TypeConverterAttributes);
-            if (typeConverterAttributes != null)
+            foreach (var attr in typeConverterAttributes)
             {
-                foreach (var attr in typeConverterAttributes)
+                var typeConverter =
+                    XamlTransformHelpers.TryGetTypeConverterFromCustomAttribute(cfg, attr);
+                if (typeConverter != null)
                 {
-                    var typeConverter =
-                        XamlTransformHelpers.TryGetTypeConverterFromCustomAttribute(cfg, attr);
-                    if (typeConverter != null)
-                    {
-                        TypeConverters[property.PropertyType] = typeConverter;
-                        break;
-                    }
+                    TypeConverters[property.PropertyType] = typeConverter;
+                    break;
                 }
             }
         }
 
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType, 
-            IXamlMethod getter, IEnumerable<IXamlPropertySetter> setters) : base(lineInfo)
+        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
+            IXamlMethod? getter, IEnumerable<IXamlPropertySetter>? setters) : base(lineInfo)
         {
             Name = name;
             DeclaringType = declaringType;
@@ -88,8 +86,8 @@ namespace XamlX.Ast
         }
 
         public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
-            IXamlMethod getter, params IXamlMethod[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x)))
+            IXamlMethod? getter, params IXamlMethod?[] setters) : this(lineInfo, name, declaringType,
+            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x!)))
         {
 
         }
@@ -112,7 +110,7 @@ namespace XamlX.Ast
     {
         private readonly IXamlMethod _method;
         public IXamlType TargetType { get; }
-        public PropertySetterBinderParameters BinderParameters { get; } = new PropertySetterBinderParameters();
+        public PropertySetterBinderParameters BinderParameters { get; }
         public IReadOnlyList<IXamlType> Parameters { get; }
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
 
@@ -145,7 +143,7 @@ namespace XamlX.Ast
             };
         }
 
-        public bool Equals(XamlDirectCallPropertySetter other)
+        public bool Equals(XamlDirectCallPropertySetter? other)
         {
             if (ReferenceEquals(null, other))
                 return false;
@@ -155,7 +153,7 @@ namespace XamlX.Ast
             return _method.Equals(other._method) && BinderParameters.Equals(other.BinderParameters);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => Equals(obj as XamlDirectCallPropertySetter);
 
         public override int GetHashCode() 
@@ -172,7 +170,7 @@ namespace XamlX.Ast
         public bool AllowRuntimeNull { get; set; } = true;
         public bool AllowAttributeSyntax { get; set; } = true;
 
-        public bool Equals(PropertySetterBinderParameters other)
+        public bool Equals(PropertySetterBinderParameters? other)
         {
             if (ReferenceEquals(null, other))
                 return false;
@@ -184,7 +182,7 @@ namespace XamlX.Ast
                    && AllowRuntimeNull == other.AllowRuntimeNull;
         }
 
-        public override bool Equals(object obj) 
+        public override bool Equals(object? obj)
             => Equals(obj as PropertySetterBinderParameters);
 
         public override int GetHashCode()
@@ -261,7 +259,7 @@ namespace XamlX.Ast
         public IXamlWrappedMethod Method { get; set; }
         public List<IXamlAstValueNode> Arguments { get; set; }
         public XamlMethodCallBaseNode(IXamlLineInfo lineInfo, 
-            IXamlWrappedMethod method, IEnumerable<IXamlAstValueNode> args) 
+            IXamlWrappedMethod method, IEnumerable<IXamlAstValueNode>? args)
             : base(lineInfo)
         {
             Method = method;
@@ -296,14 +294,14 @@ namespace XamlX.Ast
     class XamlStaticOrTargetedReturnMethodCallNode : XamlMethodCallBaseNode, IXamlAstValueNode
     {
         public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlWrappedMethod method,
-            IEnumerable<IXamlAstValueNode> args)
+            IEnumerable<IXamlAstValueNode>? args)
             : base(lineInfo, method, args)
         {
             Type = new XamlAstClrTypeReference(lineInfo, method.ReturnType, false);
         }
 
         public XamlStaticOrTargetedReturnMethodCallNode(IXamlLineInfo lineInfo, IXamlMethod method,
-            IEnumerable<IXamlAstValueNode> args)
+            IEnumerable<IXamlAstValueNode>? args)
             : this(lineInfo, new XamlWrappedMethod(method), args)
         {
             
@@ -320,7 +318,7 @@ namespace XamlX.Ast
         public List<IXamlAstManipulationNode> Children { get; set; } = new List<IXamlAstManipulationNode>();
 
         public XamlManipulationGroupNode(IXamlLineInfo lineInfo,
-            IEnumerable<IXamlAstManipulationNode> children = null)
+            IEnumerable<IXamlAstManipulationNode>? children = null)
             : base(lineInfo)
         {
             if (children != null)
@@ -354,11 +352,11 @@ namespace XamlX.Ast
 #endif
     class XamlValueWithManipulationNode : XamlValueWithSideEffectNodeBase
     {
-        public IXamlAstManipulationNode Manipulation { get; set; }
+        public IXamlAstManipulationNode? Manipulation { get; set; }
 
         public XamlValueWithManipulationNode(IXamlLineInfo lineInfo,
             IXamlAstValueNode value,
-            IXamlAstManipulationNode manipulation) : base(lineInfo, value)
+            IXamlAstManipulationNode? manipulation) : base(lineInfo, value)
         {
             Value = value;
             Manipulation = manipulation;
@@ -367,7 +365,7 @@ namespace XamlX.Ast
         public override void VisitChildren(Visitor visitor)
         {
             base.VisitChildren(visitor);
-            Manipulation = (IXamlAstManipulationNode) Manipulation?.Visit(visitor);
+            Manipulation = (IXamlAstManipulationNode?)Manipulation?.Visit(visitor);
         }
     }
 
@@ -387,7 +385,7 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
         public IXamlConstructor Constructor { get; }
-        public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
+        public List<IXamlAstValueNode> Arguments { get; set; }
 
         public override void VisitChildren(Visitor visitor)
         {
@@ -414,8 +412,8 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type { get; set; }
         public IXamlConstructor Constructor { get; }
-        public List<IXamlAstValueNode> Arguments { get; set; } = new List<IXamlAstValueNode>();
-        public List<IXamlAstNode> Children { get; set; } = new List<IXamlAstNode>();
+        public List<IXamlAstValueNode> Arguments { get; set; }
+        public List<IXamlAstNode> Children { get; set; }
 
         public override void VisitChildren(Visitor visitor)
         {
@@ -446,7 +444,7 @@ namespace XamlX.Ast
             Value = (IXamlAstValueNode) Value.Visit(visitor);
         }
 
-        public bool NeedsParentStack => ProvideValue?.Parameters.Count > 0;
+        public bool NeedsParentStack => ProvideValue.Parameters.Count > 0;
         public IXamlAstTypeReference Type { get; }
     }
     
@@ -510,8 +508,7 @@ namespace XamlX.Ast
         public XamlWrappedMethod(IXamlMethod method)
         {
             _method = method;
-            ParametersWithThis =
-                method.IsStatic ? method.Parameters : new[] {method.DeclaringType}.Concat(method.Parameters).ToList();
+            ParametersWithThis = method.ParametersWithThis();
             ReturnType = method.ReturnType;
         }
 
@@ -606,6 +603,16 @@ namespace XamlX.Ast
         public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _method.CustomAttributes;
         public IXamlParameterInfo GetParameterInfo(int index) => _method.GetParameterInfo(index);
 
+        public bool IsGenericMethodDefinition => _method.IsGenericMethodDefinition;
+
+        public IReadOnlyList<IXamlType> GenericParameters => _method.GenericParameters;
+
+        public IReadOnlyList<IXamlType> GenericArguments => _method.GenericArguments;
+
+        public bool IsGenericMethod => _method.IsGenericMethod;
+
+        public bool ContainsGenericParameters => _method.ContainsGenericParameters;
+
         public void EmitCall(IXamlILEmitter codeGen)
         {
             int firstCast = -1; 
@@ -642,7 +649,7 @@ namespace XamlX.Ast
             codeGen.EmitCall(_method);
         }
 
-        public bool Equals(IXamlMethod other) =>
+        public bool Equals(IXamlMethod? other) =>
             other is XamlMethodWithCasts mwc && mwc._method.Equals(_method) &&
             mwc.Parameters.SequenceEqual(Parameters);
 
@@ -651,8 +658,6 @@ namespace XamlX.Ast
             throw new InvalidOperationException();
         }
     }
-
-#nullable enable
 
 #if !XAMLX_INTERNAL
     public
@@ -667,7 +672,7 @@ namespace XamlX.Ast
         public IXamlAstTypeReference Type { get; }
         
         public XamlDeferredContentNode(IXamlAstValueNode value,
-            IXamlType deferredContentCustomizationTypeParameter,
+            IXamlType? deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
         {
             _deferredContentCustomization = config.TypeMappings.DeferredContentExecutorCustomization;
@@ -707,7 +712,7 @@ namespace XamlX.Ast
             var so = context.Configuration.WellKnownTypes.Object;
             var isp = context.Configuration.TypeMappings.ServiceProvider;
 
-            if (!context.TryGetItem(out XamlClosureInfo closureInfo))
+            if (!context.TryGetItem(out XamlClosureInfo? closureInfo))
             {
                 var closureType = context.DeclaringType.DefineSubType(
                     so,
@@ -760,7 +765,7 @@ namespace XamlX.Ast
                 codeGen
                     .Ldnull()
                     .Ldftn(buildMethod)
-                    .Newobj(_funcType.Constructors.FirstOrDefault(ct =>
+                    .Newobj(_funcType.Constructors.First(ct =>
                         ct.Parameters.Count == 2 &&
                         ct.Parameters[0].Equals(context.Configuration.WellKnownTypes.Object)));
             }
@@ -840,7 +845,7 @@ namespace XamlX.Ast
                         .Ldarg_0()
                         .Ldtype(rootObjectProviderType)
                         .EmitCall(context.Configuration.TypeMappings.ServiceProvider
-                            .FindMethod(m => m.Name == "GetService"))
+                            .GetMethod(m => m.Name == "GetService"))
                         .Stloc(loc.Local)
                         // if(loc == null) goto noRoot;
                         .Ldloc(loc.Local)
@@ -849,13 +854,13 @@ namespace XamlX.Ast
                         .Ldloc(loc.Local)
                         .Castclass(rootObjectProviderType)
                         .EmitCall(rootObjectProviderType
-                            .FindMethod(m => m.Name == "get_RootObject"))
+                            .GetMethod(m => m.Name == "get_RootObject"))
                         .Stloc(loc.Local)
                         // contextLocal.RootObject = loc;
                         .Ldloc(context.ContextLocal)
                         .Ldloc(loc.Local)
                         .Castclass(context.RuntimeContext.ContextType.GenericArguments[0])
-                        .Stfld(context.RuntimeContext.RootObjectField)
+                        .Stfld(context.RuntimeContext.RootObjectField!)
                         .MarkLabel(noRoot)
                         .Ldloc(context.ContextLocal);
                 }
@@ -865,9 +870,8 @@ namespace XamlX.Ast
                 return method;
             }
         }
-
-#nullable restore
     }
+
 #if !XAMLX_INTERNAL
     public
 #endif
@@ -889,13 +893,16 @@ namespace XamlX.Ast
         public IXamlAstTypeReference Type => Value.Type;
         public XamlILNodeEmitResult Emit(XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
+            Debug.Assert(context.RuntimeContext.IntermediateRootObjectField is not null);
+            var intermediateRootObjectField = context.RuntimeContext.IntermediateRootObjectField!;
+
             codeGen
                 .Ldloc(context.ContextLocal);
             context.Emit(Value, codeGen, Value.Type.GetClrType());
             codeGen
-                .Stfld(context.RuntimeContext.IntermediateRootObjectField)
+                .Stfld(intermediateRootObjectField)
                 .Ldloc(context.ContextLocal)
-                .Ldfld(context.RuntimeContext.IntermediateRootObjectField);
+                .Ldfld(intermediateRootObjectField);
             return XamlILNodeEmitResult.Type(0, Value.Type.GetClrType());
         }
     }

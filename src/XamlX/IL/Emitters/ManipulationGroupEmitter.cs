@@ -1,8 +1,6 @@
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Emit;
-using XamlX.Transform;
-using XamlX.TypeSystem;
 
 namespace XamlX.IL.Emitters
 {
@@ -11,7 +9,7 @@ namespace XamlX.IL.Emitters
 #endif
     class ManipulationGroupEmitter : IXamlAstNodeEmitter<IXamlILEmitter, XamlILNodeEmitResult>
     {
-        public XamlILNodeEmitResult Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
+        public XamlILNodeEmitResult? Emit(IXamlAstNode node, XamlEmitContext<IXamlILEmitter, XamlILNodeEmitResult> context, IXamlILEmitter codeGen)
         {
             if (!(node is XamlManipulationGroupNode group))
                 return null;

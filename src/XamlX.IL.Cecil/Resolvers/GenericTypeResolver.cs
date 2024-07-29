@@ -5,20 +5,20 @@ namespace XamlX.TypeSystem;
 
 internal class GenericTypeResolver
 {
-	private readonly IGenericInstance _typeDefinitionContext;
-	private readonly IGenericInstance _methodDefinitionContext;
+	private readonly IGenericInstance? _typeDefinitionContext;
+	private readonly IGenericInstance? _methodDefinitionContext;
 
 	public GenericTypeResolver()
 	{
 
 	}
 
-	public GenericTypeResolver(GenericInstanceType typeDefinitionContext)
+	public GenericTypeResolver(GenericInstanceType? typeDefinitionContext)
 	{
 		_typeDefinitionContext = typeDefinitionContext;
 	}
 
-	public GenericTypeResolver(GenericInstanceType typeDefinitionContext, GenericInstanceMethod methodDefinitionContext)
+	public GenericTypeResolver(GenericInstanceType? typeDefinitionContext, GenericInstanceMethod? methodDefinitionContext)
 	{
 		_typeDefinitionContext = typeDefinitionContext;
 		_methodDefinitionContext = methodDefinitionContext;
@@ -156,7 +156,7 @@ internal class GenericTypeResolver
 		return typeReference;
 	}
 
-	internal GenericTypeResolver Nested(TypeReference typeReference, MethodReference methodReference)
+	internal GenericTypeResolver Nested(TypeReference? typeReference, MethodReference? methodReference)
 	{
 		// If none of parameters has changed - return current instance.
 		var (oldType, oldMethod) = (_typeDefinitionContext, _methodDefinitionContext);
@@ -178,7 +178,7 @@ internal class GenericTypeResolver
 			throw new NotSupportedException();
 
 		return genericParameter.Type == GenericParameterType.Type
-			? _typeDefinitionContext.GenericArguments[genericParameter.Position]
+			? _typeDefinitionContext!.GenericArguments[genericParameter.Position]
 			: (_methodDefinitionContext != null
 				? _methodDefinitionContext.GenericArguments[genericParameter.Position]
 				: genericParameter);

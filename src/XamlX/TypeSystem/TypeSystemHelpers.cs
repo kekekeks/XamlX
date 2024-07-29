@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
-using System.Reflection.Emit;
 using XamlX.Ast;
-using XamlX.Transform;
 
 namespace XamlX.TypeSystem
 {
@@ -43,7 +41,12 @@ namespace XamlX.TypeSystem
 
 
 
-        public static bool TryGetEnumValueNode(IXamlType enumType, string value, IXamlLineInfo lineInfo, bool ignoreCase, out XamlConstantNode rv)
+        public static bool TryGetEnumValueNode(
+            IXamlType enumType,
+            string value,
+            IXamlLineInfo lineInfo,
+            bool ignoreCase,
+            [NotNullWhen(true)] out XamlConstantNode? rv)
         {
             if (TryGetEnumValue(enumType, value, ignoreCase, out var constant))
             {
@@ -55,7 +58,11 @@ namespace XamlX.TypeSystem
             return false;
         }
 
-        public static bool TryGetEnumValue(IXamlType enumType, string value, bool ignoreCase, out object rv)
+        public static bool TryGetEnumValue(
+            IXamlType enumType,
+            string value,
+            bool ignoreCase,
+            [NotNullWhen(true)] out object? rv)
         {
             rv = null;
             if (long.TryParse(value, out var parsedLong))
@@ -70,7 +77,14 @@ namespace XamlX.TypeSystem
             var values = enumType.CustomAttributes.Any(a => a.Type.Name == "FlagsAttribute") ?
                 value.Split(',').Select(x => x.Trim()).ToArray() :
                 new[] { value };
-            object cv = null;
+
+            if (values.Length == 0)
+            {
+                rv = null;
+                return false;
+            }
+
+            object? cv = null;
             var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
             for (var c = 0; c < values.Length; c++)
             {
@@ -81,10 +95,10 @@ namespace XamlX.TypeSystem
                 if (c == 0)
                     cv = enumValue;
                 else
-                    cv = Or(cv, enumValue);
+                    cv = Or(cv!, enumValue);
             }
 
-            rv = cv;
+            rv = cv!;
             return true;
         }
 
@@ -109,13 +123,17 @@ namespace XamlX.TypeSystem
             throw new ArgumentException("Unsupported type " + l.GetType());
         }
 
-        public static bool ParseConstantIfTypeAllows(string s, IXamlType type, IXamlLineInfo info, out XamlConstantNode rv)
+        public static bool ParseConstantIfTypeAllows(
+            string s,
+            IXamlType type,
+            IXamlLineInfo info,
+            [NotNullWhen(true)] out XamlConstantNode? rv)
         {
             rv = null;
             if (type.Namespace != "System")
                 return false;
 
-            object Parse()
+            object? Parse()
             {
                 if (type.Name == "Byte")
                     return byte.Parse(s, CultureInfo.InvariantCulture);

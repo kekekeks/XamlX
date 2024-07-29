@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using XamlX;
 using Xunit;
 
@@ -9,7 +8,7 @@ namespace XamlParserTests;
 public class StandardWarningsTestsClass
 {
     [Obsolete("ObjectProperty is obsolete")]
-    public object ObjectProperty { get; set; }
+    public object? ObjectProperty { get; set; }
 
     [Obsolete("StaticProp is obsolete", true)]
     public static object StaticProp { get; } = "StaticPropValue";

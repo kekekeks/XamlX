@@ -23,7 +23,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                 scanner.Read();
                 if (scanner.Token != MeTokenType.TypeName)
                     throw new MeScannerParseException("Unexpected token " + scanner.Token);
-                var extType = scanner.TokenType;
+                var extType = scanner.TokenType!;
                 
                 extType.TypeReference.IsMarkupExtension = true;
                 currentTypeStack.Push(ctx.CurrentType);
@@ -39,7 +39,7 @@ namespace XamlX.Parsers.SystemXamlMarkupExtensionParser
                         break;
                     else if (scanner.Token == MeTokenType.PropertyName)
                     {
-                        var prop = scanner.TokenProperty;
+                        var prop = scanner.TokenProperty!;
                         scanner.Read();
                         if (scanner.Token != MeTokenType.EqualSign)
                             throw new MeScannerParseException("Unexpected token " + scanner.Token);

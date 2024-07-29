@@ -12,7 +12,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class ConstructableObjectTransformer : IXamlAstTransformer
     {
-        IXamlConstructor TransformArgumentsAndGetConstructor(
+        IXamlConstructor? TransformArgumentsAndGetConstructor(
             AstTransformationContext context,
             XamlAstObjectNode n)
         {

@@ -6,7 +6,7 @@ namespace XamlX
 {
     public static class XamlParser
     {
-        public static XamlDocument Parse(string s, Dictionary<string, string> compatibilityMappings = null)
+        public static XamlDocument Parse(string s, Dictionary<string, string>? compatibilityMappings = null)
         {
 #if GUILABS
             return GuiLabsXamlParser.Parse(s, compatibilityMappings);

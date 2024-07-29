@@ -1,7 +1,7 @@
+using Mono.Cecil;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Mono.Cecil;
 using XamlX.IL;
 
 namespace XamlX.TypeSystem
@@ -21,7 +21,7 @@ namespace XamlX.TypeSystem
 
             public string Name => _parameterReference.Name;
 
-            private IXamlType _parameterType;
+            private IXamlType? _parameterType;
             public IXamlType ParameterType => _parameterType ??= _typeResolveContext.Resolve(_parameterReference.ParameterType);
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => _parameterReference.Resolve().CustomAttributes
                 .Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
@@ -41,38 +41,38 @@ namespace XamlX.TypeSystem
                 Definition = method.Resolve();
                 TypeResolveContext = typeResolveContext.Nested(Reference);
             }
-            
+
             public string Name => Reference.Name;
             public bool IsPublic => Definition.IsPublic;
             public bool IsPrivate => Definition.IsPrivate;
             public bool IsFamily => Definition.IsFamily;
             public bool IsStatic => Definition.IsStatic;
 
-            private IXamlType _returnType;
+            private IXamlType? _returnType;
             
             public IXamlType ReturnType =>
                 _returnType ??= TypeResolveContext.ResolveReturnType(Reference);
 
-            private IXamlType _declaringType;
+            private IXamlType? _declaringType;
 
             public IXamlType DeclaringType =>
                 _declaringType ??= TypeResolveContext.Resolve(Reference.DeclaringType);
 
             public IReadOnlyList<IXamlType> Parameters => ParameterInfos.Select(p => p.ParameterType).ToList();
 
-            private IReadOnlyList<IXamlCustomAttribute> _attributes;
+            private IReadOnlyList<IXamlCustomAttribute>? _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>
                 _attributes ??= Definition.CustomAttributes.Select(ca => new CecilCustomAttribute(TypeResolveContext, ca)).ToList();
 
-            private IXamlILEmitter _generator;
+            private IXamlILEmitter? _generator;
 
             public IXamlILEmitter Generator =>
                 _generator ??= new CecilEmitter(TypeResolveContext.TypeSystem, Definition);
 
             public IXamlParameterInfo GetParameterInfo(int index) => ParameterInfos[index];
 
-            private IReadOnlyList<IXamlParameterInfo> _parameterInfos;
+            private IReadOnlyList<IXamlParameterInfo>? _parameterInfos;
             private IReadOnlyList<IXamlParameterInfo> ParameterInfos =>
                 _parameterInfos ??= Reference.Parameters.Select(p => new CecilParameterInfo(TypeResolveContext, p)).ToList();
 
@@ -82,6 +82,27 @@ namespace XamlX.TypeSystem
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilMethod : CecilMethodBase, IXamlMethodBuilder<IXamlILEmitter>
         {
+            private IReadOnlyList<IXamlType>? _genericParameters;
+            private IReadOnlyList<IXamlType>? _genericArguments;
+
+            public bool IsGenericMethod => Reference.HasGenericParameters;
+            public bool IsGenericMethodDefinition => Reference.IsDefinition && Reference.HasGenericParameters;
+
+            public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
+                !Reference.IsGenericInstance && Reference.ContainsGenericParameter
+                ? Reference.GenericParameters
+                    .Select(gp => TypeResolveContext.Resolve(gp))
+                    .ToArray() ?? System.Array.Empty<IXamlType>()
+                : System.Array.Empty<IXamlType>();
+
+            public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
+                 Reference.IsGenericInstance
+                 ? ((GenericInstanceMethod)Reference).GenericArguments.Select(ga=> TypeResolveContext.Resolve(ga))?.ToArray() 
+                        ?? System.Array.Empty<IXamlType>()
+                    : System.Array.Empty<IXamlType>();
+
+            public bool ContainsGenericParameters => !Reference.IsGenericInstance && Reference.ContainsGenericParameter;
+
             public CecilMethod(CecilTypeResolveContext typeResolveContext, MethodReference method)
                 : base(typeResolveContext, method)
             {
@@ -99,16 +120,16 @@ namespace XamlX.TypeSystem
                 return new CecilMethod(TypeResolveContext, instantiation);
             }
 
-            public bool Equals(IXamlMethod other) =>
+            public bool Equals(IXamlMethod? other) =>
                 other is CecilMethod cm
                 && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
-            public override bool Equals(object other) => Equals(other as IXamlMethod);
+            public override bool Equals(object? other) => Equals(other as IXamlMethod);
 
-            public override int GetHashCode() 
+            public override int GetHashCode()
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
-        
+
         [DebuggerDisplay("{" + nameof(Reference) + "}")]
         sealed class CecilConstructor : CecilMethodBase, IXamlConstructorBuilder<IXamlILEmitter>
         {
@@ -117,13 +138,13 @@ namespace XamlX.TypeSystem
             {
             }
 
-            public bool Equals(IXamlConstructor other) =>
+            public bool Equals(IXamlConstructor? other) =>
                 other is CecilConstructor cm
                 && MethodReferenceEqualityComparer.AreEqual(Reference, cm.Reference, CecilTypeComparisonMode.Exact);
 
-            public override bool Equals(object other) => Equals(other as IXamlConstructor);
+            public override bool Equals(object? other) => Equals(other as IXamlConstructor);
 
-            public override int GetHashCode() 
+            public override int GetHashCode()
                 => MethodReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
         }
     }

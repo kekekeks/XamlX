@@ -1,6 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.Transform.Transformers;
@@ -64,7 +65,7 @@ namespace XamlX.Transform
 
                     foreach (var t in addChildT)
                     {
-                        var adder = t.FindMethod(x => x.Name == "AddChild");
+                        var adder = t.GetMethod(x => x.Name == "AddChild");
 
                         rv.Add(adder);
                     }
@@ -76,7 +77,7 @@ namespace XamlX.Transform
 
                     if (addChild != null)
                     {
-                        var adder = addChild.FindMethod(x => x.Name == "AddChild");
+                        var adder = addChild.GetMethod(x => x.Name == "AddChild");
 
                         rv.Add(adder);
                     }
@@ -108,12 +109,13 @@ namespace XamlX.Transform
 
         class MarkupExtensionProvideValueCache
         {
-            public Dictionary<IXamlType, IXamlMethod> TypeToProvideValue =
-                new Dictionary<IXamlType, IXamlMethod>();
+            public Dictionary<IXamlType, IXamlMethod?> TypeToProvideValue = new();
         }
 
-        public static bool TryConvertMarkupExtension(AstTransformationContext context,
-            IXamlAstValueNode node, out XamlMarkupExtensionNode o)
+        public static bool TryConvertMarkupExtension(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            [NotNullWhen(true)] out XamlMarkupExtensionNode? o)
         {
             var cache = context.GetOrCreateItem<MarkupExtensionProvideValueCache>();
             o = null;
@@ -150,26 +152,39 @@ namespace XamlX.Transform
             return true;
         }
 
-        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
-            IXamlAstValueNode node, IXamlType xamlType, out IXamlAstValueNode rv)
+        public static bool TryGetCorrectlyTypedValue(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IXamlType xamlType,
+            [NotNullWhen(true)] out IXamlAstValueNode? rv)
         {
             return TryGetCorrectlyTypedValue(context, node, null, xamlType, out rv);
         }
 
-        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
-            IXamlAstValueNode node, IXamlProperty property, out IXamlAstValueNode rv)
+        public static bool TryGetCorrectlyTypedValue(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IXamlProperty property,
+            [NotNullWhen(true)] out IXamlAstValueNode? rv)
         {
             return TryGetCorrectlyTypedValue(context, node, property.CustomAttributes, property.PropertyType, out rv);
         }
 
-        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
-            IXamlAstValueNode node, IXamlParameterInfo parameterInfo, out IXamlAstValueNode rv)
+        public static bool TryGetCorrectlyTypedValue(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IXamlParameterInfo parameterInfo,
+            [NotNullWhen(true)] out IXamlAstValueNode? rv)
         {
             return TryGetCorrectlyTypedValue(context, node, parameterInfo.CustomAttributes, parameterInfo.ParameterType, out rv);
         }
-        
-        public static bool TryGetCorrectlyTypedValue(AstTransformationContext context,
-            IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type, out IXamlAstValueNode rv)
+
+        public static bool TryGetCorrectlyTypedValue(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IReadOnlyList<IXamlCustomAttribute>? customAttributes,
+            IXamlType type,
+            [NotNullWhen(true)] out IXamlAstValueNode? rv)
         {
             if (type.IsAssignableFrom(node.Type.GetClrType()))
             {
@@ -180,8 +195,9 @@ namespace XamlX.Transform
             return TryConvertValue(context, node, customAttributes, type, null, out rv);
         }
 
-        public static IXamlType TryGetTypeConverterFromCustomAttribute(TransformerConfiguration cfg,
-            IXamlCustomAttribute attribute)
+        public static IXamlType? TryGetTypeConverterFromCustomAttribute(
+            TransformerConfiguration cfg,
+            IXamlCustomAttribute? attribute)
         {
 
             if (attribute != null)
@@ -213,7 +229,7 @@ namespace XamlX.Transform
                 else
                 {
                     // This will always terminate when ret == typeof(object)
-                    while (!ret.IsAssignableFrom(types[i]))
+                    while (!ret!.IsAssignableFrom(types[i]))
                         ret = ret.BaseType;
                 }
             }
@@ -226,9 +242,13 @@ namespace XamlX.Transform
                 cfg.WellKnownTypes.CultureInfo.Methods.First(x =>
                     x.IsPublic && x.IsStatic && x.Name == "get_InvariantCulture"), null);
 
-        public static bool TryConvertValue(AstTransformationContext context,
-                IXamlAstValueNode node, IReadOnlyList<IXamlCustomAttribute> customAttributes, IXamlType type,
-                XamlAstClrProperty propertyContext, out IXamlAstValueNode rv)
+        public static bool TryConvertValue(
+            AstTransformationContext context,
+            IXamlAstValueNode node,
+            IReadOnlyList<IXamlCustomAttribute>? customAttributes,
+            IXamlType type,
+            XamlAstClrProperty? propertyContext,
+            [NotNullWhen(true)] out IXamlAstValueNode? rv)
         {    
             rv = null;
             var cfg = context.Configuration;
@@ -281,7 +301,7 @@ namespace XamlX.Transform
 
                 if (cfg.WellKnownTypes.Delegate.IsAssignableFrom(type))
                 {
-                    var invoke = type.FindMethod(m => m.Name == "Invoke");
+                    var invoke = type.GetMethod(m => m.Name == "Invoke");
                     var rootType = context.RootObject.Type.GetClrType();
                     var handler = 
                         rootType.FindMethod(tn.Text, invoke.ReturnType, false, invoke.Parameters.ToArray());
@@ -324,9 +344,11 @@ namespace XamlX.Transform
                 if (typeConverterAttribute != null)
                 {
                     var converterType = TryGetTypeConverterFromCustomAttribute(cfg, typeConverterAttribute);
-
-                    rv = ConvertWithConverter(node, converterType, cfg, type);
-                    return true;
+                    if (converterType is not null)
+                    {
+                        rv = ConvertWithConverter(node, converterType, cfg, type);
+                        return true;
+                    }
                 }
             }
 
@@ -336,19 +358,22 @@ namespace XamlX.Transform
         private static IXamlAstValueNode ConvertWithConverter(IXamlAstValueNode node, IXamlType converterType,
             TransformerConfiguration cfg, IXamlType type)
         {
-            IXamlAstValueNode rv;
-            var converterMethod = converterType.FindMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
-                cfg.TypeMappings.TypeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
+            Debug.Assert(cfg.TypeMappings.TypeDescriptorContext is not null);
+            var typeDescriptorContext = cfg.TypeMappings.TypeDescriptorContext!;
+
+            var converterMethod = converterType.GetMethod("ConvertFrom", cfg.WellKnownTypes.Object, false,
+                typeDescriptorContext, cfg.WellKnownTypes.CultureInfo,
                 cfg.WellKnownTypes.Object);
-            rv = new XamlAstNeedsParentStackValueNode(node,
+
+            var rv = new XamlAstNeedsParentStackValueNode(node,
                 new XamlAstRuntimeCastNode(node,
                     new XamlStaticOrTargetedReturnMethodCallNode(node, converterMethod,
                         new[]
                         {
                             new XamlAstNewClrObjectNode(node,
-                                new XamlAstClrTypeReference(node, converterType, false), null,
+                                new XamlAstClrTypeReference(node, converterType, false), converterType.GetConstructor(),
                                 new List<IXamlAstValueNode>()),
-                            new XamlAstContextLocalNode(node, cfg.TypeMappings.TypeDescriptorContext),
+                            new XamlAstContextLocalNode(node, typeDescriptorContext),
                             CreateInvariantCulture(cfg, node), node
                         }), new XamlAstClrTypeReference(node, type, false)));
             return rv;
