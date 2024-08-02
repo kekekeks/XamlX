@@ -42,6 +42,7 @@ namespace XamlX.TypeSystem
                 }
 
                 TypeReference? tref = null;
+                TypeDefinition? tdef = null;
                 var plus = fullName.IndexOf('+');
 
                 while (true)
@@ -51,7 +52,11 @@ namespace XamlX.TypeSystem
 
                     t.DeclaringType = tref;
                     tref = t;
-
+                    tdef = tref?.Resolve();
+                    if (tdef is null || tdef.IsNestedPrivate)
+                    {
+                        return null;
+                    }
                     if (plus == -1)
                         break;
 
@@ -59,13 +64,7 @@ namespace XamlX.TypeSystem
                     fullName = fullName.Substring(plus + 1);
                     plus = fullName.IndexOf('+');
                 }
-
-                var resolved = tref?.Resolve();
-                if (resolved?.IsNestedPrivate == false)
-                    return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(resolved);
-
-                return null;
-
+                return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(tdef);
             }
         }
     }
