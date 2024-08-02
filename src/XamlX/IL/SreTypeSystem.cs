@@ -113,7 +113,7 @@ namespace XamlX.IL
             public string Name => Assembly.GetName().Name ?? string.Empty;
 
             public IReadOnlyList<IXamlType> Types { get; private set; } = [];
-            private Dictionary<string, SreType> _typeDic = new Dictionary<string, SreType>();
+            private Dictionary<string, SreType> _typeDic = [];
 
             [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TrimmedAttributes)]
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes
@@ -128,15 +128,34 @@ namespace XamlX.IL
 
             [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
             [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
+            [RequiresUnreferencedCode("DynamicallyAccessedMembers")]
             public void Init()
             {
-                var types = Assembly.GetTypes()
-                    .Where(t => t.IsPublic 
-                        || t.IsTopLevelInternal()
-                        || t.IsNestedlPublic_Or_Internal())
-                    .Select(t => _system.ResolveType(t)).ToList();
-                Types = types;
-                _typeDic = types.ToDictionary(t => t.Type.FullName!);
+                var allTypes = Assembly.GetTypes();
+                for (var tIndex = 0; tIndex < allTypes.Length; tIndex++)
+                {
+                    var t = allTypes[tIndex];
+                    var isVisbible = t.IsPublic
+                          || t.IsTopLevelInternal()
+                          || t.IsNestedlPublic_Or_Internal();
+                    if (isVisbible)
+                    {
+                        if (t.DeclaringType is null)
+                        {
+                            var x = _system!.ResolveType(t);
+                            _typeDic.Add(t.FullName!, x);
+                        }
+                        else
+                        {
+                            if (_typeDic.ContainsKey(t.DeclaringType.FullName!))
+                            {
+                                var x = _system!.ResolveType(t);
+                                _typeDic.Add(t.FullName!, x);
+                            }
+                        }
+                    }
+                }
+                Types = _typeDic.Values.ToArray();
             }
         }
 
