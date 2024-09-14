@@ -444,22 +444,34 @@ namespace XamlX.IL
                 .LdThisFld(parentListField)
                 .EmitCall(objectListType.GetMethod(m => m.Name == "get_Count"))
                 .Ldc_I4(1).Emit(OpCodes.Sub).Stloc(idx);
-                // this.PropertyTargetObject = _parents[idx];
+
+            pop
+                // _parents.RemoveAt(idx);
+                .LdThisFld(parentListField)
+                .Ldloc(idx)
+                .EmitCall(objectListType.GetMethod(m => m.Name == "RemoveAt"));
+
+            // this.PropertyTargetObject = idx != 0 ? _parents[idx - 1] : null;
             if (TargetObjectField != null)
             {
+                var elseLabel = pop.DefineLabel();
+                var endIfLabel = pop.DefineLabel();
                 pop
-                    .Ldarg_0()
-                    .LdThisFld(parentListField)
+                    .Ldarg(0)
                     .Ldloc(idx)
+                    .Brfalse(elseLabel) // if `idx != 0`
+                    .LdThisFld(parentListField) // then '_parents[idx - 1]'
+                    .Ldloc(idx)
+                    .Ldc_I4(1).Emit(OpCodes.Sub)
                     .EmitCall(objectListType.GetMethod(m => m.Name == "get_Item"))
+                    .Br(endIfLabel)
+                    .MarkLabel(elseLabel) // else
+                    .Ldnull() // then 'null'
+                    .MarkLabel(endIfLabel) // endif
                     .Stfld(TargetObjectField);
             }
-                // _parents.RemoveAt(idx);
-            pop
-                .LdThisFld(parentListField)
-                .Ldloc(idx).EmitCall(objectListType.GetMethod(m => m.Name == "RemoveAt"))
-                .Ret();
 
+            pop.Ret();
         }
         
         private IXamlMethodBuilder<IXamlILEmitter> ImplementInterfacePropertyGetter(IXamlTypeBuilder<IXamlILEmitter> builder ,
