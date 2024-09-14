@@ -11,6 +11,8 @@ namespace XamlParserTests
 {
     public class CallbackExtension
     {
+        public object? Nested { get; set; }
+
         public object? ProvideValue(IServiceProvider provider)
         {
             return provider.GetRequiredService<CallbackExtensionCallback>()(provider);
@@ -168,6 +170,37 @@ namespace XamlParserTests
             Assert.Equal(2, num);
         }
 
+        [Fact]
+        public void ProvideValueTarget_TargetObject_Is_Valid_After_Nested_PushPop()
+        {
+            var num = 0;
+            CompileAndRun(@"
+<ServiceProviderTestsClass xmlns='test' 
+    Property='{Callback Nested={Callback}}'
+    ServiceProviderTests.AttachedProperty='{Callback}'
+/>", sp =>
+            {
+                var pt = sp.GetRequiredService<ITestProvideValueTarget>();
+                if (num == 0)
+                {
+                    Assert.IsType<CallbackExtension>(pt.TargetObject);
+                    Assert.Equal("Nested", pt.TargetProperty);
+                }
+                else if (num == 1)
+                {
+                    Assert.IsType<ServiceProviderTestsClass>(pt.TargetObject);
+                    Assert.Equal("Property", pt.TargetProperty);
+                }
+                else if (num == 2)
+                {
+                    Assert.IsType<ServiceProviderTestsClass>(pt.TargetObject);
+                    Assert.Equal("AttachedProperty", pt.TargetProperty);
+                }
+                num++;
+                return num.ToString();
+            }, null);
+            Assert.Equal(3, num);
+        }
 
         class InnerProvider : IServiceProvider, ITestRootObjectProvider
         {
