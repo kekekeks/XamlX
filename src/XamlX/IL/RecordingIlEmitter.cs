@@ -201,7 +201,7 @@ namespace XamlX.IL
                 sb.Append(i.OpCode);
                 if (i.Operand != null)
                 {
-                    sb.Append(" ");
+                    sb.Append(' ');
                     sb.Append(i.Operand);
                 }
 

@@ -36,7 +36,7 @@ namespace XamlX.Transform.Transformers
                 TargetType = getter.DeclaringType;
                 Parameters = adder.ParametersWithThis().Skip(1).ToList();
 
-                bool allowNull = Parameters.Last().AcceptsNull();
+                bool allowNull = Parameters[Parameters.Count - 1].AcceptsNull();
                 BinderParameters = new PropertySetterBinderParameters
                 {
                     AllowMultiple = true,

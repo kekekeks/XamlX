@@ -79,6 +79,7 @@ namespace XamlX.TypeSystem
                     def.Overrides.Add(Definition.Module.ImportReference(((CecilMethod) overrideMethod).Reference));
                 def.Body.InitLocals = true;
                 Definition.Methods.Add(def);
+                TypeSystem.AddCompilerGeneratedAttribute(def);
                 var rv = new CecilMethod(_builderTypeResolveContext, def);
                 ((List<CecilMethod>)Methods).Add(rv);
                 return rv;
@@ -137,6 +138,7 @@ namespace XamlX.TypeSystem
                 var td = new TypeDefinition("", name, attrs, GetReference(baseType));
 
                 Definition.NestedTypes.Add(td);
+                TypeSystem.AddCompilerGeneratedAttribute(td);
                 return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly?)Assembly, td);
             }
 
@@ -156,6 +158,7 @@ namespace XamlX.TypeSystem
                 var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.GetType("System.MulticastDelegate")));
 
                 Definition.NestedTypes.Add(builder);
+                TypeSystem.AddCompilerGeneratedAttribute(builder);
 
                 var ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.HideBySig, GetReference(returnType));
                 ctor.ImplAttributes = MethodImplAttributes.Managed | MethodImplAttributes.Runtime;
