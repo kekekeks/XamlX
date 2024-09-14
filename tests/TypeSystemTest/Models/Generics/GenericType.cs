@@ -1,4 +1,4 @@
-﻿namespace TypeSystemTest.Models;
+﻿namespace TypeSystemTest.Models.Generics;
 
 public class GenericType<T> : GenericBaseType<T>, IGenericInterface<T>
 {

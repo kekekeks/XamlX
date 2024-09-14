@@ -1,7 +1,6 @@
-using System;
+using Mono.Cecil;
 using System.Collections.Generic;
 using System.Linq;
-using Mono.Cecil;
 
 namespace XamlX.TypeSystem
 {
@@ -10,7 +9,7 @@ namespace XamlX.TypeSystem
         internal class CecilAssembly : IXamlAssembly
         {
             private readonly Dictionary<string, IXamlType> _typeCache = new();
-            
+
             public CecilTypeSystem TypeSystem { get; }
             public AssemblyDefinition Assembly { get; }
 
@@ -32,18 +31,40 @@ namespace XamlX.TypeSystem
             {
                 if (_typeCache.TryGetValue(fullName, out var rv))
                     return rv;
-                var lastDot = fullName.LastIndexOf(".", StringComparison.Ordinal);
                 var asmRef = new AssemblyNameReference(Assembly.Name.Name, Assembly.Name.Version);
-                var tref = (lastDot == -1)
-                    ? new TypeReference(null, fullName, Assembly.MainModule, asmRef)
-                    : new TypeReference(fullName.Substring(0, lastDot),
-                        fullName.Substring(lastDot + 1), Assembly.MainModule, asmRef);
-                var resolved = tref.Resolve();
-                if (resolved != null)
-                    return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(resolved);
+                var lastDot = fullName.LastIndexOf('.');
+                var ns = string.Empty;
 
-                return null;
+                if (lastDot != -1)
+                {
+                    ns = fullName.Substring(0, lastDot);
+                    fullName = fullName.Substring(lastDot + 1);
+                }
 
+                TypeReference? tref = null;
+                TypeDefinition? tdef = null;
+                var plus = fullName.IndexOf('+');
+
+                while (true)
+                {
+                    var typeName = plus != -1 ? fullName.Substring(0, plus) : fullName;
+                    var t = new TypeReference(ns, typeName, Assembly.MainModule, asmRef);
+
+                    t.DeclaringType = tref;
+                    tref = t;
+                    tdef = tref?.Resolve();
+                    if (tdef is null || tdef.IsNestedPrivate)
+                    {
+                        return null;
+                    }
+                    if (plus == -1)
+                        break;
+
+                    ns = null;
+                    fullName = fullName.Substring(plus + 1);
+                    plus = fullName.IndexOf('+');
+                }
+                return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(tdef);
             }
         }
     }
