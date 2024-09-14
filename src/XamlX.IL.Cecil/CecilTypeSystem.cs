@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using XamlX.IL;
 
 namespace XamlX.TypeSystem
@@ -74,7 +75,7 @@ namespace XamlX.TypeSystem
                 }
             }
 
-            _compilerGeneratedAttribute = GetTypeReference(FindType("System.Runtime.CompilerServices.CompilerGeneratedAttribute")).Resolve();
+            _compilerGeneratedAttribute = GetTypeReference(FindType("System.Runtime.CompilerServices.CompilerGeneratedAttribute")!).Resolve();
             _compilerGeneratedAttributeConstructor = _compilerGeneratedAttribute.GetConstructors().Single();
         }
 
