@@ -68,7 +68,7 @@ namespace XamlX.Transform.Transformers
                 {
                     // If matching ctor isn't required and it wasn't found, pass the first possible ctor.
                     // But don't pass any arguments, as compiler doesn't know what to pass at this point.
-                    var firstCtor = ni.Type.GetClrType().Constructors.First();
+                    var firstCtor = ni.Type.GetClrType().Constructors[0];
                     return new XamlAstConstructableObjectNode(ni,
                         ni.Type.GetClrTypeReference(), firstCtor, new List<IXamlAstValueNode>(), ni.Children);
                 }
