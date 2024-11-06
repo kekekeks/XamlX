@@ -7,7 +7,6 @@ using System.Xml;
 using System.Xml.Linq;
 using XamlX.Ast;
 using XamlX.Parsers.SystemXamlMarkupExtensionParser;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace XamlX.Parsers
 {
