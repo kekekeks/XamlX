@@ -72,8 +72,14 @@ namespace XamlX.Ast
             }
         }
 
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
-            IXamlMethod? getter, IEnumerable<IXamlPropertySetter>? setters) : base(lineInfo)
+        public XamlAstClrProperty(
+            IXamlLineInfo lineInfo,
+            string name,
+            IXamlType declaringType,
+            IXamlMethod? getter,
+            IEnumerable<IXamlPropertySetter>? setters,
+            IEnumerable<IXamlCustomAttribute>? customAttributes)
+            : base(lineInfo)
         {
             Name = name;
             DeclaringType = declaringType;
@@ -83,13 +89,30 @@ namespace XamlX.Ast
             IsFamily = getter?.IsFamily == true;
             if (setters != null)
                 Setters.AddRange(setters);
+            if (customAttributes is not null)
+                CustomAttributes.AddRange(customAttributes);
         }
 
-        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType,
-            IXamlMethod? getter, params IXamlMethod?[] setters) : this(lineInfo, name, declaringType,
-            getter, setters.Where(x=> !(x is null)).Select(x => new XamlDirectCallPropertySetter(x!)))
+        public XamlAstClrProperty(
+            IXamlLineInfo lineInfo,
+            string name,
+            IXamlType declaringType,
+            IXamlMethod? getter,
+            IEnumerable<IXamlMethod?>? setters,
+            IEnumerable<IXamlCustomAttribute>? customAttributes)
+            : this(
+                lineInfo,
+                name,
+                declaringType,
+                getter,
+                setters?.Where(x => x is not null).Select(x => new XamlDirectCallPropertySetter(x!)),
+                customAttributes)
         {
+        }
 
+        public XamlAstClrProperty(IXamlLineInfo lineInfo, string name, IXamlType declaringType, IXamlMethod? getter)
+            : this(lineInfo, name, declaringType, getter, (IEnumerable<IXamlPropertySetter>?)null, null)
+        {
         }
 
         public override string ToString() => DeclaringType.GetFqn() + "." + Name;

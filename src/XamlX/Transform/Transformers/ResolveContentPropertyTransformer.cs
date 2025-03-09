@@ -56,7 +56,7 @@ namespace XamlX.Transform.Transformers
                                         adders.Select(a => new XamlDirectCallPropertySetter(a)
                                         {
                                             BinderParameters = {AllowMultiple = true}
-                                        })),
+                                        }), null),
                                     Array.Empty<IXamlAstValueNode>(),
                                     false);
                             }

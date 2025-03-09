@@ -495,7 +495,7 @@ namespace XamlParserTests
                 XamlAstClrProperty original,
                 IXamlMethod getSpecialHandlerMethod,
                 IXamlMethod handleMethod)
-                : base(original, original.Name, original.DeclaringType, original.Getter, original.Setters)
+                : base(original, original.Name, original.DeclaringType, original.Getter, original.Setters, null)
                 => Setters.Add(new SpecialHandlerPropertySetter(
                     handleMethod.DeclaringType,
                     handleMethod.Parameters[0],
