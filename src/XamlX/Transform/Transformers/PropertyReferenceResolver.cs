@@ -40,7 +40,7 @@ namespace XamlX.Transform.Transformers
                                                                                     && p.Add != null);
                     if (clrEvent != null)
                         return new XamlAstClrProperty(prop,
-                            prop.Name, clrEvent.Add!.DeclaringType, null, clrEvent.Add);
+                            prop.Name, clrEvent.Add!.DeclaringType, null, [clrEvent.Add], null);
                 }
 
                 // Look for attached properties on declaring type
@@ -68,16 +68,19 @@ namespace XamlX.Transform.Transformers
                 }
 
                 if (setter != null || getter != null)
-                    return new XamlAstClrProperty(prop, prop.Name, declaringType, getter, setter);
+                {
+                    var customAttributes = setter?.GetParameterInfo(1).CustomAttributes;
+                    return new XamlAstClrProperty(prop, prop.Name, declaringType, getter, [setter], customAttributes);
+                }
 
                 if (adder != null)
-                    return new XamlAstClrProperty(prop, prop.Name, declaringType, null, adder);
+                    return new XamlAstClrProperty(prop, prop.Name, declaringType, null, [adder], null);
 
                 return context.ReportTransformError(
                     $"Unable to resolve suitable regular or attached property {prop.Name} on type {declaringType.GetFqn()}",
                     node, FakeProperty());
 
-                XamlAstClrProperty FakeProperty() => new(prop, prop.Name, XamlPseudoType.Unknown, null, Array.Empty<IXamlMethod>());
+                XamlAstClrProperty FakeProperty() => new(prop, prop.Name, XamlPseudoType.Unknown, null);
             }
 
             return node;
