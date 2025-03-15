@@ -69,7 +69,7 @@ namespace XamlX.Transform.Transformers
 
                 if (setter != null || getter != null)
                 {
-                    var customAttributes = setter?.GetParameterInfo(1).CustomAttributes;
+                    var customAttributes = getter?.CustomAttributes;
                     return new XamlAstClrProperty(prop, prop.Name, declaringType, getter, [setter], customAttributes);
                 }
 
