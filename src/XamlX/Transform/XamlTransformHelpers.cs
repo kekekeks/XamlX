@@ -73,11 +73,11 @@ namespace XamlX.Transform
 
                 if(context.Configuration.TypeMappings.IAddChild != null)
                 {
-                    var addChild = inspectTypes.SingleOrDefault(t => t.Equals(context.Configuration.TypeMappings.IAddChild) == true);
+                    var addChild = inspectTypes.Where(t => t.Equals(context.Configuration.TypeMappings.IAddChild) == true);
 
-                    if (addChild != null)
+                    foreach (var t in addChild)
                     {
-                        var adder = addChild.GetMethod(x => x.Name == "AddChild");
+                        var adder = t.GetMethod(x => x.Name == "AddChild");
 
                         rv.Add(adder);
                     }
