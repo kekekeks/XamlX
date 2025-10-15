@@ -131,7 +131,7 @@ namespace XamlX.Ast
 
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveMember(false) switch
         {
-            IXamlField field => field.FieldType,
+            IXamlField @field => @field.FieldType,
             IXamlProperty { Getter: not null } prop => prop.Getter.ReturnType,
             _ => XamlPseudoType.Unknown
         }, false);
