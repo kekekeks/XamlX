@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
@@ -24,7 +25,8 @@ namespace XamlX.TypeSystem
             {
                 
             }
-            
+
+            [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
             public CecilType(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly? assembly, TypeDefinition definition,
                 TypeReference reference)
             {

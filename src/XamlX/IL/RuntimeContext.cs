@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Emit;
 using XamlX.Emit;
@@ -14,6 +15,7 @@ namespace XamlX.IL
 #endif
     class RuntimeContext : XamlRuntimeContext<IXamlILEmitter, XamlILNodeEmitResult>
     {
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public RuntimeContext(IXamlType definition, IXamlType constructedType,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> mappings,
             string? baseUri, List<IXamlField>? staticProviders)
@@ -85,7 +87,8 @@ namespace XamlX.IL
 
         public const int BaseUriArg = 0;
         public const int StaticProvidersArg = 1;
-        
+
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         private XamlILContextDefinition(IXamlTypeBuilder<IXamlILEmitter> parentBuilder,
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
@@ -408,6 +411,7 @@ namespace XamlX.IL
                 cb();
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         private void EmitPushPopParent(IXamlTypeBuilder<IXamlILEmitter> builder, IXamlTypeSystem ts)
         {
             Debug.Assert(ParentListField is not null);
@@ -500,6 +504,7 @@ namespace XamlX.IL
             PropertyStub("Instance");
             PropertyStub("PropertyDescriptor");
 
+            [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
             void MethodStub(string name)
             {
                 var original = tdc.GetMethod(m => m.Name == name);
@@ -517,7 +522,8 @@ namespace XamlX.IL
 
             return mappings.TypeDescriptorContext;
         }
-        
+
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         (IXamlType type, IXamlConstructor ctor, Action createCallback) EmitParentEnumerable(IXamlTypeSystem typeSystem, IXamlTypeBuilder<IXamlILEmitter> parentBuilder,
             XamlLanguageTypeMappings mappings)
         {

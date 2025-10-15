@@ -234,6 +234,7 @@ namespace XamlX.IL
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Select(c => new SreConstructor(System, c)).ToList();
 
+            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> Interfaces =>
                 _interfaces ??= Type.GetInterfaces().Select(System.ResolveType).ToList()!;
 
@@ -244,6 +245,7 @@ namespace XamlX.IL
 
             public bool IsInterface => Type.IsInterface;
 
+            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericArguments
             {
                 get
@@ -256,6 +258,7 @@ namespace XamlX.IL
                 }
             }
 
+            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericParameters =>
                 _genericParameters ??= Type.GetTypeInfo().GenericTypeParameters.Select(System.ResolveType).ToList()!;
 
@@ -326,6 +329,7 @@ namespace XamlX.IL
         {
             private readonly CustomAttributeData _data;
 
+            [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
             public SreCustomAttribute(SreTypeSystem system, CustomAttributeData data, IXamlType type)
             {
                 Type = type;
@@ -442,6 +446,7 @@ namespace XamlX.IL
 
             public bool IsGenericMethodDefinition => Method.IsGenericMethodDefinition;
 
+            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
                 Method.ContainsGenericParameters
                     ? Method.GetGenericArguments()
@@ -450,6 +455,7 @@ namespace XamlX.IL
                             .ToArray()
                     : Array.Empty<IXamlType>();
 
+            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
                 !Method.ContainsGenericParameters
                     ? Method.GetGenericArguments()

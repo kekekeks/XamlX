@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 using XamlX.Ast;
 using XamlX.Transform;
@@ -53,6 +54,7 @@ namespace XamlX.IL
 
             var createNamespaceInfoMethod = EmitCreateNamespaceInfoMethod();
 
+            [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
             IXamlMethod EmitCreateNamespacesMethod()
             {
                 // C#: private static IReadOnlyDictionary<string, IReadOnlyList<string>> CreateNamespaces()

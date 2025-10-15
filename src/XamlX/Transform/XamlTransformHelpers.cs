@@ -195,6 +195,7 @@ namespace XamlX.Transform
             return TryConvertValue(context, node, customAttributes, type, null, out rv);
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "The method can return null if the type is not found")]
         public static IXamlType? TryGetTypeConverterFromCustomAttribute(
             TransformerConfiguration cfg,
             IXamlCustomAttribute? attribute)

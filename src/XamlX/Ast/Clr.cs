@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Emit;
 using XamlX.IL;
@@ -694,6 +695,7 @@ namespace XamlX.Ast
         public IXamlAstValueNode Value { get; set; }
         public IXamlAstTypeReference Type { get; }
         
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public XamlDeferredContentNode(IXamlAstValueNode value,
             IXamlType? deferredContentCustomizationTypeParameter,
             TransformerConfiguration config) : base(value)
