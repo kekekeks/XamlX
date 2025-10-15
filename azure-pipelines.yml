@@ -15,6 +15,11 @@ jobs:
           packageType: runtime
           version: 8.0.x
 
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete
+        displayName: 'Install Mono'
+
       - task: CmdLine@2
         displayName: 'Run Tests'
         inputs:
