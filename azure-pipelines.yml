@@ -21,8 +21,8 @@ jobs:
             mono --version
             dotnet --info
             dotnet build
+            dotnet test -f net10.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
@@ -54,8 +54,8 @@ jobs:
           script: |
             dotnet --info
             dotnet build
+            dotnet test -f net10.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2
