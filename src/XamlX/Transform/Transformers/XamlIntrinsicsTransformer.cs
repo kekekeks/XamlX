@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using XamlX.Ast;
 using XamlX.TypeSystem;
 
@@ -8,6 +9,7 @@ namespace XamlX.Transform.Transformers
 #endif
     class XamlIntrinsicsTransformer : IXamlAstTransformer
     {
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
         {
             if (node is XamlAstObjectNode ni 

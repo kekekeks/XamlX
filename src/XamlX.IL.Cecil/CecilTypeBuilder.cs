@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
@@ -142,6 +143,7 @@ namespace XamlX.TypeSystem
                 return new CecilTypeBuilder(_builderTypeResolveContext, (CecilAssembly?)Assembly, td);
             }
 
+            [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
             public IXamlTypeBuilder<IXamlILEmitter> DefineDelegateSubType(string name, XamlVisibility visibility,
                 IXamlType returnType, IEnumerable<IXamlType> parameterTypes)
             {

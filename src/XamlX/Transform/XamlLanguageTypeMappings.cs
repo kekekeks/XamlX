@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using XamlX.TypeSystem;
 
 namespace XamlX.Transform
@@ -9,13 +10,11 @@ namespace XamlX.Transform
     class XamlLanguageTypeMappings
     {
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem)
+            : this(typeSystem, useDefault: true)
         {
-            ServiceProvider = typeSystem.GetType("System.IServiceProvider");
-            TypeDescriptorContext = typeSystem.GetType("System.ComponentModel.ITypeDescriptorContext");
-            SupportInitialize = typeSystem.GetType("System.ComponentModel.ISupportInitialize");
-            TypeConverterAttributes.Add(typeSystem.GetType("System.ComponentModel.TypeConverterAttribute"));
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public XamlLanguageTypeMappings(IXamlTypeSystem typeSystem, bool useDefault)
         {
             if (useDefault)

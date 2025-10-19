@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using XamlX.Ast;
 using XamlX.Emit;
@@ -160,6 +161,7 @@ namespace XamlX.IL.Emitters
             return method;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         private static void EmitDynamicSetterMethod(
             IReadOnlyList<IXamlType> valueTypes,
             IReadOnlyList<IXamlPropertySetter> setters,

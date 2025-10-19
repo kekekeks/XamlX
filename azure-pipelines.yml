@@ -1,18 +1,24 @@
 jobs:
   - job: Linux
     pool:
-      vmImage: 'ubuntu-20.04'
+      vmImage: 'ubuntu-24.04'
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET SDK 8.0.203'
+        displayName: 'Use .NET SDK 10.0.100'
         inputs:
-          version: 8.0.203
+          version: 10.0.100-rc.2.25502.107
+          includePreviewVersions: true
 
       - task: UseDotNet@2
-        displayName: 'Use .NET Runtime 6.0'
+        displayName: 'Use .NET Runtime 8.0'
         inputs:
           packageType: runtime
-          version: 6.0.x
+          version: 8.0.x
+
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete
+        displayName: 'Install Mono'
 
       - task: CmdLine@2
         displayName: 'Run Tests'
@@ -21,8 +27,8 @@ jobs:
             mono --version
             dotnet --info
             dotnet build
+            dotnet test -f net10.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
       - task: PublishTestResults@2
         inputs:
@@ -33,20 +39,21 @@ jobs:
 
   - job: Windows
     pool:
-      vmImage: 'windows-2022'
+      vmImage: 'windows-2025'
     variables:
       SolutionDir: '$(Build.SourcesDirectory)'
     steps:
       - task: UseDotNet@2
-        displayName: 'Use .NET SDK 8.0.203'
+        displayName: 'Use .NET SDK 10.0.100'
         inputs:
-          version: 8.0.203
+          version: 10.0.100-rc.2.25502.107
+          includePreviewVersions: true
           
       - task: UseDotNet@2
-        displayName: 'Use .NET Runtime 6.0'
+        displayName: 'Use .NET Runtime 8.0'
         inputs:
           packageType: runtime
-          version: 6.0.x
+          version: 8.0.x
 
       - task: CmdLine@2
         displayName: 'Run Tests'
@@ -54,8 +61,8 @@ jobs:
           script: |
             dotnet --info
             dotnet build
+            dotnet test -f net10.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net8.0 --logger "trx" --results-directory artifacts/test-results
-            dotnet test -f net6.0 --logger "trx" --results-directory artifacts/test-results
             dotnet test -f net47  --logger "trx" --results-directory artifacts/test-results
 
       - task: PublishTestResults@2

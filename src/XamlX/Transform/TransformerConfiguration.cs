@@ -229,6 +229,7 @@ namespace XamlX.Transform
         public IXamlType Delegate { get; }
         public IXamlType ObsoleteAttribute { get; }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
         {
             Void = typeSystem.GetType("System.Void");

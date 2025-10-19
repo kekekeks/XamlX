@@ -52,9 +52,9 @@ namespace XamlX.TypeSystem
                         {
                             properties.Add(prop.Name, ConvertValue(prop.Argument.Value));
                         }
-                        foreach (var field in Data.Fields)
+                        foreach (var @field in Data.Fields)
                         {
-                            properties.Add(field.Name, ConvertValue(field.Argument.Value));
+                            properties.Add(@field.Name, ConvertValue(@field.Argument.Value));
                         }
                         _properties = properties;
                     }

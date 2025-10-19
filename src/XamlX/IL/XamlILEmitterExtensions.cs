@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Text;
@@ -42,6 +43,7 @@ namespace XamlX.IL
             return emitter;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = "Only used for debugging.")]
         public static IXamlILEmitter DebugHatch(this IXamlILEmitter emitter, string message)
         {
 #if DEBUG
@@ -176,6 +178,7 @@ namespace XamlX.IL
         public static IXamlILEmitter Ldtoken(this IXamlILEmitter emitter, IXamlMethod method)
             => emitter.Emit(OpCodes.Ldtoken, method);
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter Ldtype(this IXamlILEmitter emitter, IXamlType type)
         {
             var conv = emitter.TypeSystem.GetType("System.Type")
@@ -183,6 +186,7 @@ namespace XamlX.IL
             return emitter.Ldtoken(type).EmitCall(conv);
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter LdMethodInfo(this IXamlILEmitter emitter, IXamlMethod method)
         {
             var conv = emitter.TypeSystem.GetType("System.Reflection.MethodInfo")

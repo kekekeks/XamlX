@@ -18,4 +18,7 @@ internal static class TrimmingMessages
     
     public const string DynamicXamlReference =
         "x:Class directive type and XAML dependencies are referenced dynamically and might be trimmed.";
+
+    public const string TypeInCoreAssembly =
+        "The types reside in the core assembly and will always be found.";
 }
