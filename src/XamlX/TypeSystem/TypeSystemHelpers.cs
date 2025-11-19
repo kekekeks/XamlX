@@ -157,6 +157,8 @@ namespace XamlX.TypeSystem
                     return Double.Parse(s, CultureInfo.InvariantCulture);
                 if (type.Name == "Boolean")
                     return Boolean.Parse(s);
+                if (type.Name == "Char")
+                    return Char.Parse(s);
                 return null;
             }
 

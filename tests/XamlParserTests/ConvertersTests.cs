@@ -160,11 +160,13 @@ namespace XamlParserTests
          InlineData("x:Single", "2.5"),
          InlineData("x:String", "Some string"),
          InlineData("x:TimeSpan", "01:10:00"),
+         InlineData("x:Char", "x"),
          InlineData("sys:Int32", "1"),
          InlineData("sys:Double", "1.5"),
          InlineData("sys:Single", "2.5"),
          InlineData("sys:String", "Some string"),
-         InlineData("sys:TimeSpan", "01:10:00")
+         InlineData("sys:TimeSpan", "01:10:00"),
+         InlineData("sys:Char", "x"),
         ]
         public void Primitive_Types_Are_Properly_Parsed(string type, string value)
         {
