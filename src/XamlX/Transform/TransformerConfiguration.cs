@@ -228,6 +228,7 @@ namespace XamlX.Transform
         public IXamlType IFormatProvider { get; }
         public IXamlType Delegate { get; }
         public IXamlType ObsoleteAttribute { get; }
+        public IXamlType? ExperimentalAttribute { get; }
 
         [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
@@ -247,6 +248,7 @@ namespace XamlX.Transform
             NullableT = typeSystem.GetType("System.Nullable`1");
             Delegate = typeSystem.GetType("System.Delegate");
             ObsoleteAttribute = typeSystem.GetType("System.ObsoleteAttribute");
+            ExperimentalAttribute = typeSystem.FindType("System.Diagnostics.CodeAnalysis.ExperimentalAttribute");
         }
     }
 }

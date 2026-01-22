@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using XamlX.Ast;
@@ -15,38 +14,63 @@ public
     public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
     {
         var obsoleteAttributeType = context.Configuration.WellKnownTypes.ObsoleteAttribute;
+        var experimentalAttributeType = context.Configuration.WellKnownTypes.ExperimentalAttribute;
 
         if (node is XamlAstObjectNode ctorNode
-            && FindAttr(ctorNode.Type.GetClrType().CustomAttributes) is { } typeAttr)
+            && FindAttr(ctorNode.Type.GetClrType().CustomAttributes) is var (typeAttr, typeDiagnostic))
         {
             var type = ctorNode.Type.GetClrType();
-            ReportObsolete(type.Name, typeAttr);
+            Report(type.Name, typeAttr, typeDiagnostic);
         }
         else if (node is XamlAstXamlPropertyValueNode propNode
-                 && FindAttr(propNode.Property.GetClrProperty().CustomAttributes) is { } propAttr)
+                 && FindAttr(propNode.Property.GetClrProperty().CustomAttributes) is var (propAttr, propDiagnostic))
         {
             var prop = propNode.Property.GetClrProperty();
-            ReportObsolete($"{prop.Name}.{prop.Name}", propAttr);
+            Report($"{prop.DeclaringType.Name}.{prop.Name}", propAttr, propDiagnostic);
         }
         else if (node is XamlStaticExtensionNode staticExt)
         {
-            var staticAttr = staticExt.ResolveMember(false) switch
+            var member = staticExt.ResolveMember(false);
+            var result = member switch
             {
                 IXamlField field => FindAttr(field.CustomAttributes),
                 IXamlProperty { Getter: not null } prop => FindAttr(prop.CustomAttributes.Concat(prop.Getter.CustomAttributes)),
                 _ => null
             };
-            if (staticAttr is not null)
+            if (result is var (staticAttr, staticDiagnostic))
             {
-                ReportObsolete($"{staticExt.Type.GetClrType().Name}.{staticExt.Member}", staticAttr);
+                Report($"{member!.DeclaringType.Name}.{member.Name}", staticAttr, staticDiagnostic);
             }
         }
         
         return node;
 
-        IXamlCustomAttribute? FindAttr(IEnumerable<IXamlCustomAttribute> attributes)
+        (IXamlCustomAttribute Attribute, DiagnosticType DiagnosticType)? FindAttr(IEnumerable<IXamlCustomAttribute> attributes)
         {
-            return attributes.FirstOrDefault(a => a.Type.Equals(obsoleteAttributeType));
+            foreach (var attribute in attributes)
+            {
+                if (attribute.Type.Equals(obsoleteAttributeType))
+                    return (attribute, DiagnosticType.Obsolete);
+                if (experimentalAttributeType is not null && attribute.Type.Equals(experimentalAttributeType))
+                    return (attribute, DiagnosticType.Experimental);
+            }
+
+            return null;
+        }
+
+        void Report(string member, IXamlCustomAttribute attribute, DiagnosticType diagnosticType)
+        {
+            switch (diagnosticType)
+            {
+                case DiagnosticType.Obsolete:
+                    ReportObsolete(member, attribute);
+                    break;
+                case DiagnosticType.Experimental:
+                    ReportExperimental(member, attribute);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(diagnosticType), diagnosticType, null);
+            }
         }
 
         void ReportObsolete(string member, IXamlCustomAttribute attribute)
@@ -64,5 +88,27 @@ public
                 isError ? XamlDiagnosticSeverity.Error : XamlDiagnosticSeverity.Warning,
                 title, node);
         }
+
+        void ReportExperimental(string member, IXamlCustomAttribute attribute)
+        {
+            if (attribute.Parameters.FirstOrDefault() is not string diagnosticId)
+                return;
+
+            attribute.Properties.TryGetValue("Message", out var messageObject);
+            var message = messageObject as string;
+
+            var title = string.IsNullOrEmpty(message) ?
+                $"'{member}' is for evaluation purposes only and is subject to change or removal in future updates." :
+                $"'{member}' is for evaluation purposes only and is subject to change or removal in future updates: '{message}'.";
+
+            var code = context.Configuration.DiagnosticsHandler.CodeMappings(diagnosticId);
+            context.ReportDiagnostic(code, XamlDiagnosticSeverity.Warning, title, node);
+        }
+    }
+
+    private enum DiagnosticType
+    {
+        Obsolete,
+        Experimental
     }
 }
