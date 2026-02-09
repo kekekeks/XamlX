@@ -113,7 +113,7 @@ namespace XamlX.Ast
         internal IXamlMember? ResolveMember(bool throwOnUnknown)
         {
             var type = TargetType?.GetClrType();
-            var member = type?.Fields.FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
+            var member = type?.GetAllFields().FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
                    (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
                        p.Name == Member && p.Getter is { IsPublic: true, IsStatic: true });
 
