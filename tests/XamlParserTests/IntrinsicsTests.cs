@@ -21,6 +21,8 @@ namespace XamlParserTests
         public const double DoubleConstant = 3;
     }
 
+    public class IntrinsicsTestsDerivedClass : IntrinsicsTestsClass;
+
     public class IntrinsicsListTestsClass
     {
         internal int AddInt32CallCount;
@@ -93,6 +95,8 @@ namespace XamlParserTests
          InlineData(100, "IntrinsicsTestsClass.IntConstant"),
          InlineData(2f, "IntrinsicsTestsClass.FloatConstant"),
          InlineData(3d, "IntrinsicsTestsClass.DoubleConstant"),
+         InlineData("StaticPropValue", "IntrinsicsTestsDerivedClass.StaticProp"),
+         InlineData("StaticFieldValue", "IntrinsicsTestsDerivedClass.StaticField"),
         ]
         public void Static_Extension_Resolves_Values(object expected, string r)
         {
