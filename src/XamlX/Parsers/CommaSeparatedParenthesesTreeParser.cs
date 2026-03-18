@@ -63,6 +63,9 @@ namespace XamlX.Parsers
             }
 
             // Final state: initial node at the top of the stack
+            if (stack.Count != 1)
+                throw new ParseException("Unmatched '('", s.Length);
+
             return stack.Pop().Children;
         }
     }
