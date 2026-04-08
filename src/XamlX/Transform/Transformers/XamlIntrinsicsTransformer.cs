@@ -60,6 +60,10 @@ namespace XamlX.Transform.Transformers
 
                     XamlAstXmlTypeReference ResolveSimpleTypeName(string typeName)
                     {
+                        bool isNullable = typeName.EndsWith("?");
+                        if (isNullable)
+                            typeName = typeName.TrimEnd('?');
+
                         var pair = typeName.Split(new[] { ':' }, 2);
                         if (pair.Length == 1)
                             pair = new[] { "", pair[0] };
@@ -67,7 +71,12 @@ namespace XamlX.Transform.Transformers
                         if (!context.NamespaceAliases.TryGetValue(pair[0].Trim(), out var resolvedNs))
                             throw new XamlTransformException($"Unable to resolve namespace {pair[0]}", textNode);
 
-                        return new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1].Trim());
+                        var typeRef = new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1].Trim());
+
+                        if (isNullable)
+                            return MakeNullableTypeReference(typeRef);
+
+                        return typeRef;
                     }
 
                     XamlAstXmlTypeReference ResolveTypeExpression(string typeExpression)
@@ -86,9 +95,17 @@ namespace XamlX.Transform.Transformers
                                 if (parsedValue == null || string.IsNullOrWhiteSpace(parsedValue))
                                     throw new XamlTransformException("x:Type TypeName contains an empty type name", textNode);
 
-                                var typeReference = ResolveSimpleTypeName(parsedValue.Trim());
+                                var trimmed = parsedValue.Trim();
+                                bool isNullable = trimmed.EndsWith("?");
+                                if (isNullable)
+                                    trimmed = trimmed.Substring(0, trimmed.Length - 1);
+
+                                var typeReference = ResolveSimpleTypeName(trimmed);
                                 if (parsedNode.Children.Count != 0)
                                     typeReference.GenericArguments = parsedNode.Children.Select(ConvertNode).ToList();
+
+                                if (isNullable)
+                                    return MakeNullableTypeReference(typeReference);
 
                                 return typeReference;
                             }
@@ -105,12 +122,24 @@ namespace XamlX.Transform.Transformers
                         ? ResolveTypeExpression(typeRefText)
                         : ResolveSimpleTypeName(typeRefText);
 
-                    if (!hasInlineGenericSyntax)
+                    if (!hasInlineGenericSyntax && xml.GenericArguments.Count > 0)
                         typeReference.GenericArguments = xml.GenericArguments;
 
                     return new XamlTypeExtensionNode(node,
                         typeReference,
                         context.Configuration.TypeSystem.GetType("System.Type"));
+
+                    XamlAstXmlTypeReference MakeNullableTypeReference(XamlAstXmlTypeReference typeRef)
+                    {
+                        var resolved = TypeReferenceResolver.ResolveType(context, typeRef);
+                        if (resolved.Type.IsNullable())
+                            throw new XamlTransformException(
+                                $"Type {resolved.Type.GetFqn()} is already nullable and cannot be made nullable again",
+                                textNode);
+                        if (resolved.Type.IsValueType)
+                            return new XamlAstXmlTypeReference(textNode, XamlNamespaces.Xaml2006, "Nullable`1", [typeRef]);
+                        return typeRef;
+                    }
                 }
 
                 if (xml.Name == "Static")
@@ -130,6 +159,9 @@ namespace XamlX.Transform.Transformers
 
                     XamlAstXmlTypeReference ResolveSimpleTypeName(string typeName)
                     {
+                        bool isNullable = typeName.EndsWith("?");
+                        if (isNullable) typeName = typeName.Substring(0, typeName.Length - 1);
+
                         var pair = typeName.Split(new[] { ':' }, 2);
                         if (pair.Length == 1)
                             pair = new[] { "", pair[0] };
@@ -137,7 +169,21 @@ namespace XamlX.Transform.Transformers
                         if (!context.NamespaceAliases.TryGetValue(pair[0].Trim(), out var resolvedNs))
                             throw new XamlTransformException($"Unable to resolve namespace {pair[0]}", textNode);
 
-                        return new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1].Trim());
+                        var typeRef = new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1].Trim());
+
+                        if (isNullable)
+                        {
+                            var resolved = TypeReferenceResolver.ResolveType(context, typeRef);
+                            if (resolved.Type.IsNullable())
+                                throw new XamlTransformException(
+                                    $"Type {resolved.Type.GetFqn()} is already nullable and cannot be made nullable again",
+                                    textNode);
+                            if (resolved.Type.IsValueType)
+                                return new XamlAstXmlTypeReference(textNode, XamlNamespaces.Xaml2006, "Nullable`1",
+                                    new[] { typeRef });
+                        }
+
+                        return typeRef;
                     }
 
                     XamlAstXmlTypeReference ResolveTypeExpression(string typeExpression)
@@ -156,9 +202,25 @@ namespace XamlX.Transform.Transformers
                                 if (parsedValue == null || string.IsNullOrWhiteSpace(parsedValue))
                                     throw new XamlTransformException("x:Static Member contains an empty type name", textNode);
 
-                                var typeReference = ResolveSimpleTypeName(parsedValue.Trim());
+                                var trimmed = parsedValue.Trim();
+                                bool isNullable = trimmed.EndsWith("?");
+                                if (isNullable) trimmed = trimmed.Substring(0, trimmed.Length - 1);
+
+                                var typeReference = ResolveSimpleTypeName(trimmed);
                                 if (parsedNode.Children.Count != 0)
                                     typeReference.GenericArguments = parsedNode.Children.Select(ConvertNode).ToList();
+
+                                if (isNullable)
+                                {
+                                    var resolved = TypeReferenceResolver.ResolveType(context, typeReference);
+                                    if (resolved.Type.IsNullable())
+                                        throw new XamlTransformException(
+                                            $"Type {resolved.Type.GetFqn()} is already nullable and cannot be made nullable again",
+                                            textNode);
+                                    if (resolved.Type.IsValueType)
+                                        return new XamlAstXmlTypeReference(textNode, XamlNamespaces.Xaml2006, "Nullable`1",
+                                            new[] { typeReference });
+                                }
 
                                 return typeReference;
                             }
@@ -175,7 +237,7 @@ namespace XamlX.Transform.Transformers
                         ? ResolveTypeExpression(tmpair[0])
                         : ResolveSimpleTypeName(tmpair[0]);
 
-                    if (!hasInlineGenericSyntax)
+                    if (!hasInlineGenericSyntax && xml.GenericArguments.Count > 0)
                         typeReference.GenericArguments = xml.GenericArguments;
 
                     return new XamlStaticExtensionNode(ni,

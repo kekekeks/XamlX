@@ -26,7 +26,7 @@ namespace XamlX.Parsers
         {
             var stack = new Stack<Node>();
             var current = new Node();
-            //Initial parser state with initial node added to the root parent
+            // Initial parser state with initial node added to the root parent
             stack.Push(current);
             current = new Node();
             stack.Peek().Children.Add(current);
@@ -39,8 +39,6 @@ namespace XamlX.Parsers
                 {
                     stack.Peek().Children.Add(current = new Node());
                 }
-                else if(afterClosing && char.IsWhiteSpace(ch))
-                    continue;
                 else if (ch == ')')
                 {
                     current = stack.Pop();
@@ -48,8 +46,16 @@ namespace XamlX.Parsers
                         throw new ParseException("Unmatched ')'", c);
                 }
                 else if (afterClosing)
-                    throw new ParseException("Invalid character after ')'", c);
-                else if(ch=='(')
+                {
+                    if (char.IsWhiteSpace(ch))
+                        continue;
+
+                    if (ch is not '?')
+                        throw new ParseException("Invalid character after ')'", c);
+
+                    current.Value += '?';
+                }
+                else if (ch == '(')
                 {
                     stack.Push(current);
                     stack.Peek().Children.Add(current = new Node());
@@ -59,7 +65,7 @@ namespace XamlX.Parsers
                     current.Value += ch;
                 }
 
-                afterClosing = ch == ')';
+                afterClosing = ch == ')' || (afterClosing && ch == '?');
             }
 
             // Final state: initial node at the top of the stack
@@ -69,5 +75,4 @@ namespace XamlX.Parsers
             return stack.Pop().Children;
         }
     }
-    
 }
