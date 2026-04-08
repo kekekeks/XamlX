@@ -84,7 +84,11 @@ namespace XamlParserTests
          InlineData(typeof(Dictionary<string, List<int>>), "<x:Type TypeName='scg:Dictionary(x:String, scg:List(x:Int32))' />"),
          InlineData(typeof(List<string>), "<x:Type x:TypeArguments='x:String' TypeName='scg:List' />"),
          InlineData(typeof(List<List<string>>), "<x:Type x:TypeArguments='scg:List(x:String)' TypeName='scg:List'/>"),
-         InlineData(typeof(Dictionary<string, List<int>>), "<x:Type x:TypeArguments='x:String, scg:List(x:Int32)' TypeName='scg:Dictionary' />")
+         InlineData(typeof(Dictionary<string, List<int>>), "<x:Type x:TypeArguments='x:String, scg:List(x:Int32)' TypeName='scg:Dictionary' />"),
+         InlineData(typeof(int?), "<x:Type TypeName='x:Int32?' />"),
+         InlineData(typeof(int?), "<x:Type TypeName='sys:Nullable(x:Int32)' />"),
+         InlineData(typeof(string), "<x:Type TypeName='x:String?' />"),
+         InlineData(typeof(List<int?>), "<x:Type TypeName='scg:List(x:Int32?)' />"),
         ]
         public void Type_Extension_Resolves_Types(Type expectedType, string typeExt)
         {
@@ -92,6 +96,7 @@ namespace XamlParserTests
 <IntrinsicsTestsClass 
     xmlns='test' 
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
 >
     <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
@@ -106,7 +111,13 @@ namespace XamlParserTests
          InlineData(typeof(Dictionary<string, string>), "{x:Type 'scg:Dictionary(x:String, x:String)'}"),
          InlineData(typeof(Dictionary<string, List<int>>), "{x:Type TypeName='scg:Dictionary(x:String, scg:List(x:Int32))'}"),
          InlineData(typeof(Dictionary<string, List<int>>), "{x:Type 'scg:Dictionary(x:String, scg:List(x:Int32))'}"),
-         InlineData(typeof(Dictionary<string, List<int>>), "{x:Type x:TypeArguments='x:String, scg:List(x:Int32)' TypeName='scg:Dictionary' }")
+         InlineData(typeof(Dictionary<string, List<int>>), "{x:Type x:TypeArguments='x:String, scg:List(x:Int32)' TypeName='scg:Dictionary' }"),
+         InlineData(typeof(int?), "{x:Type x:Int32?}"),
+         InlineData(typeof(int?), "{x:Type sys:Nullable(x:Int32)}"),
+         InlineData(typeof(string), "{x:Type x:String?}"),
+         InlineData(typeof(int?), "{x:Type TypeName=x:Int32?}"),
+         InlineData(typeof(List<int?>), "{x:Type TypeName='scg:List(x:Int32?)'}"),
+         InlineData(typeof(List<int?>), "{x:Type 'scg:List(x:Int32?)'}"),
         ]
         public void Type_MarkupExtension_Resolves_Types(Type expectedType, string typeExt)
         {
@@ -114,6 +125,7 @@ namespace XamlParserTests
 <IntrinsicsTestsClass 
     xmlns='test' 
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
     TypeProperty=""{typeExt}"" />");
             Assert.Equal(expectedType, res.TypeProperty);
@@ -181,6 +193,22 @@ namespace XamlParserTests
             Assert.Contains("Unmatched '('", ex.Message);
         }
         
+        [Theory,
+         InlineData("<x:Type TypeName='sys:Nullable(x:Int32)?' />")
+        ]
+        public void Type_Extension_Should_Report_Error_When_Nullable_Is_Applied_To_Nullable(string typeExt)
+        {
+            var ex = Assert.Throws<XamlTransformException>(() => Compile($@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'
+    xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
+>
+    <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
+</IntrinsicsTestsClass>"));
+            Assert.Contains("already nullable", ex.Message);
+        }
         
 
         [Theory,
@@ -197,7 +225,9 @@ namespace XamlParserTests
          InlineData("GenericStaticFieldValue", "<x:Static Member='IntrinsicsTestsGenericClass(x:String, scg:List(x:Int32)).StaticField'/>"),
          InlineData("GenericStaticFieldValue", "<x:Static Member='IntrinsicsTestsGenericClass.StaticField'  x:TypeArguments='x:String, scg:List(x:Int32)'/>"),
          InlineData("GenericConstantValue", "<x:Static Member='IntrinsicsTestsGenericClass(x:String, x:String).StringConstant'/>"),
-         InlineData("GenericConstantValue", "<x:Static Member='IntrinsicsTestsGenericClass.StringConstant' x:TypeArguments='x:String, x:String'/>")
+         InlineData("GenericConstantValue", "<x:Static Member='IntrinsicsTestsGenericClass.StringConstant' x:TypeArguments='x:String, x:String'/>"),
+         InlineData("GenericStaticPropValue", "<x:Static Member='IntrinsicsTestsGenericClass(x:Int32?, x:String).StaticProp'/>"),
+         InlineData("GenericStaticFieldValue", "<x:Static Member='IntrinsicsTestsGenericClass(x:Int32?, scg:List(x:Int32)).StaticField'/>")
         ]
         public void Static_Extension_Resolves_Values(object expected, string r)
         {
@@ -221,7 +251,8 @@ namespace XamlParserTests
          InlineData("GenericStaticFieldValue", "{x:Static Member='IntrinsicsTestsGenericClass(x:String, scg:List(x:Int32)).StaticField'}"),
          InlineData("GenericStaticFieldValue", "{x:Static x:TypeArguments='x:String, scg:List(x:Int32)', Member='IntrinsicsTestsGenericClass.StaticField'}"),
          InlineData("GenericConstantValue", "{x:Static Member='IntrinsicsTestsGenericClass(x:String, x:String).StringConstant'}"),
-         InlineData("GenericConstantValue", "{x:Static x:TypeArguments='x:String, x:String', Member='IntrinsicsTestsGenericClass.StringConstant'}")]
+         InlineData("GenericConstantValue", "{x:Static x:TypeArguments='x:String, x:String', Member='IntrinsicsTestsGenericClass.StringConstant'}"),
+         InlineData("GenericStaticPropValue", "{x:Static Member='IntrinsicsTestsGenericClass(x:Int32?, x:String).StaticProp'}")]
         public void Static_MarkupExtension_Resolves_Values(object expected, string markup)
         {
             var res = (IntrinsicsTestsClass) CompileAndRun($@"
