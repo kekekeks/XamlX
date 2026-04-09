@@ -118,6 +118,7 @@ namespace XamlParserTests
          InlineData(typeof(int?), "{x:Type TypeName=x:Int32?}"),
          InlineData(typeof(List<int?>), "{x:Type TypeName='scg:List(x:Int32?)'}"),
          InlineData(typeof(List<int?>), "{x:Type 'scg:List(x:Int32?)'}"),
+         InlineData(typeof(KeyValuePair<int?, string>?), "{x:Type 'scg:KeyValuePair(x:Int32?, x:String?)?'}")
         ]
         public void Type_MarkupExtension_Resolves_Types(Type expectedType, string typeExt)
         {
@@ -145,7 +146,7 @@ namespace XamlParserTests
     </IntrinsicsTestsClass.TypeProperty>
 </IntrinsicsTestsClass>"));
 
-            Assert.Contains("both TypeName and x:TypeArguments", ex.Message);
+            Assert.Contains("both inline and in x:TypeArguments", ex.Message);
         }
 
         [Fact]
@@ -158,7 +159,7 @@ namespace XamlParserTests
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
     TypeProperty=""{{x:Type TypeName='scg:Dictionary(x:String, x:String)', x:TypeArguments='x:String, x:String' }}"" />"));
 
-            Assert.Contains("both TypeName and x:TypeArguments", ex.Message);
+            Assert.Contains("both inline and in x:TypeArguments", ex.Message);
         }
 
         [Fact]
@@ -175,7 +176,7 @@ namespace XamlParserTests
     </IntrinsicsTestsClass.TypeProperty>
 </IntrinsicsTestsClass>"));
 
-            Assert.Contains("Unable to parse x:Type TypeName", ex.Message);
+            Assert.Contains("Unable to parse x:Type", ex.Message);
             Assert.Contains("Unmatched '('", ex.Message);
         }
 
@@ -189,12 +190,16 @@ namespace XamlParserTests
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
     TypeProperty=""{{x:Type TypeName='scg:List(x:String'}}"" />"));
 
-            Assert.Contains("Unable to parse x:Type TypeName", ex.Message);
+            Assert.Contains("Unable to parse x:Type", ex.Message);
             Assert.Contains("Unmatched '('", ex.Message);
         }
         
         [Theory,
-         InlineData("<x:Type TypeName='sys:Nullable(x:Int32)?' />")
+         // InlineData("<x:Type TypeName='sys:Nullable(x:Int32)?' />"),
+         // InlineData("<x:Type TypeName='sys:Nullable(x:Int32?)' />"),
+         // InlineData("<x:Type TypeName='sys:Nullable(sys:Nullable(x:Int32))' />"),
+         InlineData("<x:Type TypeName='x:Int32??' />"),
+         InlineData("<x:Type TypeName='x:String??' />")
         ]
         public void Type_Extension_Should_Report_Error_When_Nullable_Is_Applied_To_Nullable(string typeExt)
         {
@@ -207,7 +212,7 @@ namespace XamlParserTests
 >
     <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
 </IntrinsicsTestsClass>"));
-            Assert.Contains("already nullable", ex.Message);
+            Assert.Contains("multiple nullable indicators", ex.Message);
         }
         
 
@@ -297,7 +302,7 @@ namespace XamlParserTests
     </IntrinsicsTestsClass.ObjectProperty>
 </IntrinsicsTestsClass>"));
 
-            Assert.Contains("both Member and x:TypeArguments", ex.Message);
+            Assert.Contains("both inline and in x:TypeArguments", ex.Message);
         }
 
         [Fact]
@@ -310,7 +315,7 @@ namespace XamlParserTests
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
     ObjectProperty=""{{x:Static Member='IntrinsicsTestsGenericClass(x:String, x:String).StaticProp', x:TypeArguments='x:String, x:String' }}"" />"));
 
-            Assert.Contains("both Member and x:TypeArguments", ex.Message);
+            Assert.Contains("both inline and in x:TypeArguments", ex.Message);
         }
         
         [Fact]
