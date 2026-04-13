@@ -26,7 +26,7 @@ namespace XamlX.Parsers
         {
             var stack = new Stack<Node>();
             var current = new Node();
-            //Initial parser state with initial node added to the root parent
+            // Initial parser state with initial node added to the root parent
             stack.Push(current);
             current = new Node();
             stack.Peek().Children.Add(current);
@@ -35,36 +35,47 @@ namespace XamlX.Parsers
             for (var c = 0; c < s.Length; c++)
             {
                 var ch = s[c];
-                if (ch == ',')
+                switch (ch)
                 {
-                    stack.Peek().Children.Add(current = new Node());
-                }
-                else if(afterClosing && char.IsWhiteSpace(ch))
-                    continue;
-                else if (ch == ')')
-                {
-                    current = stack.Pop();
-                    if (stack.Count == 0)
-                        throw new ParseException("Unmatched ')'", c);
-                }
-                else if (afterClosing)
-                    throw new ParseException("Invalid character after ')'", c);
-                else if(ch=='(')
-                {
-                    stack.Push(current);
-                    stack.Peek().Children.Add(current = new Node());
-                }
-                else
-                {
-                    current.Value += ch;
+                    case ',':
+                        stack.Peek().Children.Add(current = new Node());
+                        break;
+                    case ')':
+                    {
+                        current = stack.Pop();
+                        if (stack.Count == 0)
+                            throw new ParseException("Unmatched ')'", c);
+                        // current.Value += $"`{current.Children.Count}";
+                        break;
+                    }
+                    case { } when afterClosing:
+                    {
+                        if (char.IsWhiteSpace(ch))
+                            continue;
+
+                        if (ch is not '?')
+                            throw new ParseException("Invalid character after ')'", c);
+
+                        current.Value += '?';
+                        break;
+                    }
+                    case '(':
+                        stack.Push(current);
+                        stack.Peek().Children.Add(current = new Node());
+                        break;
+                    default:
+                        current.Value += ch;
+                        break;
                 }
 
-                afterClosing = ch == ')';
+                afterClosing = ch == ')' || (afterClosing && ch == '?');
             }
 
             // Final state: initial node at the top of the stack
+            if (stack.Count != 1)
+                throw new ParseException("Unmatched '('", s.Length);
+
             return stack.Pop().Children;
         }
     }
-    
 }
