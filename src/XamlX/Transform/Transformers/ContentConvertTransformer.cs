@@ -12,15 +12,17 @@ namespace XamlX.Transform.Transformers
         {
             if (!(node is XamlAstObjectNode on))
                 return node;
+
+            var targetType = on.Type.GetClrType();
             var nonDirectiveChildren = on.Children.Where(a => !(a is XamlAstXmlDirective)).ToList();
 
             if (on.Arguments.Count != 0
                 || nonDirectiveChildren.Count != 1
                 || !(nonDirectiveChildren[0] is IXamlAstValueNode vn)
-                || !vn.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String))
+                || (!vn.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String) && !targetType.IsValueType))
                 return node;
             
-            if (XamlTransformHelpers.TryGetCorrectlyTypedValue(context, vn, on.Type.GetClrType(), out var rv))
+            if (XamlTransformHelpers.TryGetCorrectlyTypedValue(context, vn, targetType, out var rv))
             {
                 if (nonDirectiveChildren.Count != on.Children.Count)
                     rv = new XamlValueWithManipulationNode(rv, rv,
@@ -28,9 +30,9 @@ namespace XamlX.Transform.Transformers
                 return rv;
             }
 
-            if (on.Type.GetClrType().IsValueType)
+            if (targetType.IsValueType)
                 throw new XamlLoadException(
-                    $"Unable to convert value {(vn as XamlAstTextNode)?.Text}) to {on.Type.GetClrType()}", vn);
+                    $"Unable to convert value {(vn as XamlAstTextNode)?.Text ?? vn.ToString()}) to {targetType}", vn);
             
             // Parser not found, isn't a value type, probably a regular object creation node with text content
             return node;
