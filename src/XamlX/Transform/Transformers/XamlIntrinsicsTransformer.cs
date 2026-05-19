@@ -58,7 +58,7 @@ namespace XamlX.Transform.Transformers
 
                     return new XamlTypeExtensionNode(node,
                         new XamlAstXmlTypeReference(textNode, resolvedNs, pair[1], xml.GenericArguments),
-                        context.Configuration.TypeSystem.GetType("System.Type"));
+                        context.Configuration.WellKnownTypes.Type);
                 }
 
                 if (xml.Name == "Static")
