@@ -11,7 +11,7 @@ namespace XamlX.Transform
     class XamlContextBase
     {
         private readonly Dictionary<Type, object> _items = new();
-        private readonly List<IXamlAstNode> _parentNodes = [];
+        private readonly List<IXamlAstNode> _parentNodes = new(16);
         
         public T GetItem<T>() where T : notnull => (T)_items[typeof(T)];
 

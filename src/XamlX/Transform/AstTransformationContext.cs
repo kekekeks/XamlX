@@ -68,14 +68,20 @@ namespace XamlX.Transform
                 try
                 {
                     var outputNode = VisitCore(_context, node);
-                    if (outputNode is null)
-                    {
-                        throw new InvalidOperationException(
-                            $"\"{GetTransformerInfo()}\" returned null IXamlAstNode.");
-                    }
-                    return outputNode;
+                    return outputNode ?? throw CreateTransformerException();
                 }
                 catch (Exception e)
+                {
+                    return ExceptionHandler(e);
+                }
+
+                InvalidOperationException CreateTransformerException()
+                {
+                    return new InvalidOperationException(
+                        $"\"{GetTransformerInfo()}\" returned null IXamlAstNode.");
+                }
+
+                IXamlAstNode ExceptionHandler(Exception e)
                 {
                     var reportException = e is XmlException
                         ? e
@@ -85,7 +91,7 @@ namespace XamlX.Transform
                         {
                             Document = _context.Document
                         };
-                    
+
                     if (_context.OnUnhandledTransformError(reportException))
                     {
                         return node is IXamlAstTypeReference
@@ -95,8 +101,8 @@ namespace XamlX.Transform
                     else
                     {
 #if DEBUG
-                        throw;
-#else 
+                        throw e;
+#else
                         throw reportException;
 #endif
                     }
