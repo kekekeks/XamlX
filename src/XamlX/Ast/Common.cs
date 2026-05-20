@@ -115,7 +115,8 @@ namespace XamlX.Ast
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected static void VisitList<T>(List<T> list, Visitor visitor) where T : IXamlAstNode
         {
-            for (var c = 0; c < list.Count; c++)
+            var count = list.Count;
+            for (var c = 0; c < count; c++)
             {
                 list[c] = (T) list[c].Visit(visitor);
             }
@@ -124,7 +125,8 @@ namespace XamlX.Ast
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected static void VisitList<T>(T[] list, Visitor visitor) where T : IXamlAstNode
         {
-            for (var c = 0; c < list.Length; c++)
+            var length = list.Length;
+            for (var c = 0; c < length; c++)
             {
                 list[c] = (T) list[c].Visit(visitor);
             }
