@@ -77,13 +77,27 @@ namespace XamlX.TypeSystem
 
             _compilerGeneratedAttribute = GetTypeReference(FindType("System.Runtime.CompilerServices.CompilerGeneratedAttribute")!).Resolve();
             _compilerGeneratedAttributeConstructor = _compilerGeneratedAttribute.GetConstructors().Single();
+
+            WellKnownTypes = new XamlTypeWellKnownTypes(this);
         }
 
         internal CecilTypeResolveContext RootTypeResolveContext { get; } 
         public IXamlAssembly? TargetAssembly { get; private set; }
         public AssemblyDefinition? TargetAssemblyDefinition { get; private set; }
-        public IEnumerable<IXamlAssembly> Assemblies => _asms.AsReadOnly();
-        public IXamlAssembly? FindAssembly(string name) => _asms.FirstOrDefault(a => a.Assembly.Name.Name == name);
+        public IEnumerable<IXamlAssembly> Assemblies => _asms;
+
+        public XamlTypeWellKnownTypes WellKnownTypes { get; }
+
+        public IXamlAssembly? FindAssembly(string name)
+        {
+            foreach (var assembly in _asms)
+            {
+                if (assembly.Assembly.Name.Name == name)
+                    return assembly;
+            }
+
+            return null;
+        }
 
         [UnconditionalSuppressMessage("Trimming", "IL2092", Justification = TrimmingMessages.Cecil)]
         public IXamlType? FindType(string name)

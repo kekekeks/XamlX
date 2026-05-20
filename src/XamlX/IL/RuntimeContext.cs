@@ -24,7 +24,7 @@ namespace XamlX.IL
             {
                 if (staticProviders?.Count > 0)
                 {
-                    var so = codegen.TypeSystem.GetType("System.Object");
+                    var so = codegen.TypeSystem.WellKnownTypes.Object;
                     codegen.Ldc_I4(staticProviders.Count)
                         .Newarr(so);
                     for (var c = 0; c < staticProviders.Count; c++)
@@ -93,7 +93,7 @@ namespace XamlX.IL
             IXamlTypeSystem typeSystem, XamlLanguageTypeMappings mappings,
             XamlLanguageEmitMappings<IXamlILEmitter, XamlILNodeEmitResult> emitMappings)
         {
-            var so = typeSystem.GetType("System.Object");
+            var so = typeSystem.WellKnownTypes.Object;
             var builder = parentBuilder.DefineSubType(so, "Context", XamlVisibility.Public);
             TypeBuilder = builder;
             
@@ -111,13 +111,13 @@ namespace XamlX.IL
             if (mappings.InnerServiceProviderFactoryMethod != null)
                 InnerServiceProviderField = builder.DefineField(mappings.ServiceProvider, "_innerSp", XamlVisibility.Private, false);
 
-            var staticProvidersField = builder.DefineField(typeSystem.GetType("System.Object").MakeArrayType(1),
+            var staticProvidersField = builder.DefineField(so.MakeArrayType(1),
                 "_staticProviders", XamlVisibility.Private, false);
             
             
-            var systemType = typeSystem.GetType("System.Type");
-            var systemUri = typeSystem.GetType("System.Uri");
-            var systemString = typeSystem.GetType("System.String");
+            var systemType = typeSystem.WellKnownTypes.Type;
+            var systemUri = typeSystem.WellKnownTypes.Uri;
+            var systemString = typeSystem.WellKnownTypes.String;
             var getServiceInterfaceMethod = mappings.ServiceProvider.GetMethod("GetService", so, false, systemType);
 
             var ownServices = new List<IXamlType>();
@@ -173,14 +173,14 @@ namespace XamlX.IL
             if (mappings.ParentStackProvider != null)
             {
                 builder.AddInterfaceImplementation(mappings.ParentStackProvider);
-                var objectListType = typeSystem.GetType("System.Collections.Generic.List`1")
-                    .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
+                var objectListType = typeSystem.WellKnownTypes.ListOfT
+                    .MakeGenericType([typeSystem.WellKnownTypes.Object]);
                 ParentListField = builder.DefineField(objectListType, XamlRuntimeContextDefintion.ParentListFieldName, XamlVisibility.Public, false);
 
                 var enumerator = EmitParentEnumerable(typeSystem, parentBuilder, mappings);
                 CreateCallbacks.Add(enumerator.createCallback);
                 var parentStackEnumerableField = builder.DefineField(
-                    typeSystem.GetType("System.Collections.Generic.IEnumerable`1").MakeGenericType(new[]{so}),
+                    typeSystem.WellKnownTypes.IEnumerableOfT.MakeGenericType([so]),
                     "_parentStackEnumerable", XamlVisibility.Private, false);
 
                 ImplementInterfacePropertyGetter(builder, mappings.ParentStackProvider, "Parents")
@@ -219,7 +219,7 @@ namespace XamlX.IL
                 baseUriField = builder.DefineField(systemUri, "_baseUri", XamlVisibility.Private, false);
                 builder.AddInterfaceImplementation(mappings.UriContextProvider);
                 var getter = builder.DefineMethod(systemUri, Array.Empty<IXamlType>(), "get_BaseUri", XamlVisibility.Public, false, true);
-                var setter = builder.DefineMethod(typeSystem.GetType("System.Void"), new[] {systemUri},
+                var setter = builder.DefineMethod(typeSystem.WellKnownTypes.Void, [systemUri],
                     "set_BaseUri", XamlVisibility.Public, false, true);
 
                 getter.Generator
@@ -267,13 +267,13 @@ namespace XamlX.IL
                     .MarkLabel(next);
 
             }
-            var isAssignableFrom = systemType.GetMethod("IsAssignableFrom", typeSystem.GetType("System.Boolean"),
+            var isAssignableFrom = systemType.GetMethod("IsAssignableFrom", typeSystem.WellKnownTypes.Boolean,
                 false, systemType);
             var fromHandle = systemType.Methods.First(m => m.Name == "GetTypeFromHandle");
             var getTypeFromObject = so.Methods.First(m => m.Name == "GetType" && m.Parameters.Count == 0);
             if (ownServices.Count != 0)
             {
-                var compare = systemType.GetMethod("Equals", typeSystem.GetType("System.Boolean"), false, systemType);
+                var compare = systemType.GetMethod("Equals", typeSystem.WellKnownTypes.Boolean, false, systemType);
 
                 for (var c = 0; c < ownServices.Count; c++)
                 {
@@ -290,7 +290,7 @@ namespace XamlX.IL
                 }
             }
 
-            var staticProviderIndex = getServiceMethod.Generator.DefineLocal(typeSystem.GetType("System.Int32"));
+            var staticProviderIndex = getServiceMethod.Generator.DefineLocal(typeSystem.WellKnownTypes.Int32);
             var staticProviderNext = getServiceMethod.Generator.DefineLabel();
             var staticProviderFailed = getServiceMethod.Generator.DefineLabel();
             var staticProviderEnd = getServiceMethod.Generator.DefineLabel();
@@ -370,10 +370,7 @@ namespace XamlX.IL
                     .Brfalse(noUri)
                     .Emit(OpCodes.Ldarg_0)
                     .Emit(OpCodes.Ldarg_3)
-                    .Newobj(systemUri.GetConstructor(new List<IXamlType>
-                    {
-                        typeSystem.GetType("System.String")
-                    }))
+                    .Newobj(systemUri.GetConstructor([typeSystem.WellKnownTypes.String]))
                     .Emit(OpCodes.Stfld, baseUriField)
                     .MarkLabel(noUri);
             }
@@ -417,10 +414,9 @@ namespace XamlX.IL
             Debug.Assert(ParentListField is not null);
             var parentListField = ParentListField!;
 
-            var @void = ts.GetType("System.Void");
-            var so = ts.GetType("System.Object");
-            var  objectListType = ts.GetType("System.Collections.Generic.List`1")
-                .MakeGenericType(new[] {so});
+            var @void = ts.WellKnownTypes.Void;
+            var so = ts.WellKnownTypes.Object;
+            var objectListType = ts.WellKnownTypes.ListOfT.MakeGenericType([so]);
             
             var pushParentGenerator =
                 builder.DefineMethod(@void, new[] {so}, XamlRuntimeContextDefintion.PushParentMethodName, XamlVisibility.Public, false, false)
@@ -442,7 +438,7 @@ namespace XamlX.IL
             var pop = builder.DefineMethod(@void, Array.Empty<IXamlType>(), XamlRuntimeContextDefintion.PopParentMethodName, XamlVisibility.Public, false, false)
                 .Generator;
 
-            var idx = pop.DefineLocal(ts.GetType("System.Int32"));
+            var idx = pop.DefineLocal(ts.WellKnownTypes.Int32);
             pop
                 // var idx = _parents.Count - 1;
                 .LdThisFld(parentListField)
@@ -513,7 +509,7 @@ namespace XamlX.IL
                         original)
                     .Generator
                     .Emit(OpCodes.Newobj,
-                        typeSystem.GetType("System.NotSupportedException").GetConstructor())
+                        typeSystem.WellKnownTypes.NotSupportedException.GetConstructor())
                     .Emit(OpCodes.Throw);
 
             }
@@ -533,11 +529,9 @@ namespace XamlX.IL
             var parentListField = ParentListField!;
             var parentStackProvider = mappings.ParentStackProvider!;
 
-            var so = typeSystem.GetType("System.Object");
-            var enumerableBuilder =
-                parentBuilder.DefineSubType(typeSystem.GetType("System.Object"), "ParentStackEnumerable", XamlVisibility.Private);
-            var enumerableType = typeSystem.GetType("System.Collections.Generic.IEnumerable`1")
-                .MakeGenericType(new[] {typeSystem.GetType("System.Object")});
+            var so = typeSystem.WellKnownTypes.Object;
+            var enumerableBuilder = parentBuilder.DefineSubType(so, "ParentStackEnumerable", XamlVisibility.Private);
+            var enumerableType = typeSystem.WellKnownTypes.IEnumerableOfT.MakeGenericType([so]);
             enumerableBuilder.AddInterfaceImplementation(enumerableType);
 
             var enumerableParentList =
@@ -558,26 +552,24 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ret);
 
 
-            var enumeratorType = typeSystem.GetType("System.Collections.IEnumerator");
-            var enumeratorObjectType = typeSystem.GetType("System.Collections.Generic.IEnumerator`1")
-                .MakeGenericType(new[] {so});
+            var enumeratorType = typeSystem.WellKnownTypes.IEnumerator;
+            var enumeratorObjectType = typeSystem.WellKnownTypes.IEnumeratorOfT.MakeGenericType([so]);
 
             var enumeratorBuilder = enumerableBuilder.DefineSubType(so, "Enumerator", XamlVisibility.Public);
             enumeratorBuilder.AddInterfaceImplementation(enumeratorObjectType);
 
 
             
-            var state = enumeratorBuilder.DefineField(typeSystem.GetType("System.Int32"), "_state", XamlVisibility.Private, false);
+            var state = enumeratorBuilder.DefineField(typeSystem.WellKnownTypes.Int32, "_state", XamlVisibility.Private, false);
             
             
             var parentList =
                 enumeratorBuilder.DefineField(parentListField.FieldType, "_parentList", XamlVisibility.Private, false);
             var parentProvider =
                 enumeratorBuilder.DefineField(mappings.ServiceProvider, "_parentSP", XamlVisibility.Private, false);
-            var listType = typeSystem.GetType("System.Collections.Generic.List`1")
-                .MakeGenericType(new[] {so});
+            var listType = typeSystem.WellKnownTypes.ListOfT.MakeGenericType([so]);
             var list = enumeratorBuilder.DefineField(listType, "_list", XamlVisibility.Private, false);
-            var listIndex = enumeratorBuilder.DefineField(typeSystem.GetType("System.Int32"), "_listIndex", XamlVisibility.Private, false);
+            var listIndex = enumeratorBuilder.DefineField(typeSystem.WellKnownTypes.Int32, "_listIndex", XamlVisibility.Private, false);
             var current = enumeratorBuilder.DefineField(so, "_current", XamlVisibility.Private, false);
             var parentEnumerator = enumeratorBuilder.DefineField(enumeratorObjectType, "_parentEnumerator", XamlVisibility.Private, false);
             var enumeratorCtor = enumeratorBuilder.DefineConstructor(false, parentList.FieldType, parentProvider.FieldType);
@@ -600,16 +592,17 @@ namespace XamlX.IL
                 .Emit(OpCodes.Ldfld, current)
                 .Emit(OpCodes.Ret);
 
-            enumeratorBuilder.DefineMethod(typeSystem.GetType("System.Void"), Array.Empty<IXamlType>(),
+            enumeratorBuilder.DefineMethod(typeSystem.WellKnownTypes.Void, Array.Empty<IXamlType>(),
                     enumeratorObjectType.FullName + ".Reset", XamlVisibility.Private, false,
                     true, enumeratorObjectType.FindMethod(m => m.Name == "Reset")).Generator
                 .Emit(OpCodes.Newobj,
-                    typeSystem.GetType("System.NotSupportedException").GetConstructor())
+                    typeSystem.WellKnownTypes.NotSupportedException.GetConstructor())
                 .Emit(OpCodes.Throw);
 
-            var disposeGen = enumeratorBuilder.DefineMethod(typeSystem.GetType("System.Void"), Array.Empty<IXamlType>(),
+            var disposeMethod = typeSystem.WellKnownTypes.IDisposable.GetMethod(m => m.Name == "Dispose");
+            var disposeGen = enumeratorBuilder.DefineMethod(typeSystem.WellKnownTypes.Void, Array.Empty<IXamlType>(),
                 "System.IDisposable.Dispose", XamlVisibility.Private, false, true,
-                typeSystem.GetType("System.IDisposable").FindMethod(m => m.Name == "Dispose")).Generator;
+                disposeMethod).Generator;
             var disposeRet = disposeGen.DefineLabel();
             disposeGen
                 .Emit(OpCodes.Ldarg_0)
@@ -617,12 +610,11 @@ namespace XamlX.IL
                 .Emit(OpCodes.Brfalse, disposeRet)
                 .Emit(OpCodes.Ldarg_0)
                 .Emit(OpCodes.Ldfld, parentEnumerator)
-                .Emit(OpCodes.Callvirt, typeSystem.GetType("System.IDisposable").GetMethod(m => m.Name == "Dispose"))
+                .Emit(OpCodes.Callvirt, disposeMethod)
                 .MarkLabel(disposeRet)
                 .Emit(OpCodes.Ret);
 
-            var boolType = typeSystem.GetType("System.Boolean");
-            var moveNext = enumeratorBuilder.DefineMethod(boolType, Array.Empty<IXamlType>(),
+            var moveNext = enumeratorBuilder.DefineMethod(typeSystem.WellKnownTypes.Boolean, [],
                 enumeratorObjectType.FullName+".MoveNext", XamlVisibility.Private,
                 false, true,
                 enumeratorObjectType.GetMethod(m => m.Name == "MoveNext")).Generator;
@@ -669,7 +661,7 @@ namespace XamlX.IL
                 // parentProv = (IParentStackProvider)parent.GetService(typeof(IParentStackProvider));
                 .LdThisFld(parentProvider).Ldtype(parentStackProvider)
                 .EmitCall(mappings.ServiceProvider.GetMethod("GetService", so, false,
-                    typeSystem.GetType("System.Type")))
+                    typeSystem.WellKnownTypes.Type))
                 .Emit(OpCodes.Castclass, parentStackProvider)
                 .Dup().Stloc(parentProv)
                 // if(parentProv == null) goto eof
@@ -684,7 +676,7 @@ namespace XamlX.IL
 
             moveNext.MarkLabel(checkStateParent)
                 // if(!_parentEnumerator.MoveNext()) goto eof
-                .LdThisFld(parentEnumerator).EmitCall(enumeratorType.GetMethod("MoveNext", boolType, false))
+                .LdThisFld(parentEnumerator).EmitCall(enumeratorType.GetMethod("MoveNext", typeSystem.WellKnownTypes.Boolean, false))
                 .Brfalse(eof)
                 // _current = _parentEnumerator.Current
                 .Ldarg_0()
@@ -707,7 +699,7 @@ namespace XamlX.IL
 
             enumerableBuilder.DefineMethod(enumeratorType, Array.Empty<IXamlType>(),
                     "System.Collections.IEnumerable.GetEnumerator", XamlVisibility.Private, false, true,
-                    typeSystem.GetType("System.Collections.IEnumerable").FindMethod(m => m.Name == "GetEnumerator"))
+                    typeSystem.WellKnownTypes.IEnumerable.FindMethod(m => m.Name == "GetEnumerator"))
                 .Generator
                 .Ldarg_0()
                 .EmitCall(createEnumerator)
