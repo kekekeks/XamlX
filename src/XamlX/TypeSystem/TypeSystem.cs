@@ -602,6 +602,9 @@ namespace XamlX.TypeSystem
             lst.Insert(0, method.DeclaringType);
             return lst;
         }
+
+        public static bool Is(this IXamlType type, string ns, string name)
+            => type.Name == name && type.Namespace == ns;
     }
 
 }

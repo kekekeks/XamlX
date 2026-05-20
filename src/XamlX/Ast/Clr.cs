@@ -808,7 +808,7 @@ namespace XamlX.Ast
 
         private static bool IsFunctionPointerLike(IXamlType xamlType)
             => xamlType.IsFunctionPointer // Cecil, SRE with .NET 8
-               || xamlType.FullName == "System.IntPtr"; // SRE with .NET < 8 or .NET Standard
+               || xamlType.Is("System", "IntPtr"); // SRE with .NET < 8 or .NET Standard
 
         private sealed class XamlClosureInfo
         {

@@ -104,13 +104,11 @@ namespace XamlX.TypeSystem
             bool IsAssignableFromCore(IXamlType type)
             {
                 if (type == XamlPseudoType.Null)
-                    return !IsValueType || GenericTypeDefinition?.FullName == "System.Nullable`1";
+                    return !IsValueType || this.IsNullable();
 
-                if (type.IsValueType 
-                    && GenericTypeDefinition?.FullName == "System.Nullable`1"
-                    && GenericArguments[0].Equals(type))
+                if (type.IsValueType && this.IsNullableOf(type))
                     return true;
-                if (FullName == "System.Object" && type.IsInterface)
+                if (this.Is("System", "Object") && type.IsInterface)
                     return true;
                 var baseType = type;
                 while (baseType != null)
