@@ -64,10 +64,10 @@ namespace XamlX.IL
                     "CreateNamespaces",
                     XamlVisibility.Private, true, false);
 
-                var roListType = configuration.TypeSystem.GetType("System.Collections.Generic.IReadOnlyList`1")
+                var roListType = configuration.WellKnownTypes.IReadOnlyListOfT
                     .MakeGenericType(nsInfoType);
 
-                var dictionaryType = configuration.TypeSystem.GetType("System.Collections.Generic.Dictionary`2")
+                var dictionaryType = configuration.WellKnownTypes.DictionaryOfT2
                     .MakeGenericType(configuration.WellKnownTypes.String, roListType);
 
                 var dictionaryCtor = dictionaryType.GetConstructor(new List<IXamlType> { configuration.WellKnownTypes.Int32 });

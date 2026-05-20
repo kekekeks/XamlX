@@ -151,6 +151,7 @@ namespace XamlX.TypeSystem
     interface IXamlTypeSystem
     {
         IEnumerable<IXamlAssembly> Assemblies { get; }
+        XamlTypeWellKnownTypes WellKnownTypes { get; }
         IXamlAssembly? FindAssembly(string substring);
         IXamlType? FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name);
         IXamlType? FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string assembly);
