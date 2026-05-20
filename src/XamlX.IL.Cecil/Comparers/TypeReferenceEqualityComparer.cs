@@ -27,18 +27,26 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
-	public static bool AreEqual(TypeReference? a, TypeReference? b,
-		CecilTypeComparisonMode comparisonMode)
+	public static bool AreEqual(TypeReference? a, TypeReference? b, CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
 
-		if (a == null || b == null)
+		if (a is null || b is null)
 			return false;
 
-		var aMetadataType = a.MetadataType;
-		var bMetadataType = b.MetadataType;
+		return AreEqual(a, a.MetadataType, b, b.MetadataType, comparisonMode);
+	}
 
+	// Version that takes the metadata types directly for performance reasons.
+	// Read the comment on CecilType._metadataType for more information.
+	public static bool AreEqual(
+		TypeReference a,
+		MetadataType aMetadataType,
+		TypeReference b,
+		MetadataType bMetadataType,
+		CecilTypeComparisonMode comparisonMode)
+	{
 		if (aMetadataType != bMetadataType)
 			return false;
 
@@ -150,6 +158,9 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 	}
 
 	public static int GetHashCodeFor(TypeReference obj, CecilTypeComparisonMode comparisonMode)
+		=> GetHashCodeFor(obj, obj.MetadataType, comparisonMode);
+
+	public static int GetHashCodeFor(TypeReference obj, MetadataType metadataType, CecilTypeComparisonMode comparisonMode)
 	{
 		// a very good prime number
 		const int hashCodeMultiplier = 486187739;
@@ -163,8 +174,6 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		const int sentinelMultiplier = 59;
 		const int moduleMultiplier = 61;
 		const int assemblyMultiplier = 67;
-
-		var metadataType = obj.MetadataType;
 
 		if (metadataType == MetadataType.GenericInstance)
 		{
