@@ -366,17 +366,17 @@ namespace XamlX.TypeSystem
         
         public static IEnumerable<IXamlMethod> FindMethods(this IXamlType type, Func<IXamlMethod, bool> criteria)
         {
-            foreach (var m in type.Methods)
-                if (criteria(m))
-                    yield return m;
-            var bt = type.BaseType;
-            if(bt!=null)
-                foreach (var bm in bt.FindMethods(criteria))
-                    yield return bm;
-            foreach(var iface in type.Interfaces)
-            foreach(var m in iface.Methods)
-                if (criteria(m))
-                    yield return m;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var method in t.Methods)
+                    if (criteria(method))
+                        yield return method;
+            }
+
+            foreach (var iface in type.Interfaces)
+                foreach (var method in iface.Methods)
+                    if (criteria(method))
+                        yield return method;
         }
 
         public static IXamlMethod GetMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
@@ -385,19 +385,20 @@ namespace XamlX.TypeSystem
 
         public static IXamlMethod? FindMethod(this IXamlType type, Func<IXamlMethod, bool> criteria)
         {
-            foreach (var m in type.Methods)
-                if (criteria(m))
-                    return m;
-            var bres = type.BaseType?.FindMethod(criteria);
-            if (bres != null)
-                return bres;
-            foreach(var iface in type.Interfaces)
-                foreach(var m in iface.Methods)
-                    if (criteria(m))
-                        return m;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var method in t.Methods)
+                    if (criteria(method))
+                        return method;
+            }
+
+            foreach (var iface in type.Interfaces)
+                foreach (var method in iface.Methods)
+                    if (criteria(method))
+                        return method;
+
             return null;
         }
-
 
         public static IXamlMethod GetMethod(
             this IXamlType type,
@@ -522,7 +523,7 @@ namespace XamlX.TypeSystem
         {
             var def = type.GenericTypeDefinition;
             if (def == null) return false;
-            return def.Namespace == "System" && def.Name == "Nullable`1";
+            return def.Is("System", "Nullable`1");
         }
 
         public static bool IsNullableOf(this IXamlType type, IXamlType vtype)
@@ -535,54 +536,57 @@ namespace XamlX.TypeSystem
 
         public static IEnumerable<IXamlType> GetAllInterfaces(this IXamlType type)
         {
-            foreach (var i in type.Interfaces)
-                yield return i;
-            if(type.BaseType!=null)
-                foreach (var i in type.BaseType.GetAllInterfaces())
-                    yield return i;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var iface in t.Interfaces)
+                    yield return iface;
+            }
         }
 
         public static IEnumerable<IXamlCustomAttribute> GetAllCustomAttributes(this IXamlType type)
         {
-            foreach (var i in type.CustomAttributes)
-                yield return i;
-            if(type.BaseType!=null)
-                foreach (var i in type.BaseType.GetAllCustomAttributes())
+            foreach (var attribute in type.CustomAttributes)
+                yield return attribute;
+
+            for (var t = type.BaseType; t is not null; t = t.BaseType)
+            {
+                foreach (var attribute in t.CustomAttributes)
                 {
-                    var usageAttribute = i.Type.CustomAttributes.FirstOrDefault(a => a.Type.FullName == "System.AttributeUsageAttribute");
+                    var usageAttribute = attribute.Type.CustomAttributes.FirstOrDefault(a => a.Type.Name == "AttributeUsageAttribute" && a.Type.Namespace == "System");
                     if (usageAttribute is null
                         || (usageAttribute.Properties.TryGetValue("Inherited", out var boolean) && boolean is true))
                     {
-                        yield return i;
+                        yield return attribute;
                     }
                 }
+            }
         }
 
-        public static IEnumerable<IXamlProperty> GetAllProperties(this IXamlType t)
+        public static IEnumerable<IXamlProperty> GetAllProperties(this IXamlType type)
         {
-            foreach (var p in t.Properties)
-                yield return p;
-            if(t.BaseType!=null)
-                foreach (var p in t.BaseType.GetAllProperties())
-                    yield return p;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var property in t.Properties)
+                    yield return property;
+            }
         }
 
-        public static IEnumerable<IXamlField> GetAllFields(this IXamlType t)
+        public static IEnumerable<IXamlField> GetAllFields(this IXamlType type)
         {
-            foreach (var p in t.Fields)
-                yield return p;
-            if (t.BaseType != null)
-                foreach (var p in t.BaseType.GetAllFields())
-                    yield return p;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var field in t.Fields)
+                    yield return field;
+            }
         }
 
-        public static IEnumerable<IXamlEventInfo> GetAllEvents(this IXamlType t)
+        public static IEnumerable<IXamlEventInfo> GetAllEvents(this IXamlType type)
         {
-            foreach (var p in t.Events)
-                yield return p;
-            if(t.BaseType!=null)
-                foreach (var p in t.BaseType.GetAllEvents())
-                    yield return p;
+            for (var t = type; t is not null; t = t.BaseType)
+            {
+                foreach (var evt in t.Events)
+                    yield return evt;
+            }
         }
 
         public static bool IsDirectlyAssignableFrom(this IXamlType type, IXamlType other)
@@ -603,6 +607,9 @@ namespace XamlX.TypeSystem
             lst.Insert(0, method.DeclaringType);
             return lst;
         }
+
+        public static bool Is(this IXamlType type, string ns, string name)
+            => type.Name == name && type.Namespace == ns;
     }
 
 }

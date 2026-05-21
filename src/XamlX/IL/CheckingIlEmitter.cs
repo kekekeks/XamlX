@@ -137,7 +137,7 @@ namespace XamlX.IL
             var stackBalance = 0;
             if (method != null && (code == OpCodes.Call || code == OpCodes.Callvirt))
             {
-                if (method.ReturnType.FullName != "System.Void")
+                if (!method.ReturnType.Is("System", "Void"))
                     stackBalance += 1;
             }
             else if (ctor!= null && (code == OpCodes.Call  || code == OpCodes.Newobj))

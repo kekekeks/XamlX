@@ -14,6 +14,11 @@ namespace XamlX.TypeSystem
         internal class CecilType : IXamlType, ITypeReference
         {
             private readonly CecilAssembly? _assembly;
+
+            // Cache Reference.MetadataType. It's a virtual call that shows a up in performance snapshots.
+            // Its called *a lot* by Equals().
+            private readonly MetadataType _metadataType;
+
             public CecilTypeSystem TypeSystem { get; }
             public TypeReference Reference { get; }
             public TypeDefinition Definition { get; }
@@ -23,7 +28,6 @@ namespace XamlX.TypeSystem
             public CecilType(CecilTypeResolveContext parentTypeResolveContext, CecilAssembly? assembly, TypeDefinition definition)
                 : this(parentTypeResolveContext, assembly, definition, definition)
             {
-                
             }
 
             [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
@@ -31,6 +35,7 @@ namespace XamlX.TypeSystem
                 TypeReference reference)
             {
                 _assembly = assembly;
+                _metadataType = reference.MetadataType;
                 TypeSystem = parentTypeResolveContext.TypeSystem;
                 Reference = reference;
                 Definition = definition;
@@ -104,13 +109,11 @@ namespace XamlX.TypeSystem
             bool IsAssignableFromCore(IXamlType type)
             {
                 if (type == XamlPseudoType.Null)
-                    return !IsValueType || GenericTypeDefinition?.FullName == "System.Nullable`1";
+                    return !IsValueType || this.IsNullable();
 
-                if (type.IsValueType 
-                    && GenericTypeDefinition?.FullName == "System.Nullable`1"
-                    && GenericArguments[0].Equals(type))
+                if (type.IsValueType && this.IsNullableOf(type))
                     return true;
-                if (FullName == "System.Object" && type.IsInterface)
+                if (this.Is("System", "Object") && type.IsInterface)
                     return true;
                 var baseType = type;
                 while (baseType != null)
@@ -185,12 +188,15 @@ namespace XamlX.TypeSystem
             {
                 if (!(other is CecilType o))
                     return false;
-                return TypeReferenceEqualityComparer.AreEqual(Reference, o.Reference, CecilTypeComparisonMode.Exact);
+
+                return TypeReferenceEqualityComparer.AreEqual(
+                    Reference, _metadataType, o.Reference, o._metadataType, CecilTypeComparisonMode.Exact);
             }
 
             public override bool Equals(object? other) => Equals(other as IXamlType);
 
-            public override int GetHashCode() => TypeReferenceEqualityComparer.GetHashCodeFor(Reference, CecilTypeComparisonMode.Exact);
+            public override int GetHashCode()
+                => TypeReferenceEqualityComparer.GetHashCodeFor(Reference, _metadataType, CecilTypeComparisonMode.Exact);
 
             public override string ToString() => Definition.ToString();
         }
