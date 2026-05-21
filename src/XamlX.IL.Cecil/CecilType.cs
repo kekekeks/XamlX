@@ -40,7 +40,7 @@ namespace XamlX.TypeSystem
                 Reference = reference;
                 Definition = definition;
                 if (reference.IsArray)
-                    Definition = ((CecilType)TypeSystem.GetType("System.Array")).Definition;
+                    Definition = ((CecilType)TypeSystem.WellKnownTypes.Array).Definition;
 
                 TypeResolveContext = parentTypeResolveContext.Nested(reference);
             }

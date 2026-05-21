@@ -30,7 +30,7 @@ namespace XamlX.Transform
                 var actualType = type;
                 if (actualType.Equals(known.IEnumerable))
                     actualType = known.IList;
-                if (actualType.GenericTypeDefinition?.Equals(known.IEnumerableT) == true)
+                if (actualType.GenericTypeDefinition?.Equals(known.IEnumerableOfT) == true)
                     actualType = known.IListOfT.MakeGenericType(actualType.GenericArguments[0]);
 
                 var inspectTypes = new List<IXamlType>();

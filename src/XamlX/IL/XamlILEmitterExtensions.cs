@@ -181,7 +181,7 @@ namespace XamlX.IL
         [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter Ldtype(this IXamlILEmitter emitter, IXamlType type)
         {
-            var conv = emitter.TypeSystem.GetType("System.Type")
+            var conv = emitter.TypeSystem.WellKnownTypes.Type
                 .GetMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetTypeFromHandle");
             return emitter.Ldtoken(type).EmitCall(conv);
         }
@@ -189,7 +189,7 @@ namespace XamlX.IL
         [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter LdMethodInfo(this IXamlILEmitter emitter, IXamlMethod method)
         {
-            var conv = emitter.TypeSystem.GetType("System.Reflection.MethodInfo")
+            var conv = emitter.TypeSystem.WellKnownTypes.MethodInfo
                 .GetMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetMethodFromHandle");
             return emitter.Ldtoken(method).EmitCall(conv);
         }

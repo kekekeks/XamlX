@@ -704,8 +704,8 @@ namespace XamlX.Ast
             _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
 
-            _funcType = config.TypeSystem
-                .GetType("System.Func`2")
+            _funcType = config.WellKnownTypes
+                .GetFuncOfT(2)
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
 
             var returnType = _deferredContentCustomization?.ReturnType ?? _funcType;
