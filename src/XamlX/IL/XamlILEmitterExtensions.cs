@@ -181,7 +181,7 @@ namespace XamlX.IL
         [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter Ldtype(this IXamlILEmitter emitter, IXamlType type)
         {
-            var conv = emitter.TypeSystem.GetType("System.Type")
+            var conv = emitter.TypeSystem.WellKnownTypes.Type
                 .GetMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetTypeFromHandle");
             return emitter.Ldtoken(type).EmitCall(conv);
         }
@@ -189,7 +189,7 @@ namespace XamlX.IL
         [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
         public static IXamlILEmitter LdMethodInfo(this IXamlILEmitter emitter, IXamlMethod method)
         {
-            var conv = emitter.TypeSystem.GetType("System.Reflection.MethodInfo")
+            var conv = emitter.TypeSystem.WellKnownTypes.MethodInfo
                 .GetMethod(m => m.IsStatic && m.IsPublic && m.Name == "GetMethodFromHandle");
             return emitter.Ldtoken(method).EmitCall(conv);
         }
@@ -232,15 +232,18 @@ namespace XamlX.IL
                 return emitter.Ldnull();
             }
 
-            return type.FullName switch
+            if (type.Namespace != "System")
+                return EmitNewStruct(emitter, type);
+
+            return type.Name switch
             {
-                "System.Boolean" or "System.Char" or "System.Int32" or "System.UInt32"
-                    or "System.Byte" or "System.SByte" or "System.Int16" or "System.UInt16"
-                    or "System.IntPtr" or "System.UIntPtr" => emitter.Emit(OpCodes.Ldc_I4_0),
-                "System.Int64" or "System.UInt64" => emitter.Emit(OpCodes.Ldc_I8, 0L),
-                "System.Single" => emitter.Emit(OpCodes.Ldc_R4, 0F),
-                "System.Double" => emitter.Emit(OpCodes.Ldc_R8, 0D),
-                "System.Decimal" => emitter.Ldsfld(type.Fields.First(f => f.Name == "Zero")),
+                "Boolean" or "Char" or "Int32" or "UInt32"
+                    or "Byte" or "SByte" or "Int16" or "UInt16"
+                    or "IntPtr" or "UIntPtr" => emitter.Emit(OpCodes.Ldc_I4_0),
+                "Int64" or "UInt64" => emitter.Emit(OpCodes.Ldc_I8, 0L),
+                "Single" => emitter.Emit(OpCodes.Ldc_R4, 0F),
+                "Double" => emitter.Emit(OpCodes.Ldc_R8, 0D),
+                "Decimal" => emitter.Ldsfld(type.Fields.First(f => f.Name == "Zero")),
                 _ => EmitNewStruct(emitter, type)
             };
 

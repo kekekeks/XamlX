@@ -27,113 +27,72 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		return GetHashCodeFor(obj, _comparisonMode);
 	}
 
-	public static bool AreEqual(TypeReference? a, TypeReference? b,
-		CecilTypeComparisonMode comparisonMode)
+	public static bool AreEqual(TypeReference? a, TypeReference? b, CecilTypeComparisonMode comparisonMode)
 	{
 		if (ReferenceEquals(a, b))
 			return true;
 
-		if (a == null || b == null)
+		if (a is null || b is null)
 			return false;
 
-		var aMetadataType = a.MetadataType;
-		var bMetadataType = b.MetadataType;
+		return AreEqual(a, a.MetadataType, b, b.MetadataType, comparisonMode);
+	}
 
-		if (aMetadataType == MetadataType.GenericInstance || bMetadataType == MetadataType.GenericInstance)
+	// Version that takes the metadata types directly for performance reasons.
+	// Read the comment on CecilType._metadataType for more information.
+	public static bool AreEqual(
+		TypeReference a,
+		MetadataType aMetadataType,
+		TypeReference b,
+		MetadataType bMetadataType,
+		CecilTypeComparisonMode comparisonMode)
+	{
+		if (aMetadataType != bMetadataType)
+			return false;
+
+		switch (aMetadataType)
 		{
-			if (aMetadataType != bMetadataType)
-				return false;
+			case MetadataType.GenericInstance:
+				return AreEqual((GenericInstanceType)a, (GenericInstanceType)b, comparisonMode);
+			case MetadataType.Array:
+			{
+				var a1 = (ArrayType)a;
+				var b1 = (ArrayType)b;
+				if (a1.Rank != b1.Rank)
+					return false;
 
-			return AreEqual((GenericInstanceType)a, (GenericInstanceType)b, comparisonMode);
+				return AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
+			}
+			case MetadataType.Var:
+			case MetadataType.MVar:
+				return AreEqual((GenericParameter)a, (GenericParameter)b, comparisonMode);
+			case MetadataType.ByReference:
+				return AreEqual(((ByReferenceType)a).ElementType, ((ByReferenceType)b).ElementType, comparisonMode);
+			case MetadataType.Pointer:
+				return AreEqual(((PointerType)a).ElementType, ((PointerType)b).ElementType, comparisonMode);
+			case MetadataType.RequiredModifier:
+			{
+				var a1 = (RequiredModifierType)a;
+				var b1 = (RequiredModifierType)b;
+
+				return AreEqual(a1.ModifierType, b1.ModifierType, comparisonMode) &&
+				       AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
+			}
+			case MetadataType.OptionalModifier:
+			{
+				var a1 = (OptionalModifierType)a;
+				var b1 = (OptionalModifierType)b;
+
+				return AreEqual(a1.ModifierType, b1.ModifierType, comparisonMode) &&
+				       AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
+			}
+			case MetadataType.Pinned:
+				return AreEqual(((PinnedType)a).ElementType, ((PinnedType)b).ElementType, comparisonMode);
+			case MetadataType.Sentinel:
+				return AreEqual(((SentinelType)a).ElementType, ((SentinelType)b).ElementType, comparisonMode);
 		}
 
-		if (aMetadataType == MetadataType.Array || bMetadataType == MetadataType.Array)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			var a1 = (ArrayType)a;
-			var b1 = (ArrayType)b;
-			if (a1.Rank != b1.Rank)
-				return false;
-
-			return AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.Var || bMetadataType == MetadataType.Var)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual((GenericParameter)a, (GenericParameter)b, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.MVar || bMetadataType == MetadataType.MVar)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual((GenericParameter)a, (GenericParameter)b, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.ByReference || bMetadataType == MetadataType.ByReference)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual(((ByReferenceType)a).ElementType, ((ByReferenceType)b).ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.Pointer || bMetadataType == MetadataType.Pointer)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual(((PointerType)a).ElementType, ((PointerType)b).ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.RequiredModifier || bMetadataType == MetadataType.RequiredModifier)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			var a1 = (RequiredModifierType)a;
-			var b1 = (RequiredModifierType)b;
-
-			return AreEqual(a1.ModifierType, b1.ModifierType, comparisonMode) &&
-			       AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.OptionalModifier || bMetadataType == MetadataType.OptionalModifier)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			var a1 = (OptionalModifierType)a;
-			var b1 = (OptionalModifierType)b;
-
-			return AreEqual(a1.ModifierType, b1.ModifierType, comparisonMode) &&
-			       AreEqual(a1.ElementType, b1.ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.Pinned || bMetadataType == MetadataType.Pinned)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual(((PinnedType)a).ElementType, ((PinnedType)b).ElementType, comparisonMode);
-		}
-
-		if (aMetadataType == MetadataType.Sentinel || bMetadataType == MetadataType.Sentinel)
-		{
-			if (aMetadataType != bMetadataType)
-				return false;
-
-			return AreEqual(((SentinelType)a).ElementType, ((SentinelType)b).ElementType, comparisonMode);
-		}
-
-		if (!a.Name.Equals(b.Name, StringComparison.Ordinal) ||
-			!a.Namespace.Equals(b.Namespace, StringComparison.Ordinal))
+		if (a.Name != b.Name || a.Namespace != b.Namespace)
 			return false;
 
 		var xDefinition = comparisonMode == CecilTypeComparisonMode.Exact ? a.Resolve() : a as TypeDefinition;
@@ -199,6 +158,9 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 	}
 
 	public static int GetHashCodeFor(TypeReference obj, CecilTypeComparisonMode comparisonMode)
+		=> GetHashCodeFor(obj, obj.MetadataType, comparisonMode);
+
+	public static int GetHashCodeFor(TypeReference obj, MetadataType metadataType, CecilTypeComparisonMode comparisonMode)
 	{
 		// a very good prime number
 		const int hashCodeMultiplier = 486187739;
@@ -212,8 +174,6 @@ internal sealed class TypeReferenceEqualityComparer : EqualityComparer<TypeRefer
 		const int sentinelMultiplier = 59;
 		const int moduleMultiplier = 61;
 		const int assemblyMultiplier = 67;
-
-		var metadataType = obj.MetadataType;
 
 		if (metadataType == MetadataType.GenericInstance)
 		{

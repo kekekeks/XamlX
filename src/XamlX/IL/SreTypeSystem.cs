@@ -21,6 +21,8 @@ namespace XamlX.IL
 
         private Dictionary<Type, SreType> _typeDic = new Dictionary<Type, SreType>();
 
+        public XamlTypeWellKnownTypes WellKnownTypes { get; }
+
         public SreTypeSystem()
         {
             // Ensure that System.ComponentModel is available
@@ -35,6 +37,8 @@ namespace XamlX.IL
                 {
                     //
                 }
+
+            WellKnownTypes = new XamlTypeWellKnownTypes(this);
         }
         
         public IXamlAssembly? FindAssembly(string name)

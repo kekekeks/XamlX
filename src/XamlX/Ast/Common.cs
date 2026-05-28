@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using XamlX.TypeSystem;
 using Visitor = XamlX.Ast.IXamlAstVisitor;
 
@@ -29,6 +30,7 @@ namespace XamlX.Ast
 #endif
     interface IXamlAstNode : IXamlLineInfo
     {
+        bool IsSkipped { get; }
         void VisitChildren(Visitor visitor);
         IXamlAstNode Visit(Visitor visitor);
     }
@@ -36,18 +38,13 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    interface ISkipXamlAstNode : IXamlAstNode
-    {
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    class SkipXamlAstNode : XamlAstNode, ISkipXamlAstNode, IXamlAstValueNode, IXamlAstManipulationNode
+    class SkipXamlAstNode : XamlAstNode, IXamlAstValueNode, IXamlAstManipulationNode
     {
         public SkipXamlAstNode(IXamlLineInfo lineInfo) : base(lineInfo)
         {
         }
+
+        public override bool IsSkipped => true;
 
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, XamlPseudoType.Unknown, false);
 
@@ -57,11 +54,13 @@ namespace XamlX.Ast
 #if !XAMLX_INTERNAL
     public
 #endif
-    class SkipXamlValueWithManipulationNode : XamlValueWithManipulationNode, ISkipXamlAstNode, IXamlAstManipulationNode
+    class SkipXamlValueWithManipulationNode : XamlValueWithManipulationNode, IXamlAstManipulationNode
     {
         public SkipXamlValueWithManipulationNode(IXamlLineInfo lineInfo) : base(lineInfo, new SkipXamlAstNode(lineInfo), null)
         {
         }
+
+        public override bool IsSkipped => true;
 
         public override void VisitChildren(Visitor visitor) { }
     }
@@ -71,6 +70,7 @@ namespace XamlX.Ast
 #endif
     abstract class XamlAstNode : IXamlAstNode
     {
+        public virtual bool IsSkipped => false;
         public int Line { get; set; }
         public int Position { get; set; }
 
@@ -84,10 +84,10 @@ namespace XamlX.Ast
         {
             
         }
-        
+
         public IXamlAstNode Visit(Visitor visitor)
         {
-            if (this is ISkipXamlAstNode)
+            if (IsSkipped)
             {
                 return this;
             }
@@ -112,9 +112,21 @@ namespace XamlX.Ast
             return node;
         }
 
-        protected static void VisitList<T>(IList<T> list, Visitor visitor) where T : IXamlAstNode
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static void VisitList<T>(List<T> list, Visitor visitor) where T : IXamlAstNode
         {
-            for (var c = 0; c < list.Count; c++)
+            var count = list.Count;
+            for (var c = 0; c < count; c++)
+            {
+                list[c] = (T) list[c].Visit(visitor);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static void VisitList<T>(T[] list, Visitor visitor) where T : IXamlAstNode
+        {
+            var length = list.Length;
+            for (var c = 0; c < length; c++)
             {
                 list[c] = (T) list[c].Visit(visitor);
             }

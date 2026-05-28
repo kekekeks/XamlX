@@ -48,7 +48,7 @@ namespace XamlX.Transform
         public IXamlAssembly? DefaultAssembly { get; }
         public XamlLanguageTypeMappings TypeMappings { get; }
         public XamlXmlnsMappings XmlnsMappings { get; }
-        public XamlTypeWellKnownTypes WellKnownTypes { get; }
+        public XamlTypeWellKnownTypes WellKnownTypes => TypeSystem.WellKnownTypes;
         public XamlValueConverter? CustomValueConverter { get; }
         public XamlDiagnosticsHandler DiagnosticsHandler { get; }
         public IXamlIdentifierGenerator IdentifierGenerator { get; }
@@ -67,7 +67,6 @@ namespace XamlX.Transform
             DefaultAssembly = defaultAssembly;
             TypeMappings = typeMappings;
             XmlnsMappings = xmlnsMappings ?? XamlXmlnsMappings.Resolve(typeSystem, typeMappings);
-            WellKnownTypes = new XamlTypeWellKnownTypes(typeSystem);
             CustomValueConverter = customValueConverter;
             DiagnosticsHandler = diagnosticsHandler ?? new XamlDiagnosticsHandler();
             IdentifierGenerator = identifierGenerator ?? new GuidIdentifierGenerator();
@@ -205,50 +204,6 @@ namespace XamlX.Transform
             foreach(var t in types)
             foreach (var a in GetCustomAttribute(prop, t))
                 yield return a;
-        }
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    class XamlTypeWellKnownTypes
-    {
-        public IXamlType IList { get; }
-        public IXamlType IEnumerable { get; }
-        public IXamlType IEnumerableT { get; }
-        public IXamlType IListOfT { get; }
-        public IXamlType Object { get; }
-        public IXamlType String { get; }
-        public IXamlType Int32 { get; }
-        public IXamlType Void { get; }
-        public IXamlType Boolean { get; }
-        public IXamlType Double { get; }
-        public IXamlType NullableT { get; }
-        public IXamlType CultureInfo { get; }
-        public IXamlType IFormatProvider { get; }
-        public IXamlType Delegate { get; }
-        public IXamlType ObsoleteAttribute { get; }
-        public IXamlType? ExperimentalAttribute { get; }
-
-        [UnconditionalSuppressMessage("Trimming", "IL2122", Justification = TrimmingMessages.TypeInCoreAssembly)]
-        public XamlTypeWellKnownTypes(IXamlTypeSystem typeSystem)
-        {
-            Void = typeSystem.GetType("System.Void");
-            String = typeSystem.GetType("System.String");
-            Int32 = typeSystem.GetType("System.Int32");
-            Object = typeSystem.GetType("System.Object");
-            Boolean = typeSystem.GetType("System.Boolean");
-            Double = typeSystem.GetType("System.Double");
-            CultureInfo = typeSystem.GetType("System.Globalization.CultureInfo");
-            IFormatProvider = typeSystem.GetType("System.IFormatProvider");
-            IList = typeSystem.GetType("System.Collections.IList");
-            IEnumerable = typeSystem.GetType("System.Collections.IEnumerable");
-            IListOfT = typeSystem.GetType("System.Collections.Generic.IList`1");
-            IEnumerableT = typeSystem.GetType("System.Collections.Generic.IEnumerable`1");
-            NullableT = typeSystem.GetType("System.Nullable`1");
-            Delegate = typeSystem.GetType("System.Delegate");
-            ObsoleteAttribute = typeSystem.GetType("System.ObsoleteAttribute");
-            ExperimentalAttribute = typeSystem.FindType("System.Diagnostics.CodeAnalysis.ExperimentalAttribute");
         }
     }
 }

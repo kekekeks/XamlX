@@ -157,15 +157,15 @@ namespace XamlX.TypeSystem
                     _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
                 };
 
-                var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.GetType("System.MulticastDelegate")));
+                var builder = new TypeDefinition("", name, attrs, GetReference(TypeSystem.WellKnownTypes.MulticastDelegate));
 
                 Definition.NestedTypes.Add(builder);
                 TypeSystem.AddCompilerGeneratedAttribute(builder);
 
                 var ctor = new MethodDefinition(".ctor", MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.HideBySig, GetReference(returnType));
                 ctor.ImplAttributes = MethodImplAttributes.Managed | MethodImplAttributes.Runtime;
-                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.GetType("System.Object"))));
-                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.GetType("System.IntPtr"))));
+                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.WellKnownTypes.Object)));
+                ctor.Parameters.Add(new ParameterDefinition(GetReference(TypeSystem.WellKnownTypes.IntPtr)));
 
                 builder.Methods.Add(ctor);
 

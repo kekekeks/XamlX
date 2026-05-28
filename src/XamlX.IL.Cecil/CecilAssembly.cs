@@ -1,3 +1,4 @@
+using System;
 using Mono.Cecil;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ namespace XamlX.TypeSystem
     {
         internal class CecilAssembly : IXamlAssembly
         {
-            private readonly Dictionary<string, IXamlType> _typeCache = new();
+            private readonly Dictionary<string, IXamlType?> _typeCache = new();
 
             public CecilTypeSystem TypeSystem { get; }
             public AssemblyDefinition Assembly { get; }
@@ -29,8 +30,17 @@ namespace XamlX.TypeSystem
 
             public IXamlType? FindType(string fullName)
             {
-                if (_typeCache.TryGetValue(fullName, out var rv))
-                    return rv;
+                if (!_typeCache.TryGetValue(fullName, out var type))
+                {
+                    type = ResolveType(fullName);
+                    _typeCache[fullName] = type;
+                }
+
+                return type;
+            }
+
+            private IXamlType? ResolveType(string fullName)
+            {
                 var asmRef = new AssemblyNameReference(Assembly.Name.Name, Assembly.Name.Version);
                 var lastDot = fullName.LastIndexOf('.');
                 var ns = string.Empty;
@@ -42,7 +52,7 @@ namespace XamlX.TypeSystem
                 }
 
                 TypeReference? tref = null;
-                TypeDefinition? tdef = null;
+                TypeDefinition? tdef;
                 var plus = fullName.IndexOf('+');
 
                 while (true)
@@ -64,7 +74,8 @@ namespace XamlX.TypeSystem
                     fullName = fullName.Substring(plus + 1);
                     plus = fullName.IndexOf('+');
                 }
-                return _typeCache[fullName] = TypeSystem.RootTypeResolveContext.Resolve(tdef);
+
+                return TypeSystem.RootTypeResolveContext.Resolve(tdef);
             }
         }
     }

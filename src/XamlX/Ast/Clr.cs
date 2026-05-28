@@ -704,8 +704,8 @@ namespace XamlX.Ast
             _deferredContentCustomizationTypeParameter = deferredContentCustomizationTypeParameter;
             Value = value;
 
-            _funcType = config.TypeSystem
-                .GetType("System.Func`2")
+            _funcType = config.WellKnownTypes
+                .GetFuncOfT(2)
                 .MakeGenericType(config.TypeMappings.ServiceProvider, config.WellKnownTypes.Object);
 
             var returnType = _deferredContentCustomization?.ReturnType ?? _funcType;
@@ -808,7 +808,7 @@ namespace XamlX.Ast
 
         private static bool IsFunctionPointerLike(IXamlType xamlType)
             => xamlType.IsFunctionPointer // Cecil, SRE with .NET 8
-               || xamlType.FullName == "System.IntPtr"; // SRE with .NET < 8 or .NET Standard
+               || xamlType.Is("System", "IntPtr"); // SRE with .NET < 8 or .NET Standard
 
         private sealed class XamlClosureInfo
         {

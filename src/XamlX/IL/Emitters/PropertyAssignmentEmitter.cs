@@ -273,7 +273,7 @@ namespace XamlX.IL.Emitters
                 else
                 {
                     codeGen
-                        .Newobj(context.Configuration.TypeSystem.GetType("System.NullReferenceException")
+                        .Newobj(context.Configuration.WellKnownTypes.NullReferenceException
                             .GetConstructor())
                         .Throw();
                 }
@@ -281,7 +281,7 @@ namespace XamlX.IL.Emitters
                 codeGen.MarkLabel(next);
 
                 codeGen
-                    .Newobj(context.Configuration.TypeSystem.GetType("System.InvalidCastException")
+                    .Newobj(context.Configuration.WellKnownTypes.InvalidCastException
                         .GetConstructor())
                     .Throw();
             }
