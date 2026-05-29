@@ -195,13 +195,10 @@ namespace XamlParserTests
         }
         
         [Theory,
-         // InlineData("<x:Type TypeName='sys:Nullable(x:Int32)?' />"),
-         // InlineData("<x:Type TypeName='sys:Nullable(x:Int32?)' />"),
-         // InlineData("<x:Type TypeName='sys:Nullable(sys:Nullable(x:Int32))' />"),
          InlineData("<x:Type TypeName='x:Int32??' />"),
          InlineData("<x:Type TypeName='x:String??' />")
         ]
-        public void Type_Extension_Should_Report_Error_When_Nullable_Is_Applied_To_Nullable(string typeExt)
+        public void Type_Extension_Should_Report_Error_When_TypeName_Has_Multiple_Nullable_Indicators(string typeExt)
         {
             var ex = Assert.Throws<XamlTransformException>(() => Compile($@"
 <IntrinsicsTestsClass 
@@ -214,8 +211,33 @@ namespace XamlParserTests
 </IntrinsicsTestsClass>"));
             Assert.Contains("multiple nullable indicators", ex.Message);
         }
-        
 
+        [Theory,
+         InlineData("<x:Type TypeName='sys:Nullable(x:Int32)?' />"),
+         InlineData("<x:Type TypeName='sys:Nullable(x:String)' />"),
+         InlineData("<x:Type TypeName='sys:Nullable(x:Object)' />"),
+         InlineData("<x:Type TypeName='sys:Nullable(x:Int32?)' />"),
+         InlineData("<x:Type TypeName='sys:Nullable(sys:Nullable(x:Int32))' />"),
+         InlineData("<x:Type TypeName='sys:Nullable' x:TypeArguments='x:String' />"),
+         InlineData("<x:Type TypeName='sys:Nullable' x:TypeArguments='x:Object' />"),
+         InlineData("<x:Type TypeName='sys:Nullable' x:TypeArguments='sys:Nullable(x:Int32)' />")
+        ]
+        public void Type_Extension_Should_Report_Error_When_Nullable_Type_Argument_Is_Not_NonNullable_Value_Type(string typeExt)
+        {
+            var ex = Assert.Throws<XamlTransformException>(() => Compile($@"
+<IntrinsicsTestsClass 
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'
+    xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
+>
+    <IntrinsicsTestsClass.TypeProperty>{typeExt}</IntrinsicsTestsClass.TypeProperty>
+</IntrinsicsTestsClass>"));
+            Assert.Contains("Unable to construct generic type", ex.Message);
+            Assert.Contains("must be a non-nullable value type", ex.Message);
+            Assert.DoesNotContain("Internal compiler error", ex.Message);
+        }
+        
         [Theory,
          InlineData("StaticPropValue", "<x:Static Member='IntrinsicsTestsClass.StaticProp'/>"),
          InlineData("StaticFieldValue", "<x:Static Member='IntrinsicsTestsClass.StaticField'/>"),

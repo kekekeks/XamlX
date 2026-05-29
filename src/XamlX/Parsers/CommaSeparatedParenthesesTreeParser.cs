@@ -45,7 +45,6 @@ namespace XamlX.Parsers
                         current = stack.Pop();
                         if (stack.Count == 0)
                             throw new ParseException("Unmatched ')'", c);
-                        // current.Value += $"`{current.Children.Count}";
                         break;
                     }
                     case { } when afterClosing:

@@ -140,7 +140,7 @@ namespace XamlX.Transform.Transformers
                     if (isNullable)
                         typeName = typeName.Substring(0, typeName.Length - 1);
 
-                    if (typeName.Contains("?"))
+                    if (typeName.Contains('?'))
                         throw new XamlTransformException(
                             $"Type {typeName}? is cannot contain multiple nullable indicators ('?')",
                             textNodeInner);
