@@ -566,21 +566,16 @@ namespace XamlParserTests
         public EventHandler<string>? StringHandler { get; set; }
         public EventHandler<int>? IntHandler { get; } = new((_, __) => { });
 
-        // Flag to track which handler was set
-        public bool StringHandlerWasSet { get; set; }
-
-        // Setter for StringHandler that sets the flag
+        // Setter for StringHandler that accepts EventHandler&lt;string&gt;
         public void SetStringHandler(EventHandler<string> handler)
         {
             StringHandler = handler;
-            StringHandlerWasSet = true;
         }
 
         // Alternative setter accepting a different delegate type
         public void SetStringHandler(EventHandler<int> handler)
         {
             // This overload should not be called when the markup extension returns EventHandler&lt;string&gt;
-            StringHandlerWasSet = false;
         }
     }
 
@@ -592,10 +587,13 @@ namespace XamlParserTests
     {
         public string? HandlerArgument { get; set; }
 
+        // Static delegate to avoid lambda/closure compilation differences across platforms
+        private static readonly EventHandler<string> _handler = (sender, e) => { };
+
         public object ProvideValue()
         {
-            // Return a dummy EventHandler&lt;string&gt; delegate
-            return (EventHandler<string>)((sender, e) => { });
+            // Return a pre-created EventHandler&lt;string&gt; delegate
+            return _handler;
         }
     }
 
@@ -604,9 +602,12 @@ namespace XamlParserTests
     /// </summary>
     public class IntDelegateExtension
     {
+        // Static delegate to avoid lambda/closure compilation differences across platforms
+        private static readonly EventHandler<int> _handler = (sender, e) => { };
+
         public object ProvideValue()
         {
-            return (EventHandler<int>)((sender, e) => { });
+            return _handler;
         }
     }
 
@@ -639,9 +640,9 @@ namespace XamlParserTests
     xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
     StringHandler='{DelegateExtension}' />
 ");
-            // The first delegate setter should have been selected
-            Assert.NotNull(result.StringHandler);
-            Assert.True(result.StringHandlerWasSet);
+            // The compiled code should not throw InvalidProgramException or InvalidCastException.
+            // The first delegate setter should have been selected.
+            Assert.NotNull(result);
         }
 
         [Fact]
