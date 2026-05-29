@@ -549,4 +549,209 @@ namespace XamlParserTests
             }
         }
     }
+
+    /// <summary>
+    /// Test classes and tests for delegate-based dynamic setters.
+    /// Simulates the scenario where a markup extension returns a delegate for an event-like property
+    /// that has multiple delegate-type setters (e.g. EventHandler&lt;T&gt; overloads).
+    /// Without the fix in RemoveRedundantSetters, this can cause InvalidProgramException or InvalidCastException.
+    /// </summary>
+
+    /// <summary>
+    /// A class with a delegate property that has multiple setter candidates (different delegate types).
+    /// Simulates an event-like property where multiple delegate overloads exist.
+    /// </summary>
+    public class DelegateEventTarget
+    {
+        public EventHandler<string>? StringHandler { get; set; }
+        public EventHandler<int>? IntHandler { get; } = new((_, __) => { });
+
+        // Flag to track which handler was set
+        public bool StringHandlerWasSet { get; set; }
+
+        // Setter for StringHandler that sets the flag
+        public void SetStringHandler(EventHandler<string> handler)
+        {
+            StringHandler = handler;
+            StringHandlerWasSet = true;
+        }
+
+        // Alternative setter accepting a different delegate type
+        public void SetStringHandler(EventHandler<int> handler)
+        {
+            // This overload should not be called when the markup extension returns EventHandler&lt;string&gt;
+            StringHandlerWasSet = false;
+        }
+    }
+
+    /// <summary>
+    /// A markup extension that returns a delegate (EventHandler&lt;string&gt;).
+    /// Simulates real-world scenarios like VBDelegateExtension that dynamically create delegates.
+    /// </summary>
+    public class DelegateExtension
+    {
+        public string? HandlerArgument { get; set; }
+
+        public object ProvideValue()
+        {
+            // Return a dummy EventHandler&lt;string&gt; delegate
+            return (EventHandler<string>)((sender, e) => { });
+        }
+    }
+
+    /// <summary>
+    /// A markup extension that returns a delegate (EventHandler&lt;int&gt;).
+    /// </summary>
+    public class IntDelegateExtension
+    {
+        public object ProvideValue()
+        {
+            return (EventHandler<int>)((sender, e) => { });
+        }
+    }
+
+    public class DelegateDynamicSettersTests : CompilerTestBase
+    {
+        private readonly TestCompiler _compiler;
+
+        public DelegateDynamicSettersTests()
+        {
+            _compiler = CreateTestCompiler();
+
+            _compiler.IlCompiler.Transformers.Insert(
+                _compiler.IlCompiler.Transformers.FindIndex(x => x is PropertyReferenceResolver) + 1
+                , new DelegateTransformer());
+        }
+
+        private object CompileAndRunWithDelegateTransformer(string xaml)
+            => _compiler.Compile(xaml).create!(null);
+
+        [Fact]
+        public void Dynamic_Setter_With_All_Delegate_Types_Should_Not_Throw()
+        {
+            // This test verifies that when all candidate setters have delegate types,
+            // the parser does not generate invalid IL (which would cause InvalidProgramException
+            // or InvalidCastException at runtime).
+            // See: https://github.com/kekekeks/XamlX/issues/137
+            var result = (DelegateEventTarget) CompileAndRunWithDelegateTransformer(@"
+<DelegateEventTarget 
+    xmlns='clr-namespace:XamlParserTests'
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    StringHandler='{DelegateExtension}' />
+");
+            // The first delegate setter should have been selected
+            Assert.NotNull(result.StringHandler);
+            Assert.True(result.StringHandlerWasSet);
+        }
+
+        [Fact]
+        public void Dynamic_Setter_With_Different_Delegate_Type_Should_Select_First_Delegate_Setter()
+        {
+            // When all candidate setters have delegate types, the fix keeps only the first setter.
+            // If the value type doesn't match the first setter's parameter type, a runtime cast exception occurs.
+            // This is acceptable because it avoids generating invalid IL (which would cause InvalidProgramException).
+            Assert.Throws<InvalidCastException>(() =>
+            {
+                CompileAndRunWithDelegateTransformer(@"
+<DelegateEventTarget 
+    xmlns='clr-namespace:XamlParserTests'
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    StringHandler='{IntDelegateExtension}' />
+");
+            });
+        }
+
+        /// <summary>
+        /// A transformer that exposes multiple delegate-type setters for the StringHandler property.
+        /// This simulates the scenario where an event-like property has multiple delegate overloads.
+        /// </summary>
+        private sealed class DelegateTransformer : IXamlAstTransformer
+        {
+            public IXamlAstNode Transform(AstTransformationContext context, IXamlAstNode node)
+            {
+                if (node is XamlAstClrProperty
+                    {
+                        Name: "StringHandler",
+                        DeclaringType: { FullName: "XamlParserTests.DelegateEventTarget" }
+                    } property)
+                {
+                    // Find the SetStringHandler methods (they have different delegate parameter types).
+                    // Note: Type.FullName for generic types includes assembly-qualified names for arguments,
+                    // e.g. "System.EventHandler`1[[System.String, System.Private.CoreLib, ...]]"
+                    // We use StartsWith to match the prefix.
+                    var setWithStringDelegate = property.DeclaringType.Methods
+                        .FirstOrDefault(m => m.Name == "SetStringHandler"
+                            && m.Parameters.Count == 1
+                            && m.Parameters[0].FullName.StartsWith("System.EventHandler`1[[System.String"));
+
+                    var setWithIntDelegate = property.DeclaringType.Methods
+                        .FirstOrDefault(m => m.Name == "SetStringHandler"
+                            && m.Parameters.Count == 1
+                            && m.Parameters[0].FullName.StartsWith("System.EventHandler`1[[System.Int32"));
+
+                    if (setWithStringDelegate != null && setWithIntDelegate != null)
+                    {
+                        // Replace the property with a custom one that has both delegate setters
+                        return new DelegateProperty(property, setWithStringDelegate, setWithIntDelegate);
+                    }
+                }
+
+                return node;
+            }
+        }
+
+        private sealed class DelegateProperty : XamlAstClrProperty
+        {
+            public DelegateProperty(
+                XamlAstClrProperty original,
+                IXamlMethod setWithStringDelegate,
+                IXamlMethod setWithIntDelegate)
+                : base(original, original.Name, original.DeclaringType, original.Getter, original.Setters, null)
+            {
+                // Create a NEW list with only the delegate setters.
+                // We must NOT share the list with the original property,
+                // as that would affect other transformations.
+                var newSetters = new List<IXamlPropertySetter>
+                {
+                    new DelegatePropertySetter(setWithStringDelegate),
+                    new DelegatePropertySetter(setWithIntDelegate)
+                };
+                Setters.Clear();
+                Setters.AddRange(newSetters);
+            }
+        }
+
+        private sealed class DelegatePropertySetter : IXamlEmitablePropertySetter<IXamlILEmitter>
+        {
+            private readonly IXamlMethod _setMethod;
+
+            public DelegatePropertySetter(IXamlMethod setMethod)
+            {
+                _setMethod = setMethod;
+                TargetType = setMethod.DeclaringType;
+                Parameters = new[] { setMethod.Parameters[0] };
+
+                BinderParameters = new PropertySetterBinderParameters
+                {
+                    AllowMultiple = false,
+                    AllowXNull = true,
+                    AllowRuntimeNull = true
+                };
+            }
+
+            public IXamlType TargetType { get; }
+
+            public PropertySetterBinderParameters BinderParameters { get; }
+
+            public IReadOnlyList<IXamlType> Parameters { get; }
+
+            public IReadOnlyList<IXamlCustomAttribute> CustomAttributes => [];
+
+            public void Emit(IXamlILEmitter emitter)
+            {
+                // Simply call the setter method: target.SetStringHandler(value)
+                emitter.EmitCall(_setMethod);
+            }
+        }
+    }
 }
