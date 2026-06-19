@@ -10,7 +10,8 @@ using XamlX.TypeSystem;
 #if !XAMLX_NO_SRE
 namespace XamlX.IL
 {
-    [RequiresUnreferencedCode(XamlX.TrimmingMessages.DynamicXamlReference)]
+    [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
+    [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
 #if !XAMLX_INTERNAL
     public
 #endif
@@ -60,7 +61,10 @@ namespace XamlX.IL
         }
 
         [return: NotNullIfNotNull(nameof(t))]
-        SreType? ResolveType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type? t)
+        [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.TypePreservedElsewhere)]
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = TrimmingMessages.TypePreservedElsewhere)]
+        [UnconditionalSuppressMessage("Trimming", "IL3050", Justification = TrimmingMessages.TypePreservedElsewhere)]
+        SreType? ResolveType(Type? t)
         {
             if (t is null)
                 return null;
@@ -70,6 +74,8 @@ namespace XamlX.IL
             return rv;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2062", Justification = TrimmingMessages.TypePreservedElsewhere)]
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
         public IXamlType? FindType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] string name, string? asm)
         {
             if (asm != null)
@@ -98,6 +104,8 @@ namespace XamlX.IL
                 yield return list[c];
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreAssembly : IXamlAssembly
         {
             private readonly SreTypeSystem _system;
@@ -131,8 +139,6 @@ namespace XamlX.IL
             }
 
             [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
-            [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = TrimmingMessages.CanBeSafelyTrimmed)]
-            [RequiresUnreferencedCode("DynamicallyAccessedMembers")]
             public void Init()
             {
                 var allTypes = Assembly.GetTypes();
@@ -163,6 +169,8 @@ namespace XamlX.IL
             }
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreMemberInfo
         {
             protected readonly SreTypeSystem System;
@@ -184,6 +192,8 @@ namespace XamlX.IL
         }
 
         [DebuggerDisplay("{" + nameof(Type) + "}")]
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreType : SreMemberInfo, IXamlType
         {
             private IReadOnlyList<IXamlProperty>? _properties;
@@ -238,7 +248,6 @@ namespace XamlX.IL
                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
                     .Select(c => new SreConstructor(System, c)).ToList();
 
-            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> Interfaces =>
                 _interfaces ??= Type.GetInterfaces().Select(System.ResolveType).ToList()!;
 
@@ -249,7 +258,6 @@ namespace XamlX.IL
 
             public bool IsInterface => Type.IsInterface;
 
-            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericArguments
             {
                 get
@@ -262,7 +270,6 @@ namespace XamlX.IL
                 }
             }
 
-            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericParameters =>
                 _genericParameters ??= Type.GetTypeInfo().GenericTypeParameters.Select(System.ResolveType).ToList()!;
 
@@ -282,28 +289,23 @@ namespace XamlX.IL
                 return false;
             }
 
-            [UnconditionalSuppressMessage("Trimming", "IL2055", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType MakeGenericType(IReadOnlyList<IXamlType> typeArguments)
             {
                 return System.ResolveType(
                     Type.MakeGenericType(typeArguments.Select(t => ((SreType)t).Type).ToArray()));
             }
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType? GenericTypeDefinition => Type.IsConstructedGenericType
                 ? System.ResolveType(Type.GetGenericTypeDefinition())
                 : null;
 
             public bool IsArray => Type.IsArray;
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType? ArrayElementType => IsArray ? System.ResolveType(Type.GetElementType()) : null;
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType MakeArrayType(int dimensions) => System.ResolveType(
                 dimensions == 1 ? Type.MakeArrayType() : Type.MakeArrayType(dimensions));
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType? BaseType =>
                 _baseType ??= Type.BaseType is { } baseType ? System.ResolveType(baseType) : null;
 
@@ -313,7 +315,6 @@ namespace XamlX.IL
             public bool IsValueType => Type.IsValueType;
             public bool IsEnum => Type.IsEnum;
 
-            [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlType GetEnumUnderlyingType()
             {
                 return System.ResolveType(Enum.GetUnderlyingType(Type));
@@ -329,6 +330,8 @@ namespace XamlX.IL
             public override string ToString() => Type.ToString();
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreCustomAttribute : IXamlCustomAttribute
         {
             private readonly CustomAttributeData _data;
@@ -366,6 +369,8 @@ namespace XamlX.IL
         }
 
         [DebuggerDisplay("{_parameterInfo}")]
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreXamlParameterInfo : IXamlParameterInfo
         {
             private readonly SreTypeSystem _system;
@@ -386,6 +391,8 @@ namespace XamlX.IL
         }
         
         [DebuggerDisplay("{_method}")]
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreMethodBase : SreMemberInfo
         {
             private readonly MethodBase _method;
@@ -417,6 +424,8 @@ namespace XamlX.IL
         }
 
         [DebuggerDisplay("{Method}")]
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreMethod : SreMethodBase, IXamlMethod
         {
             public MethodInfo Method { get; }
@@ -436,7 +445,6 @@ namespace XamlX.IL
             public override int GetHashCode()
                 => Method.GetHashCode();
 
-            [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = TrimmingMessages.TypePreservedElsewhere)]
             public IXamlMethod MakeGenericMethod(IReadOnlyList<IXamlType> typeArguments)
             {
                 return new SreMethod(System, Method.MakeGenericMethod(typeArguments.Select(t => ((SreType)t).Type).ToArray()));
@@ -450,7 +458,7 @@ namespace XamlX.IL
 
             public bool IsGenericMethodDefinition => Method.IsGenericMethodDefinition;
 
-            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
+            [UnconditionalSuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericParameters => _genericParameters ??=
                 Method.ContainsGenericParameters
                     ? Method.GetGenericArguments()
@@ -459,7 +467,7 @@ namespace XamlX.IL
                             .ToArray()
                     : Array.Empty<IXamlType>();
 
-            [SuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
+            [UnconditionalSuppressMessage("Trimming", "IL2111", Justification = "An error will be reported if the type cannot be bound.")]
             public IReadOnlyList<IXamlType> GenericArguments => _genericArguments ??=
                 !Method.ContainsGenericParameters
                     ? Method.GetGenericArguments()
@@ -471,6 +479,8 @@ namespace XamlX.IL
             public bool ContainsGenericParameters => Method.ContainsGenericParameters;
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreConstructor : SreMethodBase, IXamlConstructor
         {
             public ConstructorInfo Constuctor { get; }
@@ -483,6 +493,8 @@ namespace XamlX.IL
                 => other is SreConstructor typedOther && Constuctor.Equals(typedOther.Constuctor);
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreProperty : SreMemberInfo, IXamlProperty
         {
             private IReadOnlyList<IXamlType>? _parameters;
@@ -521,6 +533,8 @@ namespace XamlX.IL
             public override string? ToString() => Member.ToString();
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreEvent : SreMemberInfo, IXamlEventInfo
         {
             private IXamlType? _declaringType;
@@ -544,6 +558,8 @@ namespace XamlX.IL
             public override string? ToString() => Event.ToString();
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreField : SreMemberInfo, IXamlField
         {
             private IXamlType? _declaringType;
@@ -586,6 +602,8 @@ namespace XamlX.IL
         public Type GetType(IXamlType t) => ((SreType)t).Type;
         public IXamlType GetType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type t) => ResolveType(t);
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         public IXamlTypeBuilder<IXamlILEmitter> CreateTypeBuilder([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TypeBuilder builder) => new SreTypeBuilder(this, builder);
 
         class IlGen : IXamlILEmitter
@@ -731,6 +749,8 @@ namespace XamlX.IL
             }
         }
 
+        [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
+        [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
         class SreTypeBuilder : SreType, IXamlTypeBuilder<IXamlILEmitter>
         {
             private readonly SreTypeSystem _system;
@@ -766,6 +786,8 @@ namespace XamlX.IL
                 _tb.AddInterfaceImplementation(((SreType)type).Type);
             }
 
+            [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
+            [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
             class SreMethodBuilder : SreMethod, IXamlMethodBuilder<IXamlILEmitter>
             {
                 private readonly IReadOnlyList<IXamlParameterInfo> _parameters;
@@ -829,6 +851,8 @@ namespace XamlX.IL
                 return new SreProperty(_system, p);
             }
 
+            [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
+            [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
             class SreConstructorBuilder : SreConstructor, IXamlConstructorBuilder<IXamlILEmitter>
             {
                 public SreConstructorBuilder(SreTypeSystem system, ConstructorBuilder ctor) : base(system, ctor)
