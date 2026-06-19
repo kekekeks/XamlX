@@ -100,6 +100,19 @@ namespace System.Diagnostics.CodeAnalysis
         public string? Url { get; set; }
     }
 
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class, Inherited = false)]
+    internal sealed class RequiresDynamicCodeAttribute : Attribute
+    {
+        public RequiresDynamicCodeAttribute(string message)
+        {
+            Message = message;
+        }
+
+        public bool ExcludeStatics { get; set; }
+        public string Message { get; }
+        public string? Url { get; set; }
+    }
+
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     internal sealed class UnconditionalSuppressMessageAttribute : Attribute
     {
