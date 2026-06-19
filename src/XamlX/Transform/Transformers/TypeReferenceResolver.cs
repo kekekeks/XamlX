@@ -38,7 +38,8 @@ namespace XamlX.Transform.Transformers
                 return ResolveTypeCore(context, xmlns, name, isMarkupExtension, typeArguments, lineInfo);
         }
 
-        [UnconditionalSuppressMessage("Trimming", "IL2062", Justification = "A compilation error will be reported if the type is not found.")]
+        [UnconditionalSuppressMessage("Trimming", "IL2062", Justification = TrimmingMessages.TypePreservedElsewhere)]
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = TrimmingMessages.TypePreservedElsewhere)]
         static XamlAstClrTypeReference ResolveTypeCore(AstTransformationContext context,
             string? xmlns, string name, bool isMarkupExtension, List<XamlAstXmlTypeReference>? typeArguments, IXamlLineInfo lineInfo)
         {
