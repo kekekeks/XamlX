@@ -7,12 +7,14 @@ internal static class TrimmingMessages
 
     public const string CanBeSafelyTrimmed =
         "When this method is called, we don't care if any exported type was trimmed. We can't do anything here.";
-    
+
     public const string TypePreservedElsewhere =
         "We assume that all IXamlType instances did preserve type information.";
     
     public const string GeneratedTypes =
         "This code references generated types that cannot be trimmed.";
+
+    public const string Sre = "Runtime XAML compilation requires unreferenced and dynamic code.";
 
     public const string Cecil = "Cecil is not getting trimmed.";
     

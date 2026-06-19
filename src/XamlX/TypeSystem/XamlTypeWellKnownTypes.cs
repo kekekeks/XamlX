@@ -86,13 +86,47 @@ class XamlTypeWellKnownTypes
         Uri = typeSystem.GetType("System.Uri");
         Void = typeSystem.GetType("System.Void");
 
-        _actionOfT = new IXamlType[16];
-        for (var i = 1; i <= 16; ++i)
-            _actionOfT[i - 1] = typeSystem.GetType($"System.Action`{i}");
+        // We can't use for-loop below for action/func initialization,
+        // because `GetType` needs a const value to ensure this type is not trimmed. 
 
-        _funcOfT = new IXamlType[17];
-        for (var i = 1; i <= 17; ++i)
-            _funcOfT[i - 1] = typeSystem.GetType($"System.Func`{i}");
+        var actionOfT = new IXamlType[16];
+        actionOfT[0] = typeSystem.GetType("System.Action`1");
+        actionOfT[1] = typeSystem.GetType("System.Action`2");
+        actionOfT[2] = typeSystem.GetType("System.Action`3");
+        actionOfT[3] = typeSystem.GetType("System.Action`4");
+        actionOfT[4] = typeSystem.GetType("System.Action`5");
+        actionOfT[5] = typeSystem.GetType("System.Action`6");
+        actionOfT[6] = typeSystem.GetType("System.Action`7");
+        actionOfT[7] = typeSystem.GetType("System.Action`8");
+        actionOfT[8] = typeSystem.GetType("System.Action`9");
+        actionOfT[9] = typeSystem.GetType("System.Action`10");
+        actionOfT[10] = typeSystem.GetType("System.Action`11");
+        actionOfT[11] = typeSystem.GetType("System.Action`12");
+        actionOfT[12] = typeSystem.GetType("System.Action`13");
+        actionOfT[13] = typeSystem.GetType("System.Action`14");
+        actionOfT[14] = typeSystem.GetType("System.Action`15");
+        actionOfT[15] = typeSystem.GetType("System.Action`16");
+        _actionOfT = actionOfT;
+
+        var funcOfT = new IXamlType[17];
+        funcOfT[0] = typeSystem.GetType("System.Func`1");
+        funcOfT[1] = typeSystem.GetType("System.Func`2");
+        funcOfT[2] = typeSystem.GetType("System.Func`3");
+        funcOfT[3] = typeSystem.GetType("System.Func`4");
+        funcOfT[4] = typeSystem.GetType("System.Func`5");
+        funcOfT[5] = typeSystem.GetType("System.Func`6");
+        funcOfT[6] = typeSystem.GetType("System.Func`7");
+        funcOfT[7] = typeSystem.GetType("System.Func`8");
+        funcOfT[8] = typeSystem.GetType("System.Func`9");
+        funcOfT[9] = typeSystem.GetType("System.Func`10");
+        funcOfT[10] = typeSystem.GetType("System.Func`11");
+        funcOfT[11] = typeSystem.GetType("System.Func`12");
+        funcOfT[12] = typeSystem.GetType("System.Func`13");
+        funcOfT[13] = typeSystem.GetType("System.Func`14");
+        funcOfT[14] = typeSystem.GetType("System.Func`15");
+        funcOfT[15] = typeSystem.GetType("System.Func`16");
+        funcOfT[16] = typeSystem.GetType("System.Func`17");
+        _funcOfT = funcOfT;
 
         ExperimentalAttribute = typeSystem.FindType("System.Diagnostics.CodeAnalysis.ExperimentalAttribute");
     }
