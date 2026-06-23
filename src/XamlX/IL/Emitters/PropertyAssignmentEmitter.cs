@@ -78,6 +78,18 @@ namespace XamlX.IL.Emitters
             if (setters.Count == 1)
                 return;
 
+            var lastParameterTypes = setters
+                .Select(s => s.Parameters[s.Parameters.Count - 1])
+                .ToList();
+
+            // Dynamic setter IL for multiple delegate-compatible event setters can become invalid
+            // on some runtimes. Keeping the first delegate setter avoids generating that path.
+            if (lastParameterTypes.All(IsDelegateType))
+            {
+                setters.RemoveRange(1, setters.Count - 1);
+                return;
+            }
+
             // If the value is a value type, always use the first one
             if (valueType.IsValueType)
             {
@@ -106,6 +118,19 @@ namespace XamlX.IL.Emitters
 
                 ++index;
             }
+        }
+
+        private static bool IsDelegateType(IXamlType? type)
+        {
+            while (type != null)
+            {
+                if (type.FullName == "System.MulticastDelegate" || type.FullName == "System.Delegate")
+                    return true;
+
+                type = type.BaseType;
+            }
+
+            return false;
         }
 
         private static bool IsAssignableToWithNullability(IXamlPropertySetter from, IXamlPropertySetter to)
