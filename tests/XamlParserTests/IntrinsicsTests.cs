@@ -30,6 +30,13 @@ namespace XamlParserTests
         public const string StringConstant = "GenericConstantValue";
     }
 
+    internal class IntrinsicsTestsInternalResources
+    {
+        internal static object StaticProp { get; } = "InternalStaticPropValue";
+        internal static object StaticField = "InternalStaticFieldValue";
+        private static object PrivateStaticProp { get; } = "PrivateStaticPropValue";
+    }
+
     public class IntrinsicsListTestsClass
     {
         internal int AddInt32CallCount;
@@ -289,6 +296,32 @@ namespace XamlParserTests
     xmlns:scg='clr-namespace:System.Collections.Generic;assembly=netstandard'
     ObjectProperty=""{markup}"" />");
             Assert.Equal(expected, res.ObjectProperty);
+        }
+
+        [Theory,
+         InlineData("<x:Static Member='IntrinsicsTestsInternalResources.StaticProp'/>"),
+         InlineData("<x:Static Member='IntrinsicsTestsInternalResources.StaticField'/>")]
+        public void Static_Extension_Resolves_Internal_Members_From_Default_Assembly(string extension)
+        {
+            Compile($@"
+<IntrinsicsTestsClass
+    xmlns='test'
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.ObjectProperty>{extension}</IntrinsicsTestsClass.ObjectProperty>
+</IntrinsicsTestsClass>");
+        }
+
+        [Fact]
+        public void Static_Extension_Does_Not_Resolve_Private_Members()
+        {
+            Assert.Throws<XamlTransformException>(() => Compile($@"
+<IntrinsicsTestsClass
+    xmlns='test'
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
+    <IntrinsicsTestsClass.ObjectProperty>
+        <x:Static Member='IntrinsicsTestsInternalResources.PrivateStaticProp'/>
+    </IntrinsicsTestsClass.ObjectProperty>
+</IntrinsicsTestsClass>"));
         }
 
         [Fact]

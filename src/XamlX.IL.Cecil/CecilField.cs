@@ -7,7 +7,7 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        class CecilField : IXamlField
+        class CecilField : IXamlField, IXamlAssemblyAccessibleMember
         {
             private readonly FieldDefinition _def;
             private readonly CecilTypeResolveContext _typeResolveContext;
@@ -26,6 +26,7 @@ namespace XamlX.TypeSystem
             private IXamlType? _type;
             public IXamlType FieldType => _type ??= _typeResolveContext.ResolveFieldType(Field);
             public bool IsPublic => _def.IsPublic;
+            public bool IsAssemblyAccessible => _def.IsAssembly || _def.IsFamilyOrAssembly;
             public bool IsStatic => _def.IsStatic;
             public bool IsLiteral => _def.IsLiteral;
 
