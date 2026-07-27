@@ -80,6 +80,14 @@ namespace XamlX.TypeSystem
         string Name { get; }
         IXamlType DeclaringType { get; }
     }
+
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAssemblyAccessibleMember : IXamlMember
+    {
+        bool IsAssemblyAccessible { get; }
+    }
     
 #if !XAMLX_INTERNAL
     public

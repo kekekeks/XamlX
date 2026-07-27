@@ -22,7 +22,7 @@ namespace XamlParserTests
         private CompilerTestBase(IXamlTypeSystem typeSystem)
         {
             Configuration = new TransformerConfiguration(typeSystem,
-                typeSystem.FindAssembly("XamlParserTests"),
+                typeSystem.FindAssembly(typeof(CompilerTestBase).Assembly.GetName().Name!),
                 new XamlLanguageTypeMappings(typeSystem)
                 {
                     XmlnsAttributes =
