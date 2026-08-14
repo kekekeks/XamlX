@@ -14,6 +14,17 @@ namespace XamlX.Transform.Transformers
                 return node;
             var nonDirectiveChildren = on.Children.Where(a => !(a is XamlAstXmlDirective)).ToList();
 
+            if (on.Arguments.Count == 0
+                && nonDirectiveChildren.Count == 0
+                && on.Type.GetClrType().Equals(context.Configuration.WellKnownTypes.String))
+            {
+                IXamlAstValueNode res = new XamlConstantNode(on, context.Configuration.WellKnownTypes.String, string.Empty);
+                if (nonDirectiveChildren.Count != on.Children.Count)
+                    res = new XamlValueWithManipulationNode(res, res,
+                        new XamlManipulationGroupNode(res, on.Children.OfType<XamlAstXmlDirective>()));
+                return res;
+            }
+
             if (on.Arguments.Count != 0
                 || nonDirectiveChildren.Count != 1
                 || !(nonDirectiveChildren[0] is IXamlAstValueNode vn)
