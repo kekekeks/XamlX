@@ -208,5 +208,23 @@ namespace XamlParserTests
             Assert.Equal("01:10:00", res.Converted.ToString());
             
         }
+
+        [Theory,
+         InlineData("<x:String />"),
+         InlineData("<x:String></x:String>"),
+         InlineData("<sys:String />"),
+         InlineData("<sys:String></sys:String>"),
+        ]
+        public void Empty_Strings_Are_Properly_Parsed(string element)
+        {
+            var res = (ConvertersTestClass)CompileAndRun($@"
+<ConvertersTestClass
+    xmlns='test' 
+    xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
+    xmlns:sys='clr-namespace:System;assembly=netstandard'>
+    {element}
+</ConvertersTestClass>");
+            Assert.Equal(string.Empty, res.ContentProperty);
+        }
     }
 }

@@ -40,5 +40,22 @@ namespace XamlParserTests
                 }
             });
         }
+
+        [Fact]
+        public void Empty_Strings_Can_Be_Added_To_Dictionary()
+        {
+            var res = (SimpleClassWithDictionaryContent)CompileAndRun(@"
+<SimpleClassWithDictionaryContent xmlns='test' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' xmlns:sys='clr-namespace:System;assembly=netstandard'>
+    <x:String x:Key='empty1'></x:String>
+    <x:String x:Key='empty2'/>
+    <sys:String x:Key='empty3'></sys:String>
+    <sys:String x:Key='empty4'/>
+</SimpleClassWithDictionaryContent>");
+
+            Assert.Equal(string.Empty, res.Children["empty1"]);
+            Assert.Equal(string.Empty, res.Children["empty2"]);
+            Assert.Equal(string.Empty, res.Children["empty3"]);
+            Assert.Equal(string.Empty, res.Children["empty4"]);
+        }
     }
 }
