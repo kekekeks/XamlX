@@ -741,7 +741,7 @@ namespace XamlX.Ast
             {
                 var closureType = context.DeclaringType.DefineSubType(
                     so,
-                    "XamlClosure_" + context.Configuration.IdentifierGenerator.GenerateIdentifierPart(),
+                    context.Configuration.IdentifierGenerator.CreateIdentifierFromPrefix("XamlClosure_"),
                     XamlVisibility.Private);
 
                 closureInfo = new XamlClosureInfo(closureType, context);
