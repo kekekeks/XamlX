@@ -8,14 +8,6 @@ namespace XamlX.Transform
 #endif
     interface IXamlIdentifierGenerator
     {
-        string GenerateIdentifierPart();
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    interface IGeneratedIdentifierFactory : IXamlIdentifierGenerator
-    {
         GeneratedIdentifier CreateIdentifierFromPrefix(string prefix);
         GeneratedIdentifier CreateIdentifierFromPreferredName(string name, int nameUseCount);
     }
@@ -43,28 +35,9 @@ namespace XamlX.Transform
 #if !XAMLX_INTERNAL
     public
 #endif
-    static class GeneratedIdentifierExtensions
+    class GuidIdentifierGenerator : IXamlIdentifierGenerator
     {
-        public static GeneratedIdentifier CreateIdentifierFromPrefix(this IXamlIdentifierGenerator generator, string prefix)
-            => generator is IGeneratedIdentifierFactory factory
-                ? factory.CreateIdentifierFromPrefix(prefix)
-                : new ReadableGeneratedIdentifier(prefix + generator.GenerateIdentifierPart());
-
-        public static GeneratedIdentifier CreateIdentifierFromPreferredName(
-            this IXamlIdentifierGenerator generator, string name, int nameUseCount)
-            => generator is IGeneratedIdentifierFactory factory
-                ? factory.CreateIdentifierFromPreferredName(name, nameUseCount)
-                : new ReadableGeneratedIdentifier(nameUseCount == 0
-                    ? name
-                    : name + "_" + generator.GenerateIdentifierPart());
-    }
-
-#if !XAMLX_INTERNAL
-    public
-#endif
-    class GuidIdentifierGenerator : IGeneratedIdentifierFactory
-    {
-        public string GenerateIdentifierPart() => Guid.NewGuid().ToString().Replace("-","");
+        private static string GenerateIdentifierPart() => Guid.NewGuid().ToString().Replace("-","");
 
         public GeneratedIdentifier CreateIdentifierFromPrefix(string prefix)
             => new ReadableGeneratedIdentifier(prefix + GenerateIdentifierPart());
