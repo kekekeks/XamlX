@@ -80,6 +80,30 @@ namespace XamlX.TypeSystem
         string Name { get; }
         IXamlType DeclaringType { get; }
     }
+
+    /// <summary>
+    /// Optional capability for members whose visibility is assembly-scoped
+    /// (<c>internal</c> or <c>protected internal</c>). Type systems that do not
+    /// implement it are treated as exposing public members only.
+    /// </summary>
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAssemblyAccessibleMember : IXamlMember
+    {
+        bool IsAssemblyAccessible { get; }
+    }
+
+    /// <summary>
+    /// Optional strong-name identity used when matching <c>InternalsVisibleTo</c>.
+    /// </summary>
+#if !XAMLX_INTERNAL
+    public
+#endif
+    interface IXamlAssemblyPublicKey
+    {
+        byte[] PublicKey { get; }
+    }
     
 #if !XAMLX_INTERNAL
     public
