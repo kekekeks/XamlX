@@ -76,7 +76,7 @@ namespace XamlX.TypeSystem
             
             var values = enumType.CustomAttributes.Any(a => a.Type.Name == "FlagsAttribute") ?
                 value.Split(',').Select(x => x.Trim()).ToArray() :
-                new[] { value };
+                new[] { value.Trim() };
 
             if (values.Length == 0)
             {
