@@ -34,6 +34,12 @@ namespace XamlParserTests
         Third = 4
     }
     
+    public enum ConvertersTestsSimpleEnum
+    {
+        First,
+        Second
+    }
+
     public struct ConvertersTestValueType
     {
         public string? Value { get; set; }
@@ -189,6 +195,21 @@ namespace XamlParserTests
             {
                 CultureInfo.CurrentCulture = old;
             }
+        }
+
+        [Theory,
+         InlineData("ConvertersTestsSimpleEnum", "Second"),
+         InlineData("ConvertersTestsEnum", "First, Third"),
+        ]
+        public void Enum_Element_Content_Ignores_Surrounding_Whitespace(string type, string value)
+        {
+            var res = (ConvertersTestClass) CompileAndRun($@"
+<ConvertersTestClass xmlns='test'>
+    <{type}>
+        {value}
+    </{type}>
+</ConvertersTestClass>");
+            Assert.Equal(value, res.ContentProperty?.ToString());
         }
 
         [Fact]
