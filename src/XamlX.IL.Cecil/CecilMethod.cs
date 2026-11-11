@@ -27,7 +27,7 @@ namespace XamlX.TypeSystem
                 .Select(ca => new CecilCustomAttribute(_typeResolveContext, ca)).ToList();
         }
 
-        internal abstract class CecilMethodBase
+        internal abstract class CecilMethodBase : IXamlAssemblyAccessibleMember
         {
             protected CecilTypeResolveContext TypeResolveContext { get; }
             public MethodReference Reference { get; }
@@ -46,6 +46,7 @@ namespace XamlX.TypeSystem
             public bool IsPublic => Definition.IsPublic;
             public bool IsPrivate => Definition.IsPrivate;
             public bool IsFamily => Definition.IsFamily;
+            public bool IsAssemblyAccessible => Definition.IsAssembly || Definition.IsFamilyOrAssembly;
             public bool IsStatic => Definition.IsStatic;
 
             private IXamlType? _returnType;

@@ -7,7 +7,7 @@ namespace XamlX.TypeSystem
 {
     partial class CecilTypeSystem
     {
-        internal class CecilAssembly : IXamlAssembly
+        internal class CecilAssembly : IXamlAssembly, IXamlAssemblyPublicKey
         {
             private readonly Dictionary<string, IXamlType?> _typeCache = new();
 
@@ -23,6 +23,7 @@ namespace XamlX.TypeSystem
             public bool Equals(IXamlAssembly? other) => other == this;
 
             public string Name => Assembly.Name.Name;
+            public byte[] PublicKey => Assembly.Name.PublicKey ?? Array.Empty<byte>();
             private IReadOnlyList<IXamlCustomAttribute>? _attributes;
 
             public IReadOnlyList<IXamlCustomAttribute> CustomAttributes =>

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using XamlX.Emit;
 using XamlX.IL;
@@ -81,6 +82,12 @@ namespace XamlX.Ast
         public string Member { get; set; }
         public IXamlAstTypeReference? TargetType { get; set; }
 
+        /// <summary>
+        /// Assembly that will contain the generated XAML. Assembly-accessible members are
+        /// resolved only when this assembly declares them or is granted <c>InternalsVisibleTo</c>.
+        /// </summary>
+        internal IXamlAssembly? AccessingAssembly { get; set; }
+
         public override void VisitChildren(Visitor visitor)
         {
             TargetType = (IXamlAstTypeReference?) TargetType?.Visit(visitor);
@@ -113,9 +120,11 @@ namespace XamlX.Ast
         internal IXamlMember? ResolveMember(bool throwOnUnknown)
         {
             var type = TargetType?.GetClrType();
-            var member = type?.GetAllFields().FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
-                   (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
-                       p.Name == Member && p.Getter is { IsPublic: true, IsStatic: true });
+            var member = type?.GetAllFields().FirstOrDefault(f =>
+                             f.IsStatic && f.Name == Member && IsAccessible(f, f.IsPublic)) ??
+                         (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
+                             p.Name == Member && p.Getter is { IsStatic: true } getter &&
+                             IsAccessible(getter, getter.IsPublic));
 
             if (member is IXamlProperty or IXamlField)
             {
@@ -127,6 +136,77 @@ namespace XamlX.Ast
                     $"Unable to resolve \"{type?.Name}.{Member}\" as static field, property, constant or enum value", this);
             }
             return null;
+        }
+
+        private bool IsAccessible(IXamlMember member, bool isPublic)
+        {
+            if (isPublic)
+                return true;
+
+            if (AccessingAssembly is null
+                || member is not IXamlAssemblyAccessibleMember { IsAssemblyAccessible: true })
+                return false;
+
+            var declaringAssembly = member.DeclaringType.Assembly;
+            if (declaringAssembly is null)
+                return false;
+
+            return declaringAssembly.Equals(AccessingAssembly)
+                   || GrantsInternalAccess(declaringAssembly, AccessingAssembly);
+        }
+
+        private static bool GrantsInternalAccess(IXamlAssembly declaringAssembly, IXamlAssembly accessingAssembly)
+        {
+            foreach (var attribute in declaringAssembly.CustomAttributes)
+            {
+                if (attribute.Type.Name != "InternalsVisibleToAttribute"
+                    || attribute.Type.Namespace != "System.Runtime.CompilerServices")
+                    continue;
+
+                if (attribute.Parameters.Count == 0 || attribute.Parameters[0] is not string friendName)
+                    continue;
+
+                if (FriendAssemblyMatches(friendName, accessingAssembly))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool FriendAssemblyMatches(string friendName, IXamlAssembly accessingAssembly)
+        {
+            if (string.IsNullOrWhiteSpace(friendName))
+                return false;
+
+            // PublicKeyToken is not a valid InternalsVisibleTo qualifier. Reject it instead of
+            // falling back to a name-only match, which would widen access.
+            if (friendName.IndexOf("PublicKeyToken", StringComparison.OrdinalIgnoreCase) >= 0
+                && friendName.IndexOf("PublicKey=", StringComparison.OrdinalIgnoreCase) < 0)
+                return false;
+
+            AssemblyName parsed;
+            try
+            {
+                parsed = new AssemblyName(friendName);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(parsed.Name)
+                || !string.Equals(parsed.Name, accessingAssembly.Name, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var requiredKey = parsed.GetPublicKey();
+            if (requiredKey is null || requiredKey.Length == 0)
+                return true;
+
+            if (accessingAssembly is not IXamlAssemblyPublicKey identity)
+                return false;
+
+            var actualKey = identity.PublicKey;
+            return actualKey is { Length: > 0 } && actualKey.SequenceEqual(requiredKey);
         }
 
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveMember(false) switch

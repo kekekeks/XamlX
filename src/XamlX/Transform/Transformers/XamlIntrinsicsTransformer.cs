@@ -52,7 +52,10 @@ namespace XamlX.Transform.Transformers
 
                         return new XamlStaticExtensionNode(ni,
                             typeReference,
-                            tmpair[1]);
+                            tmpair[1])
+                        {
+                            AccessingAssembly = context.Configuration.DefaultAssembly
+                        };
                     }
                 }
             }
