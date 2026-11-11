@@ -1,4 +1,3 @@
-using System;
 using XamlX.Emit;
 
 namespace XamlX.Transform
@@ -8,14 +7,28 @@ namespace XamlX.Transform
 #endif
     interface IXamlIdentifierGenerator
     {
-        string GenerateIdentifierPart();
+        GeneratedIdentifier CreateIdentifierFromPrefix(string prefix);
+        GeneratedIdentifier CreateIdentifierFromPreferredName(string name, int nameUseCount);
     }
 
 #if !XAMLX_INTERNAL
     public
 #endif
-    class GuidIdentifierGenerator : IXamlIdentifierGenerator
+    abstract class GeneratedIdentifier
     {
-        public string GenerateIdentifierPart() => Guid.NewGuid().ToString().Replace("-","");
+        public abstract string Name { get; }
+        public abstract string AppendSuffix(string suffix);
+
+        public static implicit operator string(GeneratedIdentifier identifier) => identifier.Name;
     }
+
+    internal sealed class ReadableGeneratedIdentifier : GeneratedIdentifier
+    {
+        private readonly string _name;
+
+        public ReadableGeneratedIdentifier(string name) => _name = name;
+        public override string Name => _name;
+        public override string AppendSuffix(string suffix) => _name + suffix;
+    }
+
 }
