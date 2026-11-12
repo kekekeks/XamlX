@@ -80,6 +80,7 @@ namespace XamlX.Ast
 
         public string Member { get; set; }
         public IXamlAstTypeReference? TargetType { get; set; }
+        internal IXamlAssembly? AccessingAssembly { get; set; }
 
         public override void VisitChildren(Visitor visitor)
         {
@@ -113,9 +114,11 @@ namespace XamlX.Ast
         internal IXamlMember? ResolveMember(bool throwOnUnknown)
         {
             var type = TargetType?.GetClrType();
-            var member = type?.GetAllFields().FirstOrDefault(f => f.IsPublic && f.IsStatic && f.Name == Member) ??
-                   (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
-                       p.Name == Member && p.Getter is { IsPublic: true, IsStatic: true });
+            var member = type?.GetAllFields().FirstOrDefault(f =>
+                    f.IsStatic && f.Name == Member && IsAccessible(f, f.IsPublic)) ??
+                (IXamlMember?)type?.GetAllProperties().FirstOrDefault(p =>
+                    p.Name == Member && p.Getter is { IsStatic: true } getter &&
+                    IsAccessible(getter, getter.IsPublic));
 
             if (member is IXamlProperty or IXamlField)
             {
@@ -128,6 +131,12 @@ namespace XamlX.Ast
             }
             return null;
         }
+
+        private bool IsAccessible(IXamlMember member, bool isPublic) =>
+            isPublic ||
+            (AccessingAssembly is not null
+             && member is IXamlAssemblyAccessibleMember { IsAssemblyAccessible: true }
+             && member.DeclaringType.Assembly?.Equals(AccessingAssembly) == true);
 
         public IXamlAstTypeReference Type => new XamlAstClrTypeReference(this, ResolveMember(false) switch
         {

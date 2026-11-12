@@ -393,7 +393,7 @@ namespace XamlX.IL
         [DebuggerDisplay("{_method}")]
         [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
         [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
-        class SreMethodBase : SreMemberInfo
+        class SreMethodBase : SreMemberInfo, IXamlAssemblyAccessibleMember
         {
             private readonly MethodBase _method;
             private IReadOnlyList<IXamlParameterInfo>? _parameters;
@@ -406,6 +406,7 @@ namespace XamlX.IL
             public bool IsPublic => _method.IsPublic;
             public bool IsPrivate => _method.IsPrivate;
             public bool IsFamily => _method.IsFamily;
+            public bool IsAssemblyAccessible => _method.IsAssembly || _method.IsFamilyOrAssembly;
             public bool IsStatic => _method.IsStatic;
 
             protected virtual IReadOnlyList<IXamlParameterInfo> SreParameters => _parameters ??=
@@ -560,7 +561,7 @@ namespace XamlX.IL
 
         [RequiresDynamicCode(XamlX.TrimmingMessages.Sre)]
         [RequiresUnreferencedCode(XamlX.TrimmingMessages.Sre)]
-        class SreField : SreMemberInfo, IXamlField
+        class SreField : SreMemberInfo, IXamlField, IXamlAssemblyAccessibleMember
         {
             private IXamlType? _declaringType;
 
@@ -575,6 +576,7 @@ namespace XamlX.IL
 
             public IXamlType FieldType { get; }
             public bool IsPublic => Field.IsPublic;
+            public bool IsAssemblyAccessible => Field.IsAssembly || Field.IsFamilyOrAssembly;
             public bool IsStatic => Field.IsStatic;
             public bool IsLiteral => Field.IsLiteral;
 
